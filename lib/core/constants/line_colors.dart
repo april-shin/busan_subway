@@ -1,0 +1,39 @@
+import 'dart:ui';
+
+const Map<String, Color> lineColors = {
+  '1': Color(0xFF0052A4),
+  '2': Color(0xFF00A84D),
+  '3': Color(0xFFEF7C1C),
+  '4': Color(0xFF00A5DE),
+  '5': Color(0xFF996CAC),
+  '6': Color(0xFFCD7C2F),
+  '7': Color(0xFF747F00),
+  '8': Color(0xFFE6186C),
+  '9': Color(0xFFBDB092),
+  'SB': Color(0xFFD31145),
+  '신분당': Color(0xFFD31145),
+  '경의중앙': Color(0xFF77C4A3),
+  '경춘': Color(0xFF0C8E72),
+  '공항철도': Color(0xFF0090D2),
+  '수인분당': Color(0xFFF5A200),
+  '신림': Color(0xFF6789CA),
+};
+
+const Map<String, String> lineNames = {
+  '1': '1호선',
+  '2': '2호선',
+  '3': '3호선',
+  '4': '4호선',
+  '5': '5호선',
+  '6': '6호선',
+  '7': '7호선',
+  '8': '8호선',
+  '9': '9호선',
+  'SB': '신분당선',
+  '신분당': '신분당선',
+  '경의중앙': '경의중앙선',
+  '경춘': '경춘선',
+  '공항철도': '공항철도',
+  '수인분당': '수인분당선',
+  '신림': '신림선',
+};

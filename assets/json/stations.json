@@ -1,0 +1,7562 @@
+[
+  {
+    "id": "101",
+    "name": "소요산",
+    "lineId": "1",
+    "latitude": 37.7472,
+    "longitude": 127.0612,
+    "svgX": 1135.0,
+    "svgY": 370.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "102",
+    "name": "동두천",
+    "lineId": "1",
+    "latitude": 37.7382,
+    "longitude": 127.0594,
+    "svgX": 1132.0,
+    "svgY": 389.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "103",
+    "name": "보산",
+    "lineId": "1",
+    "latitude": 37.729,
+    "longitude": 127.0629,
+    "svgX": 1137.0,
+    "svgY": 407.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "104",
+    "name": "동두천중앙",
+    "lineId": "1",
+    "latitude": 37.7186,
+    "longitude": 127.0607,
+    "svgX": 1134.0,
+    "svgY": 428.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "105",
+    "name": "지행",
+    "lineId": "1",
+    "latitude": 37.7102,
+    "longitude": 127.0533,
+    "svgX": 1121.0,
+    "svgY": 445.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "106",
+    "name": "덕정",
+    "lineId": "1",
+    "latitude": 37.6967,
+    "longitude": 127.057,
+    "svgX": 1128.0,
+    "svgY": 473.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "107",
+    "name": "덕계",
+    "lineId": "1",
+    "latitude": 37.6911,
+    "longitude": 127.0553,
+    "svgX": 1125.0,
+    "svgY": 484.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "108",
+    "name": "양주",
+    "lineId": "1",
+    "latitude": 37.6636,
+    "longitude": 127.0464,
+    "svgX": 1110.0,
+    "svgY": 540.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "109",
+    "name": "녹양",
+    "lineId": "1",
+    "latitude": 37.6417,
+    "longitude": 127.039,
+    "svgX": 1097.0,
+    "svgY": 584.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "110",
+    "name": "가능",
+    "lineId": "1",
+    "latitude": 37.6321,
+    "longitude": 127.0372,
+    "svgX": 1094.0,
+    "svgY": 604.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "111",
+    "name": "의정부",
+    "lineId": "1",
+    "latitude": 37.7383,
+    "longitude": 127.0458,
+    "svgX": 1109.0,
+    "svgY": 388.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "112",
+    "name": "회룡",
+    "lineId": "1",
+    "latitude": 37.6505,
+    "longitude": 127.0125,
+    "svgX": 1053.0,
+    "svgY": 566.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "113",
+    "name": "망월사",
+    "lineId": "1",
+    "latitude": 37.6358,
+    "longitude": 127.0199,
+    "svgX": 1065.0,
+    "svgY": 596.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "114",
+    "name": "도봉산",
+    "lineId": "1",
+    "latitude": 37.6892,
+    "longitude": 127.0447,
+    "svgX": 1107.0,
+    "svgY": 488.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "7"
+    ]
+  },
+  {
+    "id": "115",
+    "name": "도봉",
+    "lineId": "1",
+    "latitude": 37.6723,
+    "longitude": 127.0472,
+    "svgX": 1111.0,
+    "svgY": 522.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "116",
+    "name": "방학",
+    "lineId": "1",
+    "latitude": 37.6598,
+    "longitude": 127.044,
+    "svgX": 1106.0,
+    "svgY": 548.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "117",
+    "name": "창동",
+    "lineId": "1",
+    "latitude": 37.6531,
+    "longitude": 127.0469,
+    "svgX": 1110.0,
+    "svgY": 561.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4"
+    ]
+  },
+  {
+    "id": "118",
+    "name": "녹천",
+    "lineId": "1",
+    "latitude": 37.6453,
+    "longitude": 127.0512,
+    "svgX": 1118.0,
+    "svgY": 577.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "119",
+    "name": "월계",
+    "lineId": "1",
+    "latitude": 37.6402,
+    "longitude": 127.0585,
+    "svgX": 1130.0,
+    "svgY": 587.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "120",
+    "name": "광운대",
+    "lineId": "1",
+    "latitude": 37.6326,
+    "longitude": 127.0618,
+    "svgX": 1136.0,
+    "svgY": 603.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "121",
+    "name": "석계",
+    "lineId": "1",
+    "latitude": 37.6157,
+    "longitude": 127.0655,
+    "svgX": 1142.0,
+    "svgY": 637.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "6"
+    ]
+  },
+  {
+    "id": "122",
+    "name": "신이문",
+    "lineId": "1",
+    "latitude": 37.596,
+    "longitude": 127.0581,
+    "svgX": 1129.0,
+    "svgY": 677.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "123",
+    "name": "외대앞",
+    "lineId": "1",
+    "latitude": 37.5947,
+    "longitude": 127.059,
+    "svgX": 1131.0,
+    "svgY": 680.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "124",
+    "name": "회기",
+    "lineId": "1",
+    "latitude": 37.5895,
+    "longitude": 127.0579,
+    "svgX": 1129.0,
+    "svgY": 690.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "125",
+    "name": "청량리",
+    "lineId": "1",
+    "latitude": 37.5805,
+    "longitude": 127.0475,
+    "svgX": 1111.0,
+    "svgY": 708.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "수인분당",
+      "경춘"
+    ]
+  },
+  {
+    "id": "126",
+    "name": "제기동",
+    "lineId": "1",
+    "latitude": 37.5785,
+    "longitude": 127.0373,
+    "svgX": 1094.0,
+    "svgY": 712.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "127",
+    "name": "신설동",
+    "lineId": "1",
+    "latitude": 37.5747,
+    "longitude": 127.0252,
+    "svgX": 1074.0,
+    "svgY": 720.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "128",
+    "name": "동묘앞",
+    "lineId": "1",
+    "latitude": 37.5715,
+    "longitude": 127.0167,
+    "svgX": 1060.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "6"
+    ]
+  },
+  {
+    "id": "129",
+    "name": "동대문",
+    "lineId": "1",
+    "latitude": 37.5712,
+    "longitude": 127.0094,
+    "svgX": 1047.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4"
+    ]
+  },
+  {
+    "id": "130",
+    "name": "종로5가",
+    "lineId": "1",
+    "latitude": 37.5707,
+    "longitude": 127.0019,
+    "svgX": 1035.0,
+    "svgY": 728.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "131",
+    "name": "종로3가",
+    "lineId": "1",
+    "latitude": 37.5712,
+    "longitude": 126.9916,
+    "svgX": 1017.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "3",
+      "5"
+    ]
+  },
+  {
+    "id": "132",
+    "name": "종각",
+    "lineId": "1",
+    "latitude": 37.5703,
+    "longitude": 126.983,
+    "svgX": 1003.0,
+    "svgY": 729.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "133",
+    "name": "시청",
+    "lineId": "1",
+    "latitude": 37.5641,
+    "longitude": 126.977,
+    "svgX": 993.0,
+    "svgY": 742.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "134",
+    "name": "서울역",
+    "lineId": "1",
+    "latitude": 37.5547,
+    "longitude": 126.9706,
+    "svgX": 982.0,
+    "svgY": 761.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "135",
+    "name": "남영",
+    "lineId": "1",
+    "latitude": 37.5415,
+    "longitude": 126.9717,
+    "svgX": 984.0,
+    "svgY": 788.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "136",
+    "name": "용산",
+    "lineId": "1",
+    "latitude": 37.5299,
+    "longitude": 126.9648,
+    "svgX": 972.0,
+    "svgY": 811.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "137",
+    "name": "노량진",
+    "lineId": "1",
+    "latitude": 37.5134,
+    "longitude": 126.9428,
+    "svgX": 935.0,
+    "svgY": 844.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "9"
+    ]
+  },
+  {
+    "id": "138",
+    "name": "대방",
+    "lineId": "1",
+    "latitude": 37.5133,
+    "longitude": 126.9264,
+    "svgX": 907.0,
+    "svgY": 845.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "신림"
+    ]
+  },
+  {
+    "id": "139",
+    "name": "신길",
+    "lineId": "1",
+    "latitude": 37.5151,
+    "longitude": 126.9163,
+    "svgX": 890.0,
+    "svgY": 841.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "5"
+    ]
+  },
+  {
+    "id": "140",
+    "name": "영등포",
+    "lineId": "1",
+    "latitude": 37.5156,
+    "longitude": 126.9077,
+    "svgX": 876.0,
+    "svgY": 840.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "141",
+    "name": "신도림",
+    "lineId": "1",
+    "latitude": 37.5091,
+    "longitude": 126.8912,
+    "svgX": 848.0,
+    "svgY": 853.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "142",
+    "name": "구로",
+    "lineId": "1",
+    "latitude": 37.5032,
+    "longitude": 126.8825,
+    "svgX": 833.0,
+    "svgY": 865.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "143",
+    "name": "구일",
+    "lineId": "1",
+    "latitude": 37.4945,
+    "longitude": 126.8752,
+    "svgX": 821.0,
+    "svgY": 883.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "144",
+    "name": "개봉",
+    "lineId": "1",
+    "latitude": 37.4935,
+    "longitude": 126.8567,
+    "svgX": 790.0,
+    "svgY": 885.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "145",
+    "name": "오류동",
+    "lineId": "1",
+    "latitude": 37.4933,
+    "longitude": 126.842,
+    "svgX": 765.0,
+    "svgY": 885.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "146",
+    "name": "온수",
+    "lineId": "1",
+    "latitude": 37.4925,
+    "longitude": 126.8234,
+    "svgX": 734.0,
+    "svgY": 887.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "7"
+    ]
+  },
+  {
+    "id": "147",
+    "name": "역곡",
+    "lineId": "1",
+    "latitude": 37.486,
+    "longitude": 126.8038,
+    "svgX": 701.0,
+    "svgY": 900.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "148",
+    "name": "소사",
+    "lineId": "1",
+    "latitude": 37.4827,
+    "longitude": 126.7916,
+    "svgX": 680.0,
+    "svgY": 907.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "149",
+    "name": "부천",
+    "lineId": "1",
+    "latitude": 37.4827,
+    "longitude": 126.7832,
+    "svgX": 666.0,
+    "svgY": 907.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "150",
+    "name": "중동",
+    "lineId": "1",
+    "latitude": 37.4902,
+    "longitude": 126.7658,
+    "svgX": 637.0,
+    "svgY": 892.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "151",
+    "name": "송내",
+    "lineId": "1",
+    "latitude": 37.489,
+    "longitude": 126.7533,
+    "svgX": 616.0,
+    "svgY": 894.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "152",
+    "name": "부개",
+    "lineId": "1",
+    "latitude": 37.498,
+    "longitude": 126.7417,
+    "svgX": 596.0,
+    "svgY": 876.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "153",
+    "name": "부평",
+    "lineId": "1",
+    "latitude": 37.5074,
+    "longitude": 126.7231,
+    "svgX": 565.0,
+    "svgY": 857.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "154",
+    "name": "백운",
+    "lineId": "1",
+    "latitude": 37.5103,
+    "longitude": 126.7074,
+    "svgX": 538.0,
+    "svgY": 851.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "155",
+    "name": "동암",
+    "lineId": "1",
+    "latitude": 37.5182,
+    "longitude": 126.6999,
+    "svgX": 526.0,
+    "svgY": 835.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "156",
+    "name": "간석",
+    "lineId": "1",
+    "latitude": 37.5262,
+    "longitude": 126.6852,
+    "svgX": 501.0,
+    "svgY": 819.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "157",
+    "name": "주안",
+    "lineId": "1",
+    "latitude": 37.5291,
+    "longitude": 126.6806,
+    "svgX": 493.0,
+    "svgY": 813.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "158",
+    "name": "도화",
+    "lineId": "1",
+    "latitude": 37.5356,
+    "longitude": 126.6702,
+    "svgX": 475.0,
+    "svgY": 799.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "159",
+    "name": "제물포",
+    "lineId": "1",
+    "latitude": 37.5396,
+    "longitude": 126.6538,
+    "svgX": 448.0,
+    "svgY": 791.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "160",
+    "name": "도원",
+    "lineId": "1",
+    "latitude": 37.5464,
+    "longitude": 126.6421,
+    "svgX": 428.0,
+    "svgY": 778.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "161",
+    "name": "동인천",
+    "lineId": "1",
+    "latitude": 37.4738,
+    "longitude": 126.632,
+    "svgX": 411.0,
+    "svgY": 925.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "162",
+    "name": "인천",
+    "lineId": "1",
+    "latitude": 37.4737,
+    "longitude": 126.6241,
+    "svgX": 398.0,
+    "svgY": 925.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "201",
+    "name": "시청",
+    "lineId": "2",
+    "latitude": 37.5641,
+    "longitude": 126.977,
+    "svgX": 993.0,
+    "svgY": 742.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "202",
+    "name": "을지로입구",
+    "lineId": "2",
+    "latitude": 37.566,
+    "longitude": 126.9826,
+    "svgX": 1002.0,
+    "svgY": 738.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "203",
+    "name": "을지로3가",
+    "lineId": "2",
+    "latitude": 37.5664,
+    "longitude": 126.992,
+    "svgX": 1018.0,
+    "svgY": 737.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "3"
+    ]
+  },
+  {
+    "id": "204",
+    "name": "을지로4가",
+    "lineId": "2",
+    "latitude": 37.5673,
+    "longitude": 126.9981,
+    "svgX": 1028.0,
+    "svgY": 735.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "205",
+    "name": "동대문역사문화공원",
+    "lineId": "2",
+    "latitude": 37.5654,
+    "longitude": 127.0094,
+    "svgX": 1047.0,
+    "svgY": 739.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "4",
+      "5"
+    ]
+  },
+  {
+    "id": "206",
+    "name": "신당",
+    "lineId": "2",
+    "latitude": 37.566,
+    "longitude": 127.0177,
+    "svgX": 1061.0,
+    "svgY": 738.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "6"
+    ]
+  },
+  {
+    "id": "207",
+    "name": "상왕십리",
+    "lineId": "2",
+    "latitude": 37.5654,
+    "longitude": 127.0293,
+    "svgX": 1081.0,
+    "svgY": 739.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "208",
+    "name": "왕십리",
+    "lineId": "2",
+    "latitude": 37.5614,
+    "longitude": 127.037,
+    "svgX": 1094.0,
+    "svgY": 747.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5",
+      "경의중앙",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "209",
+    "name": "한양대",
+    "lineId": "2",
+    "latitude": 37.5578,
+    "longitude": 127.0433,
+    "svgX": 1104.0,
+    "svgY": 754.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "210",
+    "name": "뚝섬",
+    "lineId": "2",
+    "latitude": 37.5474,
+    "longitude": 127.0473,
+    "svgX": 1111.0,
+    "svgY": 776.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "211",
+    "name": "성수",
+    "lineId": "2",
+    "latitude": 37.5446,
+    "longitude": 127.0557,
+    "svgX": 1125.0,
+    "svgY": 781.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "212",
+    "name": "건대입구",
+    "lineId": "2",
+    "latitude": 37.5404,
+    "longitude": 127.0694,
+    "svgX": 1148.0,
+    "svgY": 790.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "7"
+    ]
+  },
+  {
+    "id": "213",
+    "name": "구의",
+    "lineId": "2",
+    "latitude": 37.5367,
+    "longitude": 127.0847,
+    "svgX": 1174.0,
+    "svgY": 797.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "214",
+    "name": "강변",
+    "lineId": "2",
+    "latitude": 37.5353,
+    "longitude": 127.094,
+    "svgX": 1190.0,
+    "svgY": 800.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "215",
+    "name": "잠실나루",
+    "lineId": "2",
+    "latitude": 37.5214,
+    "longitude": 127.1039,
+    "svgX": 1207.0,
+    "svgY": 828.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "216",
+    "name": "잠실",
+    "lineId": "2",
+    "latitude": 37.5133,
+    "longitude": 127.0998,
+    "svgX": 1200.0,
+    "svgY": 845.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "8"
+    ]
+  },
+  {
+    "id": "217",
+    "name": "잠실새내",
+    "lineId": "2",
+    "latitude": 37.5117,
+    "longitude": 127.0861,
+    "svgX": 1177.0,
+    "svgY": 848.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "218",
+    "name": "종합운동장",
+    "lineId": "2",
+    "latitude": 37.5107,
+    "longitude": 127.0738,
+    "svgX": 1156.0,
+    "svgY": 850.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "9"
+    ]
+  },
+  {
+    "id": "219",
+    "name": "삼성",
+    "lineId": "2",
+    "latitude": 37.5088,
+    "longitude": 127.0632,
+    "svgX": 1138.0,
+    "svgY": 854.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "220",
+    "name": "선릉",
+    "lineId": "2",
+    "latitude": 37.5046,
+    "longitude": 127.049,
+    "svgX": 1114.0,
+    "svgY": 862.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "221",
+    "name": "역삼",
+    "lineId": "2",
+    "latitude": 37.5007,
+    "longitude": 127.0365,
+    "svgX": 1093.0,
+    "svgY": 870.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "222",
+    "name": "강남",
+    "lineId": "2",
+    "latitude": 37.4979,
+    "longitude": 127.0276,
+    "svgX": 1078.0,
+    "svgY": 876.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "신분당"
+    ]
+  },
+  {
+    "id": "223",
+    "name": "교대",
+    "lineId": "2",
+    "latitude": 37.4935,
+    "longitude": 127.0145,
+    "svgX": 1056.0,
+    "svgY": 885.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "3"
+    ]
+  },
+  {
+    "id": "224",
+    "name": "서초",
+    "lineId": "2",
+    "latitude": 37.4918,
+    "longitude": 127.0079,
+    "svgX": 1045.0,
+    "svgY": 888.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "225",
+    "name": "방배",
+    "lineId": "2",
+    "latitude": 37.4815,
+    "longitude": 126.9977,
+    "svgX": 1028.0,
+    "svgY": 909.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "226",
+    "name": "사당",
+    "lineId": "2",
+    "latitude": 37.4765,
+    "longitude": 126.9816,
+    "svgX": 1000.0,
+    "svgY": 919.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "4"
+    ]
+  },
+  {
+    "id": "227",
+    "name": "낙성대",
+    "lineId": "2",
+    "latitude": 37.4776,
+    "longitude": 126.9636,
+    "svgX": 970.0,
+    "svgY": 917.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "228",
+    "name": "서울대입구",
+    "lineId": "2",
+    "latitude": 37.4816,
+    "longitude": 126.9529,
+    "svgX": 952.0,
+    "svgY": 909.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "229",
+    "name": "봉천",
+    "lineId": "2",
+    "latitude": 37.4825,
+    "longitude": 126.9419,
+    "svgX": 933.0,
+    "svgY": 907.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "230",
+    "name": "신림",
+    "lineId": "2",
+    "latitude": 37.4843,
+    "longitude": 126.9296,
+    "svgX": 913.0,
+    "svgY": 904.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "신림"
+    ]
+  },
+  {
+    "id": "231",
+    "name": "신대방",
+    "lineId": "2",
+    "latitude": 37.4878,
+    "longitude": 126.913,
+    "svgX": 885.0,
+    "svgY": 896.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "232",
+    "name": "구로디지털단지",
+    "lineId": "2",
+    "latitude": 37.4852,
+    "longitude": 126.9016,
+    "svgX": 866.0,
+    "svgY": 902.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "233",
+    "name": "대림",
+    "lineId": "2",
+    "latitude": 37.4934,
+    "longitude": 126.8962,
+    "svgX": 856.0,
+    "svgY": 885.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "7"
+    ]
+  },
+  {
+    "id": "234",
+    "name": "신도림",
+    "lineId": "2",
+    "latitude": 37.5091,
+    "longitude": 126.8912,
+    "svgX": 848.0,
+    "svgY": 853.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2"
+    ]
+  },
+  {
+    "id": "235",
+    "name": "문래",
+    "lineId": "2",
+    "latitude": 37.5178,
+    "longitude": 126.8954,
+    "svgX": 855.0,
+    "svgY": 836.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "236",
+    "name": "영등포구청",
+    "lineId": "2",
+    "latitude": 37.5246,
+    "longitude": 126.8965,
+    "svgX": 857.0,
+    "svgY": 822.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "237",
+    "name": "당산",
+    "lineId": "2",
+    "latitude": 37.5347,
+    "longitude": 126.9026,
+    "svgX": 867.0,
+    "svgY": 801.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "9"
+    ]
+  },
+  {
+    "id": "238",
+    "name": "합정",
+    "lineId": "2",
+    "latitude": 37.55,
+    "longitude": 126.914,
+    "svgX": 886.0,
+    "svgY": 770.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "6"
+    ]
+  },
+  {
+    "id": "239",
+    "name": "홍대입구",
+    "lineId": "2",
+    "latitude": 37.5572,
+    "longitude": 126.9259,
+    "svgX": 907.0,
+    "svgY": 756.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "240",
+    "name": "신촌",
+    "lineId": "2",
+    "latitude": 37.5554,
+    "longitude": 126.937,
+    "svgX": 925.0,
+    "svgY": 759.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "241",
+    "name": "이대",
+    "lineId": "2",
+    "latitude": 37.5569,
+    "longitude": 126.9467,
+    "svgX": 942.0,
+    "svgY": 756.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "242",
+    "name": "아현",
+    "lineId": "2",
+    "latitude": 37.5577,
+    "longitude": 126.9563,
+    "svgX": 958.0,
+    "svgY": 755.0,
+    "isTransfer": false,
+    "transferLines": [
+      "2"
+    ]
+  },
+  {
+    "id": "243",
+    "name": "충정로",
+    "lineId": "2",
+    "latitude": 37.56,
+    "longitude": 126.9636,
+    "svgX": 970.0,
+    "svgY": 750.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "301",
+    "name": "대화",
+    "lineId": "3",
+    "latitude": 37.6765,
+    "longitude": 126.7512,
+    "svgX": 612.0,
+    "svgY": 514.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "302",
+    "name": "주엽",
+    "lineId": "3",
+    "latitude": 37.6706,
+    "longitude": 126.7575,
+    "svgX": 623.0,
+    "svgY": 526.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "303",
+    "name": "정발산",
+    "lineId": "3",
+    "latitude": 37.6634,
+    "longitude": 126.7628,
+    "svgX": 632.0,
+    "svgY": 540.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "304",
+    "name": "마두",
+    "lineId": "3",
+    "latitude": 37.6516,
+    "longitude": 126.7723,
+    "svgX": 648.0,
+    "svgY": 564.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "305",
+    "name": "백석",
+    "lineId": "3",
+    "latitude": 37.6383,
+    "longitude": 126.7858,
+    "svgX": 670.0,
+    "svgY": 591.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "306",
+    "name": "대곡",
+    "lineId": "3",
+    "latitude": 37.6534,
+    "longitude": 126.7486,
+    "svgX": 608.0,
+    "svgY": 561.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "307",
+    "name": "화정",
+    "lineId": "3",
+    "latitude": 37.6342,
+    "longitude": 126.8315,
+    "svgX": 747.0,
+    "svgY": 600.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "308",
+    "name": "원당",
+    "lineId": "3",
+    "latitude": 37.644,
+    "longitude": 126.8342,
+    "svgX": 752.0,
+    "svgY": 580.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "309",
+    "name": "삼송",
+    "lineId": "3",
+    "latitude": 37.6499,
+    "longitude": 126.8561,
+    "svgX": 789.0,
+    "svgY": 568.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "310",
+    "name": "지축",
+    "lineId": "3",
+    "latitude": 37.6483,
+    "longitude": 126.9135,
+    "svgX": 886.0,
+    "svgY": 571.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "311",
+    "name": "구파발",
+    "lineId": "3",
+    "latitude": 37.6369,
+    "longitude": 126.9188,
+    "svgX": 895.0,
+    "svgY": 594.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "312",
+    "name": "연신내",
+    "lineId": "3",
+    "latitude": 37.619,
+    "longitude": 126.9211,
+    "svgX": 898.0,
+    "svgY": 630.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6"
+    ]
+  },
+  {
+    "id": "313",
+    "name": "불광",
+    "lineId": "3",
+    "latitude": 37.6105,
+    "longitude": 126.9296,
+    "svgX": 913.0,
+    "svgY": 648.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6"
+    ]
+  },
+  {
+    "id": "314",
+    "name": "녹번",
+    "lineId": "3",
+    "latitude": 37.6027,
+    "longitude": 126.9357,
+    "svgX": 923.0,
+    "svgY": 663.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "315",
+    "name": "홍제",
+    "lineId": "3",
+    "latitude": 37.5892,
+    "longitude": 126.9439,
+    "svgX": 937.0,
+    "svgY": 691.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "316",
+    "name": "무악재",
+    "lineId": "3",
+    "latitude": 37.5821,
+    "longitude": 126.9504,
+    "svgX": 948.0,
+    "svgY": 705.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "317",
+    "name": "독립문",
+    "lineId": "3",
+    "latitude": 37.5727,
+    "longitude": 126.9601,
+    "svgX": 964.0,
+    "svgY": 724.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "318",
+    "name": "경복궁",
+    "lineId": "3",
+    "latitude": 37.576,
+    "longitude": 126.9737,
+    "svgX": 987.0,
+    "svgY": 718.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "319",
+    "name": "안국",
+    "lineId": "3",
+    "latitude": 37.5766,
+    "longitude": 126.9854,
+    "svgX": 1007.0,
+    "svgY": 716.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "320",
+    "name": "종로3가",
+    "lineId": "3",
+    "latitude": 37.5712,
+    "longitude": 126.9916,
+    "svgX": 1017.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "3",
+      "5"
+    ]
+  },
+  {
+    "id": "321",
+    "name": "을지로3가",
+    "lineId": "3",
+    "latitude": 37.5664,
+    "longitude": 126.992,
+    "svgX": 1018.0,
+    "svgY": 737.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "3"
+    ]
+  },
+  {
+    "id": "322",
+    "name": "충무로",
+    "lineId": "3",
+    "latitude": 37.5614,
+    "longitude": 126.9949,
+    "svgX": 1023.0,
+    "svgY": 747.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "4"
+    ]
+  },
+  {
+    "id": "323",
+    "name": "동대입구",
+    "lineId": "3",
+    "latitude": 37.5581,
+    "longitude": 126.9884,
+    "svgX": 1012.0,
+    "svgY": 754.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "324",
+    "name": "약수",
+    "lineId": "3",
+    "latitude": 37.5544,
+    "longitude": 127.0104,
+    "svgX": 1049.0,
+    "svgY": 761.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6"
+    ]
+  },
+  {
+    "id": "325",
+    "name": "금호",
+    "lineId": "3",
+    "latitude": 37.5577,
+    "longitude": 127.019,
+    "svgX": 1063.0,
+    "svgY": 755.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "326",
+    "name": "옥수",
+    "lineId": "3",
+    "latitude": 37.5397,
+    "longitude": 127.0171,
+    "svgX": 1060.0,
+    "svgY": 791.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "327",
+    "name": "압구정",
+    "lineId": "3",
+    "latitude": 37.527,
+    "longitude": 127.0288,
+    "svgX": 1080.0,
+    "svgY": 817.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "328",
+    "name": "신사",
+    "lineId": "3",
+    "latitude": 37.5167,
+    "longitude": 127.0201,
+    "svgX": 1065.0,
+    "svgY": 838.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "신분당"
+    ]
+  },
+  {
+    "id": "329",
+    "name": "잠원",
+    "lineId": "3",
+    "latitude": 37.5119,
+    "longitude": 127.0092,
+    "svgX": 1047.0,
+    "svgY": 848.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "330",
+    "name": "고속터미널",
+    "lineId": "3",
+    "latitude": 37.5048,
+    "longitude": 127.0043,
+    "svgX": 1039.0,
+    "svgY": 862.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "7",
+      "9"
+    ]
+  },
+  {
+    "id": "331",
+    "name": "교대",
+    "lineId": "3",
+    "latitude": 37.4935,
+    "longitude": 127.0145,
+    "svgX": 1056.0,
+    "svgY": 885.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "3"
+    ]
+  },
+  {
+    "id": "332",
+    "name": "남부터미널",
+    "lineId": "3",
+    "latitude": 37.4863,
+    "longitude": 127.0159,
+    "svgX": 1058.0,
+    "svgY": 899.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "333",
+    "name": "양재",
+    "lineId": "3",
+    "latitude": 37.4843,
+    "longitude": 127.0354,
+    "svgX": 1091.0,
+    "svgY": 904.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "신분당"
+    ]
+  },
+  {
+    "id": "334",
+    "name": "매봉",
+    "lineId": "3",
+    "latitude": 37.4871,
+    "longitude": 127.0473,
+    "svgX": 1111.0,
+    "svgY": 898.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "335",
+    "name": "도곡",
+    "lineId": "3",
+    "latitude": 37.4913,
+    "longitude": 127.0555,
+    "svgX": 1125.0,
+    "svgY": 889.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "336",
+    "name": "대치",
+    "lineId": "3",
+    "latitude": 37.4944,
+    "longitude": 127.062,
+    "svgX": 1136.0,
+    "svgY": 883.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "337",
+    "name": "학여울",
+    "lineId": "3",
+    "latitude": 37.4968,
+    "longitude": 127.0714,
+    "svgX": 1152.0,
+    "svgY": 878.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "338",
+    "name": "대청",
+    "lineId": "3",
+    "latitude": 37.4913,
+    "longitude": 127.0831,
+    "svgX": 1172.0,
+    "svgY": 889.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "339",
+    "name": "일원",
+    "lineId": "3",
+    "latitude": 37.4835,
+    "longitude": 127.0866,
+    "svgX": 1177.0,
+    "svgY": 905.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "340",
+    "name": "수서",
+    "lineId": "3",
+    "latitude": 37.4873,
+    "longitude": 127.1017,
+    "svgX": 1203.0,
+    "svgY": 897.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "341",
+    "name": "가락시장",
+    "lineId": "3",
+    "latitude": 37.4927,
+    "longitude": 127.1183,
+    "svgX": 1231.0,
+    "svgY": 886.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "8"
+    ]
+  },
+  {
+    "id": "342",
+    "name": "경찰병원",
+    "lineId": "3",
+    "latitude": 37.4963,
+    "longitude": 127.1247,
+    "svgX": 1242.0,
+    "svgY": 879.0,
+    "isTransfer": false,
+    "transferLines": [
+      "3"
+    ]
+  },
+  {
+    "id": "343",
+    "name": "오금",
+    "lineId": "3",
+    "latitude": 37.502,
+    "longitude": 127.1283,
+    "svgX": 1248.0,
+    "svgY": 868.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "5"
+    ]
+  },
+  {
+    "id": "401",
+    "name": "당고개",
+    "lineId": "4",
+    "latitude": 37.6641,
+    "longitude": 127.0765,
+    "svgX": 1160.0,
+    "svgY": 539.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "402",
+    "name": "상계",
+    "lineId": "4",
+    "latitude": 37.6535,
+    "longitude": 127.0714,
+    "svgX": 1152.0,
+    "svgY": 560.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "403",
+    "name": "노원",
+    "lineId": "4",
+    "latitude": 37.6557,
+    "longitude": 127.0611,
+    "svgX": 1134.0,
+    "svgY": 556.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "7"
+    ]
+  },
+  {
+    "id": "404",
+    "name": "창동",
+    "lineId": "4",
+    "latitude": 37.6531,
+    "longitude": 127.0469,
+    "svgX": 1110.0,
+    "svgY": 561.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4"
+    ]
+  },
+  {
+    "id": "405",
+    "name": "쌍문",
+    "lineId": "4",
+    "latitude": 37.6484,
+    "longitude": 127.0345,
+    "svgX": 1090.0,
+    "svgY": 571.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "406",
+    "name": "수유",
+    "lineId": "4",
+    "latitude": 37.6381,
+    "longitude": 127.0251,
+    "svgX": 1074.0,
+    "svgY": 592.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "407",
+    "name": "미아",
+    "lineId": "4",
+    "latitude": 37.6265,
+    "longitude": 127.0283,
+    "svgX": 1079.0,
+    "svgY": 615.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "408",
+    "name": "미아삼거리",
+    "lineId": "4",
+    "latitude": 37.6135,
+    "longitude": 127.0302,
+    "svgX": 1082.0,
+    "svgY": 642.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "409",
+    "name": "길음",
+    "lineId": "4",
+    "latitude": 37.6035,
+    "longitude": 127.0254,
+    "svgX": 1074.0,
+    "svgY": 662.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "410",
+    "name": "성신여대입구",
+    "lineId": "4",
+    "latitude": 37.5924,
+    "longitude": 127.0165,
+    "svgX": 1059.0,
+    "svgY": 684.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "411",
+    "name": "한성대입구",
+    "lineId": "4",
+    "latitude": 37.5876,
+    "longitude": 127.0062,
+    "svgX": 1042.0,
+    "svgY": 694.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "412",
+    "name": "혜화",
+    "lineId": "4",
+    "latitude": 37.5825,
+    "longitude": 127.0018,
+    "svgX": 1034.0,
+    "svgY": 704.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "413",
+    "name": "동대문",
+    "lineId": "4",
+    "latitude": 37.5712,
+    "longitude": 127.0094,
+    "svgX": 1047.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4"
+    ]
+  },
+  {
+    "id": "414",
+    "name": "동대문역사문화공원",
+    "lineId": "4",
+    "latitude": 37.5654,
+    "longitude": 127.0094,
+    "svgX": 1047.0,
+    "svgY": 739.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "4",
+      "5"
+    ]
+  },
+  {
+    "id": "415",
+    "name": "충무로",
+    "lineId": "4",
+    "latitude": 37.5614,
+    "longitude": 126.9949,
+    "svgX": 1023.0,
+    "svgY": 747.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "4"
+    ]
+  },
+  {
+    "id": "416",
+    "name": "명동",
+    "lineId": "4",
+    "latitude": 37.5606,
+    "longitude": 126.986,
+    "svgX": 1008.0,
+    "svgY": 749.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "417",
+    "name": "회현",
+    "lineId": "4",
+    "latitude": 37.5589,
+    "longitude": 126.9786,
+    "svgX": 995.0,
+    "svgY": 752.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "418",
+    "name": "서울역",
+    "lineId": "4",
+    "latitude": 37.5547,
+    "longitude": 126.9706,
+    "svgX": 982.0,
+    "svgY": 761.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "419",
+    "name": "숙대입구",
+    "lineId": "4",
+    "latitude": 37.5457,
+    "longitude": 126.9727,
+    "svgX": 985.0,
+    "svgY": 779.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "420",
+    "name": "삼각지",
+    "lineId": "4",
+    "latitude": 37.5349,
+    "longitude": 126.9732,
+    "svgX": 986.0,
+    "svgY": 801.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "6"
+    ]
+  },
+  {
+    "id": "421",
+    "name": "신용산",
+    "lineId": "4",
+    "latitude": 37.5299,
+    "longitude": 126.9693,
+    "svgX": 980.0,
+    "svgY": 811.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "422",
+    "name": "이촌",
+    "lineId": "4",
+    "latitude": 37.5216,
+    "longitude": 126.9692,
+    "svgX": 980.0,
+    "svgY": 828.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "423",
+    "name": "동작",
+    "lineId": "4",
+    "latitude": 37.5085,
+    "longitude": 126.9514,
+    "svgX": 950.0,
+    "svgY": 854.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "424",
+    "name": "총신대입구",
+    "lineId": "4",
+    "latitude": 37.4863,
+    "longitude": 126.9817,
+    "svgX": 1001.0,
+    "svgY": 899.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "7"
+    ]
+  },
+  {
+    "id": "425",
+    "name": "사당",
+    "lineId": "4",
+    "latitude": 37.4765,
+    "longitude": 126.9816,
+    "svgX": 1000.0,
+    "svgY": 919.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "4"
+    ]
+  },
+  {
+    "id": "426",
+    "name": "남태령",
+    "lineId": "4",
+    "latitude": 37.4646,
+    "longitude": 126.9884,
+    "svgX": 1012.0,
+    "svgY": 943.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "427",
+    "name": "선바위",
+    "lineId": "4",
+    "latitude": 37.452,
+    "longitude": 126.9901,
+    "svgX": 1015.0,
+    "svgY": 969.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "428",
+    "name": "경마공원",
+    "lineId": "4",
+    "latitude": 37.4433,
+    "longitude": 126.9944,
+    "svgX": 1022.0,
+    "svgY": 987.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "429",
+    "name": "대공원",
+    "lineId": "4",
+    "latitude": 37.4302,
+    "longitude": 126.9967,
+    "svgX": 1026.0,
+    "svgY": 1013.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "430",
+    "name": "과천",
+    "lineId": "4",
+    "latitude": 37.4279,
+    "longitude": 127.0088,
+    "svgX": 1046.0,
+    "svgY": 1018.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "431",
+    "name": "정부과천청사",
+    "lineId": "4",
+    "latitude": 37.4245,
+    "longitude": 127.0153,
+    "svgX": 1057.0,
+    "svgY": 1025.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "432",
+    "name": "인덕원",
+    "lineId": "4",
+    "latitude": 37.3948,
+    "longitude": 126.996,
+    "svgX": 1025.0,
+    "svgY": 1085.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "433",
+    "name": "평촌",
+    "lineId": "4",
+    "latitude": 37.3896,
+    "longitude": 126.9862,
+    "svgX": 1008.0,
+    "svgY": 1096.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "434",
+    "name": "범계",
+    "lineId": "4",
+    "latitude": 37.3905,
+    "longitude": 126.9556,
+    "svgX": 957.0,
+    "svgY": 1094.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "435",
+    "name": "금정",
+    "lineId": "4",
+    "latitude": 37.3717,
+    "longitude": 126.9412,
+    "svgX": 932.0,
+    "svgY": 1132.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "436",
+    "name": "산본",
+    "lineId": "4",
+    "latitude": 37.3597,
+    "longitude": 126.9327,
+    "svgX": 918.0,
+    "svgY": 1156.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "437",
+    "name": "수리산",
+    "lineId": "4",
+    "latitude": 37.3551,
+    "longitude": 126.9126,
+    "svgX": 884.0,
+    "svgY": 1165.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "438",
+    "name": "대야미",
+    "lineId": "4",
+    "latitude": 37.3428,
+    "longitude": 126.8993,
+    "svgX": 862.0,
+    "svgY": 1190.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "439",
+    "name": "반월",
+    "lineId": "4",
+    "latitude": 37.323,
+    "longitude": 126.8656,
+    "svgX": 805.0,
+    "svgY": 1231.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "440",
+    "name": "상록수",
+    "lineId": "4",
+    "latitude": 37.3071,
+    "longitude": 126.8625,
+    "svgX": 800.0,
+    "svgY": 1263.0,
+    "isTransfer": false,
+    "transferLines": [
+      "4"
+    ]
+  },
+  {
+    "id": "441",
+    "name": "한대앞",
+    "lineId": "4",
+    "latitude": 37.3087,
+    "longitude": 126.8526,
+    "svgX": 783.0,
+    "svgY": 1260.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "442",
+    "name": "중앙",
+    "lineId": "4",
+    "latitude": 37.3118,
+    "longitude": 126.8408,
+    "svgX": 763.0,
+    "svgY": 1253.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "443",
+    "name": "고잔",
+    "lineId": "4",
+    "latitude": 37.3156,
+    "longitude": 126.8274,
+    "svgX": 740.0,
+    "svgY": 1246.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "444",
+    "name": "초지",
+    "lineId": "4",
+    "latitude": 37.3192,
+    "longitude": 126.8001,
+    "svgX": 694.0,
+    "svgY": 1238.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "445",
+    "name": "안산",
+    "lineId": "4",
+    "latitude": 37.3248,
+    "longitude": 126.7896,
+    "svgX": 677.0,
+    "svgY": 1227.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "446",
+    "name": "신길온천",
+    "lineId": "4",
+    "latitude": 37.3327,
+    "longitude": 126.7863,
+    "svgX": 671.0,
+    "svgY": 1211.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "447",
+    "name": "정왕",
+    "lineId": "4",
+    "latitude": 37.3458,
+    "longitude": 126.739,
+    "svgX": 591.0,
+    "svgY": 1184.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "448",
+    "name": "오이도",
+    "lineId": "4",
+    "latitude": 37.3473,
+    "longitude": 126.6878,
+    "svgX": 505.0,
+    "svgY": 1181.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "501",
+    "name": "방화",
+    "lineId": "5",
+    "latitude": 37.5742,
+    "longitude": 126.8154,
+    "svgX": 720.0,
+    "svgY": 721.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "502",
+    "name": "개화산",
+    "lineId": "5",
+    "latitude": 37.5727,
+    "longitude": 126.8073,
+    "svgX": 707.0,
+    "svgY": 724.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "503",
+    "name": "김포공항",
+    "lineId": "5",
+    "latitude": 37.5624,
+    "longitude": 126.8015,
+    "svgX": 697.0,
+    "svgY": 745.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "504",
+    "name": "송정",
+    "lineId": "5",
+    "latitude": 37.5563,
+    "longitude": 126.8029,
+    "svgX": 699.0,
+    "svgY": 758.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "505",
+    "name": "마곡",
+    "lineId": "5",
+    "latitude": 37.5625,
+    "longitude": 126.8247,
+    "svgX": 736.0,
+    "svgY": 745.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "506",
+    "name": "발산",
+    "lineId": "5",
+    "latitude": 37.5593,
+    "longitude": 126.8381,
+    "svgX": 759.0,
+    "svgY": 751.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "507",
+    "name": "우장산",
+    "lineId": "5",
+    "latitude": 37.5484,
+    "longitude": 126.8368,
+    "svgX": 756.0,
+    "svgY": 774.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "508",
+    "name": "화곡",
+    "lineId": "5",
+    "latitude": 37.5414,
+    "longitude": 126.8395,
+    "svgX": 761.0,
+    "svgY": 788.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "509",
+    "name": "까치산",
+    "lineId": "5",
+    "latitude": 37.531,
+    "longitude": 126.8476,
+    "svgX": 775.0,
+    "svgY": 809.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "510",
+    "name": "신정",
+    "lineId": "5",
+    "latitude": 37.5239,
+    "longitude": 126.8539,
+    "svgX": 785.0,
+    "svgY": 823.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "511",
+    "name": "목동",
+    "lineId": "5",
+    "latitude": 37.5256,
+    "longitude": 126.8736,
+    "svgX": 818.0,
+    "svgY": 820.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "512",
+    "name": "오목교",
+    "lineId": "5",
+    "latitude": 37.5239,
+    "longitude": 126.88,
+    "svgX": 829.0,
+    "svgY": 823.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "513",
+    "name": "양평",
+    "lineId": "5",
+    "latitude": 37.5273,
+    "longitude": 126.8874,
+    "svgX": 842.0,
+    "svgY": 816.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "514",
+    "name": "영등포구청",
+    "lineId": "5",
+    "latitude": 37.5246,
+    "longitude": 126.8965,
+    "svgX": 857.0,
+    "svgY": 822.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "515",
+    "name": "영등포시장",
+    "lineId": "5",
+    "latitude": 37.5225,
+    "longitude": 126.905,
+    "svgX": 871.0,
+    "svgY": 826.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "516",
+    "name": "신길",
+    "lineId": "5",
+    "latitude": 37.5151,
+    "longitude": 126.9163,
+    "svgX": 890.0,
+    "svgY": 841.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "5"
+    ]
+  },
+  {
+    "id": "517",
+    "name": "여의도",
+    "lineId": "5",
+    "latitude": 37.5216,
+    "longitude": 126.9244,
+    "svgX": 904.0,
+    "svgY": 828.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9"
+    ]
+  },
+  {
+    "id": "518",
+    "name": "여의나루",
+    "lineId": "5",
+    "latitude": 37.5272,
+    "longitude": 126.932,
+    "svgX": 917.0,
+    "svgY": 817.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "519",
+    "name": "마포",
+    "lineId": "5",
+    "latitude": 37.5393,
+    "longitude": 126.9459,
+    "svgX": 940.0,
+    "svgY": 792.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "520",
+    "name": "공덕",
+    "lineId": "5",
+    "latitude": 37.5438,
+    "longitude": 126.9517,
+    "svgX": 950.0,
+    "svgY": 783.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "521",
+    "name": "애오개",
+    "lineId": "5",
+    "latitude": 37.5537,
+    "longitude": 126.9566,
+    "svgX": 958.0,
+    "svgY": 763.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "522",
+    "name": "충정로",
+    "lineId": "5",
+    "latitude": 37.56,
+    "longitude": 126.9636,
+    "svgX": 970.0,
+    "svgY": 750.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "523",
+    "name": "서대문",
+    "lineId": "5",
+    "latitude": 37.5657,
+    "longitude": 126.9667,
+    "svgX": 975.0,
+    "svgY": 738.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "524",
+    "name": "광화문",
+    "lineId": "5",
+    "latitude": 37.5704,
+    "longitude": 126.9768,
+    "svgX": 992.0,
+    "svgY": 729.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "525",
+    "name": "종로3가",
+    "lineId": "5",
+    "latitude": 37.5712,
+    "longitude": 126.9916,
+    "svgX": 1017.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "3",
+      "5"
+    ]
+  },
+  {
+    "id": "526",
+    "name": "을지로4가",
+    "lineId": "5",
+    "latitude": 37.5673,
+    "longitude": 126.9981,
+    "svgX": 1028.0,
+    "svgY": 735.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
+    "id": "527",
+    "name": "동대문역사문화공원",
+    "lineId": "5",
+    "latitude": 37.5654,
+    "longitude": 127.0094,
+    "svgX": 1047.0,
+    "svgY": 739.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "4",
+      "5"
+    ]
+  },
+  {
+    "id": "528",
+    "name": "청구",
+    "lineId": "5",
+    "latitude": 37.5601,
+    "longitude": 127.0149,
+    "svgX": 1057.0,
+    "svgY": 750.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "6"
+    ]
+  },
+  {
+    "id": "529",
+    "name": "신금호",
+    "lineId": "5",
+    "latitude": 37.5537,
+    "longitude": 127.0237,
+    "svgX": 1071.0,
+    "svgY": 763.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "530",
+    "name": "행당",
+    "lineId": "5",
+    "latitude": 37.5577,
+    "longitude": 127.0296,
+    "svgX": 1081.0,
+    "svgY": 755.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "531",
+    "name": "왕십리",
+    "lineId": "5",
+    "latitude": 37.5614,
+    "longitude": 127.037,
+    "svgX": 1094.0,
+    "svgY": 747.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5",
+      "경의중앙",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "532",
+    "name": "마장",
+    "lineId": "5",
+    "latitude": 37.5667,
+    "longitude": 127.0442,
+    "svgX": 1106.0,
+    "svgY": 736.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "533",
+    "name": "답십리",
+    "lineId": "5",
+    "latitude": 37.566,
+    "longitude": 127.0536,
+    "svgX": 1122.0,
+    "svgY": 738.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "534",
+    "name": "장한평",
+    "lineId": "5",
+    "latitude": 37.5612,
+    "longitude": 127.0645,
+    "svgX": 1140.0,
+    "svgY": 748.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "535",
+    "name": "군자",
+    "lineId": "5",
+    "latitude": 37.5573,
+    "longitude": 127.0789,
+    "svgX": 1164.0,
+    "svgY": 755.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "7"
+    ]
+  },
+  {
+    "id": "536",
+    "name": "아차산",
+    "lineId": "5",
+    "latitude": 37.5516,
+    "longitude": 127.0884,
+    "svgX": 1180.0,
+    "svgY": 767.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "537",
+    "name": "광나루",
+    "lineId": "5",
+    "latitude": 37.5449,
+    "longitude": 127.0978,
+    "svgX": 1196.0,
+    "svgY": 781.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "538",
+    "name": "천호",
+    "lineId": "5",
+    "latitude": 37.5385,
+    "longitude": 127.1233,
+    "svgX": 1239.0,
+    "svgY": 794.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "8"
+    ]
+  },
+  {
+    "id": "539",
+    "name": "강동",
+    "lineId": "5",
+    "latitude": 37.5351,
+    "longitude": 127.1316,
+    "svgX": 1253.0,
+    "svgY": 800.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "540",
+    "name": "길동",
+    "lineId": "5",
+    "latitude": 37.5275,
+    "longitude": 127.1365,
+    "svgX": 1262.0,
+    "svgY": 816.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "541",
+    "name": "굽은다리",
+    "lineId": "5",
+    "latitude": 37.5195,
+    "longitude": 127.1364,
+    "svgX": 1261.0,
+    "svgY": 832.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "542",
+    "name": "명일",
+    "lineId": "5",
+    "latitude": 37.5168,
+    "longitude": 127.142,
+    "svgX": 1271.0,
+    "svgY": 838.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "543",
+    "name": "고덕",
+    "lineId": "5",
+    "latitude": 37.5101,
+    "longitude": 127.1537,
+    "svgX": 1291.0,
+    "svgY": 851.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "544",
+    "name": "상일동",
+    "lineId": "5",
+    "latitude": 37.5567,
+    "longitude": 127.1656,
+    "svgX": 1311.0,
+    "svgY": 757.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "545",
+    "name": "강일",
+    "lineId": "5",
+    "latitude": 37.5581,
+    "longitude": 127.1747,
+    "svgX": 1326.0,
+    "svgY": 754.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "546",
+    "name": "미사",
+    "lineId": "5",
+    "latitude": 37.5603,
+    "longitude": 127.1889,
+    "svgX": 1350.0,
+    "svgY": 749.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "547",
+    "name": "하남풍산",
+    "lineId": "5",
+    "latitude": 37.5515,
+    "longitude": 127.2058,
+    "svgX": 1378.0,
+    "svgY": 767.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "548",
+    "name": "하남시청",
+    "lineId": "5",
+    "latitude": 37.541,
+    "longitude": 127.2133,
+    "svgX": 1391.0,
+    "svgY": 789.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "549",
+    "name": "하남검단산",
+    "lineId": "5",
+    "latitude": 37.5286,
+    "longitude": 127.2222,
+    "svgX": 1406.0,
+    "svgY": 814.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "550",
+    "name": "둔촌동",
+    "lineId": "5",
+    "latitude": 37.5249,
+    "longitude": 127.1367,
+    "svgX": 1262.0,
+    "svgY": 821.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "551",
+    "name": "올림픽공원",
+    "lineId": "5",
+    "latitude": 37.5152,
+    "longitude": 127.1286,
+    "svgX": 1248.0,
+    "svgY": 841.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9"
+    ]
+  },
+  {
+    "id": "552",
+    "name": "방이",
+    "lineId": "5",
+    "latitude": 37.5096,
+    "longitude": 127.1198,
+    "svgX": 1233.0,
+    "svgY": 852.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "553",
+    "name": "오금",
+    "lineId": "5",
+    "latitude": 37.502,
+    "longitude": 127.1283,
+    "svgX": 1248.0,
+    "svgY": 868.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "5"
+    ]
+  },
+  {
+    "id": "554",
+    "name": "개롱",
+    "lineId": "5",
+    "latitude": 37.492,
+    "longitude": 127.1349,
+    "svgX": 1259.0,
+    "svgY": 888.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "555",
+    "name": "거여",
+    "lineId": "5",
+    "latitude": 37.4929,
+    "longitude": 127.1432,
+    "svgX": 1273.0,
+    "svgY": 886.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "556",
+    "name": "마천",
+    "lineId": "5",
+    "latitude": 37.4961,
+    "longitude": 127.1519,
+    "svgX": 1287.0,
+    "svgY": 880.0,
+    "isTransfer": false,
+    "transferLines": [
+      "5"
+    ]
+  },
+  {
+    "id": "601",
+    "name": "응암",
+    "lineId": "6",
+    "latitude": 37.5988,
+    "longitude": 126.9137,
+    "svgX": 886.0,
+    "svgY": 671.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "602",
+    "name": "역촌",
+    "lineId": "6",
+    "latitude": 37.605,
+    "longitude": 126.9217,
+    "svgX": 899.0,
+    "svgY": 659.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "603",
+    "name": "불광",
+    "lineId": "6",
+    "latitude": 37.6105,
+    "longitude": 126.9296,
+    "svgX": 913.0,
+    "svgY": 648.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6"
+    ]
+  },
+  {
+    "id": "604",
+    "name": "독바위",
+    "lineId": "6",
+    "latitude": 37.6131,
+    "longitude": 126.9397,
+    "svgX": 930.0,
+    "svgY": 642.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "605",
+    "name": "연신내",
+    "lineId": "6",
+    "latitude": 37.619,
+    "longitude": 126.9211,
+    "svgX": 898.0,
+    "svgY": 630.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6"
+    ]
+  },
+  {
+    "id": "606",
+    "name": "구산",
+    "lineId": "6",
+    "latitude": 37.6095,
+    "longitude": 126.9123,
+    "svgX": 884.0,
+    "svgY": 650.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "607",
+    "name": "새절",
+    "lineId": "6",
+    "latitude": 37.5993,
+    "longitude": 126.9102,
+    "svgX": 880.0,
+    "svgY": 670.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "608",
+    "name": "증산",
+    "lineId": "6",
+    "latitude": 37.5836,
+    "longitude": 126.9095,
+    "svgX": 879.0,
+    "svgY": 702.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "609",
+    "name": "디지털미디어시티",
+    "lineId": "6",
+    "latitude": 37.5762,
+    "longitude": 126.8996,
+    "svgX": 862.0,
+    "svgY": 717.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "610",
+    "name": "월드컵경기장",
+    "lineId": "6",
+    "latitude": 37.5686,
+    "longitude": 126.8972,
+    "svgX": 858.0,
+    "svgY": 733.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "611",
+    "name": "마포구청",
+    "lineId": "6",
+    "latitude": 37.5617,
+    "longitude": 126.907,
+    "svgX": 875.0,
+    "svgY": 747.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "612",
+    "name": "망원",
+    "lineId": "6",
+    "latitude": 37.5565,
+    "longitude": 126.9104,
+    "svgX": 880.0,
+    "svgY": 757.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "613",
+    "name": "합정",
+    "lineId": "6",
+    "latitude": 37.55,
+    "longitude": 126.914,
+    "svgX": 886.0,
+    "svgY": 770.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "6"
+    ]
+  },
+  {
+    "id": "614",
+    "name": "상수",
+    "lineId": "6",
+    "latitude": 37.5479,
+    "longitude": 126.9229,
+    "svgX": 901.0,
+    "svgY": 775.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "615",
+    "name": "광흥창",
+    "lineId": "6",
+    "latitude": 37.5472,
+    "longitude": 126.9311,
+    "svgX": 915.0,
+    "svgY": 776.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "616",
+    "name": "대흥",
+    "lineId": "6",
+    "latitude": 37.5475,
+    "longitude": 126.9425,
+    "svgX": 934.0,
+    "svgY": 775.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "617",
+    "name": "공덕",
+    "lineId": "6",
+    "latitude": 37.5438,
+    "longitude": 126.9517,
+    "svgX": 950.0,
+    "svgY": 783.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "618",
+    "name": "효창공원앞",
+    "lineId": "6",
+    "latitude": 37.5393,
+    "longitude": 126.9613,
+    "svgX": 966.0,
+    "svgY": 792.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "619",
+    "name": "삼각지",
+    "lineId": "6",
+    "latitude": 37.5349,
+    "longitude": 126.9732,
+    "svgX": 986.0,
+    "svgY": 801.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "6"
+    ]
+  },
+  {
+    "id": "620",
+    "name": "녹사평",
+    "lineId": "6",
+    "latitude": 37.5341,
+    "longitude": 126.9877,
+    "svgX": 1011.0,
+    "svgY": 803.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "621",
+    "name": "이태원",
+    "lineId": "6",
+    "latitude": 37.5346,
+    "longitude": 126.9938,
+    "svgX": 1021.0,
+    "svgY": 802.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "622",
+    "name": "한강진",
+    "lineId": "6",
+    "latitude": 37.5396,
+    "longitude": 127.0002,
+    "svgX": 1032.0,
+    "svgY": 791.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "623",
+    "name": "버티고개",
+    "lineId": "6",
+    "latitude": 37.5474,
+    "longitude": 127.0075,
+    "svgX": 1044.0,
+    "svgY": 776.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "624",
+    "name": "약수",
+    "lineId": "6",
+    "latitude": 37.5544,
+    "longitude": 127.0104,
+    "svgX": 1049.0,
+    "svgY": 761.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6"
+    ]
+  },
+  {
+    "id": "625",
+    "name": "청구",
+    "lineId": "6",
+    "latitude": 37.5601,
+    "longitude": 127.0149,
+    "svgX": 1057.0,
+    "svgY": 750.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "6"
+    ]
+  },
+  {
+    "id": "626",
+    "name": "신당",
+    "lineId": "6",
+    "latitude": 37.566,
+    "longitude": 127.0177,
+    "svgX": 1061.0,
+    "svgY": 738.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "6"
+    ]
+  },
+  {
+    "id": "627",
+    "name": "동묘앞",
+    "lineId": "6",
+    "latitude": 37.5715,
+    "longitude": 127.0167,
+    "svgX": 1060.0,
+    "svgY": 727.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "6"
+    ]
+  },
+  {
+    "id": "628",
+    "name": "창신",
+    "lineId": "6",
+    "latitude": 37.5791,
+    "longitude": 127.0165,
+    "svgX": 1059.0,
+    "svgY": 711.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "629",
+    "name": "보문",
+    "lineId": "6",
+    "latitude": 37.5882,
+    "longitude": 127.0198,
+    "svgX": 1065.0,
+    "svgY": 693.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "630",
+    "name": "안암",
+    "lineId": "6",
+    "latitude": 37.5862,
+    "longitude": 127.0289,
+    "svgX": 1080.0,
+    "svgY": 697.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "631",
+    "name": "고려대",
+    "lineId": "6",
+    "latitude": 37.5905,
+    "longitude": 127.034,
+    "svgX": 1089.0,
+    "svgY": 688.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "632",
+    "name": "월곡",
+    "lineId": "6",
+    "latitude": 37.6022,
+    "longitude": 127.0401,
+    "svgX": 1099.0,
+    "svgY": 664.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "633",
+    "name": "상월곡",
+    "lineId": "6",
+    "latitude": 37.6061,
+    "longitude": 127.0502,
+    "svgX": 1116.0,
+    "svgY": 657.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "634",
+    "name": "돌곶이",
+    "lineId": "6",
+    "latitude": 37.6104,
+    "longitude": 127.0572,
+    "svgX": 1128.0,
+    "svgY": 648.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "635",
+    "name": "석계",
+    "lineId": "6",
+    "latitude": 37.6157,
+    "longitude": 127.0655,
+    "svgX": 1142.0,
+    "svgY": 637.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "6"
+    ]
+  },
+  {
+    "id": "636",
+    "name": "태릉입구",
+    "lineId": "6",
+    "latitude": 37.6175,
+    "longitude": 127.0755,
+    "svgX": 1159.0,
+    "svgY": 633.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "7"
+    ]
+  },
+  {
+    "id": "637",
+    "name": "화랑대",
+    "lineId": "6",
+    "latitude": 37.6202,
+    "longitude": 127.0838,
+    "svgX": 1173.0,
+    "svgY": 628.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "638",
+    "name": "봉화산",
+    "lineId": "6",
+    "latitude": 37.6182,
+    "longitude": 127.0927,
+    "svgX": 1188.0,
+    "svgY": 632.0,
+    "isTransfer": false,
+    "transferLines": [
+      "6"
+    ]
+  },
+  {
+    "id": "701",
+    "name": "장암",
+    "lineId": "7",
+    "latitude": 37.6989,
+    "longitude": 127.0538,
+    "svgX": 1122.0,
+    "svgY": 468.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "702",
+    "name": "도봉산",
+    "lineId": "7",
+    "latitude": 37.6892,
+    "longitude": 127.0447,
+    "svgX": 1107.0,
+    "svgY": 488.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "7"
+    ]
+  },
+  {
+    "id": "703",
+    "name": "수락산",
+    "lineId": "7",
+    "latitude": 37.6697,
+    "longitude": 127.0551,
+    "svgX": 1124.0,
+    "svgY": 528.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "704",
+    "name": "마들",
+    "lineId": "7",
+    "latitude": 37.6649,
+    "longitude": 127.0602,
+    "svgX": 1133.0,
+    "svgY": 537.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "705",
+    "name": "노원",
+    "lineId": "7",
+    "latitude": 37.6557,
+    "longitude": 127.0611,
+    "svgX": 1134.0,
+    "svgY": 556.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "7"
+    ]
+  },
+  {
+    "id": "706",
+    "name": "중계",
+    "lineId": "7",
+    "latitude": 37.6451,
+    "longitude": 127.0633,
+    "svgX": 1138.0,
+    "svgY": 577.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "707",
+    "name": "하계",
+    "lineId": "7",
+    "latitude": 37.637,
+    "longitude": 127.0647,
+    "svgX": 1140.0,
+    "svgY": 594.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "708",
+    "name": "공릉",
+    "lineId": "7",
+    "latitude": 37.6259,
+    "longitude": 127.0727,
+    "svgX": 1154.0,
+    "svgY": 616.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "709",
+    "name": "태릉입구",
+    "lineId": "7",
+    "latitude": 37.6175,
+    "longitude": 127.0755,
+    "svgX": 1159.0,
+    "svgY": 633.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "7"
+    ]
+  },
+  {
+    "id": "710",
+    "name": "먹골",
+    "lineId": "7",
+    "latitude": 37.6105,
+    "longitude": 127.0786,
+    "svgX": 1164.0,
+    "svgY": 648.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "711",
+    "name": "중화",
+    "lineId": "7",
+    "latitude": 37.6027,
+    "longitude": 127.0809,
+    "svgX": 1168.0,
+    "svgY": 663.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "712",
+    "name": "상봉",
+    "lineId": "7",
+    "latitude": 37.5968,
+    "longitude": 127.0851,
+    "svgX": 1175.0,
+    "svgY": 675.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "713",
+    "name": "면목",
+    "lineId": "7",
+    "latitude": 37.5862,
+    "longitude": 127.084,
+    "svgX": 1173.0,
+    "svgY": 697.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "714",
+    "name": "사가정",
+    "lineId": "7",
+    "latitude": 37.5784,
+    "longitude": 127.0856,
+    "svgX": 1176.0,
+    "svgY": 713.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "715",
+    "name": "용마산",
+    "lineId": "7",
+    "latitude": 37.5731,
+    "longitude": 127.0868,
+    "svgX": 1178.0,
+    "svgY": 723.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "716",
+    "name": "중곡",
+    "lineId": "7",
+    "latitude": 37.5656,
+    "longitude": 127.0853,
+    "svgX": 1175.0,
+    "svgY": 739.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "717",
+    "name": "군자",
+    "lineId": "7",
+    "latitude": 37.5573,
+    "longitude": 127.0789,
+    "svgX": 1164.0,
+    "svgY": 755.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "7"
+    ]
+  },
+  {
+    "id": "718",
+    "name": "어린이대공원",
+    "lineId": "7",
+    "latitude": 37.5489,
+    "longitude": 127.0747,
+    "svgX": 1157.0,
+    "svgY": 773.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "719",
+    "name": "건대입구",
+    "lineId": "7",
+    "latitude": 37.5404,
+    "longitude": 127.0694,
+    "svgX": 1148.0,
+    "svgY": 790.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "7"
+    ]
+  },
+  {
+    "id": "720",
+    "name": "뚝섬유원지",
+    "lineId": "7",
+    "latitude": 37.5322,
+    "longitude": 127.0675,
+    "svgX": 1145.0,
+    "svgY": 806.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "721",
+    "name": "청담",
+    "lineId": "7",
+    "latitude": 37.5198,
+    "longitude": 127.0518,
+    "svgX": 1119.0,
+    "svgY": 832.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "722",
+    "name": "강남구청",
+    "lineId": "7",
+    "latitude": 37.5177,
+    "longitude": 127.0414,
+    "svgX": 1101.0,
+    "svgY": 836.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "723",
+    "name": "학동",
+    "lineId": "7",
+    "latitude": 37.5146,
+    "longitude": 127.0326,
+    "svgX": 1086.0,
+    "svgY": 842.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "724",
+    "name": "논현",
+    "lineId": "7",
+    "latitude": 37.5119,
+    "longitude": 127.0233,
+    "svgX": 1071.0,
+    "svgY": 848.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "725",
+    "name": "반포",
+    "lineId": "7",
+    "latitude": 37.5084,
+    "longitude": 127.0138,
+    "svgX": 1055.0,
+    "svgY": 855.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "726",
+    "name": "고속터미널",
+    "lineId": "7",
+    "latitude": 37.5048,
+    "longitude": 127.0043,
+    "svgX": 1039.0,
+    "svgY": 862.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "7",
+      "9"
+    ]
+  },
+  {
+    "id": "727",
+    "name": "내방",
+    "lineId": "7",
+    "latitude": 37.4881,
+    "longitude": 126.9957,
+    "svgX": 1024.0,
+    "svgY": 896.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "728",
+    "name": "총신대입구",
+    "lineId": "7",
+    "latitude": 37.4863,
+    "longitude": 126.9817,
+    "svgX": 1001.0,
+    "svgY": 899.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "7"
+    ]
+  },
+  {
+    "id": "729",
+    "name": "남성",
+    "lineId": "7",
+    "latitude": 37.4844,
+    "longitude": 126.9729,
+    "svgX": 986.0,
+    "svgY": 903.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "730",
+    "name": "숭실대입구",
+    "lineId": "7",
+    "latitude": 37.4964,
+    "longitude": 126.9539,
+    "svgX": 954.0,
+    "svgY": 879.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "731",
+    "name": "상도",
+    "lineId": "7",
+    "latitude": 37.5019,
+    "longitude": 126.9479,
+    "svgX": 944.0,
+    "svgY": 868.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "732",
+    "name": "장승배기",
+    "lineId": "7",
+    "latitude": 37.5063,
+    "longitude": 126.9401,
+    "svgX": 930.0,
+    "svgY": 859.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "733",
+    "name": "신대방삼거리",
+    "lineId": "7",
+    "latitude": 37.4974,
+    "longitude": 126.9249,
+    "svgX": 905.0,
+    "svgY": 877.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "734",
+    "name": "보라매",
+    "lineId": "7",
+    "latitude": 37.4948,
+    "longitude": 126.9159,
+    "svgX": 890.0,
+    "svgY": 882.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "신림"
+    ]
+  },
+  {
+    "id": "735",
+    "name": "신풍",
+    "lineId": "7",
+    "latitude": 37.5094,
+    "longitude": 126.903,
+    "svgX": 868.0,
+    "svgY": 853.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "736",
+    "name": "대림",
+    "lineId": "7",
+    "latitude": 37.4934,
+    "longitude": 126.8962,
+    "svgX": 856.0,
+    "svgY": 885.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "7"
+    ]
+  },
+  {
+    "id": "737",
+    "name": "남구로",
+    "lineId": "7",
+    "latitude": 37.4867,
+    "longitude": 126.8869,
+    "svgX": 841.0,
+    "svgY": 899.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "738",
+    "name": "가산디지털단지",
+    "lineId": "7",
+    "latitude": 37.4821,
+    "longitude": 126.8825,
+    "svgX": 833.0,
+    "svgY": 908.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "7"
+    ]
+  },
+  {
+    "id": "739",
+    "name": "철산",
+    "lineId": "7",
+    "latitude": 37.4755,
+    "longitude": 126.8683,
+    "svgX": 809.0,
+    "svgY": 921.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "740",
+    "name": "광명사거리",
+    "lineId": "7",
+    "latitude": 37.4673,
+    "longitude": 126.8618,
+    "svgX": 798.0,
+    "svgY": 938.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "741",
+    "name": "천왕",
+    "lineId": "7",
+    "latitude": 37.4643,
+    "longitude": 126.8391,
+    "svgX": 760.0,
+    "svgY": 944.0,
+    "isTransfer": false,
+    "transferLines": [
+      "7"
+    ]
+  },
+  {
+    "id": "742",
+    "name": "온수",
+    "lineId": "7",
+    "latitude": 37.4925,
+    "longitude": 126.8234,
+    "svgX": 734.0,
+    "svgY": 887.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "7"
+    ]
+  },
+  {
+    "id": "801",
+    "name": "암사",
+    "lineId": "8",
+    "latitude": 37.5504,
+    "longitude": 127.1271,
+    "svgX": 1246.0,
+    "svgY": 769.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "802",
+    "name": "천호",
+    "lineId": "8",
+    "latitude": 37.5385,
+    "longitude": 127.1233,
+    "svgX": 1239.0,
+    "svgY": 794.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "8"
+    ]
+  },
+  {
+    "id": "803",
+    "name": "강동구청",
+    "lineId": "8",
+    "latitude": 37.5302,
+    "longitude": 127.1254,
+    "svgX": 1243.0,
+    "svgY": 810.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "804",
+    "name": "몽촌토성",
+    "lineId": "8",
+    "latitude": 37.5171,
+    "longitude": 127.1122,
+    "svgX": 1221.0,
+    "svgY": 837.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "805",
+    "name": "잠실",
+    "lineId": "8",
+    "latitude": 37.5133,
+    "longitude": 127.0998,
+    "svgX": 1200.0,
+    "svgY": 845.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "8"
+    ]
+  },
+  {
+    "id": "806",
+    "name": "석촌",
+    "lineId": "8",
+    "latitude": 37.5054,
+    "longitude": 127.1017,
+    "svgX": 1203.0,
+    "svgY": 861.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "807",
+    "name": "송파",
+    "lineId": "8",
+    "latitude": 37.5014,
+    "longitude": 127.1083,
+    "svgX": 1214.0,
+    "svgY": 869.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "808",
+    "name": "가락시장",
+    "lineId": "8",
+    "latitude": 37.4927,
+    "longitude": 127.1183,
+    "svgX": 1231.0,
+    "svgY": 886.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "8"
+    ]
+  },
+  {
+    "id": "809",
+    "name": "문정",
+    "lineId": "8",
+    "latitude": 37.4857,
+    "longitude": 127.1226,
+    "svgX": 1238.0,
+    "svgY": 901.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "810",
+    "name": "장지",
+    "lineId": "8",
+    "latitude": 37.4784,
+    "longitude": 127.1264,
+    "svgX": 1245.0,
+    "svgY": 915.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "811",
+    "name": "복정",
+    "lineId": "8",
+    "latitude": 37.4706,
+    "longitude": 127.1266,
+    "svgX": 1245.0,
+    "svgY": 931.0,
+    "isTransfer": true,
+    "transferLines": [
+      "8",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "812",
+    "name": "남위례",
+    "lineId": "8",
+    "latitude": 37.4577,
+    "longitude": 127.1404,
+    "svgX": 1268.0,
+    "svgY": 957.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "813",
+    "name": "산성",
+    "lineId": "8",
+    "latitude": 37.456,
+    "longitude": 127.1499,
+    "svgX": 1284.0,
+    "svgY": 961.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "814",
+    "name": "남한산성입구",
+    "lineId": "8",
+    "latitude": 37.4505,
+    "longitude": 127.1577,
+    "svgX": 1297.0,
+    "svgY": 972.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "815",
+    "name": "단대오거리",
+    "lineId": "8",
+    "latitude": 37.4438,
+    "longitude": 127.1574,
+    "svgX": 1297.0,
+    "svgY": 986.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "816",
+    "name": "신흥",
+    "lineId": "8",
+    "latitude": 37.4422,
+    "longitude": 127.1475,
+    "svgX": 1280.0,
+    "svgY": 989.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "817",
+    "name": "수진",
+    "lineId": "8",
+    "latitude": 37.4385,
+    "longitude": 127.1392,
+    "svgX": 1266.0,
+    "svgY": 996.0,
+    "isTransfer": false,
+    "transferLines": [
+      "8"
+    ]
+  },
+  {
+    "id": "818",
+    "name": "모란",
+    "lineId": "8",
+    "latitude": 37.432,
+    "longitude": 127.1294,
+    "svgX": 1250.0,
+    "svgY": 1010.0,
+    "isTransfer": true,
+    "transferLines": [
+      "8",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "901",
+    "name": "개화",
+    "lineId": "9",
+    "latitude": 37.5788,
+    "longitude": 126.8042,
+    "svgX": 701.0,
+    "svgY": 712.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "902",
+    "name": "김포공항",
+    "lineId": "9",
+    "latitude": 37.5624,
+    "longitude": 126.8015,
+    "svgX": 697.0,
+    "svgY": 745.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "903",
+    "name": "공항시장",
+    "lineId": "9",
+    "latitude": 37.5614,
+    "longitude": 126.8118,
+    "svgX": 714.0,
+    "svgY": 747.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "904",
+    "name": "신방화",
+    "lineId": "9",
+    "latitude": 37.5624,
+    "longitude": 126.8226,
+    "svgX": 732.0,
+    "svgY": 745.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "905",
+    "name": "마곡나루",
+    "lineId": "9",
+    "latitude": 37.5665,
+    "longitude": 126.8302,
+    "svgX": 745.0,
+    "svgY": 737.0,
+    "isTransfer": true,
+    "transferLines": [
+      "9",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "906",
+    "name": "양천향교",
+    "lineId": "9",
+    "latitude": 37.5496,
+    "longitude": 126.8505,
+    "svgX": 779.0,
+    "svgY": 771.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "907",
+    "name": "가양",
+    "lineId": "9",
+    "latitude": 37.5614,
+    "longitude": 126.8546,
+    "svgX": 786.0,
+    "svgY": 747.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "908",
+    "name": "증미",
+    "lineId": "9",
+    "latitude": 37.5558,
+    "longitude": 126.8732,
+    "svgX": 818.0,
+    "svgY": 759.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "909",
+    "name": "등촌",
+    "lineId": "9",
+    "latitude": 37.55,
+    "longitude": 126.8771,
+    "svgX": 824.0,
+    "svgY": 770.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "910",
+    "name": "염창",
+    "lineId": "9",
+    "latitude": 37.5468,
+    "longitude": 126.8756,
+    "svgX": 822.0,
+    "svgY": 777.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "911",
+    "name": "신목동",
+    "lineId": "9",
+    "latitude": 37.5378,
+    "longitude": 126.8759,
+    "svgX": 822.0,
+    "svgY": 795.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "912",
+    "name": "선유도",
+    "lineId": "9",
+    "latitude": 37.5337,
+    "longitude": 126.8941,
+    "svgX": 853.0,
+    "svgY": 803.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "913",
+    "name": "당산",
+    "lineId": "9",
+    "latitude": 37.5347,
+    "longitude": 126.9026,
+    "svgX": 867.0,
+    "svgY": 801.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "9"
+    ]
+  },
+  {
+    "id": "914",
+    "name": "국회의사당",
+    "lineId": "9",
+    "latitude": 37.5285,
+    "longitude": 126.9174,
+    "svgX": 892.0,
+    "svgY": 814.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "915",
+    "name": "여의도",
+    "lineId": "9",
+    "latitude": 37.5216,
+    "longitude": 126.9244,
+    "svgX": 904.0,
+    "svgY": 828.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9"
+    ]
+  },
+  {
+    "id": "916",
+    "name": "샛강",
+    "lineId": "9",
+    "latitude": 37.517,
+    "longitude": 126.928,
+    "svgX": 910.0,
+    "svgY": 837.0,
+    "isTransfer": true,
+    "transferLines": [
+      "9",
+      "신림"
+    ]
+  },
+  {
+    "id": "917",
+    "name": "노량진",
+    "lineId": "9",
+    "latitude": 37.5134,
+    "longitude": 126.9428,
+    "svgX": 935.0,
+    "svgY": 844.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "9"
+    ]
+  },
+  {
+    "id": "918",
+    "name": "노들",
+    "lineId": "9",
+    "latitude": 37.5128,
+    "longitude": 126.9522,
+    "svgX": 951.0,
+    "svgY": 846.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "919",
+    "name": "흑석",
+    "lineId": "9",
+    "latitude": 37.5085,
+    "longitude": 126.9637,
+    "svgX": 970.0,
+    "svgY": 854.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "920",
+    "name": "동작",
+    "lineId": "9",
+    "latitude": 37.5085,
+    "longitude": 126.9514,
+    "svgX": 950.0,
+    "svgY": 854.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "9"
+    ]
+  },
+  {
+    "id": "921",
+    "name": "구반포",
+    "lineId": "9",
+    "latitude": 37.5068,
+    "longitude": 126.9918,
+    "svgX": 1018.0,
+    "svgY": 858.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "922",
+    "name": "신반포",
+    "lineId": "9",
+    "latitude": 37.5072,
+    "longitude": 126.9967,
+    "svgX": 1026.0,
+    "svgY": 857.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "923",
+    "name": "고속터미널",
+    "lineId": "9",
+    "latitude": 37.5048,
+    "longitude": 127.0043,
+    "svgX": 1039.0,
+    "svgY": 862.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "7",
+      "9"
+    ]
+  },
+  {
+    "id": "924",
+    "name": "사평",
+    "lineId": "9",
+    "latitude": 37.5037,
+    "longitude": 127.0122,
+    "svgX": 1052.0,
+    "svgY": 864.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "925",
+    "name": "신논현",
+    "lineId": "9",
+    "latitude": 37.5045,
+    "longitude": 127.0252,
+    "svgX": 1074.0,
+    "svgY": 863.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "926",
+    "name": "언주",
+    "lineId": "9",
+    "latitude": 37.5074,
+    "longitude": 127.0353,
+    "svgX": 1091.0,
+    "svgY": 857.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "927",
+    "name": "선정릉",
+    "lineId": "9",
+    "latitude": 37.51,
+    "longitude": 127.0445,
+    "svgX": 1106.0,
+    "svgY": 851.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "928",
+    "name": "삼성중앙",
+    "lineId": "9",
+    "latitude": 37.5107,
+    "longitude": 127.059,
+    "svgX": 1131.0,
+    "svgY": 850.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "929",
+    "name": "봉은사",
+    "lineId": "9",
+    "latitude": 37.5135,
+    "longitude": 127.066,
+    "svgX": 1143.0,
+    "svgY": 844.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "930",
+    "name": "종합운동장",
+    "lineId": "9",
+    "latitude": 37.5107,
+    "longitude": 127.0738,
+    "svgX": 1156.0,
+    "svgY": 850.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "9"
+    ]
+  },
+  {
+    "id": "931",
+    "name": "삼전",
+    "lineId": "9",
+    "latitude": 37.5082,
+    "longitude": 127.085,
+    "svgX": 1175.0,
+    "svgY": 855.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "932",
+    "name": "석촌고분",
+    "lineId": "9",
+    "latitude": 37.505,
+    "longitude": 127.0926,
+    "svgX": 1188.0,
+    "svgY": 862.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "933",
+    "name": "석촌",
+    "lineId": "9",
+    "latitude": 37.5054,
+    "longitude": 127.1017,
+    "svgX": 1203.0,
+    "svgY": 861.0,
+    "isTransfer": true,
+    "transferLines": [
+      "8",
+      "9"
+    ]
+  },
+  {
+    "id": "934",
+    "name": "송파나루",
+    "lineId": "9",
+    "latitude": 37.5083,
+    "longitude": 127.1108,
+    "svgX": 1218.0,
+    "svgY": 855.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "935",
+    "name": "한성백제",
+    "lineId": "9",
+    "latitude": 37.5168,
+    "longitude": 127.1117,
+    "svgX": 1220.0,
+    "svgY": 838.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "936",
+    "name": "올림픽공원",
+    "lineId": "9",
+    "latitude": 37.5152,
+    "longitude": 127.1286,
+    "svgX": 1248.0,
+    "svgY": 841.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9"
+    ]
+  },
+  {
+    "id": "937",
+    "name": "둔촌오륜",
+    "lineId": "9",
+    "latitude": 37.5173,
+    "longitude": 127.1391,
+    "svgX": 1266.0,
+    "svgY": 837.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "938",
+    "name": "중앙보훈병원",
+    "lineId": "9",
+    "latitude": 37.5149,
+    "longitude": 127.1476,
+    "svgX": 1280.0,
+    "svgY": 841.0,
+    "isTransfer": false,
+    "transferLines": [
+      "9"
+    ]
+  },
+  {
+    "id": "D01",
+    "name": "신사",
+    "lineId": "SB",
+    "latitude": 37.5167,
+    "longitude": 127.0201,
+    "svgX": 1065.0,
+    "svgY": 838.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "신분당"
+    ]
+  },
+  {
+    "id": "D02",
+    "name": "논현",
+    "lineId": "SB",
+    "latitude": 37.5119,
+    "longitude": 127.0233,
+    "svgX": 1071.0,
+    "svgY": 848.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D03",
+    "name": "신논현",
+    "lineId": "SB",
+    "latitude": 37.5045,
+    "longitude": 127.0252,
+    "svgX": 1074.0,
+    "svgY": 863.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D04",
+    "name": "강남",
+    "lineId": "SB",
+    "latitude": 37.4979,
+    "longitude": 127.0276,
+    "svgX": 1078.0,
+    "svgY": 876.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "신분당"
+    ]
+  },
+  {
+    "id": "D05",
+    "name": "양재",
+    "lineId": "SB",
+    "latitude": 37.4843,
+    "longitude": 127.0354,
+    "svgX": 1091.0,
+    "svgY": 904.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "신분당"
+    ]
+  },
+  {
+    "id": "D06",
+    "name": "양재시민의숲",
+    "lineId": "SB",
+    "latitude": 37.4706,
+    "longitude": 127.0377,
+    "svgX": 1095.0,
+    "svgY": 931.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D07",
+    "name": "청계산입구",
+    "lineId": "SB",
+    "latitude": 37.4536,
+    "longitude": 127.0533,
+    "svgX": 1121.0,
+    "svgY": 966.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D08",
+    "name": "판교",
+    "lineId": "SB",
+    "latitude": 37.3949,
+    "longitude": 127.1118,
+    "svgX": 1220.0,
+    "svgY": 1085.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D09",
+    "name": "정자",
+    "lineId": "SB",
+    "latitude": 37.3666,
+    "longitude": 127.1083,
+    "svgX": 1214.0,
+    "svgY": 1142.0,
+    "isTransfer": true,
+    "transferLines": [
+      "신분당",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "D10",
+    "name": "미금",
+    "lineId": "SB",
+    "latitude": 37.3505,
+    "longitude": 127.1093,
+    "svgX": 1216.0,
+    "svgY": 1175.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D11",
+    "name": "동천",
+    "lineId": "SB",
+    "latitude": 37.3379,
+    "longitude": 127.1069,
+    "svgX": 1212.0,
+    "svgY": 1200.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D12",
+    "name": "수지구청",
+    "lineId": "SB",
+    "latitude": 37.3222,
+    "longitude": 127.0975,
+    "svgX": 1196.0,
+    "svgY": 1232.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D13",
+    "name": "성복",
+    "lineId": "SB",
+    "latitude": 37.3116,
+    "longitude": 127.0785,
+    "svgX": 1164.0,
+    "svgY": 1254.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D14",
+    "name": "상현",
+    "lineId": "SB",
+    "latitude": 37.3009,
+    "longitude": 127.0685,
+    "svgX": 1147.0,
+    "svgY": 1275.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D15",
+    "name": "광교중앙",
+    "lineId": "SB",
+    "latitude": 37.2887,
+    "longitude": 127.0596,
+    "svgX": 1132.0,
+    "svgY": 1300.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "D16",
+    "name": "광교",
+    "lineId": "SB",
+    "latitude": 37.2808,
+    "longitude": 127.0476,
+    "svgX": 1112.0,
+    "svgY": 1316.0,
+    "isTransfer": false,
+    "transferLines": [
+      "SB"
+    ]
+  },
+  {
+    "id": "K01",
+    "name": "문산",
+    "lineId": "경의중앙",
+    "latitude": 37.8477,
+    "longitude": 126.7807,
+    "svgX": 662.0,
+    "svgY": 167.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K02",
+    "name": "파주",
+    "lineId": "경의중앙",
+    "latitude": 37.8241,
+    "longitude": 126.7655,
+    "svgX": 636.0,
+    "svgY": 214.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K03",
+    "name": "월롱",
+    "lineId": "경의중앙",
+    "latitude": 37.8115,
+    "longitude": 126.7627,
+    "svgX": 631.0,
+    "svgY": 240.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K04",
+    "name": "금촌",
+    "lineId": "경의중앙",
+    "latitude": 37.7926,
+    "longitude": 126.7563,
+    "svgX": 621.0,
+    "svgY": 278.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K05",
+    "name": "금릉",
+    "lineId": "경의중앙",
+    "latitude": 37.7815,
+    "longitude": 126.7449,
+    "svgX": 601.0,
+    "svgY": 301.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K06",
+    "name": "운정",
+    "lineId": "경의중앙",
+    "latitude": 37.7351,
+    "longitude": 126.7443,
+    "svgX": 600.0,
+    "svgY": 395.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K07",
+    "name": "야당",
+    "lineId": "경의중앙",
+    "latitude": 37.7201,
+    "longitude": 126.7456,
+    "svgX": 603.0,
+    "svgY": 425.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K08",
+    "name": "탄현",
+    "lineId": "경의중앙",
+    "latitude": 37.7075,
+    "longitude": 126.7477,
+    "svgX": 606.0,
+    "svgY": 451.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K09",
+    "name": "일산",
+    "lineId": "경의중앙",
+    "latitude": 37.6919,
+    "longitude": 126.7696,
+    "svgX": 643.0,
+    "svgY": 483.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K10",
+    "name": "풍산",
+    "lineId": "경의중앙",
+    "latitude": 37.6822,
+    "longitude": 126.7637,
+    "svgX": 633.0,
+    "svgY": 502.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K11",
+    "name": "백마",
+    "lineId": "경의중앙",
+    "latitude": 37.6721,
+    "longitude": 126.7695,
+    "svgX": 643.0,
+    "svgY": 523.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K12",
+    "name": "곡산",
+    "lineId": "경의중앙",
+    "latitude": 37.6632,
+    "longitude": 126.756,
+    "svgX": 620.0,
+    "svgY": 541.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K13",
+    "name": "대곡",
+    "lineId": "경의중앙",
+    "latitude": 37.6534,
+    "longitude": 126.7486,
+    "svgX": 608.0,
+    "svgY": 561.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K14",
+    "name": "능곡",
+    "lineId": "경의중앙",
+    "latitude": 37.6499,
+    "longitude": 126.7738,
+    "svgX": 650.0,
+    "svgY": 568.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K15",
+    "name": "행신",
+    "lineId": "경의중앙",
+    "latitude": 37.6132,
+    "longitude": 126.8197,
+    "svgX": 727.0,
+    "svgY": 642.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K16",
+    "name": "강매",
+    "lineId": "경의중앙",
+    "latitude": 37.6013,
+    "longitude": 126.8346,
+    "svgX": 753.0,
+    "svgY": 666.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K17",
+    "name": "화전",
+    "lineId": "경의중앙",
+    "latitude": 37.5965,
+    "longitude": 126.8624,
+    "svgX": 799.0,
+    "svgY": 676.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K18",
+    "name": "수색",
+    "lineId": "경의중앙",
+    "latitude": 37.5827,
+    "longitude": 126.8924,
+    "svgX": 850.0,
+    "svgY": 704.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K19",
+    "name": "디지털미디어시티",
+    "lineId": "경의중앙",
+    "latitude": 37.5762,
+    "longitude": 126.8996,
+    "svgX": 862.0,
+    "svgY": 717.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "K20",
+    "name": "가좌",
+    "lineId": "경의중앙",
+    "latitude": 37.5673,
+    "longitude": 126.9144,
+    "svgX": 887.0,
+    "svgY": 735.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K21",
+    "name": "홍대입구",
+    "lineId": "경의중앙",
+    "latitude": 37.5572,
+    "longitude": 126.9259,
+    "svgX": 907.0,
+    "svgY": 756.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "K22",
+    "name": "서강대",
+    "lineId": "경의중앙",
+    "latitude": 37.5514,
+    "longitude": 126.9322,
+    "svgX": 917.0,
+    "svgY": 767.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K23",
+    "name": "공덕",
+    "lineId": "경의중앙",
+    "latitude": 37.5438,
+    "longitude": 126.9517,
+    "svgX": 950.0,
+    "svgY": 783.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "K24",
+    "name": "효창공원앞",
+    "lineId": "경의중앙",
+    "latitude": 37.5393,
+    "longitude": 126.9613,
+    "svgX": 966.0,
+    "svgY": 792.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K25",
+    "name": "용산",
+    "lineId": "경의중앙",
+    "latitude": 37.5299,
+    "longitude": 126.9648,
+    "svgX": 972.0,
+    "svgY": 811.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K26",
+    "name": "이촌",
+    "lineId": "경의중앙",
+    "latitude": 37.5216,
+    "longitude": 126.9692,
+    "svgX": 980.0,
+    "svgY": 828.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K27",
+    "name": "서빙고",
+    "lineId": "경의중앙",
+    "latitude": 37.5226,
+    "longitude": 126.9822,
+    "svgX": 1001.0,
+    "svgY": 826.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K28",
+    "name": "한남",
+    "lineId": "경의중앙",
+    "latitude": 37.5369,
+    "longitude": 127.0002,
+    "svgX": 1032.0,
+    "svgY": 797.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K29",
+    "name": "옥수",
+    "lineId": "경의중앙",
+    "latitude": 37.5397,
+    "longitude": 127.0171,
+    "svgX": 1060.0,
+    "svgY": 791.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K30",
+    "name": "응봉",
+    "lineId": "경의중앙",
+    "latitude": 37.5512,
+    "longitude": 127.0297,
+    "svgX": 1081.0,
+    "svgY": 768.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K31",
+    "name": "왕십리",
+    "lineId": "경의중앙",
+    "latitude": 37.5614,
+    "longitude": 127.037,
+    "svgX": 1094.0,
+    "svgY": 747.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5",
+      "경의중앙",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "K32",
+    "name": "청량리",
+    "lineId": "경의중앙",
+    "latitude": 37.5805,
+    "longitude": 127.0475,
+    "svgX": 1111.0,
+    "svgY": 708.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "수인분당",
+      "경춘"
+    ]
+  },
+  {
+    "id": "K33",
+    "name": "회기",
+    "lineId": "경의중앙",
+    "latitude": 37.5895,
+    "longitude": 127.0579,
+    "svgX": 1129.0,
+    "svgY": 690.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "K34",
+    "name": "중랑",
+    "lineId": "경의중앙",
+    "latitude": 37.5972,
+    "longitude": 127.0684,
+    "svgX": 1147.0,
+    "svgY": 675.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "K35",
+    "name": "상봉",
+    "lineId": "경의중앙",
+    "latitude": 37.5968,
+    "longitude": 127.0851,
+    "svgX": 1175.0,
+    "svgY": 675.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "K36",
+    "name": "망우",
+    "lineId": "경의중앙",
+    "latitude": 37.5985,
+    "longitude": 127.0915,
+    "svgX": 1186.0,
+    "svgY": 672.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "K37",
+    "name": "양원",
+    "lineId": "경의중앙",
+    "latitude": 37.601,
+    "longitude": 127.1056,
+    "svgX": 1209.0,
+    "svgY": 667.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K38",
+    "name": "구리",
+    "lineId": "경의중앙",
+    "latitude": 37.6036,
+    "longitude": 127.1313,
+    "svgX": 1253.0,
+    "svgY": 662.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K39",
+    "name": "도농",
+    "lineId": "경의중앙",
+    "latitude": 37.6076,
+    "longitude": 127.1536,
+    "svgX": 1290.0,
+    "svgY": 653.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K40",
+    "name": "양정",
+    "lineId": "경의중앙",
+    "latitude": 37.5954,
+    "longitude": 127.1751,
+    "svgX": 1327.0,
+    "svgY": 678.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K41",
+    "name": "덕소",
+    "lineId": "경의중앙",
+    "latitude": 37.5851,
+    "longitude": 127.2004,
+    "svgX": 1369.0,
+    "svgY": 699.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K42",
+    "name": "도심",
+    "lineId": "경의중앙",
+    "latitude": 37.5711,
+    "longitude": 127.2313,
+    "svgX": 1421.0,
+    "svgY": 727.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K43",
+    "name": "팔당",
+    "lineId": "경의중앙",
+    "latitude": 37.5469,
+    "longitude": 127.2831,
+    "svgX": 1509.0,
+    "svgY": 777.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K44",
+    "name": "운길산",
+    "lineId": "경의중앙",
+    "latitude": 37.5337,
+    "longitude": 127.318,
+    "svgX": 1567.0,
+    "svgY": 803.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K45",
+    "name": "양수",
+    "lineId": "경의중앙",
+    "latitude": 37.5259,
+    "longitude": 127.3371,
+    "svgX": 1600.0,
+    "svgY": 819.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K46",
+    "name": "신원",
+    "lineId": "경의중앙",
+    "latitude": 37.5094,
+    "longitude": 127.3589,
+    "svgX": 1636.0,
+    "svgY": 853.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K47",
+    "name": "국수",
+    "lineId": "경의중앙",
+    "latitude": 37.5009,
+    "longitude": 127.3807,
+    "svgX": 1673.0,
+    "svgY": 870.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K48",
+    "name": "아신",
+    "lineId": "경의중앙",
+    "latitude": 37.4897,
+    "longitude": 127.425,
+    "svgX": 1748.0,
+    "svgY": 893.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K49",
+    "name": "오빈",
+    "lineId": "경의중앙",
+    "latitude": 37.4802,
+    "longitude": 127.4698,
+    "svgX": 1823.0,
+    "svgY": 912.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K50",
+    "name": "양평",
+    "lineId": "경의중앙",
+    "latitude": 37.4895,
+    "longitude": 127.4879,
+    "svgX": 1854.0,
+    "svgY": 893.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K51",
+    "name": "원덕",
+    "lineId": "경의중앙",
+    "latitude": 37.4816,
+    "longitude": 127.5319,
+    "svgX": 1928.0,
+    "svgY": 909.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K52",
+    "name": "용문",
+    "lineId": "경의중앙",
+    "latitude": 37.4781,
+    "longitude": 127.5833,
+    "svgX": 2015.0,
+    "svgY": 916.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K53",
+    "name": "지평",
+    "lineId": "경의중앙",
+    "latitude": 37.4731,
+    "longitude": 127.6237,
+    "svgX": 2083.0,
+    "svgY": 926.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
+    "id": "K54",
+    "name": "서울역",
+    "lineId": "경의중앙",
+    "latitude": 37.5547,
+    "longitude": 126.9706,
+    "svgX": 982.0,
+    "svgY": 761.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "C01",
+    "name": "청량리",
+    "lineId": "경춘",
+    "latitude": 37.5805,
+    "longitude": 127.0475,
+    "svgX": 1111.0,
+    "svgY": 708.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "수인분당",
+      "경춘"
+    ]
+  },
+  {
+    "id": "C02",
+    "name": "회기",
+    "lineId": "경춘",
+    "latitude": 37.5895,
+    "longitude": 127.0579,
+    "svgX": 1129.0,
+    "svgY": 690.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "C03",
+    "name": "중랑",
+    "lineId": "경춘",
+    "latitude": 37.5972,
+    "longitude": 127.0684,
+    "svgX": 1147.0,
+    "svgY": 675.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "C04",
+    "name": "상봉",
+    "lineId": "경춘",
+    "latitude": 37.5968,
+    "longitude": 127.0851,
+    "svgX": 1175.0,
+    "svgY": 675.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "C05",
+    "name": "망우",
+    "lineId": "경춘",
+    "latitude": 37.5985,
+    "longitude": 127.0915,
+    "svgX": 1186.0,
+    "svgY": 672.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "경춘"
+    ]
+  },
+  {
+    "id": "C06",
+    "name": "신내",
+    "lineId": "경춘",
+    "latitude": 37.6126,
+    "longitude": 127.1042,
+    "svgX": 1207.0,
+    "svgY": 643.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C07",
+    "name": "갈매",
+    "lineId": "경춘",
+    "latitude": 37.6344,
+    "longitude": 127.1179,
+    "svgX": 1230.0,
+    "svgY": 599.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C08",
+    "name": "별내",
+    "lineId": "경춘",
+    "latitude": 37.6448,
+    "longitude": 127.1275,
+    "svgX": 1246.0,
+    "svgY": 578.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C09",
+    "name": "퇴계원",
+    "lineId": "경춘",
+    "latitude": 37.6553,
+    "longitude": 127.1394,
+    "svgX": 1266.0,
+    "svgY": 557.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C10",
+    "name": "사릉",
+    "lineId": "경춘",
+    "latitude": 37.6596,
+    "longitude": 127.1696,
+    "svgX": 1317.0,
+    "svgY": 548.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C11",
+    "name": "금곡",
+    "lineId": "경춘",
+    "latitude": 37.6638,
+    "longitude": 127.1885,
+    "svgX": 1349.0,
+    "svgY": 540.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C12",
+    "name": "평내호평",
+    "lineId": "경춘",
+    "latitude": 37.6541,
+    "longitude": 127.212,
+    "svgX": 1389.0,
+    "svgY": 559.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C13",
+    "name": "천마산",
+    "lineId": "경춘",
+    "latitude": 37.667,
+    "longitude": 127.24,
+    "svgX": 1436.0,
+    "svgY": 533.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C14",
+    "name": "마석",
+    "lineId": "경춘",
+    "latitude": 37.6502,
+    "longitude": 127.2933,
+    "svgX": 1526.0,
+    "svgY": 567.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C15",
+    "name": "대성리",
+    "lineId": "경춘",
+    "latitude": 37.6712,
+    "longitude": 127.339,
+    "svgX": 1603.0,
+    "svgY": 525.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C16",
+    "name": "청평",
+    "lineId": "경춘",
+    "latitude": 37.7152,
+    "longitude": 127.3757,
+    "svgX": 1665.0,
+    "svgY": 435.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C17",
+    "name": "상천",
+    "lineId": "경춘",
+    "latitude": 37.727,
+    "longitude": 127.4008,
+    "svgX": 1707.0,
+    "svgY": 411.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C18",
+    "name": "가평",
+    "lineId": "경춘",
+    "latitude": 37.8148,
+    "longitude": 127.51,
+    "svgX": 1891.0,
+    "svgY": 233.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C19",
+    "name": "굴봉산",
+    "lineId": "경춘",
+    "latitude": 37.8217,
+    "longitude": 127.5431,
+    "svgX": 1947.0,
+    "svgY": 219.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C20",
+    "name": "백양리",
+    "lineId": "경춘",
+    "latitude": 37.8312,
+    "longitude": 127.575,
+    "svgX": 2001.0,
+    "svgY": 200.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C21",
+    "name": "강촌",
+    "lineId": "경춘",
+    "latitude": 37.8148,
+    "longitude": 127.6168,
+    "svgX": 2071.0,
+    "svgY": 233.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C22",
+    "name": "김유정",
+    "lineId": "경춘",
+    "latitude": 37.8233,
+    "longitude": 127.6409,
+    "svgX": 2112.0,
+    "svgY": 216.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C23",
+    "name": "남춘천",
+    "lineId": "경춘",
+    "latitude": 37.8653,
+    "longitude": 127.7188,
+    "svgX": 2243.0,
+    "svgY": 131.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "C24",
+    "name": "춘천",
+    "lineId": "경춘",
+    "latitude": 37.8847,
+    "longitude": 127.7178,
+    "svgX": 2241.0,
+    "svgY": 92.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경춘"
+    ]
+  },
+  {
+    "id": "A01",
+    "name": "서울역",
+    "lineId": "공항철도",
+    "latitude": 37.5547,
+    "longitude": 126.9706,
+    "svgX": 982.0,
+    "svgY": 761.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A02",
+    "name": "공덕",
+    "lineId": "공항철도",
+    "latitude": 37.5438,
+    "longitude": 126.9517,
+    "svgX": 950.0,
+    "svgY": 783.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A03",
+    "name": "홍대입구",
+    "lineId": "공항철도",
+    "latitude": 37.5572,
+    "longitude": 126.9259,
+    "svgX": 907.0,
+    "svgY": 756.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A04",
+    "name": "디지털미디어시티",
+    "lineId": "공항철도",
+    "latitude": 37.5762,
+    "longitude": 126.8996,
+    "svgX": 862.0,
+    "svgY": 717.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "경의중앙",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A05",
+    "name": "마곡나루",
+    "lineId": "공항철도",
+    "latitude": 37.5665,
+    "longitude": 126.8302,
+    "svgX": 745.0,
+    "svgY": 737.0,
+    "isTransfer": true,
+    "transferLines": [
+      "9",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A06",
+    "name": "김포공항",
+    "lineId": "공항철도",
+    "latitude": 37.5624,
+    "longitude": 126.8015,
+    "svgX": 697.0,
+    "svgY": 745.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9",
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A07",
+    "name": "계양",
+    "lineId": "공항철도",
+    "latitude": 37.5684,
+    "longitude": 126.7605,
+    "svgX": 628.0,
+    "svgY": 733.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A08",
+    "name": "검암",
+    "lineId": "공항철도",
+    "latitude": 37.5726,
+    "longitude": 126.7418,
+    "svgX": 596.0,
+    "svgY": 724.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A09",
+    "name": "청라국제도시",
+    "lineId": "공항철도",
+    "latitude": 37.534,
+    "longitude": 126.662,
+    "svgX": 462.0,
+    "svgY": 803.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A10",
+    "name": "영종",
+    "lineId": "공항철도",
+    "latitude": 37.4993,
+    "longitude": 126.5606,
+    "svgX": 291.0,
+    "svgY": 873.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A11",
+    "name": "운서",
+    "lineId": "공항철도",
+    "latitude": 37.4859,
+    "longitude": 126.4935,
+    "svgX": 178.0,
+    "svgY": 900.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A12",
+    "name": "공항화물청사",
+    "lineId": "공항철도",
+    "latitude": 37.4642,
+    "longitude": 126.4519,
+    "svgX": 107.0,
+    "svgY": 944.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A13",
+    "name": "인천공항1터미널",
+    "lineId": "공항철도",
+    "latitude": 37.4602,
+    "longitude": 126.4407,
+    "svgX": 89.0,
+    "svgY": 952.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "A14",
+    "name": "인천공항2터미널",
+    "lineId": "공항철도",
+    "latitude": 37.4601,
+    "longitude": 126.42,
+    "svgX": 54.0,
+    "svgY": 953.0,
+    "isTransfer": false,
+    "transferLines": [
+      "공항철도"
+    ]
+  },
+  {
+    "id": "B01",
+    "name": "청량리",
+    "lineId": "수인분당",
+    "latitude": 37.5805,
+    "longitude": 127.0475,
+    "svgX": 1111.0,
+    "svgY": 708.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "경의중앙",
+      "수인분당",
+      "경춘"
+    ]
+  },
+  {
+    "id": "B02",
+    "name": "왕십리",
+    "lineId": "수인분당",
+    "latitude": 37.5614,
+    "longitude": 127.037,
+    "svgX": 1094.0,
+    "svgY": 747.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5",
+      "경의중앙",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B03",
+    "name": "서울숲",
+    "lineId": "수인분당",
+    "latitude": 37.5434,
+    "longitude": 127.0447,
+    "svgX": 1107.0,
+    "svgY": 784.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B04",
+    "name": "압구정로데오",
+    "lineId": "수인분당",
+    "latitude": 37.5279,
+    "longitude": 127.0398,
+    "svgX": 1099.0,
+    "svgY": 815.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B05",
+    "name": "강남구청",
+    "lineId": "수인분당",
+    "latitude": 37.5177,
+    "longitude": 127.0414,
+    "svgX": 1101.0,
+    "svgY": 836.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B06",
+    "name": "선정릉",
+    "lineId": "수인분당",
+    "latitude": 37.51,
+    "longitude": 127.0445,
+    "svgX": 1106.0,
+    "svgY": 851.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B07",
+    "name": "선릉",
+    "lineId": "수인분당",
+    "latitude": 37.5046,
+    "longitude": 127.049,
+    "svgX": 1114.0,
+    "svgY": 862.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B08",
+    "name": "한티",
+    "lineId": "수인분당",
+    "latitude": 37.4982,
+    "longitude": 127.0503,
+    "svgX": 1116.0,
+    "svgY": 875.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B09",
+    "name": "도곡",
+    "lineId": "수인분당",
+    "latitude": 37.4913,
+    "longitude": 127.0555,
+    "svgX": 1125.0,
+    "svgY": 889.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B10",
+    "name": "구룡",
+    "lineId": "수인분당",
+    "latitude": 37.4838,
+    "longitude": 127.0617,
+    "svgX": 1135.0,
+    "svgY": 905.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B11",
+    "name": "개포동",
+    "lineId": "수인분당",
+    "latitude": 37.4781,
+    "longitude": 127.0658,
+    "svgX": 1142.0,
+    "svgY": 916.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B12",
+    "name": "대모산입구",
+    "lineId": "수인분당",
+    "latitude": 37.4703,
+    "longitude": 127.0771,
+    "svgX": 1161.0,
+    "svgY": 932.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B13",
+    "name": "수서",
+    "lineId": "수인분당",
+    "latitude": 37.4873,
+    "longitude": 127.1017,
+    "svgX": 1203.0,
+    "svgY": 897.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B14",
+    "name": "복정",
+    "lineId": "수인분당",
+    "latitude": 37.4706,
+    "longitude": 127.1266,
+    "svgX": 1245.0,
+    "svgY": 931.0,
+    "isTransfer": true,
+    "transferLines": [
+      "8",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B15",
+    "name": "가천대",
+    "lineId": "수인분당",
+    "latitude": 37.4487,
+    "longitude": 127.1281,
+    "svgX": 1247.0,
+    "svgY": 976.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B16",
+    "name": "태평",
+    "lineId": "수인분당",
+    "latitude": 37.4413,
+    "longitude": 127.1266,
+    "svgX": 1245.0,
+    "svgY": 991.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B17",
+    "name": "모란",
+    "lineId": "수인분당",
+    "latitude": 37.432,
+    "longitude": 127.1294,
+    "svgX": 1250.0,
+    "svgY": 1010.0,
+    "isTransfer": true,
+    "transferLines": [
+      "8",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B18",
+    "name": "야탑",
+    "lineId": "수인분당",
+    "latitude": 37.4115,
+    "longitude": 127.1272,
+    "svgX": 1246.0,
+    "svgY": 1051.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B19",
+    "name": "이매",
+    "lineId": "수인분당",
+    "latitude": 37.3959,
+    "longitude": 127.1264,
+    "svgX": 1245.0,
+    "svgY": 1083.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B20",
+    "name": "서현",
+    "lineId": "수인분당",
+    "latitude": 37.3844,
+    "longitude": 127.1214,
+    "svgX": 1236.0,
+    "svgY": 1106.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B21",
+    "name": "수내",
+    "lineId": "수인분당",
+    "latitude": 37.3771,
+    "longitude": 127.1138,
+    "svgX": 1223.0,
+    "svgY": 1121.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B22",
+    "name": "정자",
+    "lineId": "수인분당",
+    "latitude": 37.3666,
+    "longitude": 127.1083,
+    "svgX": 1214.0,
+    "svgY": 1142.0,
+    "isTransfer": true,
+    "transferLines": [
+      "수인분당",
+      "SB"
+    ]
+  },
+  {
+    "id": "B23",
+    "name": "미금",
+    "lineId": "수인분당",
+    "latitude": 37.3505,
+    "longitude": 127.1093,
+    "svgX": 1216.0,
+    "svgY": 1175.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B24",
+    "name": "오리",
+    "lineId": "수인분당",
+    "latitude": 37.3391,
+    "longitude": 127.1082,
+    "svgX": 1214.0,
+    "svgY": 1198.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B25",
+    "name": "죽전",
+    "lineId": "수인분당",
+    "latitude": 37.3267,
+    "longitude": 127.1065,
+    "svgX": 1211.0,
+    "svgY": 1223.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B26",
+    "name": "보정",
+    "lineId": "수인분당",
+    "latitude": 37.3152,
+    "longitude": 127.1022,
+    "svgX": 1204.0,
+    "svgY": 1246.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B27",
+    "name": "구성",
+    "lineId": "수인분당",
+    "latitude": 37.2994,
+    "longitude": 127.0956,
+    "svgX": 1193.0,
+    "svgY": 1278.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B28",
+    "name": "신갈",
+    "lineId": "수인분당",
+    "latitude": 37.2872,
+    "longitude": 127.0841,
+    "svgX": 1173.0,
+    "svgY": 1303.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B29",
+    "name": "기흥",
+    "lineId": "수인분당",
+    "latitude": 37.2755,
+    "longitude": 127.0768,
+    "svgX": 1161.0,
+    "svgY": 1327.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B30",
+    "name": "상갈",
+    "lineId": "수인분당",
+    "latitude": 37.2668,
+    "longitude": 127.0644,
+    "svgX": 1140.0,
+    "svgY": 1345.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B31",
+    "name": "청명",
+    "lineId": "수인분당",
+    "latitude": 37.2578,
+    "longitude": 127.0548,
+    "svgX": 1124.0,
+    "svgY": 1363.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B32",
+    "name": "영통",
+    "lineId": "수인분당",
+    "latitude": 37.251,
+    "longitude": 127.0437,
+    "svgX": 1105.0,
+    "svgY": 1377.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B33",
+    "name": "망포",
+    "lineId": "수인분당",
+    "latitude": 37.2441,
+    "longitude": 127.0287,
+    "svgX": 1080.0,
+    "svgY": 1391.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B34",
+    "name": "매탄권선",
+    "lineId": "수인분당",
+    "latitude": 37.2555,
+    "longitude": 127.027,
+    "svgX": 1077.0,
+    "svgY": 1367.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B35",
+    "name": "수원시청",
+    "lineId": "수인분당",
+    "latitude": 37.264,
+    "longitude": 127.0141,
+    "svgX": 1055.0,
+    "svgY": 1350.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B36",
+    "name": "매교",
+    "lineId": "수인분당",
+    "latitude": 37.262,
+    "longitude": 126.9991,
+    "svgX": 1030.0,
+    "svgY": 1354.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B37",
+    "name": "수원",
+    "lineId": "수인분당",
+    "latitude": 37.2667,
+    "longitude": 126.9998,
+    "svgX": 1031.0,
+    "svgY": 1345.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B38",
+    "name": "고색",
+    "lineId": "수인분당",
+    "latitude": 37.2596,
+    "longitude": 126.9637,
+    "svgX": 970.0,
+    "svgY": 1359.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B39",
+    "name": "오목천",
+    "lineId": "수인분당",
+    "latitude": 37.2636,
+    "longitude": 126.9432,
+    "svgX": 936.0,
+    "svgY": 1351.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B40",
+    "name": "어천",
+    "lineId": "수인분당",
+    "latitude": 37.273,
+    "longitude": 126.9189,
+    "svgX": 895.0,
+    "svgY": 1332.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B41",
+    "name": "야목",
+    "lineId": "수인분당",
+    "latitude": 37.2838,
+    "longitude": 126.8995,
+    "svgX": 862.0,
+    "svgY": 1310.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B42",
+    "name": "사리",
+    "lineId": "수인분당",
+    "latitude": 37.3033,
+    "longitude": 126.8769,
+    "svgX": 824.0,
+    "svgY": 1271.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B43",
+    "name": "한대앞",
+    "lineId": "수인분당",
+    "latitude": 37.3087,
+    "longitude": 126.8526,
+    "svgX": 783.0,
+    "svgY": 1260.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B44",
+    "name": "중앙",
+    "lineId": "수인분당",
+    "latitude": 37.3118,
+    "longitude": 126.8408,
+    "svgX": 763.0,
+    "svgY": 1253.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B45",
+    "name": "고잔",
+    "lineId": "수인분당",
+    "latitude": 37.3156,
+    "longitude": 126.8274,
+    "svgX": 740.0,
+    "svgY": 1246.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B46",
+    "name": "초지",
+    "lineId": "수인분당",
+    "latitude": 37.3192,
+    "longitude": 126.8001,
+    "svgX": 694.0,
+    "svgY": 1238.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B47",
+    "name": "안산",
+    "lineId": "수인분당",
+    "latitude": 37.3248,
+    "longitude": 126.7896,
+    "svgX": 677.0,
+    "svgY": 1227.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B48",
+    "name": "신길온천",
+    "lineId": "수인분당",
+    "latitude": 37.3327,
+    "longitude": 126.7863,
+    "svgX": 671.0,
+    "svgY": 1211.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B49",
+    "name": "정왕",
+    "lineId": "수인분당",
+    "latitude": 37.3458,
+    "longitude": 126.739,
+    "svgX": 591.0,
+    "svgY": 1184.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B50",
+    "name": "오이도",
+    "lineId": "수인분당",
+    "latitude": 37.3473,
+    "longitude": 126.6878,
+    "svgX": 505.0,
+    "svgY": 1181.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B51",
+    "name": "달월",
+    "lineId": "수인분당",
+    "latitude": 37.349,
+    "longitude": 126.6765,
+    "svgX": 486.0,
+    "svgY": 1178.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B52",
+    "name": "월곶",
+    "lineId": "수인분당",
+    "latitude": 37.3755,
+    "longitude": 126.6627,
+    "svgX": 463.0,
+    "svgY": 1124.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B53",
+    "name": "소래포구",
+    "lineId": "수인분당",
+    "latitude": 37.3952,
+    "longitude": 126.6585,
+    "svgX": 456.0,
+    "svgY": 1084.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B54",
+    "name": "인하대",
+    "lineId": "수인분당",
+    "latitude": 37.436,
+    "longitude": 126.656,
+    "svgX": 452.0,
+    "svgY": 1001.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B55",
+    "name": "숭의",
+    "lineId": "수인분당",
+    "latitude": 37.4483,
+    "longitude": 126.647,
+    "svgX": 436.0,
+    "svgY": 977.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B56",
+    "name": "신포",
+    "lineId": "수인분당",
+    "latitude": 37.4684,
+    "longitude": 126.6283,
+    "svgX": 405.0,
+    "svgY": 936.0,
+    "isTransfer": false,
+    "transferLines": [
+      "수인분당"
+    ]
+  },
+  {
+    "id": "B57",
+    "name": "인천",
+    "lineId": "수인분당",
+    "latitude": 37.4737,
+    "longitude": 126.6241,
+    "svgX": 398.0,
+    "svgY": 925.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "수인분당"
+    ]
+  },
+  {
+    "id": "S01",
+    "name": "샛강",
+    "lineId": "신림",
+    "latitude": 37.517,
+    "longitude": 126.928,
+    "svgX": 910.0,
+    "svgY": 837.0,
+    "isTransfer": true,
+    "transferLines": [
+      "9",
+      "신림"
+    ]
+  },
+  {
+    "id": "S02",
+    "name": "대방",
+    "lineId": "신림",
+    "latitude": 37.511,
+    "longitude": 126.9264,
+    "svgX": 907.0,
+    "svgY": 849.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "신림"
+    ]
+  },
+  {
+    "id": "S03",
+    "name": "서울지방병무청",
+    "lineId": "신림",
+    "latitude": 37.502,
+    "longitude": 126.922,
+    "svgX": 900.0,
+    "svgY": 868.0,
+    "isTransfer": false,
+    "transferLines": [
+      "신림"
+    ]
+  },
+  {
+    "id": "S04",
+    "name": "보라매",
+    "lineId": "신림",
+    "latitude": 37.496,
+    "longitude": 126.919,
+    "svgX": 895.0,
+    "svgY": 880.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "신림"
+    ]
+  },
+  {
+    "id": "S05",
+    "name": "보라매공원",
+    "lineId": "신림",
+    "latitude": 37.491,
+    "longitude": 126.922,
+    "svgX": 900.0,
+    "svgY": 890.0,
+    "isTransfer": false,
+    "transferLines": [
+      "신림"
+    ]
+  },
+  {
+    "id": "S06",
+    "name": "보라매병원",
+    "lineId": "신림",
+    "latitude": 37.488,
+    "longitude": 126.926,
+    "svgX": 907.0,
+    "svgY": 896.0,
+    "isTransfer": false,
+    "transferLines": [
+      "신림"
+    ]
+  },
+  {
+    "id": "S07",
+    "name": "당곡",
+    "lineId": "신림",
+    "latitude": 37.4855,
+    "longitude": 126.931,
+    "svgX": 915.0,
+    "svgY": 901.0,
+    "isTransfer": false,
+    "transferLines": [
+      "신림"
+    ]
+  },
+  {
+    "id": "S08",
+    "name": "신림",
+    "lineId": "신림",
+    "latitude": 37.4843,
+    "longitude": 126.9296,
+    "svgX": 913.0,
+    "svgY": 904.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "신림"
+    ]
+  },
+  {
+    "id": "S09",
+    "name": "서원",
+    "lineId": "신림",
+    "latitude": 37.479,
+    "longitude": 126.934,
+    "svgX": 920.0,
+    "svgY": 914.0,
+    "isTransfer": false,
+    "transferLines": [
+      "신림"
+    ]
+  },
+  {
+    "id": "S10",
+    "name": "관악산",
+    "lineId": "신림",
+    "latitude": 37.472,
+    "longitude": 126.94,
+    "svgX": 930.0,
+    "svgY": 928.0,
+    "isTransfer": false,
+    "transferLines": [
+      "신림"
+    ]
+  }
+]

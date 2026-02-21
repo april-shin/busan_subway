@@ -1,0 +1,22 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'arrival_info.freezed.dart';
+part 'arrival_info.g.dart';
+
+@freezed
+class ArrivalInfo with _$ArrivalInfo {
+  const factory ArrivalInfo({
+    required String subwayId,
+    required String stationName,
+    required String trainLineNm,
+    required String direction,
+    required String arrivalMessage,
+    required String destination,
+    required String trainType,
+    int? arrivalSeconds,
+    required DateTime receivedAt,
+  }) = _ArrivalInfo;
+
+  factory ArrivalInfo.fromJson(Map<String, dynamic> json) =>
+      _$ArrivalInfoFromJson(json);
+}
