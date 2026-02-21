@@ -1,0 +1,20 @@
+# 텍스트 파일은 LF로 정규화
+* text=auto eol=lf
+
+# 명시적 이진 파일
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.jar binary
+*.so binary
+*.dylib binary
+*.dll binary
+
+# Windows 배치 파일만 CRLF 허용
+*.bat text eol=crlf
