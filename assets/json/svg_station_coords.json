@@ -1,0 +1,4573 @@
+{
+  "수서": {
+    "name": "수서",
+    "dataLine": "1-GA",
+    "svgX": 2048.0,
+    "svgY": 1200.0,
+    "distance": 9
+  },
+  "성남": {
+    "name": "성남",
+    "dataLine": "1-GA",
+    "svgX": 1836.0,
+    "svgY": 1248.0,
+    "distance": 11
+  },
+  "구성": {
+    "name": "구성",
+    "dataLine": "1-GA",
+    "svgX": 1500.0,
+    "svgY": 1368.0,
+    "distance": 11
+  },
+  "동탄": {
+    "name": "동탄",
+    "dataLine": "1-GA",
+    "svgX": 1272.0,
+    "svgY": 1336.0,
+    "distance": 11
+  },
+  "운정중앙": {
+    "name": "운정중앙",
+    "dataLine": "1-GA",
+    "svgX": 104.0,
+    "svgY": 200.0,
+    "distance": 10
+  },
+  "킨텍스": {
+    "name": "킨텍스",
+    "dataLine": "1-GA",
+    "svgX": 208.0,
+    "svgY": 200.0,
+    "distance": 10
+  },
+  "대곡": {
+    "name": "대곡",
+    "dataLine": "1-GA",
+    "svgX": 404.0,
+    "svgY": 256.0,
+    "distance": 14
+  },
+  "연신내": {
+    "name": "연신내",
+    "dataLine": "1-GA",
+    "svgX": 690.6666666666666,
+    "svgY": 256.0,
+    "distance": 14
+  },
+  "서울역": {
+    "name": "서울역",
+    "dataLine": "1-GA",
+    "svgX": 1040.0,
+    "svgY": 618.0,
+    "distance": 11
+  },
+  "연천": {
+    "name": "연천",
+    "dataLine": "2-1",
+    "svgX": 896.0,
+    "svgY": 40.0,
+    "distance": 15
+  },
+  "전곡": {
+    "name": "전곡",
+    "dataLine": "2-1",
+    "svgX": 936.0,
+    "svgY": 40.0,
+    "distance": 15
+  },
+  "청산": {
+    "name": "청산",
+    "dataLine": "2-1",
+    "svgX": 984.0,
+    "svgY": 64.0,
+    "distance": 15
+  },
+  "소요산": {
+    "name": "소요산",
+    "dataLine": "2-1",
+    "svgX": 1024.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "동두천": {
+    "name": "동두천",
+    "dataLine": "2-1",
+    "svgX": 1080.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "보산": {
+    "name": "보산",
+    "dataLine": "2-1",
+    "svgX": 1128.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "동두천중앙": {
+    "name": "동두천중앙",
+    "dataLine": "2-1",
+    "svgX": 1180.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "지행": {
+    "name": "지행",
+    "dataLine": "2-1",
+    "svgX": 1232.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "덕정": {
+    "name": "덕정",
+    "dataLine": "2-1",
+    "svgX": 1280.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "덕계": {
+    "name": "덕계",
+    "dataLine": "2-1",
+    "svgX": 1336.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "양주": {
+    "name": "양주",
+    "dataLine": "2-1",
+    "svgX": 1384.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "녹양": {
+    "name": "녹양",
+    "dataLine": "2-1",
+    "svgX": 1436.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "가능": {
+    "name": "가능",
+    "dataLine": "2-1",
+    "svgX": 1488.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "의정부": {
+    "name": "의정부",
+    "dataLine": "2-1",
+    "svgX": 1536.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "회룡": {
+    "name": "회룡",
+    "dataLine": "2-1",
+    "svgX": 1580.0,
+    "svgY": 80.0,
+    "distance": 11
+  },
+  "망월사": {
+    "name": "망월사",
+    "dataLine": "2-1",
+    "svgX": 1640.0,
+    "svgY": 80.0,
+    "distance": 15
+  },
+  "도봉산": {
+    "name": "도봉산",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 104.0,
+    "distance": 11
+  },
+  "도봉": {
+    "name": "도봉",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 136.0,
+    "distance": 9
+  },
+  "방학": {
+    "name": "방학",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 168.0,
+    "distance": 9
+  },
+  "창동": {
+    "name": "창동",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 224.0,
+    "distance": 11
+  },
+  "녹천": {
+    "name": "녹천",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 252.0,
+    "distance": 9
+  },
+  "월계": {
+    "name": "월계",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 280.0,
+    "distance": 9
+  },
+  "광운대": {
+    "name": "광운대",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 312.0,
+    "distance": 9
+  },
+  "석계": {
+    "name": "석계",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 336.0,
+    "distance": 14
+  },
+  "신이문": {
+    "name": "신이문",
+    "dataLine": "2-1",
+    "svgX": 1696.0,
+    "svgY": 368.0,
+    "distance": 14
+  },
+  "외대앞": {
+    "name": "외대앞",
+    "dataLine": "2-1",
+    "svgX": 1672.0,
+    "svgY": 392.0,
+    "distance": 14
+  },
+  "회기": {
+    "name": "회기",
+    "dataLine": "2-1",
+    "svgX": 1640.0,
+    "svgY": 424.0,
+    "distance": 10
+  },
+  "청량리": {
+    "name": "청량리",
+    "dataLine": "2-1",
+    "svgX": 1584.0,
+    "svgY": 421.3333333333333,
+    "distance": 10
+  },
+  "제기동": {
+    "name": "제기동",
+    "dataLine": "2-1",
+    "svgX": 1528.0,
+    "svgY": 416.0,
+    "distance": 10
+  },
+  "신설동": {
+    "name": "신설동",
+    "dataLine": "2-1",
+    "svgX": 1485.3333333333333,
+    "svgY": 416.0,
+    "distance": 15
+  },
+  "동묘앞": {
+    "name": "동묘앞",
+    "dataLine": "2-1",
+    "svgX": 1432.0,
+    "svgY": 416.0,
+    "distance": 14
+  },
+  "동대문": {
+    "name": "동대문",
+    "dataLine": "2-1",
+    "svgX": 1376.0,
+    "svgY": 416.0,
+    "distance": 14
+  },
+  "종로5가": {
+    "name": "종로5가",
+    "dataLine": "2-1",
+    "svgX": 1264.0,
+    "svgY": 416.0,
+    "distance": 10
+  },
+  "종로3가": {
+    "name": "종로3가",
+    "dataLine": "2-1",
+    "svgX": 1141.3333333333333,
+    "svgY": 416.0,
+    "distance": 11
+  },
+  "종각": {
+    "name": "종각",
+    "dataLine": "2-1",
+    "svgX": 1080.0,
+    "svgY": 472.0,
+    "distance": 11
+  },
+  "시청": {
+    "name": "시청",
+    "dataLine": "2-1",
+    "svgX": 1040.0,
+    "svgY": 528.0,
+    "distance": 11
+  },
+  "남영": {
+    "name": "남영",
+    "dataLine": "2-1",
+    "svgX": 1040.0,
+    "svgY": 680.0,
+    "distance": 9
+  },
+  "용산": {
+    "name": "용산",
+    "dataLine": "2-1",
+    "svgX": 1040.0,
+    "svgY": 848.0,
+    "distance": 11
+  },
+  "노량진": {
+    "name": "노량진",
+    "dataLine": "2-1",
+    "svgX": 936.0,
+    "svgY": 880.0,
+    "distance": 14
+  },
+  "대방": {
+    "name": "대방",
+    "dataLine": "2-1",
+    "svgX": 812.0,
+    "svgY": 852.0,
+    "distance": 14
+  },
+  "신길": {
+    "name": "신길",
+    "dataLine": "2-1",
+    "svgX": 756.0,
+    "svgY": 800.0,
+    "distance": 10
+  },
+  "영등포": {
+    "name": "영등포",
+    "dataLine": "2-1",
+    "svgX": 728.0,
+    "svgY": 824.0,
+    "distance": 11
+  },
+  "신도림": {
+    "name": "신도림",
+    "dataLine": "2-1",
+    "svgX": 692.0,
+    "svgY": 856.0,
+    "distance": 9
+  },
+  "구로": {
+    "name": "구로",
+    "dataLine": "2-1",
+    "svgX": 656.0,
+    "svgY": 896.0,
+    "distance": 9
+  },
+  "구일": {
+    "name": "구일",
+    "dataLine": "2-1",
+    "svgX": 632.0,
+    "svgY": 920.0,
+    "distance": 11
+  },
+  "개봉": {
+    "name": "개봉",
+    "dataLine": "2-1",
+    "svgX": 600.0,
+    "svgY": 928.0,
+    "distance": 15
+  },
+  "오류동": {
+    "name": "오류동",
+    "dataLine": "2-1",
+    "svgX": 560.0,
+    "svgY": 928.0,
+    "distance": 15
+  },
+  "온수": {
+    "name": "온수",
+    "dataLine": "2-1",
+    "svgX": 516.0,
+    "svgY": 936.0,
+    "distance": 10
+  },
+  "역곡": {
+    "name": "역곡",
+    "dataLine": "2-1",
+    "svgX": 480.0,
+    "svgY": 976.0,
+    "distance": 11
+  },
+  "소사": {
+    "name": "소사",
+    "dataLine": "2-1",
+    "svgX": 448.0,
+    "svgY": 1012.0,
+    "distance": 14
+  },
+  "부천": {
+    "name": "부천",
+    "dataLine": "2-1",
+    "svgX": 400.0,
+    "svgY": 1048.0,
+    "distance": 10
+  },
+  "중동": {
+    "name": "중동",
+    "dataLine": "2-1",
+    "svgX": 348.0,
+    "svgY": 1048.0,
+    "distance": 10
+  },
+  "송내": {
+    "name": "송내",
+    "dataLine": "2-1",
+    "svgX": 304.0,
+    "svgY": 1048.0,
+    "distance": 10
+  },
+  "부개": {
+    "name": "부개",
+    "dataLine": "2-1",
+    "svgX": 260.0,
+    "svgY": 1048.0,
+    "distance": 10
+  },
+  "부평": {
+    "name": "부평",
+    "dataLine": "2-1",
+    "svgX": 216.0,
+    "svgY": 1048.0,
+    "distance": 14
+  },
+  "백운": {
+    "name": "백운",
+    "dataLine": "2-1",
+    "svgX": 176.0,
+    "svgY": 1048.0,
+    "distance": 10
+  },
+  "동암": {
+    "name": "동암",
+    "dataLine": "2-1",
+    "svgX": 144.0,
+    "svgY": 1092.0,
+    "distance": 9
+  },
+  "간석": {
+    "name": "간석",
+    "dataLine": "2-1",
+    "svgX": 144.0,
+    "svgY": 1120.0,
+    "distance": 9
+  },
+  "주안": {
+    "name": "주안",
+    "dataLine": "2-1",
+    "svgX": 144.0,
+    "svgY": 1152.0,
+    "distance": 14
+  },
+  "도화": {
+    "name": "도화",
+    "dataLine": "2-1",
+    "svgX": 144.0,
+    "svgY": 1192.0,
+    "distance": 9
+  },
+  "제물포": {
+    "name": "제물포",
+    "dataLine": "2-1",
+    "svgX": 192.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "도원": {
+    "name": "도원",
+    "dataLine": "2-1",
+    "svgX": 240.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "동인천": {
+    "name": "동인천",
+    "dataLine": "2-1",
+    "svgX": 288.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "인천": {
+    "name": "인천",
+    "dataLine": "2-1",
+    "svgX": 344.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "가산디지털단지": {
+    "name": "가산디지털단지",
+    "dataLine": "2-1",
+    "svgX": 656.0,
+    "svgY": 1000.0,
+    "distance": 14
+  },
+  "독산": {
+    "name": "독산",
+    "dataLine": "2-1",
+    "svgX": 656.0,
+    "svgY": 1072.0,
+    "distance": 9
+  },
+  "금천구청": {
+    "name": "금천구청",
+    "dataLine": "2-1",
+    "svgX": 656.0,
+    "svgY": 1128.0,
+    "distance": 11
+  },
+  "광명": {
+    "name": "광명",
+    "dataLine": "2-1",
+    "svgX": 616.0,
+    "svgY": 1096.0,
+    "distance": 9
+  },
+  "석수": {
+    "name": "석수",
+    "dataLine": "2-1",
+    "svgX": 744.0,
+    "svgY": 1128.0,
+    "distance": 15
+  },
+  "관악": {
+    "name": "관악",
+    "dataLine": "2-1",
+    "svgX": 816.0,
+    "svgY": 1176.0,
+    "distance": 9
+  },
+  "안양": {
+    "name": "안양",
+    "dataLine": "2-1",
+    "svgX": 816.0,
+    "svgY": 1240.0,
+    "distance": 9
+  },
+  "명학": {
+    "name": "명학",
+    "dataLine": "2-1",
+    "svgX": 816.0,
+    "svgY": 1304.0,
+    "distance": 9
+  },
+  "금정": {
+    "name": "금정",
+    "dataLine": "2-1",
+    "svgX": 816.0,
+    "svgY": 1352.0,
+    "distance": 14
+  },
+  "군포": {
+    "name": "군포",
+    "dataLine": "2-1",
+    "svgX": 840.0,
+    "svgY": 1432.0,
+    "distance": 11
+  },
+  "당정": {
+    "name": "당정",
+    "dataLine": "2-1",
+    "svgX": 872.0,
+    "svgY": 1464.0,
+    "distance": 14
+  },
+  "의왕": {
+    "name": "의왕",
+    "dataLine": "2-1",
+    "svgX": 928.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "성균관대": {
+    "name": "성균관대",
+    "dataLine": "2-1",
+    "svgX": 984.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "화서": {
+    "name": "화서",
+    "dataLine": "2-1",
+    "svgX": 1028.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "수원": {
+    "name": "수원",
+    "dataLine": "2-1",
+    "svgX": 1064.0,
+    "svgY": 1496.0,
+    "distance": 14
+  },
+  "세류": {
+    "name": "세류",
+    "dataLine": "2-1",
+    "svgX": 1108.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "병점": {
+    "name": "병점",
+    "dataLine": "2-1",
+    "svgX": 1160.0,
+    "svgY": 1496.0,
+    "distance": 15
+  },
+  "세마": {
+    "name": "세마",
+    "dataLine": "2-1",
+    "svgX": 1208.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "오산대": {
+    "name": "오산대",
+    "dataLine": "2-1",
+    "svgX": 1264.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "오산": {
+    "name": "오산",
+    "dataLine": "2-1",
+    "svgX": 1312.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "진위": {
+    "name": "진위",
+    "dataLine": "2-1",
+    "svgX": 1360.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "송탄": {
+    "name": "송탄",
+    "dataLine": "2-1",
+    "svgX": 1408.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "서정리": {
+    "name": "서정리",
+    "dataLine": "2-1",
+    "svgX": 1460.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "평택지제": {
+    "name": "평택지제",
+    "dataLine": "2-1",
+    "svgX": 1512.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "평택": {
+    "name": "평택",
+    "dataLine": "2-1",
+    "svgX": 1560.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "성환": {
+    "name": "성환",
+    "dataLine": "2-1",
+    "svgX": 1608.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "직산": {
+    "name": "직산",
+    "dataLine": "2-1",
+    "svgX": 1656.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "두정": {
+    "name": "두정",
+    "dataLine": "2-1",
+    "svgX": 1704.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "천안": {
+    "name": "천안",
+    "dataLine": "2-1",
+    "svgX": 1752.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "봉명": {
+    "name": "봉명",
+    "dataLine": "2-1",
+    "svgX": 1800.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "쌍용": {
+    "name": "쌍용",
+    "dataLine": "2-1",
+    "svgX": 1856.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "아산": {
+    "name": "아산",
+    "dataLine": "2-1",
+    "svgX": 1908.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "탕정": {
+    "name": "탕정",
+    "dataLine": "2-1",
+    "svgX": 1960.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "배방": {
+    "name": "배방",
+    "dataLine": "2-1",
+    "svgX": 2024.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "온양온천": {
+    "name": "온양온천",
+    "dataLine": "2-1",
+    "svgX": 2088.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "신창": {
+    "name": "신창",
+    "dataLine": "2-1",
+    "svgX": 2152.0,
+    "svgY": 1496.0,
+    "distance": 10
+  },
+  "서동탄": {
+    "name": "서동탄",
+    "dataLine": "2-1",
+    "svgX": 1160.0,
+    "svgY": 1448.0,
+    "distance": 10
+  },
+  "까치산": {
+    "name": "까치산",
+    "dataLine": "3-2",
+    "svgX": 456.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "신정네거리": {
+    "name": "신정네거리",
+    "dataLine": "3-2",
+    "svgX": 512.0,
+    "svgY": 768.0,
+    "distance": 11
+  },
+  "양천구청": {
+    "name": "양천구청",
+    "dataLine": "3-2",
+    "svgX": 544.0,
+    "svgY": 800.0,
+    "distance": 11
+  },
+  "도림천": {
+    "name": "도림천",
+    "dataLine": "3-2",
+    "svgX": 576.0,
+    "svgY": 832.0,
+    "distance": 11
+  },
+  "문래": {
+    "name": "문래",
+    "dataLine": "3-2",
+    "svgX": 656.0,
+    "svgY": 776.0,
+    "distance": 9
+  },
+  "영등포구청": {
+    "name": "영등포구청",
+    "dataLine": "3-2",
+    "svgX": 656.0,
+    "svgY": 712.0,
+    "distance": 14
+  },
+  "당산": {
+    "name": "당산",
+    "dataLine": "3-2",
+    "svgX": 728.0,
+    "svgY": 688.0,
+    "distance": 14
+  },
+  "합정": {
+    "name": "합정",
+    "dataLine": "3-2",
+    "svgX": 808.0,
+    "svgY": 688.0,
+    "distance": 14
+  },
+  "홍대입구": {
+    "name": "홍대입구",
+    "dataLine": "3-2",
+    "svgX": 872.0,
+    "svgY": 632.0,
+    "distance": 11
+  },
+  "신촌": {
+    "name": "신촌",
+    "dataLine": "3-2",
+    "svgX": 872.0,
+    "svgY": 588.0,
+    "distance": 9
+  },
+  "이대": {
+    "name": "이대",
+    "dataLine": "3-2",
+    "svgX": 872.0,
+    "svgY": 568.0,
+    "distance": 9
+  },
+  "아현": {
+    "name": "아현",
+    "dataLine": "3-2",
+    "svgX": 872.0,
+    "svgY": 544.0,
+    "distance": 9
+  },
+  "충정로": {
+    "name": "충정로",
+    "dataLine": "3-2",
+    "svgX": 960.0,
+    "svgY": 528.0,
+    "distance": 11
+  },
+  "을지로입구": {
+    "name": "을지로입구",
+    "dataLine": "3-2",
+    "svgX": 1096.0,
+    "svgY": 528.0,
+    "distance": 10
+  },
+  "을지로3가": {
+    "name": "을지로3가",
+    "dataLine": "3-2",
+    "svgX": 1144.0,
+    "svgY": 528.0,
+    "distance": 11
+  },
+  "을지로4가": {
+    "name": "을지로4가",
+    "dataLine": "3-2",
+    "svgX": 1256.0,
+    "svgY": 524.0,
+    "distance": 14
+  },
+  "동대문역사문화공원": {
+    "name": "동대문역사문화공원",
+    "dataLine": "3-2",
+    "svgX": 1352.0,
+    "svgY": 525.3333333333334,
+    "distance": 11
+  },
+  "신당": {
+    "name": "신당",
+    "dataLine": "3-2",
+    "svgX": 1432.0,
+    "svgY": 528.0,
+    "distance": 14
+  },
+  "상왕십리": {
+    "name": "상왕십리",
+    "dataLine": "3-2",
+    "svgX": 1528.0,
+    "svgY": 552.0,
+    "distance": 14
+  },
+  "왕십리": {
+    "name": "왕십리",
+    "dataLine": "3-2",
+    "svgX": 1576.0,
+    "svgY": 600.0,
+    "distance": 11
+  },
+  "한양대": {
+    "name": "한양대",
+    "dataLine": "3-2",
+    "svgX": 1624.0,
+    "svgY": 648.0,
+    "distance": 14
+  },
+  "뚝섬": {
+    "name": "뚝섬",
+    "dataLine": "3-2",
+    "svgX": 1648.0,
+    "svgY": 672.0,
+    "distance": 14
+  },
+  "성수": {
+    "name": "성수",
+    "dataLine": "3-2",
+    "svgX": 1680.0,
+    "svgY": 704.0,
+    "distance": 14
+  },
+  "건대입구": {
+    "name": "건대입구",
+    "dataLine": "3-2",
+    "svgX": 1856.0,
+    "svgY": 752.0,
+    "distance": 11
+  },
+  "구의": {
+    "name": "구의",
+    "dataLine": "3-2",
+    "svgX": 1912.0,
+    "svgY": 776.0,
+    "distance": 11
+  },
+  "강변": {
+    "name": "강변",
+    "dataLine": "3-2",
+    "svgX": 1960.0,
+    "svgY": 824.0,
+    "distance": 11
+  },
+  "잠실나루": {
+    "name": "잠실나루",
+    "dataLine": "3-2",
+    "svgX": 2000.0,
+    "svgY": 912.0,
+    "distance": 9
+  },
+  "잠실": {
+    "name": "잠실",
+    "dataLine": "3-2",
+    "svgX": 2000.0,
+    "svgY": 992.0,
+    "distance": 9
+  },
+  "잠실새내": {
+    "name": "잠실새내",
+    "dataLine": "3-2",
+    "svgX": 1972.0,
+    "svgY": 1064.0,
+    "distance": 10
+  },
+  "종합운동장": {
+    "name": "종합운동장",
+    "dataLine": "3-2",
+    "svgX": 1824.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "삼성": {
+    "name": "삼성",
+    "dataLine": "3-2",
+    "svgX": 1728.0,
+    "svgY": 1064.0,
+    "distance": 10
+  },
+  "선릉": {
+    "name": "선릉",
+    "dataLine": "3-2",
+    "svgX": 1616.0,
+    "svgY": 1064.0,
+    "distance": 11
+  },
+  "역삼": {
+    "name": "역삼",
+    "dataLine": "3-2",
+    "svgX": 1544.0,
+    "svgY": 1064.0,
+    "distance": 10
+  },
+  "강남": {
+    "name": "강남",
+    "dataLine": "3-2",
+    "svgX": 1464.0,
+    "svgY": 1064.0,
+    "distance": 10
+  },
+  "교대": {
+    "name": "교대",
+    "dataLine": "3-2",
+    "svgX": 1368.0,
+    "svgY": 1064.0,
+    "distance": 11
+  },
+  "서초": {
+    "name": "서초",
+    "dataLine": "3-2",
+    "svgX": 1280.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "방배": {
+    "name": "방배",
+    "dataLine": "3-2",
+    "svgX": 1208.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "사당": {
+    "name": "사당",
+    "dataLine": "3-2",
+    "svgX": 1120.0,
+    "svgY": 1064.0,
+    "distance": 11
+  },
+  "낙성대": {
+    "name": "낙성대",
+    "dataLine": "3-2",
+    "svgX": 1076.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "서울대입구": {
+    "name": "서울대입구",
+    "dataLine": "3-2",
+    "svgX": 1008.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "봉천": {
+    "name": "봉천",
+    "dataLine": "3-2",
+    "svgX": 928.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "신림": {
+    "name": "신림",
+    "dataLine": "3-2",
+    "svgX": 868.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "신대방": {
+    "name": "신대방",
+    "dataLine": "3-2",
+    "svgX": 792.0,
+    "svgY": 1064.0,
+    "distance": 15
+  },
+  "구로디지털단지": {
+    "name": "구로디지털단지",
+    "dataLine": "3-2",
+    "svgX": 728.0,
+    "svgY": 1048.0,
+    "distance": 9
+  },
+  "대림": {
+    "name": "대림",
+    "dataLine": "3-2",
+    "svgX": 728.0,
+    "svgY": 1000.0,
+    "distance": 14
+  },
+  "용답": {
+    "name": "용답",
+    "dataLine": "3-2",
+    "svgX": 1680.0,
+    "svgY": 648.0,
+    "distance": 9
+  },
+  "신답": {
+    "name": "신답",
+    "dataLine": "3-2",
+    "svgX": 1552.0,
+    "svgY": 480.0,
+    "distance": 14
+  },
+  "용두": {
+    "name": "용두",
+    "dataLine": "3-2",
+    "svgX": 1520.0,
+    "svgY": 448.0,
+    "distance": 14
+  },
+  "대화": {
+    "name": "대화",
+    "dataLine": "4-3",
+    "svgX": 120.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "주엽": {
+    "name": "주엽",
+    "dataLine": "4-3",
+    "svgX": 184.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "정발산": {
+    "name": "정발산",
+    "dataLine": "4-3",
+    "svgX": 244.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "마두": {
+    "name": "마두",
+    "dataLine": "4-3",
+    "svgX": 303.2,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "백석": {
+    "name": "백석",
+    "dataLine": "4-3",
+    "svgX": 360.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "화정": {
+    "name": "화정",
+    "dataLine": "4-3",
+    "svgX": 452.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "원당": {
+    "name": "원당",
+    "dataLine": "4-3",
+    "svgX": 496.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "원흥": {
+    "name": "원흥",
+    "dataLine": "4-3",
+    "svgX": 536.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "삼송": {
+    "name": "삼송",
+    "dataLine": "4-3",
+    "svgX": 576.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "지축": {
+    "name": "지축",
+    "dataLine": "4-3",
+    "svgX": 617.6,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "구파발": {
+    "name": "구파발",
+    "dataLine": "4-3",
+    "svgX": 662.4,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "불광": {
+    "name": "불광",
+    "dataLine": "4-3",
+    "svgX": 792.0,
+    "svgY": 256.0,
+    "distance": 14
+  },
+  "녹번": {
+    "name": "녹번",
+    "dataLine": "4-3",
+    "svgX": 860.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "홍제": {
+    "name": "홍제",
+    "dataLine": "4-3",
+    "svgX": 912.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "무악재": {
+    "name": "무악재",
+    "dataLine": "4-3",
+    "svgX": 960.0,
+    "svgY": 256.0,
+    "distance": 10
+  },
+  "독립문": {
+    "name": "독립문",
+    "dataLine": "4-3",
+    "svgX": 1024.0,
+    "svgY": 296.0,
+    "distance": 11
+  },
+  "경복궁": {
+    "name": "경복궁",
+    "dataLine": "4-3",
+    "svgX": 1064.0,
+    "svgY": 336.0,
+    "distance": 11
+  },
+  "안국": {
+    "name": "안국",
+    "dataLine": "4-3",
+    "svgX": 1096.0,
+    "svgY": 368.0,
+    "distance": 11
+  },
+  "충무로": {
+    "name": "충무로",
+    "dataLine": "4-3",
+    "svgX": 1236.0,
+    "svgY": 616.0,
+    "distance": 11
+  },
+  "동대입구": {
+    "name": "동대입구",
+    "dataLine": "4-3",
+    "svgX": 1288.0,
+    "svgY": 672.0,
+    "distance": 14
+  },
+  "약수": {
+    "name": "약수",
+    "dataLine": "4-3",
+    "svgX": 1352.0,
+    "svgY": 736.0,
+    "distance": 11
+  },
+  "금호": {
+    "name": "금호",
+    "dataLine": "4-3",
+    "svgX": 1368.0,
+    "svgY": 776.0,
+    "distance": 9
+  },
+  "옥수": {
+    "name": "옥수",
+    "dataLine": "4-3",
+    "svgX": 1368.0,
+    "svgY": 824.0,
+    "distance": 9
+  },
+  "압구정": {
+    "name": "압구정",
+    "dataLine": "4-3",
+    "svgX": 1368.0,
+    "svgY": 888.0,
+    "distance": 9
+  },
+  "신사": {
+    "name": "신사",
+    "dataLine": "4-3",
+    "svgX": 1368.0,
+    "svgY": 924.0,
+    "distance": 9
+  },
+  "잠원": {
+    "name": "잠원",
+    "dataLine": "4-3",
+    "svgX": 1368.0,
+    "svgY": 952.0,
+    "distance": 9
+  },
+  "고속터미널": {
+    "name": "고속터미널",
+    "dataLine": "4-3",
+    "svgX": 1368.0,
+    "svgY": 1008.0,
+    "distance": 14
+  },
+  "남부터미널": {
+    "name": "남부터미널",
+    "dataLine": "4-3",
+    "svgX": 1400.0,
+    "svgY": 1096.0,
+    "distance": 14
+  },
+  "양재": {
+    "name": "양재",
+    "dataLine": "4-3",
+    "svgX": 1464.0,
+    "svgY": 1136.0,
+    "distance": 14
+  },
+  "매봉": {
+    "name": "매봉",
+    "dataLine": "4-3",
+    "svgX": 1528.0,
+    "svgY": 1136.0,
+    "distance": 10
+  },
+  "도곡": {
+    "name": "도곡",
+    "dataLine": "4-3",
+    "svgX": 1616.0,
+    "svgY": 1136.0,
+    "distance": 14
+  },
+  "대치": {
+    "name": "대치",
+    "dataLine": "4-3",
+    "svgX": 1696.0,
+    "svgY": 1136.0,
+    "distance": 10
+  },
+  "학여울": {
+    "name": "학여울",
+    "dataLine": "4-3",
+    "svgX": 1768.0,
+    "svgY": 1136.0,
+    "distance": 10
+  },
+  "대청": {
+    "name": "대청",
+    "dataLine": "4-3",
+    "svgX": 1872.0,
+    "svgY": 1136.0,
+    "distance": 10
+  },
+  "일원": {
+    "name": "일원",
+    "dataLine": "4-3",
+    "svgX": 1944.0,
+    "svgY": 1136.0,
+    "distance": 10
+  },
+  "가락시장": {
+    "name": "가락시장",
+    "dataLine": "4-3",
+    "svgX": 2124.0,
+    "svgY": 1120.0,
+    "distance": 9
+  },
+  "경찰병원": {
+    "name": "경찰병원",
+    "dataLine": "4-3",
+    "svgX": 2192.0,
+    "svgY": 1056.0,
+    "distance": 11
+  },
+  "오금": {
+    "name": "오금",
+    "dataLine": "4-3",
+    "svgX": 2248.0,
+    "svgY": 1000.0,
+    "distance": 9
+  },
+  "진접": {
+    "name": "진접",
+    "dataLine": "5-4",
+    "svgX": 2056.0,
+    "svgY": 104.0,
+    "distance": 11
+  },
+  "오남": {
+    "name": "오남",
+    "dataLine": "5-4",
+    "svgX": 2024.0,
+    "svgY": 136.0,
+    "distance": 11
+  },
+  "별내별가람": {
+    "name": "별내별가람",
+    "dataLine": "5-4",
+    "svgX": 1992.0,
+    "svgY": 168.0,
+    "distance": 11
+  },
+  "불암산": {
+    "name": "불암산",
+    "dataLine": "5-4",
+    "svgX": 1960.0,
+    "svgY": 200.0,
+    "distance": 11
+  },
+  "상계": {
+    "name": "상계",
+    "dataLine": "5-4",
+    "svgX": 1904.0,
+    "svgY": 224.0,
+    "distance": 10
+  },
+  "노원": {
+    "name": "노원",
+    "dataLine": "5-4",
+    "svgX": 1832.0,
+    "svgY": 224.0,
+    "distance": 11
+  },
+  "쌍문": {
+    "name": "쌍문",
+    "dataLine": "5-4",
+    "svgX": 1640.0,
+    "svgY": 224.0,
+    "distance": 10
+  },
+  "수유": {
+    "name": "수유",
+    "dataLine": "5-4",
+    "svgX": 1592.0,
+    "svgY": 224.0,
+    "distance": 10
+  },
+  "미아": {
+    "name": "미아",
+    "dataLine": "5-4",
+    "svgX": 1520.0,
+    "svgY": 224.0,
+    "distance": 10
+  },
+  "미아사거리": {
+    "name": "미아사거리",
+    "dataLine": "5-4",
+    "svgX": 1456.0,
+    "svgY": 224.0,
+    "distance": 10
+  },
+  "길음": {
+    "name": "길음",
+    "dataLine": "5-4",
+    "svgX": 1400.0,
+    "svgY": 224.0,
+    "distance": 10
+  },
+  "성신여대입구": {
+    "name": "성신여대입구",
+    "dataLine": "5-4",
+    "svgX": 1380.0,
+    "svgY": 248.0,
+    "distance": 9
+  },
+  "한성대입구": {
+    "name": "한성대입구",
+    "dataLine": "5-4",
+    "svgX": 1376.0,
+    "svgY": 296.0,
+    "distance": 9
+  },
+  "혜화": {
+    "name": "혜화",
+    "dataLine": "5-4",
+    "svgX": 1376.0,
+    "svgY": 344.0,
+    "distance": 9
+  },
+  "명동": {
+    "name": "명동",
+    "dataLine": "5-4",
+    "svgX": 1184.0,
+    "svgY": 616.0,
+    "distance": 10
+  },
+  "회현": {
+    "name": "회현",
+    "dataLine": "5-4",
+    "svgX": 1136.0,
+    "svgY": 616.0,
+    "distance": 10
+  },
+  "숙대입구": {
+    "name": "숙대입구",
+    "dataLine": "5-4",
+    "svgX": 1096.0,
+    "svgY": 672.0,
+    "distance": 11
+  },
+  "삼각지": {
+    "name": "삼각지",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 736.0,
+    "distance": 14
+  },
+  "신용산": {
+    "name": "신용산",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 800.0,
+    "distance": 9
+  },
+  "이촌": {
+    "name": "이촌",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 848.0,
+    "distance": 11
+  },
+  "동작": {
+    "name": "동작",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 936.0,
+    "distance": 11
+  },
+  "총신대입구": {
+    "name": "총신대입구",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 1000.0,
+    "distance": 11
+  },
+  "남태령": {
+    "name": "남태령",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 1104.0,
+    "distance": 9
+  },
+  "선바위": {
+    "name": "선바위",
+    "dataLine": "5-4",
+    "svgX": 1120.0,
+    "svgY": 1136.0,
+    "distance": 9
+  },
+  "경마공원": {
+    "name": "경마공원",
+    "dataLine": "5-4",
+    "svgX": 1104.0,
+    "svgY": 1168.0,
+    "distance": 14
+  },
+  "대공원": {
+    "name": "대공원",
+    "dataLine": "5-4",
+    "svgX": 1072.0,
+    "svgY": 1200.0,
+    "distance": 14
+  },
+  "과천": {
+    "name": "과천",
+    "dataLine": "5-4",
+    "svgX": 1040.0,
+    "svgY": 1224.0,
+    "distance": 15
+  },
+  "정부과천청사": {
+    "name": "정부과천청사",
+    "dataLine": "5-4",
+    "svgX": 984.0,
+    "svgY": 1224.0,
+    "distance": 15
+  },
+  "인덕원": {
+    "name": "인덕원",
+    "dataLine": "5-4",
+    "svgX": 912.0,
+    "svgY": 1256.0,
+    "distance": 14
+  },
+  "평촌": {
+    "name": "평촌",
+    "dataLine": "5-4",
+    "svgX": 880.0,
+    "svgY": 1288.0,
+    "distance": 14
+  },
+  "범계": {
+    "name": "범계",
+    "dataLine": "5-4",
+    "svgX": 848.0,
+    "svgY": 1320.0,
+    "distance": 14
+  },
+  "산본": {
+    "name": "산본",
+    "dataLine": "5-4",
+    "svgX": 784.0,
+    "svgY": 1384.0,
+    "distance": 11
+  },
+  "수리산": {
+    "name": "수리산",
+    "dataLine": "5-4",
+    "svgX": 752.0,
+    "svgY": 1416.0,
+    "distance": 11
+  },
+  "대야미": {
+    "name": "대야미",
+    "dataLine": "5-4",
+    "svgX": 720.0,
+    "svgY": 1448.0,
+    "distance": 11
+  },
+  "반월": {
+    "name": "반월",
+    "dataLine": "5-4",
+    "svgX": 648.0,
+    "svgY": 1488.0,
+    "distance": 10
+  },
+  "상록수": {
+    "name": "상록수",
+    "dataLine": "5-4",
+    "svgX": 600.0,
+    "svgY": 1488.0,
+    "distance": 10
+  },
+  "한대앞": {
+    "name": "한대앞",
+    "dataLine": "5-4",
+    "svgX": 552.0,
+    "svgY": 1492.0,
+    "distance": 10
+  },
+  "중앙": {
+    "name": "중앙",
+    "dataLine": "5-4",
+    "svgX": 504.0,
+    "svgY": 1492.0,
+    "distance": 15
+  },
+  "고잔": {
+    "name": "고잔",
+    "dataLine": "5-4",
+    "svgX": 456.0,
+    "svgY": 1492.0,
+    "distance": 10
+  },
+  "초지": {
+    "name": "초지",
+    "dataLine": "5-4",
+    "svgX": 408.0,
+    "svgY": 1488.0,
+    "distance": 14
+  },
+  "안산": {
+    "name": "안산",
+    "dataLine": "5-4",
+    "svgX": 360.0,
+    "svgY": 1492.0,
+    "distance": 10
+  },
+  "신길온천": {
+    "name": "신길온천",
+    "dataLine": "5-4",
+    "svgX": 304.0,
+    "svgY": 1492.0,
+    "distance": 10
+  },
+  "정왕": {
+    "name": "정왕",
+    "dataLine": "5-4",
+    "svgX": 240.0,
+    "svgY": 1492.0,
+    "distance": 10
+  },
+  "오이도": {
+    "name": "오이도",
+    "dataLine": "5-4",
+    "svgX": 152.0,
+    "svgY": 1492.0,
+    "distance": 14
+  },
+  "방화": {
+    "name": "방화",
+    "dataLine": "6-5",
+    "svgX": 328.0,
+    "svgY": 416.0,
+    "distance": 9
+  },
+  "개화산": {
+    "name": "개화산",
+    "dataLine": "6-5",
+    "svgX": 328.0,
+    "svgY": 472.0,
+    "distance": 9
+  },
+  "김포공항": {
+    "name": "김포공항",
+    "dataLine": "6-5",
+    "svgX": 328.0,
+    "svgY": 544.0,
+    "distance": 14
+  },
+  "송정": {
+    "name": "송정",
+    "dataLine": "6-5",
+    "svgX": 328.0,
+    "svgY": 580.0,
+    "distance": 9
+  },
+  "마곡": {
+    "name": "마곡",
+    "dataLine": "6-5",
+    "svgX": 328.0,
+    "svgY": 620.0,
+    "distance": 9
+  },
+  "발산": {
+    "name": "발산",
+    "dataLine": "6-5",
+    "svgX": 328.0,
+    "svgY": 662.4,
+    "distance": 9
+  },
+  "우장산": {
+    "name": "우장산",
+    "dataLine": "6-5",
+    "svgX": 352.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "화곡": {
+    "name": "화곡",
+    "dataLine": "6-5",
+    "svgX": 400.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "신정": {
+    "name": "신정",
+    "dataLine": "6-5",
+    "svgX": 504.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "목동": {
+    "name": "목동",
+    "dataLine": "6-5",
+    "svgX": 544.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "오목교": {
+    "name": "오목교",
+    "dataLine": "6-5",
+    "svgX": 584.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "양평": {
+    "name": "양평",
+    "dataLine": "6-5",
+    "svgX": 624.0,
+    "svgY": 712.0,
+    "distance": 10
+  },
+  "영등포시장": {
+    "name": "영등포시장",
+    "dataLine": "6-5",
+    "svgX": 700.0,
+    "svgY": 752.0,
+    "distance": 9
+  },
+  "여의도": {
+    "name": "여의도",
+    "dataLine": "6-5",
+    "svgX": 832.0,
+    "svgY": 784.0,
+    "distance": 15
+  },
+  "여의나루": {
+    "name": "여의나루",
+    "dataLine": "6-5",
+    "svgX": 896.0,
+    "svgY": 784.0,
+    "distance": 15
+  },
+  "마포": {
+    "name": "마포",
+    "dataLine": "6-5",
+    "svgX": 952.0,
+    "svgY": 784.0,
+    "distance": 15
+  },
+  "공덕": {
+    "name": "공덕",
+    "dataLine": "6-5",
+    "svgX": 960.0,
+    "svgY": 724.0,
+    "distance": 9
+  },
+  "애오개": {
+    "name": "애오개",
+    "dataLine": "6-5",
+    "svgX": 960.0,
+    "svgY": 544.0,
+    "distance": 9
+  },
+  "서대문": {
+    "name": "서대문",
+    "dataLine": "6-5",
+    "svgX": 960.0,
+    "svgY": 456.0,
+    "distance": 9
+  },
+  "광화문": {
+    "name": "광화문",
+    "dataLine": "6-5",
+    "svgX": 1024.0,
+    "svgY": 416.0,
+    "distance": 10
+  },
+  "청구": {
+    "name": "청구",
+    "dataLine": "6-5",
+    "svgX": 1352.0,
+    "svgY": 608.0,
+    "distance": 14
+  },
+  "신금호": {
+    "name": "신금호",
+    "dataLine": "6-5",
+    "svgX": 1440.0,
+    "svgY": 608.0,
+    "distance": 10
+  },
+  "행당": {
+    "name": "행당",
+    "dataLine": "6-5",
+    "svgX": 1504.0,
+    "svgY": 608.0,
+    "distance": 10
+  },
+  "마장": {
+    "name": "마장",
+    "dataLine": "6-5",
+    "svgX": 1648.0,
+    "svgY": 608.0,
+    "distance": 15
+  },
+  "답십리": {
+    "name": "답십리",
+    "dataLine": "6-5",
+    "svgX": 1728.0,
+    "svgY": 608.0,
+    "distance": 10
+  },
+  "장한평": {
+    "name": "장한평",
+    "dataLine": "6-5",
+    "svgX": 1800.0,
+    "svgY": 608.0,
+    "distance": 10
+  },
+  "군자": {
+    "name": "군자",
+    "dataLine": "6-5",
+    "svgX": 1856.0,
+    "svgY": 608.0,
+    "distance": 11
+  },
+  "아차산": {
+    "name": "아차산",
+    "dataLine": "6-5",
+    "svgX": 1968.0,
+    "svgY": 648.0,
+    "distance": 11
+  },
+  "광나루": {
+    "name": "광나루",
+    "dataLine": "6-5",
+    "svgX": 2032.0,
+    "svgY": 712.0,
+    "distance": 11
+  },
+  "천호": {
+    "name": "천호",
+    "dataLine": "6-5",
+    "svgX": 2160.0,
+    "svgY": 840.0,
+    "distance": 9
+  },
+  "강동": {
+    "name": "강동",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 840.0,
+    "distance": 9
+  },
+  "길동": {
+    "name": "길동",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 800.0,
+    "distance": 9
+  },
+  "굽은다리": {
+    "name": "굽은다리",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 760.0,
+    "distance": 9
+  },
+  "명일": {
+    "name": "명일",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 720.0,
+    "distance": 9
+  },
+  "고덕": {
+    "name": "고덕",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 680.0,
+    "distance": 9
+  },
+  "상일동": {
+    "name": "상일동",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 640.0,
+    "distance": 9
+  },
+  "강일": {
+    "name": "강일",
+    "dataLine": "6-5",
+    "svgX": 2320.0,
+    "svgY": 640.0,
+    "distance": 9
+  },
+  "미사": {
+    "name": "미사",
+    "dataLine": "6-5",
+    "svgX": 2320.0,
+    "svgY": 672.0,
+    "distance": 9
+  },
+  "하남풍산": {
+    "name": "하남풍산",
+    "dataLine": "6-5",
+    "svgX": 2320.0,
+    "svgY": 704.0,
+    "distance": 9
+  },
+  "하남시청": {
+    "name": "하남시청",
+    "dataLine": "6-5",
+    "svgX": 2320.0,
+    "svgY": 736.0,
+    "distance": 9
+  },
+  "하남검단산": {
+    "name": "하남검단산",
+    "dataLine": "6-5",
+    "svgX": 2320.0,
+    "svgY": 768.0,
+    "distance": 9
+  },
+  "둔촌동": {
+    "name": "둔촌동",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 880.0,
+    "distance": 9
+  },
+  "올림픽공원": {
+    "name": "올림픽공원",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 920.0,
+    "distance": 14
+  },
+  "방이": {
+    "name": "방이",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 960.0,
+    "distance": 9
+  },
+  "개롱": {
+    "name": "개롱",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 1040.0,
+    "distance": 9
+  },
+  "거여": {
+    "name": "거여",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 1080.0,
+    "distance": 9
+  },
+  "마천": {
+    "name": "마천",
+    "dataLine": "6-5",
+    "svgX": 2248.0,
+    "svgY": 1120.0,
+    "distance": 9
+  },
+  "신내": {
+    "name": "신내",
+    "dataLine": "7-6",
+    "svgX": 2008.0,
+    "svgY": 388.0,
+    "distance": 9
+  },
+  "봉화산": {
+    "name": "봉화산",
+    "dataLine": "7-6",
+    "svgX": 1984.0,
+    "svgY": 360.0,
+    "distance": 9
+  },
+  "화랑대": {
+    "name": "화랑대",
+    "dataLine": "7-6",
+    "svgX": 1904.0,
+    "svgY": 336.0,
+    "distance": 11
+  },
+  "태릉입구": {
+    "name": "태릉입구",
+    "dataLine": "7-6",
+    "svgX": 1856.0,
+    "svgY": 336.0,
+    "distance": 11
+  },
+  "돌곶이": {
+    "name": "돌곶이",
+    "dataLine": "7-6",
+    "svgX": 1664.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "상월곡": {
+    "name": "상월곡",
+    "dataLine": "7-6",
+    "svgX": 1608.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "월곡": {
+    "name": "월곡",
+    "dataLine": "7-6",
+    "svgX": 1544.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "고려대": {
+    "name": "고려대",
+    "dataLine": "7-6",
+    "svgX": 1496.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "안암": {
+    "name": "안암",
+    "dataLine": "7-6",
+    "svgX": 1440.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "보문": {
+    "name": "보문",
+    "dataLine": "7-6",
+    "svgX": 1432.0,
+    "svgY": 356.0,
+    "distance": 9
+  },
+  "창신": {
+    "name": "창신",
+    "dataLine": "7-6",
+    "svgX": 1432.0,
+    "svgY": 384.0,
+    "distance": 9
+  },
+  "버티고개": {
+    "name": "버티고개",
+    "dataLine": "7-6",
+    "svgX": 1312.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "한강진": {
+    "name": "한강진",
+    "dataLine": "7-6",
+    "svgX": 1264.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "이태원": {
+    "name": "이태원",
+    "dataLine": "7-6",
+    "svgX": 1200.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "녹사평": {
+    "name": "녹사평",
+    "dataLine": "7-6",
+    "svgX": 1152.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "효창공원앞": {
+    "name": "효창공원앞",
+    "dataLine": "7-6",
+    "svgX": 1008.0,
+    "svgY": 728.0,
+    "distance": 10
+  },
+  "대흥": {
+    "name": "대흥",
+    "dataLine": "7-6",
+    "svgX": 920.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "광흥창": {
+    "name": "광흥창",
+    "dataLine": "7-6",
+    "svgX": 864.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "상수": {
+    "name": "상수",
+    "dataLine": "7-6",
+    "svgX": 832.0,
+    "svgY": 712.0,
+    "distance": 11
+  },
+  "망원": {
+    "name": "망원",
+    "dataLine": "7-6",
+    "svgX": 768.0,
+    "svgY": 648.0,
+    "distance": 11
+  },
+  "마포구청": {
+    "name": "마포구청",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 576.0,
+    "distance": 9
+  },
+  "월드컵경기장": {
+    "name": "월드컵경기장",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 536.0,
+    "distance": 9
+  },
+  "디지털미디어시티": {
+    "name": "디지털미디어시티",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 477.3333333333333,
+    "distance": 11
+  },
+  "증산": {
+    "name": "증산",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 424.0,
+    "distance": 9
+  },
+  "새절": {
+    "name": "새절",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 376.0,
+    "distance": 9
+  },
+  "응암": {
+    "name": "응암",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 304.0,
+    "distance": 14
+  },
+  "역촌": {
+    "name": "역촌",
+    "dataLine": "7-6",
+    "svgX": 768.0,
+    "svgY": 280.0,
+    "distance": 14
+  },
+  "독바위": {
+    "name": "독바위",
+    "dataLine": "7-6",
+    "svgX": 744.0,
+    "svgY": 208.0,
+    "distance": 10
+  },
+  "구산": {
+    "name": "구산",
+    "dataLine": "7-6",
+    "svgX": 720.0,
+    "svgY": 280.0,
+    "distance": 14
+  },
+  "석남": {
+    "name": "석남",
+    "dataLine": "8-7",
+    "svgX": 56.0,
+    "svgY": 904.0,
+    "distance": 11
+  },
+  "산곡": {
+    "name": "산곡",
+    "dataLine": "8-7",
+    "svgX": 152.0,
+    "svgY": 944.0,
+    "distance": 10
+  },
+  "부평구청": {
+    "name": "부평구청",
+    "dataLine": "8-7",
+    "svgX": 216.0,
+    "svgY": 944.0,
+    "distance": 9
+  },
+  "굴포천": {
+    "name": "굴포천",
+    "dataLine": "8-7",
+    "svgX": 304.0,
+    "svgY": 856.0,
+    "distance": 14
+  },
+  "삼산체육관": {
+    "name": "삼산체육관",
+    "dataLine": "8-7",
+    "svgX": 328.0,
+    "svgY": 832.0,
+    "distance": 9
+  },
+  "상동": {
+    "name": "상동",
+    "dataLine": "8-7",
+    "svgX": 328.0,
+    "svgY": 800.0,
+    "distance": 9
+  },
+  "부천시청": {
+    "name": "부천시청",
+    "dataLine": "8-7",
+    "svgX": 376.0,
+    "svgY": 768.0,
+    "distance": 10
+  },
+  "신중동": {
+    "name": "신중동",
+    "dataLine": "8-7",
+    "svgX": 424.0,
+    "svgY": 776.0,
+    "distance": 11
+  },
+  "춘의": {
+    "name": "춘의",
+    "dataLine": "8-7",
+    "svgX": 448.0,
+    "svgY": 800.0,
+    "distance": 11
+  },
+  "부천종합운동장": {
+    "name": "부천종합운동장",
+    "dataLine": "8-7",
+    "svgX": 456.0,
+    "svgY": 844.0,
+    "distance": 14
+  },
+  "까치울": {
+    "name": "까치울",
+    "dataLine": "8-7",
+    "svgX": 456.0,
+    "svgY": 880.0,
+    "distance": 14
+  },
+  "천왕": {
+    "name": "천왕",
+    "dataLine": "8-7",
+    "svgX": 536.0,
+    "svgY": 960.0,
+    "distance": 14
+  },
+  "광명사거리": {
+    "name": "광명사거리",
+    "dataLine": "8-7",
+    "svgX": 560.0,
+    "svgY": 984.0,
+    "distance": 14
+  },
+  "철산": {
+    "name": "철산",
+    "dataLine": "8-7",
+    "svgX": 616.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "남구로": {
+    "name": "남구로",
+    "dataLine": "8-7",
+    "svgX": 688.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "신풍": {
+    "name": "신풍",
+    "dataLine": "8-7",
+    "svgX": 768.0,
+    "svgY": 1000.0,
+    "distance": 11
+  },
+  "보라매": {
+    "name": "보라매",
+    "dataLine": "8-7",
+    "svgX": 828.0,
+    "svgY": 1000.0,
+    "distance": 11
+  },
+  "신대방삼거리": {
+    "name": "신대방삼거리",
+    "dataLine": "8-7",
+    "svgX": 880.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "장승배기": {
+    "name": "장승배기",
+    "dataLine": "8-7",
+    "svgX": 928.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "상도": {
+    "name": "상도",
+    "dataLine": "8-7",
+    "svgX": 976.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "숭실대입구": {
+    "name": "숭실대입구",
+    "dataLine": "8-7",
+    "svgX": 1032.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "남성": {
+    "name": "남성",
+    "dataLine": "8-7",
+    "svgX": 1088.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "내방": {
+    "name": "내방",
+    "dataLine": "8-7",
+    "svgX": 1264.0,
+    "svgY": 1000.0,
+    "distance": 10
+  },
+  "반포": {
+    "name": "반포",
+    "dataLine": "8-7",
+    "svgX": 1496.0,
+    "svgY": 936.0,
+    "distance": 10
+  },
+  "논현": {
+    "name": "논현",
+    "dataLine": "8-7",
+    "svgX": 1552.0,
+    "svgY": 940.0,
+    "distance": 11
+  },
+  "학동": {
+    "name": "학동",
+    "dataLine": "8-7",
+    "svgX": 1640.0,
+    "svgY": 936.0,
+    "distance": 10
+  },
+  "강남구청": {
+    "name": "강남구청",
+    "dataLine": "8-7",
+    "svgX": 1744.0,
+    "svgY": 888.0,
+    "distance": 14
+  },
+  "청담": {
+    "name": "청담",
+    "dataLine": "8-7",
+    "svgX": 1800.0,
+    "svgY": 832.0,
+    "distance": 14
+  },
+  "자양": {
+    "name": "자양",
+    "dataLine": "8-7",
+    "svgX": 1848.0,
+    "svgY": 784.0,
+    "distance": 14
+  },
+  "어린이대공원": {
+    "name": "어린이대공원",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 672.0,
+    "distance": 9
+  },
+  "중곡": {
+    "name": "중곡",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 560.0,
+    "distance": 9
+  },
+  "용마산": {
+    "name": "용마산",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 528.0,
+    "distance": 9
+  },
+  "사가정": {
+    "name": "사가정",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 496.0,
+    "distance": 9
+  },
+  "면목": {
+    "name": "면목",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 464.0,
+    "distance": 9
+  },
+  "상봉": {
+    "name": "상봉",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 420.0,
+    "distance": 9
+  },
+  "중화": {
+    "name": "중화",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 384.0,
+    "distance": 9
+  },
+  "먹골": {
+    "name": "먹골",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 360.0,
+    "distance": 9
+  },
+  "공릉": {
+    "name": "공릉",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 296.0,
+    "distance": 9
+  },
+  "하계": {
+    "name": "하계",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 272.0,
+    "distance": 9
+  },
+  "중계": {
+    "name": "중계",
+    "dataLine": "8-7",
+    "svgX": 1856.0,
+    "svgY": 248.0,
+    "distance": 9
+  },
+  "마들": {
+    "name": "마들",
+    "dataLine": "8-7",
+    "svgX": 1792.0,
+    "svgY": 184.0,
+    "distance": 9
+  },
+  "수락산": {
+    "name": "수락산",
+    "dataLine": "8-7",
+    "svgX": 1760.0,
+    "svgY": 152.0,
+    "distance": 9
+  },
+  "장암": {
+    "name": "장암",
+    "dataLine": "8-7",
+    "svgX": 1840.0,
+    "svgY": 104.0,
+    "distance": 10
+  },
+  "별내": {
+    "name": "별내",
+    "dataLine": "9-8",
+    "svgX": 2072.0,
+    "svgY": 360.0,
+    "distance": 13
+  },
+  "다산": {
+    "name": "다산",
+    "dataLine": "9-8",
+    "svgX": 2072.0,
+    "svgY": 360.0,
+    "distance": 9
+  },
+  "동구릉": {
+    "name": "동구릉",
+    "dataLine": "9-8",
+    "svgX": 2072.0,
+    "svgY": 392.0,
+    "distance": 9
+  },
+  "구리": {
+    "name": "구리",
+    "dataLine": "9-8",
+    "svgX": 2072.0,
+    "svgY": 432.0,
+    "distance": 15
+  },
+  "장자호수공원": {
+    "name": "장자호수공원",
+    "dataLine": "9-8",
+    "svgX": 2072.0,
+    "svgY": 464.0,
+    "distance": 9
+  },
+  "암사역사공원": {
+    "name": "암사역사공원",
+    "dataLine": "9-8",
+    "svgX": 2160.0,
+    "svgY": 656.0,
+    "distance": 9
+  },
+  "암사": {
+    "name": "암사",
+    "dataLine": "9-8",
+    "svgX": 2160.0,
+    "svgY": 776.0,
+    "distance": 9
+  },
+  "강동구청": {
+    "name": "강동구청",
+    "dataLine": "9-8",
+    "svgX": 2112.0,
+    "svgY": 886.4000000000001,
+    "distance": 14
+  },
+  "몽촌토성": {
+    "name": "몽촌토성",
+    "dataLine": "9-8",
+    "svgX": 2064.0,
+    "svgY": 932.0,
+    "distance": 14
+  },
+  "석촌": {
+    "name": "석촌",
+    "dataLine": "9-8",
+    "svgX": 2040.0,
+    "svgY": 1036.0,
+    "distance": 9
+  },
+  "송파": {
+    "name": "송파",
+    "dataLine": "9-8",
+    "svgX": 2080.0,
+    "svgY": 1072.0,
+    "distance": 11
+  },
+  "문정": {
+    "name": "문정",
+    "dataLine": "9-8",
+    "svgX": 2152.0,
+    "svgY": 1144.0,
+    "distance": 11
+  },
+  "장지": {
+    "name": "장지",
+    "dataLine": "9-8",
+    "svgX": 2184.0,
+    "svgY": 1176.0,
+    "distance": 11
+  },
+  "복정": {
+    "name": "복정",
+    "dataLine": "9-8",
+    "svgX": 2208.0,
+    "svgY": 1200.0,
+    "distance": 11
+  },
+  "남위례": {
+    "name": "남위례",
+    "dataLine": "9-8",
+    "svgX": 2248.0,
+    "svgY": 1240.0,
+    "distance": 11
+  },
+  "산성": {
+    "name": "산성",
+    "dataLine": "9-8",
+    "svgX": 2272.0,
+    "svgY": 1272.0,
+    "distance": 9
+  },
+  "남한산성입구": {
+    "name": "남한산성입구",
+    "dataLine": "9-8",
+    "svgX": 2272.0,
+    "svgY": 1320.0,
+    "distance": 9
+  },
+  "단대오거리": {
+    "name": "단대오거리",
+    "dataLine": "9-8",
+    "svgX": 2220.0,
+    "svgY": 1328.0,
+    "distance": 10
+  },
+  "신흥": {
+    "name": "신흥",
+    "dataLine": "9-8",
+    "svgX": 2160.0,
+    "svgY": 1328.0,
+    "distance": 10
+  },
+  "수진": {
+    "name": "수진",
+    "dataLine": "9-8",
+    "svgX": 2096.0,
+    "svgY": 1312.0,
+    "distance": 11
+  },
+  "모란": {
+    "name": "모란",
+    "dataLine": "9-8",
+    "svgX": 2064.0,
+    "svgY": 1264.0,
+    "distance": 14
+  },
+  "개화": {
+    "name": "개화",
+    "dataLine": "10-9",
+    "svgX": 288.0,
+    "svgY": 416.0,
+    "distance": 9
+  },
+  "공항시장": {
+    "name": "공항시장",
+    "dataLine": "10-9",
+    "svgX": 360.0,
+    "svgY": 528.0,
+    "distance": 11
+  },
+  "신방화": {
+    "name": "신방화",
+    "dataLine": "10-9",
+    "svgX": 400.0,
+    "svgY": 544.0,
+    "distance": 11
+  },
+  "마곡나루": {
+    "name": "마곡나루",
+    "dataLine": "10-9",
+    "svgX": 432.0,
+    "svgY": 572.0,
+    "distance": 11
+  },
+  "양천향교": {
+    "name": "양천향교",
+    "dataLine": "10-9",
+    "svgX": 456.0,
+    "svgY": 600.0,
+    "distance": 11
+  },
+  "가양": {
+    "name": "가양",
+    "dataLine": "10-9",
+    "svgX": 520.0,
+    "svgY": 640.0,
+    "distance": 10
+  },
+  "증미": {
+    "name": "증미",
+    "dataLine": "10-9",
+    "svgX": 568.0,
+    "svgY": 640.0,
+    "distance": 10
+  },
+  "등촌": {
+    "name": "등촌",
+    "dataLine": "10-9",
+    "svgX": 608.0,
+    "svgY": 640.0,
+    "distance": 10
+  },
+  "염창": {
+    "name": "염창",
+    "dataLine": "10-9",
+    "svgX": 656.0,
+    "svgY": 640.0,
+    "distance": 10
+  },
+  "신목동": {
+    "name": "신목동",
+    "dataLine": "10-9",
+    "svgX": 696.0,
+    "svgY": 656.0,
+    "distance": 11
+  },
+  "선유도": {
+    "name": "선유도",
+    "dataLine": "10-9",
+    "svgX": 712.0,
+    "svgY": 672.0,
+    "distance": 11
+  },
+  "국회의사당": {
+    "name": "국회의사당",
+    "dataLine": "10-9",
+    "svgX": 772.0,
+    "svgY": 728.0,
+    "distance": 14
+  },
+  "샛강": {
+    "name": "샛강",
+    "dataLine": "10-9",
+    "svgX": 865.6,
+    "svgY": 816.0,
+    "distance": 15
+  },
+  "노들": {
+    "name": "노들",
+    "dataLine": "10-9",
+    "svgX": 976.0,
+    "svgY": 920.0,
+    "distance": 14
+  },
+  "흑석": {
+    "name": "흑석",
+    "dataLine": "10-9",
+    "svgX": 1048.0,
+    "svgY": 936.0,
+    "distance": 10
+  },
+  "구반포": {
+    "name": "구반포",
+    "dataLine": "10-9",
+    "svgX": 1216.0,
+    "svgY": 936.0,
+    "distance": 10
+  },
+  "신반포": {
+    "name": "신반포",
+    "dataLine": "10-9",
+    "svgX": 1288.0,
+    "svgY": 936.0,
+    "distance": 10
+  },
+  "사평": {
+    "name": "사평",
+    "dataLine": "10-9",
+    "svgX": 1488.0,
+    "svgY": 1008.0,
+    "distance": 10
+  },
+  "신논현": {
+    "name": "신논현",
+    "dataLine": "10-9",
+    "svgX": 1552.0,
+    "svgY": 1012.0,
+    "distance": 11
+  },
+  "언주": {
+    "name": "언주",
+    "dataLine": "10-9",
+    "svgX": 1632.0,
+    "svgY": 1008.0,
+    "distance": 10
+  },
+  "선정릉": {
+    "name": "선정릉",
+    "dataLine": "10-9",
+    "svgX": 1672.0,
+    "svgY": 1008.0,
+    "distance": 10
+  },
+  "삼성중앙": {
+    "name": "삼성중앙",
+    "dataLine": "10-9",
+    "svgX": 1776.0,
+    "svgY": 1008.0,
+    "distance": 10
+  },
+  "봉은사": {
+    "name": "봉은사",
+    "dataLine": "10-9",
+    "svgX": 1824.0,
+    "svgY": 1016.0,
+    "distance": 9
+  },
+  "삼전": {
+    "name": "삼전",
+    "dataLine": "10-9",
+    "svgX": 1904.0,
+    "svgY": 1088.0,
+    "distance": 15
+  },
+  "석촌고분": {
+    "name": "석촌고분",
+    "dataLine": "10-9",
+    "svgX": 2008.0,
+    "svgY": 1088.0,
+    "distance": 15
+  },
+  "송파나루": {
+    "name": "송파나루",
+    "dataLine": "10-9",
+    "svgX": 2096.0,
+    "svgY": 984.0,
+    "distance": 9
+  },
+  "한성백제": {
+    "name": "한성백제",
+    "dataLine": "10-9",
+    "svgX": 2144.0,
+    "svgY": 936.0,
+    "distance": 9
+  },
+  "둔촌오륜": {
+    "name": "둔촌오륜",
+    "dataLine": "10-9",
+    "svgX": 2312.0,
+    "svgY": 920.0,
+    "distance": 10
+  },
+  "중앙보훈병원": {
+    "name": "중앙보훈병원",
+    "dataLine": "10-9",
+    "svgX": 2344.0,
+    "svgY": 880.0,
+    "distance": 9
+  },
+  "고촌": {
+    "name": "고촌",
+    "dataLine": "KP",
+    "svgX": 264.0,
+    "svgY": 520.0,
+    "distance": 10
+  },
+  "풍무": {
+    "name": "풍무",
+    "dataLine": "KP",
+    "svgX": 232.0,
+    "svgY": 464.0,
+    "distance": 9
+  },
+  "사우 (김포시청)": {
+    "name": "사우 (김포시청)",
+    "dataLine": "KP",
+    "svgX": 232.0,
+    "svgY": 416.0,
+    "distance": 9
+  },
+  "걸포북변": {
+    "name": "걸포북변",
+    "dataLine": "KP",
+    "svgX": 232.0,
+    "svgY": 368.0,
+    "distance": 9
+  },
+  "운양": {
+    "name": "운양",
+    "dataLine": "KP",
+    "svgX": 200.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "장기": {
+    "name": "장기",
+    "dataLine": "KP",
+    "svgX": 144.0,
+    "svgY": 336.0,
+    "distance": 10
+  },
+  "마산": {
+    "name": "마산",
+    "dataLine": "KP",
+    "svgX": 128.0,
+    "svgY": 368.0,
+    "distance": 9
+  },
+  "구래": {
+    "name": "구래",
+    "dataLine": "KP",
+    "svgX": 128.0,
+    "svgY": 408.0,
+    "distance": 9
+  },
+  "양촌": {
+    "name": "양촌",
+    "dataLine": "KP",
+    "svgX": 128.0,
+    "svgY": 464.0,
+    "distance": 9
+  },
+  "발곡": {
+    "name": "발곡",
+    "dataLine": "U",
+    "svgX": 1560.0,
+    "svgY": 48.0,
+    "distance": 10
+  },
+  "범골": {
+    "name": "범골",
+    "dataLine": "U",
+    "svgX": 1568.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "경전철의정부": {
+    "name": "경전철의정부",
+    "dataLine": "U",
+    "svgX": 1504.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "의정부시청": {
+    "name": "의정부시청",
+    "dataLine": "U",
+    "svgX": 1416.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "흥선": {
+    "name": "흥선",
+    "dataLine": "U",
+    "svgX": 1356.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "의정부중앙": {
+    "name": "의정부중앙",
+    "dataLine": "U",
+    "svgX": 1296.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "동오": {
+    "name": "동오",
+    "dataLine": "U",
+    "svgX": 1232.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "새말": {
+    "name": "새말",
+    "dataLine": "U",
+    "svgX": 1192.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "경기도청북부청사": {
+    "name": "경기도청북부청사",
+    "dataLine": "U",
+    "svgX": 1132.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "효자": {
+    "name": "효자",
+    "dataLine": "U",
+    "svgX": 1072.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "곤제": {
+    "name": "곤제",
+    "dataLine": "U",
+    "svgX": 1032.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "어룡": {
+    "name": "어룡",
+    "dataLine": "U",
+    "svgX": 992.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "송산": {
+    "name": "송산",
+    "dataLine": "U",
+    "svgX": 952.0,
+    "svgY": 112.0,
+    "distance": 14
+  },
+  "탑석": {
+    "name": "탑석",
+    "dataLine": "U",
+    "svgX": 928.0,
+    "svgY": 88.0,
+    "distance": 14
+  },
+  "송도달빛축제공원": {
+    "name": "송도달빛축제공원",
+    "dataLine": "I",
+    "svgX": 64.0,
+    "svgY": 1456.0,
+    "distance": 9
+  },
+  "국제업무지구": {
+    "name": "국제업무지구",
+    "dataLine": "I",
+    "svgX": 64.0,
+    "svgY": 1416.0,
+    "distance": 9
+  },
+  "센트럴파크": {
+    "name": "센트럴파크",
+    "dataLine": "I",
+    "svgX": 64.0,
+    "svgY": 1376.0,
+    "distance": 9
+  },
+  "인천대입구": {
+    "name": "인천대입구",
+    "dataLine": "I",
+    "svgX": 88.0,
+    "svgY": 1344.0,
+    "distance": 10
+  },
+  "지식정보단지": {
+    "name": "지식정보단지",
+    "dataLine": "I",
+    "svgX": 168.0,
+    "svgY": 1344.0,
+    "distance": 10
+  },
+  "테크노파크": {
+    "name": "테크노파크",
+    "dataLine": "I",
+    "svgX": 248.0,
+    "svgY": 1344.0,
+    "distance": 10
+  },
+  "캠퍼스타운": {
+    "name": "캠퍼스타운",
+    "dataLine": "I",
+    "svgX": 320.0,
+    "svgY": 1344.0,
+    "distance": 10
+  },
+  "동막": {
+    "name": "동막",
+    "dataLine": "I",
+    "svgX": 376.0,
+    "svgY": 1344.0,
+    "distance": 10
+  },
+  "동춘": {
+    "name": "동춘",
+    "dataLine": "I",
+    "svgX": 432.0,
+    "svgY": 1344.0,
+    "distance": 10
+  },
+  "원인재": {
+    "name": "원인재",
+    "dataLine": "I",
+    "svgX": 504.0,
+    "svgY": 1344.0,
+    "distance": 14
+  },
+  "신연수": {
+    "name": "신연수",
+    "dataLine": "I",
+    "svgX": 544.0,
+    "svgY": 1328.0,
+    "distance": 9
+  },
+  "선학": {
+    "name": "선학",
+    "dataLine": "I",
+    "svgX": 520.0,
+    "svgY": 1296.0,
+    "distance": 9
+  },
+  "문학경기장": {
+    "name": "문학경기장",
+    "dataLine": "I",
+    "svgX": 496.0,
+    "svgY": 1264.0,
+    "distance": 11
+  },
+  "인천터미널": {
+    "name": "인천터미널",
+    "dataLine": "I",
+    "svgX": 465.6,
+    "svgY": 1224.0,
+    "distance": 11
+  },
+  "예술회관": {
+    "name": "예술회관",
+    "dataLine": "I",
+    "svgX": 441.6,
+    "svgY": 1192.0,
+    "distance": 11
+  },
+  "인천시청": {
+    "name": "인천시청",
+    "dataLine": "I",
+    "svgX": 416.0,
+    "svgY": 1152.0,
+    "distance": 14
+  },
+  "간석오거리": {
+    "name": "간석오거리",
+    "dataLine": "I",
+    "svgX": 368.0,
+    "svgY": 1120.0,
+    "distance": 10
+  },
+  "부평삼거리": {
+    "name": "부평삼거리",
+    "dataLine": "I",
+    "svgX": 296.0,
+    "svgY": 1120.0,
+    "distance": 10
+  },
+  "동수": {
+    "name": "동수",
+    "dataLine": "I",
+    "svgX": 240.0,
+    "svgY": 1120.0,
+    "distance": 10
+  },
+  "부평시장": {
+    "name": "부평시장",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 992.0,
+    "distance": 9
+  },
+  "갈산": {
+    "name": "갈산",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 872.0,
+    "distance": 9
+  },
+  "작전": {
+    "name": "작전",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 832.0,
+    "distance": 9
+  },
+  "경인교대입구": {
+    "name": "경인교대입구",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 784.0,
+    "distance": 9
+  },
+  "계산": {
+    "name": "계산",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 744.0,
+    "distance": 9
+  },
+  "임학": {
+    "name": "임학",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 688.0,
+    "distance": 9
+  },
+  "박촌": {
+    "name": "박촌",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 648.0,
+    "distance": 9
+  },
+  "귤현": {
+    "name": "귤현",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 608.0,
+    "distance": 9
+  },
+  "계양": {
+    "name": "계양",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 536.0,
+    "distance": 14
+  },
+  "아라(북부법원검찰청)": {
+    "name": "아라(북부법원검찰청)",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 456.0,
+    "distance": 9
+  },
+  "신검단중앙": {
+    "name": "신검단중앙",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 424.0,
+    "distance": 9
+  },
+  "검단호수공원": {
+    "name": "검단호수공원",
+    "dataLine": "I",
+    "svgX": 216.0,
+    "svgY": 376.0,
+    "distance": 9
+  },
+  "검단오류": {
+    "name": "검단오류",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 336.0,
+    "distance": 9
+  },
+  "왕길": {
+    "name": "왕길",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 392.0,
+    "distance": 9
+  },
+  "검단사거리": {
+    "name": "검단사거리",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 424.0,
+    "distance": 9
+  },
+  "마전": {
+    "name": "마전",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 464.0,
+    "distance": 9
+  },
+  "완정": {
+    "name": "완정",
+    "dataLine": "I2",
+    "svgX": 80.0,
+    "svgY": 504.0,
+    "distance": 14
+  },
+  "독정": {
+    "name": "독정",
+    "dataLine": "I2",
+    "svgX": 104.0,
+    "svgY": 528.0,
+    "distance": 14
+  },
+  "검암": {
+    "name": "검암",
+    "dataLine": "I2",
+    "svgX": 152.0,
+    "svgY": 576.0,
+    "distance": 9
+  },
+  "검바위": {
+    "name": "검바위",
+    "dataLine": "I2",
+    "svgX": 104.0,
+    "svgY": 624.0,
+    "distance": 11
+  },
+  "아시아드경기장": {
+    "name": "아시아드경기장",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 696.0,
+    "distance": 9
+  },
+  "서구청": {
+    "name": "서구청",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 752.0,
+    "distance": 9
+  },
+  "가정": {
+    "name": "가정",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 800.0,
+    "distance": 9
+  },
+  "가정중앙시장": {
+    "name": "가정중앙시장",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 848.0,
+    "distance": 9
+  },
+  "서부여성회관": {
+    "name": "서부여성회관",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 960.0,
+    "distance": 9
+  },
+  "인천가좌": {
+    "name": "인천가좌",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 1008.0,
+    "distance": 9
+  },
+  "가재울": {
+    "name": "가재울",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 1056.0,
+    "distance": 9
+  },
+  "주안국가산단": {
+    "name": "주안국가산단",
+    "dataLine": "I2",
+    "svgX": 56.0,
+    "svgY": 1104.0,
+    "distance": 9
+  },
+  "시민공원": {
+    "name": "시민공원",
+    "dataLine": "I2",
+    "svgX": 232.0,
+    "svgY": 1152.0,
+    "distance": 15
+  },
+  "석바위시장": {
+    "name": "석바위시장",
+    "dataLine": "I2",
+    "svgX": 320.0,
+    "svgY": 1152.0,
+    "distance": 15
+  },
+  "석천사거리": {
+    "name": "석천사거리",
+    "dataLine": "I2",
+    "svgX": 464.0,
+    "svgY": 1152.0,
+    "distance": 10
+  },
+  "모래내시장": {
+    "name": "모래내시장",
+    "dataLine": "I2",
+    "svgX": 520.0,
+    "svgY": 1176.0,
+    "distance": 9
+  },
+  "만수": {
+    "name": "만수",
+    "dataLine": "I2",
+    "svgX": 552.0,
+    "svgY": 1208.0,
+    "distance": 9
+  },
+  "남동구청": {
+    "name": "남동구청",
+    "dataLine": "I2",
+    "svgX": 584.0,
+    "svgY": 1240.0,
+    "distance": 9
+  },
+  "인천대공원": {
+    "name": "인천대공원",
+    "dataLine": "I2",
+    "svgX": 608.0,
+    "svgY": 1272.0,
+    "distance": 9
+  },
+  "운연": {
+    "name": "운연",
+    "dataLine": "I2",
+    "svgX": 608.0,
+    "svgY": 1312.0,
+    "distance": 9
+  },
+  "중랑": {
+    "name": "중랑",
+    "dataLine": "G",
+    "svgX": 1760.0,
+    "svgY": 428.0,
+    "distance": 10
+  },
+  "망우": {
+    "name": "망우",
+    "dataLine": "G",
+    "svgX": 1976.0,
+    "svgY": 428.0,
+    "distance": 15
+  },
+  "갈매": {
+    "name": "갈매",
+    "dataLine": "G",
+    "svgX": 2040.0,
+    "svgY": 360.0,
+    "distance": 11
+  },
+  "퇴계원": {
+    "name": "퇴계원",
+    "dataLine": "G",
+    "svgX": 2104.0,
+    "svgY": 296.0,
+    "distance": 11
+  },
+  "사릉": {
+    "name": "사릉",
+    "dataLine": "G",
+    "svgX": 2136.0,
+    "svgY": 264.0,
+    "distance": 11
+  },
+  "금곡": {
+    "name": "금곡",
+    "dataLine": "G",
+    "svgX": 2168.0,
+    "svgY": 232.0,
+    "distance": 11
+  },
+  "평내호평": {
+    "name": "평내호평",
+    "dataLine": "G",
+    "svgX": 2200.0,
+    "svgY": 216.0,
+    "distance": 10
+  },
+  "천마산": {
+    "name": "천마산",
+    "dataLine": "G",
+    "svgX": 2248.0,
+    "svgY": 216.0,
+    "distance": 10
+  },
+  "마석": {
+    "name": "마석",
+    "dataLine": "G",
+    "svgX": 2296.0,
+    "svgY": 216.0,
+    "distance": 10
+  },
+  "대성리": {
+    "name": "대성리",
+    "dataLine": "G",
+    "svgX": 2344.0,
+    "svgY": 216.0,
+    "distance": 10
+  },
+  "청평": {
+    "name": "청평",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 264.0,
+    "distance": 9
+  },
+  "상천": {
+    "name": "상천",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 304.0,
+    "distance": 9
+  },
+  "가평": {
+    "name": "가평",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 344.0,
+    "distance": 9
+  },
+  "굴봉산": {
+    "name": "굴봉산",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 384.0,
+    "distance": 9
+  },
+  "백양리": {
+    "name": "백양리",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 424.0,
+    "distance": 9
+  },
+  "강촌": {
+    "name": "강촌",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 464.0,
+    "distance": 9
+  },
+  "김유정": {
+    "name": "김유정",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 504.0,
+    "distance": 9
+  },
+  "남춘천": {
+    "name": "남춘천",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 544.0,
+    "distance": 9
+  },
+  "춘천": {
+    "name": "춘천",
+    "dataLine": "G",
+    "svgX": 2376.0,
+    "svgY": 584.0,
+    "distance": 9
+  },
+  "임진강": {
+    "name": "임진강",
+    "dataLine": "K",
+    "svgX": 40.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "운천": {
+    "name": "운천",
+    "dataLine": "K",
+    "svgX": 80.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "문산": {
+    "name": "문산",
+    "dataLine": "K",
+    "svgX": 112.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "파주": {
+    "name": "파주",
+    "dataLine": "K",
+    "svgX": 152.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "월롱": {
+    "name": "월롱",
+    "dataLine": "K",
+    "svgX": 192.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "금촌": {
+    "name": "금촌",
+    "dataLine": "K",
+    "svgX": 232.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "금릉": {
+    "name": "금릉",
+    "dataLine": "K",
+    "svgX": 272.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "운정": {
+    "name": "운정",
+    "dataLine": "K",
+    "svgX": 312.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "야당": {
+    "name": "야당",
+    "dataLine": "K",
+    "svgX": 352.0,
+    "svgY": 104.0,
+    "distance": 15
+  },
+  "탄현": {
+    "name": "탄현",
+    "dataLine": "K",
+    "svgX": 392.0,
+    "svgY": 104.0,
+    "distance": 10
+  },
+  "일산": {
+    "name": "일산",
+    "dataLine": "K",
+    "svgX": 412.0,
+    "svgY": 120.0,
+    "distance": 9
+  },
+  "풍산": {
+    "name": "풍산",
+    "dataLine": "K",
+    "svgX": 412.0,
+    "svgY": 152.0,
+    "distance": 9
+  },
+  "백마": {
+    "name": "백마",
+    "dataLine": "K",
+    "svgX": 412.0,
+    "svgY": 184.0,
+    "distance": 9
+  },
+  "곡산": {
+    "name": "곡산",
+    "dataLine": "K",
+    "svgX": 412.0,
+    "svgY": 216.0,
+    "distance": 9
+  },
+  "능곡": {
+    "name": "능곡",
+    "dataLine": "K",
+    "svgX": 440.0,
+    "svgY": 318.0,
+    "distance": 11
+  },
+  "행신": {
+    "name": "행신",
+    "dataLine": "K",
+    "svgX": 472.0,
+    "svgY": 344.0,
+    "distance": 11
+  },
+  "강매": {
+    "name": "강매",
+    "dataLine": "K",
+    "svgX": 512.0,
+    "svgY": 384.0,
+    "distance": 11
+  },
+  "한국항공대": {
+    "name": "한국항공대",
+    "dataLine": "K",
+    "svgX": 544.0,
+    "svgY": 416.0,
+    "distance": 11
+  },
+  "수색": {
+    "name": "수색",
+    "dataLine": "K",
+    "svgX": 576.0,
+    "svgY": 448.0,
+    "distance": 11
+  },
+  "가좌": {
+    "name": "가좌",
+    "dataLine": "K",
+    "svgX": 784.0,
+    "svgY": 480.0,
+    "distance": 10
+  },
+  "서강대": {
+    "name": "서강대",
+    "dataLine": "K",
+    "svgX": 872.0,
+    "svgY": 680.0,
+    "distance": 9
+  },
+  "서빙고": {
+    "name": "서빙고",
+    "dataLine": "K",
+    "svgX": 1240.0,
+    "svgY": 848.0,
+    "distance": 10
+  },
+  "한남": {
+    "name": "한남",
+    "dataLine": "K",
+    "svgX": 1312.0,
+    "svgY": 848.0,
+    "distance": 10
+  },
+  "응봉": {
+    "name": "응봉",
+    "dataLine": "K",
+    "svgX": 1472.0,
+    "svgY": 720.0,
+    "distance": 11
+  },
+  "양원": {
+    "name": "양원",
+    "dataLine": "K",
+    "svgX": 2032.0,
+    "svgY": 432.0,
+    "distance": 10
+  },
+  "도농": {
+    "name": "도농",
+    "dataLine": "K",
+    "svgX": 2128.0,
+    "svgY": 432.0,
+    "distance": 10
+  },
+  "양정": {
+    "name": "양정",
+    "dataLine": "K",
+    "svgX": 2160.0,
+    "svgY": 432.0,
+    "distance": 10
+  },
+  "덕소": {
+    "name": "덕소",
+    "dataLine": "K",
+    "svgX": 2192.0,
+    "svgY": 432.0,
+    "distance": 10
+  },
+  "도심": {
+    "name": "도심",
+    "dataLine": "K",
+    "svgX": 2232.0,
+    "svgY": 432.0,
+    "distance": 10
+  },
+  "팔당": {
+    "name": "팔당",
+    "dataLine": "K",
+    "svgX": 2288.0,
+    "svgY": 456.0,
+    "distance": 9
+  },
+  "운길산": {
+    "name": "운길산",
+    "dataLine": "K",
+    "svgX": 2288.0,
+    "svgY": 488.0,
+    "distance": 9
+  },
+  "양수": {
+    "name": "양수",
+    "dataLine": "K",
+    "svgX": 2288.0,
+    "svgY": 520.0,
+    "distance": 9
+  },
+  "신원": {
+    "name": "신원",
+    "dataLine": "K",
+    "svgX": 2288.0,
+    "svgY": 552.0,
+    "distance": 9
+  },
+  "국수": {
+    "name": "국수",
+    "dataLine": "K",
+    "svgX": 2232.0,
+    "svgY": 576.0,
+    "distance": 10
+  },
+  "아신": {
+    "name": "아신",
+    "dataLine": "K",
+    "svgX": 2192.0,
+    "svgY": 576.0,
+    "distance": 10
+  },
+  "오빈": {
+    "name": "오빈",
+    "dataLine": "K",
+    "svgX": 2144.0,
+    "svgY": 576.0,
+    "distance": 10
+  },
+  "원덕": {
+    "name": "원덕",
+    "dataLine": "K",
+    "svgX": 2072.0,
+    "svgY": 576.0,
+    "distance": 10
+  },
+  "용문": {
+    "name": "용문",
+    "dataLine": "K",
+    "svgX": 2032.0,
+    "svgY": 576.0,
+    "distance": 10
+  },
+  "지평": {
+    "name": "지평",
+    "dataLine": "K",
+    "svgX": 1992.0,
+    "svgY": 576.0,
+    "distance": 10
+  },
+  "인천공항2터미널": {
+    "name": "인천공항2터미널",
+    "dataLine": "A",
+    "svgX": 152.0,
+    "svgY": 816.0,
+    "distance": 9
+  },
+  "인천공항1터미널": {
+    "name": "인천공항1터미널",
+    "dataLine": "A",
+    "svgX": 152.0,
+    "svgY": 776.0,
+    "distance": 9
+  },
+  "공항화물청사": {
+    "name": "공항화물청사",
+    "dataLine": "A",
+    "svgX": 152.0,
+    "svgY": 736.0,
+    "distance": 9
+  },
+  "운서": {
+    "name": "운서",
+    "dataLine": "A",
+    "svgX": 152.0,
+    "svgY": 696.0,
+    "distance": 9
+  },
+  "영종": {
+    "name": "영종",
+    "dataLine": "A",
+    "svgX": 152.0,
+    "svgY": 656.0,
+    "distance": 9
+  },
+  "청라국제도시": {
+    "name": "청라국제도시",
+    "dataLine": "A",
+    "svgX": 152.0,
+    "svgY": 616.0,
+    "distance": 9
+  },
+  "신포": {
+    "name": "신포",
+    "dataLine": "B",
+    "svgX": 400.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "숭의": {
+    "name": "숭의",
+    "dataLine": "B",
+    "svgX": 432.0,
+    "svgY": 1264.0,
+    "distance": 11
+  },
+  "인하대": {
+    "name": "인하대",
+    "dataLine": "B",
+    "svgX": 452.0,
+    "svgY": 1284.8,
+    "distance": 11
+  },
+  "송도": {
+    "name": "송도",
+    "dataLine": "B",
+    "svgX": 472.0,
+    "svgY": 1306.4,
+    "distance": 11
+  },
+  "연수": {
+    "name": "연수",
+    "dataLine": "B",
+    "svgX": 492.0,
+    "svgY": 1328.0,
+    "distance": 11
+  },
+  "남동인더스파크": {
+    "name": "남동인더스파크",
+    "dataLine": "B",
+    "svgX": 448.0,
+    "svgY": 1416.0,
+    "distance": 10
+  },
+  "호구포": {
+    "name": "호구포",
+    "dataLine": "B",
+    "svgX": 384.0,
+    "svgY": 1416.0,
+    "distance": 10
+  },
+  "인천논현": {
+    "name": "인천논현",
+    "dataLine": "B",
+    "svgX": 320.0,
+    "svgY": 1416.0,
+    "distance": 10
+  },
+  "소래포구": {
+    "name": "소래포구",
+    "dataLine": "B",
+    "svgX": 248.0,
+    "svgY": 1416.0,
+    "distance": 10
+  },
+  "월곶": {
+    "name": "월곶",
+    "dataLine": "B",
+    "svgX": 184.0,
+    "svgY": 1416.0,
+    "distance": 10
+  },
+  "달월": {
+    "name": "달월",
+    "dataLine": "B",
+    "svgX": 152.0,
+    "svgY": 1448.0,
+    "distance": 9
+  },
+  "사리": {
+    "name": "사리",
+    "dataLine": "B",
+    "svgX": 632.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "야목": {
+    "name": "야목",
+    "dataLine": "B",
+    "svgX": 720.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "어천": {
+    "name": "어천",
+    "dataLine": "B",
+    "svgX": 808.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "오목천": {
+    "name": "오목천",
+    "dataLine": "B",
+    "svgX": 896.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "고색": {
+    "name": "고색",
+    "dataLine": "B",
+    "svgX": 984.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "매교": {
+    "name": "매교",
+    "dataLine": "B",
+    "svgX": 1064.0,
+    "svgY": 1432.0,
+    "distance": 9
+  },
+  "수원시청": {
+    "name": "수원시청",
+    "dataLine": "B",
+    "svgX": 1064.0,
+    "svgY": 1400.0,
+    "distance": 9
+  },
+  "매탄권선": {
+    "name": "매탄권선",
+    "dataLine": "B",
+    "svgX": 1104.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "망포": {
+    "name": "망포",
+    "dataLine": "B",
+    "svgX": 1168.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "영통": {
+    "name": "영통",
+    "dataLine": "B",
+    "svgX": 1224.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "청명": {
+    "name": "청명",
+    "dataLine": "B",
+    "svgX": 1272.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "상갈": {
+    "name": "상갈",
+    "dataLine": "B",
+    "svgX": 1328.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "기흥": {
+    "name": "기흥",
+    "dataLine": "B",
+    "svgX": 1376.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "신갈": {
+    "name": "신갈",
+    "dataLine": "B",
+    "svgX": 1424.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "보정": {
+    "name": "보정",
+    "dataLine": "B",
+    "svgX": 1552.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "죽전": {
+    "name": "죽전",
+    "dataLine": "B",
+    "svgX": 1608.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "오리": {
+    "name": "오리",
+    "dataLine": "B",
+    "svgX": 1664.0,
+    "svgY": 1368.0,
+    "distance": 10
+  },
+  "미금": {
+    "name": "미금",
+    "dataLine": "B",
+    "svgX": 1700.0,
+    "svgY": 1335.2,
+    "distance": 14
+  },
+  "정자": {
+    "name": "정자",
+    "dataLine": "B",
+    "svgX": 1731.2,
+    "svgY": 1304.0,
+    "distance": 9
+  },
+  "수내": {
+    "name": "수내",
+    "dataLine": "B",
+    "svgX": 1808.0,
+    "svgY": 1264.0,
+    "distance": 15
+  },
+  "서현": {
+    "name": "서현",
+    "dataLine": "B",
+    "svgX": 1864.0,
+    "svgY": 1264.0,
+    "distance": 15
+  },
+  "이매": {
+    "name": "이매",
+    "dataLine": "B",
+    "svgX": 1928.0,
+    "svgY": 1260.0,
+    "distance": 11
+  },
+  "야탑": {
+    "name": "야탑",
+    "dataLine": "B",
+    "svgX": 1984.0,
+    "svgY": 1264.0,
+    "distance": 15
+  },
+  "태평": {
+    "name": "태평",
+    "dataLine": "B",
+    "svgX": 2120.0,
+    "svgY": 1264.0,
+    "distance": 10
+  },
+  "가천대": {
+    "name": "가천대",
+    "dataLine": "B",
+    "svgX": 2168.0,
+    "svgY": 1232.0,
+    "distance": 11
+  },
+  "대모산입구": {
+    "name": "대모산입구",
+    "dataLine": "B",
+    "svgX": 1904.0,
+    "svgY": 1200.0,
+    "distance": 10
+  },
+  "개포동": {
+    "name": "개포동",
+    "dataLine": "B",
+    "svgX": 1808.0,
+    "svgY": 1200.0,
+    "distance": 10
+  },
+  "구룡": {
+    "name": "구룡",
+    "dataLine": "B",
+    "svgX": 1712.0,
+    "svgY": 1200.0,
+    "distance": 10
+  },
+  "한티": {
+    "name": "한티",
+    "dataLine": "B",
+    "svgX": 1616.0,
+    "svgY": 1096.0,
+    "distance": 9
+  },
+  "압구정로데오": {
+    "name": "압구정로데오",
+    "dataLine": "B",
+    "svgX": 1688.0,
+    "svgY": 832.0,
+    "distance": 14
+  },
+  "서울숲": {
+    "name": "서울숲",
+    "dataLine": "B",
+    "svgX": 1608.0,
+    "svgY": 752.0,
+    "distance": 14
+  },
+  "양재시민의숲": {
+    "name": "양재시민의숲",
+    "dataLine": "S",
+    "svgX": 1480.0,
+    "svgY": 1216.0,
+    "distance": 11
+  },
+  "청계산입구": {
+    "name": "청계산입구",
+    "dataLine": "S",
+    "svgX": 1560.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "판교": {
+    "name": "판교",
+    "dataLine": "S",
+    "svgX": 1668.0,
+    "svgY": 1256.0,
+    "distance": 10
+  },
+  "동천": {
+    "name": "동천",
+    "dataLine": "S",
+    "svgX": 1664.0,
+    "svgY": 1312.0,
+    "distance": 10
+  },
+  "수지구청": {
+    "name": "수지구청",
+    "dataLine": "S",
+    "svgX": 1608.0,
+    "svgY": 1312.0,
+    "distance": 10
+  },
+  "성복": {
+    "name": "성복",
+    "dataLine": "S",
+    "svgX": 1552.0,
+    "svgY": 1312.0,
+    "distance": 10
+  },
+  "상현": {
+    "name": "상현",
+    "dataLine": "S",
+    "svgX": 1496.0,
+    "svgY": 1312.0,
+    "distance": 10
+  },
+  "광교중앙": {
+    "name": "광교중앙",
+    "dataLine": "S",
+    "svgX": 1440.0,
+    "svgY": 1312.0,
+    "distance": 10
+  },
+  "광교": {
+    "name": "광교",
+    "dataLine": "S",
+    "svgX": 1384.0,
+    "svgY": 1312.0,
+    "distance": 10
+  },
+  "삼동": {
+    "name": "삼동",
+    "dataLine": "KK",
+    "svgX": 1928.0,
+    "svgY": 1320.0,
+    "distance": 9
+  },
+  "경기광주": {
+    "name": "경기광주",
+    "dataLine": "KK",
+    "svgX": 1984.0,
+    "svgY": 1376.0,
+    "distance": 10
+  },
+  "초월": {
+    "name": "초월",
+    "dataLine": "KK",
+    "svgX": 2048.0,
+    "svgY": 1376.0,
+    "distance": 10
+  },
+  "곤지암": {
+    "name": "곤지암",
+    "dataLine": "KK",
+    "svgX": 2112.0,
+    "svgY": 1376.0,
+    "distance": 10
+  },
+  "신둔도예촌": {
+    "name": "신둔도예촌",
+    "dataLine": "KK",
+    "svgX": 2176.0,
+    "svgY": 1376.0,
+    "distance": 10
+  },
+  "이천": {
+    "name": "이천",
+    "dataLine": "KK",
+    "svgX": 2240.0,
+    "svgY": 1376.0,
+    "distance": 10
+  },
+  "부발": {
+    "name": "부발",
+    "dataLine": "KK",
+    "svgX": 2304.0,
+    "svgY": 1376.0,
+    "distance": 10
+  },
+  "세종대왕릉": {
+    "name": "세종대왕릉",
+    "dataLine": "KK",
+    "svgX": 2376.0,
+    "svgY": 1416.0,
+    "distance": 9
+  },
+  "여주": {
+    "name": "여주",
+    "dataLine": "KK",
+    "svgX": 2376.0,
+    "svgY": 1456.0,
+    "distance": 9
+  },
+  "강남대": {
+    "name": "강남대",
+    "dataLine": "E",
+    "svgX": 1376.0,
+    "svgY": 1408.0,
+    "distance": 15
+  },
+  "지석": {
+    "name": "지석",
+    "dataLine": "E",
+    "svgX": 1408.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "어정": {
+    "name": "어정",
+    "dataLine": "E",
+    "svgX": 1464.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "동백": {
+    "name": "동백",
+    "dataLine": "E",
+    "svgX": 1520.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "초당": {
+    "name": "초당",
+    "dataLine": "E",
+    "svgX": 1576.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "삼가": {
+    "name": "삼가",
+    "dataLine": "E",
+    "svgX": 1632.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "시청·용인대": {
+    "name": "시청·용인대",
+    "dataLine": "E",
+    "svgX": 1696.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "명지대": {
+    "name": "명지대",
+    "dataLine": "E",
+    "svgX": 1760.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "김량장": {
+    "name": "김량장",
+    "dataLine": "E",
+    "svgX": 1816.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "용인중앙시장": {
+    "name": "용인중앙시장",
+    "dataLine": "E",
+    "svgX": 1880.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "고진": {
+    "name": "고진",
+    "dataLine": "E",
+    "svgX": 1944.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "보평": {
+    "name": "보평",
+    "dataLine": "E",
+    "svgX": 2000.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "둔전": {
+    "name": "둔전",
+    "dataLine": "E",
+    "svgX": 2056.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "전대·에버랜드": {
+    "name": "전대·에버랜드",
+    "dataLine": "E",
+    "svgX": 2112.0,
+    "svgY": 1432.0,
+    "distance": 10
+  },
+  "정릉": {
+    "name": "정릉",
+    "dataLine": "W",
+    "svgX": 1336.0,
+    "svgY": 200.0,
+    "distance": 11
+  },
+  "북한산보국문": {
+    "name": "북한산보국문",
+    "dataLine": "W",
+    "svgX": 1296.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "솔샘": {
+    "name": "솔샘",
+    "dataLine": "W",
+    "svgX": 1240.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "삼양사거리": {
+    "name": "삼양사거리",
+    "dataLine": "W",
+    "svgX": 1184.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "삼양": {
+    "name": "삼양",
+    "dataLine": "W",
+    "svgX": 1128.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "화계": {
+    "name": "화계",
+    "dataLine": "W",
+    "svgX": 1080.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "가오리": {
+    "name": "가오리",
+    "dataLine": "W",
+    "svgX": 1032.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "4·19민주묘지": {
+    "name": "4·19민주묘지",
+    "dataLine": "W",
+    "svgX": 968.0,
+    "svgY": 192.0,
+    "distance": 15
+  },
+  "솔밭공원": {
+    "name": "솔밭공원",
+    "dataLine": "W",
+    "svgX": 912.0,
+    "svgY": 152.0,
+    "distance": 14
+  },
+  "북한산우이": {
+    "name": "북한산우이",
+    "dataLine": "W",
+    "svgX": 832.0,
+    "svgY": 128.0,
+    "distance": 15
+  },
+  "원종": {
+    "name": "원종",
+    "dataLine": "SH",
+    "svgX": 320.0,
+    "svgY": 736.0,
+    "distance": 15
+  },
+  "소새울": {
+    "name": "소새울",
+    "dataLine": "SH",
+    "svgX": 512.0,
+    "svgY": 1080.0,
+    "distance": 9
+  },
+  "시흥대야": {
+    "name": "시흥대야",
+    "dataLine": "SH",
+    "svgX": 592.0,
+    "svgY": 1152.0,
+    "distance": 9
+  },
+  "신천": {
+    "name": "신천",
+    "dataLine": "SH",
+    "svgX": 672.0,
+    "svgY": 1232.0,
+    "distance": 9
+  },
+  "신현": {
+    "name": "신현",
+    "dataLine": "SH",
+    "svgX": 720.0,
+    "svgY": 1312.0,
+    "distance": 9
+  },
+  "시흥시청": {
+    "name": "시흥시청",
+    "dataLine": "SH",
+    "svgX": 672.0,
+    "svgY": 1384.0,
+    "distance": 9
+  },
+  "시흥능곡": {
+    "name": "시흥능곡",
+    "dataLine": "SH",
+    "svgX": 608.0,
+    "svgY": 1424.0,
+    "distance": 9
+  },
+  "달미": {
+    "name": "달미",
+    "dataLine": "SH",
+    "svgX": 504.0,
+    "svgY": 1440.0,
+    "distance": 15
+  },
+  "선부": {
+    "name": "선부",
+    "dataLine": "SH",
+    "svgX": 424.0,
+    "svgY": 1440.0,
+    "distance": 15
+  },
+  "시우": {
+    "name": "시우",
+    "dataLine": "SH",
+    "svgX": 352.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "원시": {
+    "name": "원시",
+    "dataLine": "SH",
+    "svgX": 296.0,
+    "svgY": 1520.0,
+    "distance": 15
+  },
+  "서울지방병무청": {
+    "name": "서울지방병무청",
+    "dataLine": "SL",
+    "svgX": 812.0,
+    "svgY": 928.0,
+    "distance": 9
+  },
+  "보라매공원": {
+    "name": "보라매공원",
+    "dataLine": "SL",
+    "svgX": 832.0,
+    "svgY": 1016.0,
+    "distance": 9
+  },
+  "보라매병원": {
+    "name": "보라매병원",
+    "dataLine": "SL",
+    "svgX": 840.0,
+    "svgY": 1032.0,
+    "distance": 9
+  },
+  "당곡": {
+    "name": "당곡",
+    "dataLine": "SL",
+    "svgX": 856.0,
+    "svgY": 1048.0,
+    "distance": 9
+  },
+  "서원": {
+    "name": "서원",
+    "dataLine": "SL",
+    "svgX": 912.0,
+    "svgY": 1112.0,
+    "distance": 9
+  },
+  "서울대벤처타운": {
+    "name": "서울대벤처타운",
+    "dataLine": "SL",
+    "svgX": 960.0,
+    "svgY": 1136.0,
+    "distance": 15
+  },
+  "관악산(서울대)": {
+    "name": "관악산(서울대)",
+    "dataLine": "SL",
+    "svgX": 1008.0,
+    "svgY": 1136.0,
+    "distance": 10
+  }
+}
