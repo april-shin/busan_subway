@@ -3841,5 +3841,803 @@
     "lineId": "신림",
     "travelTimeSeconds": 90,
     "isTransfer": false
+  },
+  {
+    "fromStationId": "E01",
+    "toStationId": "E02",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E02",
+    "toStationId": "E03",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E03",
+    "toStationId": "E04",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E04",
+    "toStationId": "E05",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E05",
+    "toStationId": "E06",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E06",
+    "toStationId": "E07",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E07",
+    "toStationId": "E08",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E08",
+    "toStationId": "E09",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E09",
+    "toStationId": "E10",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E10",
+    "toStationId": "E11",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E11",
+    "toStationId": "E12",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E12",
+    "toStationId": "E13",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "E13",
+    "toStationId": "E14",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I01",
+    "toStationId": "I02",
+    "lineId": "인천1",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I02",
+    "toStationId": "I03",
+    "lineId": "인천1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I03",
+    "toStationId": "I04",
+    "lineId": "인천1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I04",
+    "toStationId": "I05",
+    "lineId": "인천1",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I05",
+    "toStationId": "I06",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I06",
+    "toStationId": "I07",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I07",
+    "toStationId": "I08",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I08",
+    "toStationId": "I09",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I09",
+    "toStationId": "I10",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I10",
+    "toStationId": "I11",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I11",
+    "toStationId": "I12",
+    "lineId": "인천1",
+    "travelTimeSeconds": 270,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I12",
+    "toStationId": "I13",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I13",
+    "toStationId": "I14",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I14",
+    "toStationId": "I15",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I15",
+    "toStationId": "I16",
+    "lineId": "인천1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I16",
+    "toStationId": "I17",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I17",
+    "toStationId": "I18",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I18",
+    "toStationId": "I19",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I19",
+    "toStationId": "I20",
+    "lineId": "인천1",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I20",
+    "toStationId": "I21",
+    "lineId": "인천1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I21",
+    "toStationId": "I22",
+    "lineId": "인천1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I22",
+    "toStationId": "I23",
+    "lineId": "인천1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I23",
+    "toStationId": "I24",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I24",
+    "toStationId": "I25",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I25",
+    "toStationId": "I26",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I26",
+    "toStationId": "I27",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I27",
+    "toStationId": "I28",
+    "lineId": "인천1",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I28",
+    "toStationId": "I29",
+    "lineId": "인천1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I29",
+    "toStationId": "I30",
+    "lineId": "인천1",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I30",
+    "toStationId": "I31",
+    "lineId": "인천1",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J01",
+    "toStationId": "J02",
+    "lineId": "인천2",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J02",
+    "toStationId": "J03",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J03",
+    "toStationId": "J04",
+    "lineId": "인천2",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J04",
+    "toStationId": "J05",
+    "lineId": "인천2",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J05",
+    "toStationId": "J06",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J06",
+    "toStationId": "J07",
+    "lineId": "인천2",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J07",
+    "toStationId": "J08",
+    "lineId": "인천2",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J08",
+    "toStationId": "J09",
+    "lineId": "인천2",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J09",
+    "toStationId": "J10",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J10",
+    "toStationId": "J11",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J11",
+    "toStationId": "J12",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J12",
+    "toStationId": "J13",
+    "lineId": "인천2",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J13",
+    "toStationId": "J14",
+    "lineId": "인천2",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J14",
+    "toStationId": "J15",
+    "lineId": "인천2",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J15",
+    "toStationId": "J16",
+    "lineId": "인천2",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J16",
+    "toStationId": "J17",
+    "lineId": "인천2",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J17",
+    "toStationId": "J18",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J18",
+    "toStationId": "J19",
+    "lineId": "인천2",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J19",
+    "toStationId": "J20",
+    "lineId": "인천2",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J20",
+    "toStationId": "J21",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J21",
+    "toStationId": "J22",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J22",
+    "toStationId": "J23",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "J23",
+    "toStationId": "J24",
+    "lineId": "인천2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P01",
+    "toStationId": "P02",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P02",
+    "toStationId": "P03",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P03",
+    "toStationId": "P04",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P04",
+    "toStationId": "P05",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P05",
+    "toStationId": "P06",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P06",
+    "toStationId": "P07",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P07",
+    "toStationId": "P08",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P08",
+    "toStationId": "P09",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 270,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H01",
+    "toStationId": "H02",
+    "lineId": "서해",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H02",
+    "toStationId": "H03",
+    "lineId": "서해",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H03",
+    "toStationId": "H04",
+    "lineId": "서해",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H04",
+    "toStationId": "H05",
+    "lineId": "서해",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H05",
+    "toStationId": "H06",
+    "lineId": "서해",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H06",
+    "toStationId": "H07",
+    "lineId": "서해",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H07",
+    "toStationId": "H08",
+    "lineId": "서해",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H08",
+    "toStationId": "H09",
+    "lineId": "서해",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H09",
+    "toStationId": "H10",
+    "lineId": "서해",
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H10",
+    "toStationId": "H11",
+    "lineId": "서해",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U01",
+    "toStationId": "U02",
+    "lineId": "의정부",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U02",
+    "toStationId": "U03",
+    "lineId": "의정부",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U03",
+    "toStationId": "U04",
+    "lineId": "의정부",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U04",
+    "toStationId": "U05",
+    "lineId": "의정부",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U05",
+    "toStationId": "U06",
+    "lineId": "의정부",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U06",
+    "toStationId": "U07",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U07",
+    "toStationId": "U08",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U08",
+    "toStationId": "U09",
+    "lineId": "의정부",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U09",
+    "toStationId": "U10",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U10",
+    "toStationId": "U11",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U11",
+    "toStationId": "U12",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U12",
+    "toStationId": "U13",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U13",
+    "toStationId": "U14",
+    "lineId": "의정부",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W01",
+    "toStationId": "W02",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W02",
+    "toStationId": "W03",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W03",
+    "toStationId": "W04",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W04",
+    "toStationId": "W05",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W05",
+    "toStationId": "W06",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W06",
+    "toStationId": "W07",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W07",
+    "toStationId": "W08",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W08",
+    "toStationId": "W09",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W09",
+    "toStationId": "W10",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G01",
+    "toStationId": "G02",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G02",
+    "toStationId": "G03",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G03",
+    "toStationId": "G04",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G04",
+    "toStationId": "G05",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G05",
+    "toStationId": "G06",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G06",
+    "toStationId": "G07",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G07",
+    "toStationId": "G08",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "G08",
+    "toStationId": "G09",
+    "lineId": "GTX-A",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
   }
 ]

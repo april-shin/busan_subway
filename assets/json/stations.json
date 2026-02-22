@@ -5,8 +5,8 @@
     "lineId": "1",
     "latitude": 37.7472,
     "longitude": 127.0612,
-    "svgX": 1135.0,
-    "svgY": 370.0,
+    "svgX": 1024.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -18,8 +18,8 @@
     "lineId": "1",
     "latitude": 37.7382,
     "longitude": 127.0594,
-    "svgX": 1132.0,
-    "svgY": 389.0,
+    "svgX": 1080.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -31,8 +31,8 @@
     "lineId": "1",
     "latitude": 37.729,
     "longitude": 127.0629,
-    "svgX": 1137.0,
-    "svgY": 407.0,
+    "svgX": 1128.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -44,8 +44,8 @@
     "lineId": "1",
     "latitude": 37.7186,
     "longitude": 127.0607,
-    "svgX": 1134.0,
-    "svgY": 428.0,
+    "svgX": 1180.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -57,8 +57,8 @@
     "lineId": "1",
     "latitude": 37.7102,
     "longitude": 127.0533,
-    "svgX": 1121.0,
-    "svgY": 445.0,
+    "svgX": 1232.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -70,8 +70,8 @@
     "lineId": "1",
     "latitude": 37.6967,
     "longitude": 127.057,
-    "svgX": 1128.0,
-    "svgY": 473.0,
+    "svgX": 1280.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -83,8 +83,8 @@
     "lineId": "1",
     "latitude": 37.6911,
     "longitude": 127.0553,
-    "svgX": 1125.0,
-    "svgY": 484.0,
+    "svgX": 1336.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -96,8 +96,8 @@
     "lineId": "1",
     "latitude": 37.6636,
     "longitude": 127.0464,
-    "svgX": 1110.0,
-    "svgY": 540.0,
+    "svgX": 1384.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -109,8 +109,8 @@
     "lineId": "1",
     "latitude": 37.6417,
     "longitude": 127.039,
-    "svgX": 1097.0,
-    "svgY": 584.0,
+    "svgX": 1436.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -122,8 +122,8 @@
     "lineId": "1",
     "latitude": 37.6321,
     "longitude": 127.0372,
-    "svgX": 1094.0,
-    "svgY": 604.0,
+    "svgX": 1488.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -135,8 +135,8 @@
     "lineId": "1",
     "latitude": 37.7383,
     "longitude": 127.0458,
-    "svgX": 1109.0,
-    "svgY": 388.0,
+    "svgX": 1536.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -148,8 +148,8 @@
     "lineId": "1",
     "latitude": 37.6505,
     "longitude": 127.0125,
-    "svgX": 1053.0,
-    "svgY": 566.0,
+    "svgX": 1580.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -161,8 +161,8 @@
     "lineId": "1",
     "latitude": 37.6358,
     "longitude": 127.0199,
-    "svgX": 1065.0,
-    "svgY": 596.0,
+    "svgX": 1640.0,
+    "svgY": 80.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -174,8 +174,8 @@
     "lineId": "1",
     "latitude": 37.6892,
     "longitude": 127.0447,
-    "svgX": 1107.0,
-    "svgY": 488.0,
+    "svgX": 1704.0,
+    "svgY": 104.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -188,8 +188,8 @@
     "lineId": "1",
     "latitude": 37.6723,
     "longitude": 127.0472,
-    "svgX": 1111.0,
-    "svgY": 522.0,
+    "svgX": 1704.0,
+    "svgY": 136.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -201,8 +201,8 @@
     "lineId": "1",
     "latitude": 37.6598,
     "longitude": 127.044,
-    "svgX": 1106.0,
-    "svgY": 548.0,
+    "svgX": 1704.0,
+    "svgY": 168.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -214,8 +214,8 @@
     "lineId": "1",
     "latitude": 37.6531,
     "longitude": 127.0469,
-    "svgX": 1110.0,
-    "svgY": 561.0,
+    "svgX": 1704.0,
+    "svgY": 224.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -228,8 +228,8 @@
     "lineId": "1",
     "latitude": 37.6453,
     "longitude": 127.0512,
-    "svgX": 1118.0,
-    "svgY": 577.0,
+    "svgX": 1704.0,
+    "svgY": 252.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -241,8 +241,8 @@
     "lineId": "1",
     "latitude": 37.6402,
     "longitude": 127.0585,
-    "svgX": 1130.0,
-    "svgY": 587.0,
+    "svgX": 1704.0,
+    "svgY": 280.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -254,8 +254,8 @@
     "lineId": "1",
     "latitude": 37.6326,
     "longitude": 127.0618,
-    "svgX": 1136.0,
-    "svgY": 603.0,
+    "svgX": 1704.0,
+    "svgY": 312.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -267,8 +267,8 @@
     "lineId": "1",
     "latitude": 37.6157,
     "longitude": 127.0655,
-    "svgX": 1142.0,
-    "svgY": 637.0,
+    "svgX": 1704.0,
+    "svgY": 336.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -281,8 +281,8 @@
     "lineId": "1",
     "latitude": 37.596,
     "longitude": 127.0581,
-    "svgX": 1129.0,
-    "svgY": 677.0,
+    "svgX": 1696.0,
+    "svgY": 368.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -294,8 +294,8 @@
     "lineId": "1",
     "latitude": 37.5947,
     "longitude": 127.059,
-    "svgX": 1131.0,
-    "svgY": 680.0,
+    "svgX": 1672.0,
+    "svgY": 392.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -307,8 +307,8 @@
     "lineId": "1",
     "latitude": 37.5895,
     "longitude": 127.0579,
-    "svgX": 1129.0,
-    "svgY": 690.0,
+    "svgX": 1640.0,
+    "svgY": 424.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -322,8 +322,8 @@
     "lineId": "1",
     "latitude": 37.5805,
     "longitude": 127.0475,
-    "svgX": 1111.0,
-    "svgY": 708.0,
+    "svgX": 1584.0,
+    "svgY": 421.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -338,8 +338,8 @@
     "lineId": "1",
     "latitude": 37.5785,
     "longitude": 127.0373,
-    "svgX": 1094.0,
-    "svgY": 712.0,
+    "svgX": 1528.0,
+    "svgY": 416.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -351,8 +351,8 @@
     "lineId": "1",
     "latitude": 37.5747,
     "longitude": 127.0252,
-    "svgX": 1074.0,
-    "svgY": 720.0,
+    "svgX": 1485.3333333333333,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -365,8 +365,8 @@
     "lineId": "1",
     "latitude": 37.5715,
     "longitude": 127.0167,
-    "svgX": 1060.0,
-    "svgY": 727.0,
+    "svgX": 1432.0,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -379,8 +379,8 @@
     "lineId": "1",
     "latitude": 37.5712,
     "longitude": 127.0094,
-    "svgX": 1047.0,
-    "svgY": 727.0,
+    "svgX": 1376.0,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -393,8 +393,8 @@
     "lineId": "1",
     "latitude": 37.5707,
     "longitude": 127.0019,
-    "svgX": 1035.0,
-    "svgY": 728.0,
+    "svgX": 1264.0,
+    "svgY": 416.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -406,8 +406,8 @@
     "lineId": "1",
     "latitude": 37.5712,
     "longitude": 126.9916,
-    "svgX": 1017.0,
-    "svgY": 727.0,
+    "svgX": 1141.3333333333333,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -421,8 +421,8 @@
     "lineId": "1",
     "latitude": 37.5703,
     "longitude": 126.983,
-    "svgX": 1003.0,
-    "svgY": 729.0,
+    "svgX": 1080.0,
+    "svgY": 472.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -434,8 +434,8 @@
     "lineId": "1",
     "latitude": 37.5641,
     "longitude": 126.977,
-    "svgX": 993.0,
-    "svgY": 742.0,
+    "svgX": 1040.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -448,14 +448,15 @@
     "lineId": "1",
     "latitude": 37.5547,
     "longitude": 126.9706,
-    "svgX": 982.0,
-    "svgY": 761.0,
+    "svgX": 1040.0,
+    "svgY": 618.0,
     "isTransfer": true,
     "transferLines": [
       "1",
       "4",
       "경의중앙",
-      "공항철도"
+      "공항철도",
+      "GTX-A"
     ]
   },
   {
@@ -464,8 +465,8 @@
     "lineId": "1",
     "latitude": 37.5415,
     "longitude": 126.9717,
-    "svgX": 984.0,
-    "svgY": 788.0,
+    "svgX": 1040.0,
+    "svgY": 680.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -477,8 +478,8 @@
     "lineId": "1",
     "latitude": 37.5299,
     "longitude": 126.9648,
-    "svgX": 972.0,
-    "svgY": 811.0,
+    "svgX": 1040.0,
+    "svgY": 848.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -491,8 +492,8 @@
     "lineId": "1",
     "latitude": 37.5134,
     "longitude": 126.9428,
-    "svgX": 935.0,
-    "svgY": 844.0,
+    "svgX": 936.0,
+    "svgY": 880.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -505,8 +506,8 @@
     "lineId": "1",
     "latitude": 37.5133,
     "longitude": 126.9264,
-    "svgX": 907.0,
-    "svgY": 845.0,
+    "svgX": 812.0,
+    "svgY": 852.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -519,8 +520,8 @@
     "lineId": "1",
     "latitude": 37.5151,
     "longitude": 126.9163,
-    "svgX": 890.0,
-    "svgY": 841.0,
+    "svgX": 756.0,
+    "svgY": 800.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -533,8 +534,8 @@
     "lineId": "1",
     "latitude": 37.5156,
     "longitude": 126.9077,
-    "svgX": 876.0,
-    "svgY": 840.0,
+    "svgX": 728.0,
+    "svgY": 824.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -546,8 +547,8 @@
     "lineId": "1",
     "latitude": 37.5091,
     "longitude": 126.8912,
-    "svgX": 848.0,
-    "svgY": 853.0,
+    "svgX": 692.0,
+    "svgY": 856.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -560,8 +561,8 @@
     "lineId": "1",
     "latitude": 37.5032,
     "longitude": 126.8825,
-    "svgX": 833.0,
-    "svgY": 865.0,
+    "svgX": 656.0,
+    "svgY": 896.0,
     "isTransfer": true,
     "transferLines": [
       "1"
@@ -573,8 +574,8 @@
     "lineId": "1",
     "latitude": 37.4945,
     "longitude": 126.8752,
-    "svgX": 821.0,
-    "svgY": 883.0,
+    "svgX": 632.0,
+    "svgY": 920.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -586,8 +587,8 @@
     "lineId": "1",
     "latitude": 37.4935,
     "longitude": 126.8567,
-    "svgX": 790.0,
-    "svgY": 885.0,
+    "svgX": 600.0,
+    "svgY": 928.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -599,8 +600,8 @@
     "lineId": "1",
     "latitude": 37.4933,
     "longitude": 126.842,
-    "svgX": 765.0,
-    "svgY": 885.0,
+    "svgX": 560.0,
+    "svgY": 928.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -612,8 +613,8 @@
     "lineId": "1",
     "latitude": 37.4925,
     "longitude": 126.8234,
-    "svgX": 734.0,
-    "svgY": 887.0,
+    "svgX": 516.0,
+    "svgY": 936.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -626,8 +627,8 @@
     "lineId": "1",
     "latitude": 37.486,
     "longitude": 126.8038,
-    "svgX": 701.0,
-    "svgY": 900.0,
+    "svgX": 480.0,
+    "svgY": 976.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -639,8 +640,8 @@
     "lineId": "1",
     "latitude": 37.4827,
     "longitude": 126.7916,
-    "svgX": 680.0,
-    "svgY": 907.0,
+    "svgX": 448.0,
+    "svgY": 1012.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -652,8 +653,8 @@
     "lineId": "1",
     "latitude": 37.4827,
     "longitude": 126.7832,
-    "svgX": 666.0,
-    "svgY": 907.0,
+    "svgX": 400.0,
+    "svgY": 1048.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -665,8 +666,8 @@
     "lineId": "1",
     "latitude": 37.4902,
     "longitude": 126.7658,
-    "svgX": 637.0,
-    "svgY": 892.0,
+    "svgX": 348.0,
+    "svgY": 1048.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -678,8 +679,8 @@
     "lineId": "1",
     "latitude": 37.489,
     "longitude": 126.7533,
-    "svgX": 616.0,
-    "svgY": 894.0,
+    "svgX": 304.0,
+    "svgY": 1048.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -691,8 +692,8 @@
     "lineId": "1",
     "latitude": 37.498,
     "longitude": 126.7417,
-    "svgX": 596.0,
-    "svgY": 876.0,
+    "svgX": 260.0,
+    "svgY": 1048.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -704,8 +705,8 @@
     "lineId": "1",
     "latitude": 37.5074,
     "longitude": 126.7231,
-    "svgX": 565.0,
-    "svgY": 857.0,
+    "svgX": 216.0,
+    "svgY": 1048.0,
     "isTransfer": true,
     "transferLines": [
       "1"
@@ -717,8 +718,8 @@
     "lineId": "1",
     "latitude": 37.5103,
     "longitude": 126.7074,
-    "svgX": 538.0,
-    "svgY": 851.0,
+    "svgX": 176.0,
+    "svgY": 1048.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -730,8 +731,8 @@
     "lineId": "1",
     "latitude": 37.5182,
     "longitude": 126.6999,
-    "svgX": 526.0,
-    "svgY": 835.0,
+    "svgX": 144.0,
+    "svgY": 1092.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -743,8 +744,8 @@
     "lineId": "1",
     "latitude": 37.5262,
     "longitude": 126.6852,
-    "svgX": 501.0,
-    "svgY": 819.0,
+    "svgX": 144.0,
+    "svgY": 1120.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -756,8 +757,8 @@
     "lineId": "1",
     "latitude": 37.5291,
     "longitude": 126.6806,
-    "svgX": 493.0,
-    "svgY": 813.0,
+    "svgX": 144.0,
+    "svgY": 1152.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -770,8 +771,8 @@
     "lineId": "1",
     "latitude": 37.5356,
     "longitude": 126.6702,
-    "svgX": 475.0,
-    "svgY": 799.0,
+    "svgX": 144.0,
+    "svgY": 1192.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -783,8 +784,8 @@
     "lineId": "1",
     "latitude": 37.5396,
     "longitude": 126.6538,
-    "svgX": 448.0,
-    "svgY": 791.0,
+    "svgX": 192.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -796,8 +797,8 @@
     "lineId": "1",
     "latitude": 37.5464,
     "longitude": 126.6421,
-    "svgX": 428.0,
-    "svgY": 778.0,
+    "svgX": 240.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -809,8 +810,8 @@
     "lineId": "1",
     "latitude": 37.4738,
     "longitude": 126.632,
-    "svgX": 411.0,
-    "svgY": 925.0,
+    "svgX": 288.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -822,8 +823,8 @@
     "lineId": "1",
     "latitude": 37.4737,
     "longitude": 126.6241,
-    "svgX": 398.0,
-    "svgY": 925.0,
+    "svgX": 344.0,
+    "svgY": 1256.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -836,8 +837,8 @@
     "lineId": "2",
     "latitude": 37.5641,
     "longitude": 126.977,
-    "svgX": 993.0,
-    "svgY": 742.0,
+    "svgX": 1040.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -850,8 +851,8 @@
     "lineId": "2",
     "latitude": 37.566,
     "longitude": 126.9826,
-    "svgX": 1002.0,
-    "svgY": 738.0,
+    "svgX": 1096.0,
+    "svgY": 528.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -863,8 +864,8 @@
     "lineId": "2",
     "latitude": 37.5664,
     "longitude": 126.992,
-    "svgX": 1018.0,
-    "svgY": 737.0,
+    "svgX": 1144.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -877,8 +878,8 @@
     "lineId": "2",
     "latitude": 37.5673,
     "longitude": 126.9981,
-    "svgX": 1028.0,
-    "svgY": 735.0,
+    "svgX": 1256.0,
+    "svgY": 524.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -891,8 +892,8 @@
     "lineId": "2",
     "latitude": 37.5654,
     "longitude": 127.0094,
-    "svgX": 1047.0,
-    "svgY": 739.0,
+    "svgX": 1352.0,
+    "svgY": 525.3333333333334,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -906,8 +907,8 @@
     "lineId": "2",
     "latitude": 37.566,
     "longitude": 127.0177,
-    "svgX": 1061.0,
-    "svgY": 738.0,
+    "svgX": 1432.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -920,8 +921,8 @@
     "lineId": "2",
     "latitude": 37.5654,
     "longitude": 127.0293,
-    "svgX": 1081.0,
-    "svgY": 739.0,
+    "svgX": 1528.0,
+    "svgY": 552.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -933,8 +934,8 @@
     "lineId": "2",
     "latitude": 37.5614,
     "longitude": 127.037,
-    "svgX": 1094.0,
-    "svgY": 747.0,
+    "svgX": 1576.0,
+    "svgY": 600.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -949,8 +950,8 @@
     "lineId": "2",
     "latitude": 37.5578,
     "longitude": 127.0433,
-    "svgX": 1104.0,
-    "svgY": 754.0,
+    "svgX": 1624.0,
+    "svgY": 648.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -962,8 +963,8 @@
     "lineId": "2",
     "latitude": 37.5474,
     "longitude": 127.0473,
-    "svgX": 1111.0,
-    "svgY": 776.0,
+    "svgX": 1648.0,
+    "svgY": 672.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -975,8 +976,8 @@
     "lineId": "2",
     "latitude": 37.5446,
     "longitude": 127.0557,
-    "svgX": 1125.0,
-    "svgY": 781.0,
+    "svgX": 1680.0,
+    "svgY": 704.0,
     "isTransfer": true,
     "transferLines": [
       "2"
@@ -988,8 +989,8 @@
     "lineId": "2",
     "latitude": 37.5404,
     "longitude": 127.0694,
-    "svgX": 1148.0,
-    "svgY": 790.0,
+    "svgX": 1856.0,
+    "svgY": 752.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1002,8 +1003,8 @@
     "lineId": "2",
     "latitude": 37.5367,
     "longitude": 127.0847,
-    "svgX": 1174.0,
-    "svgY": 797.0,
+    "svgX": 1912.0,
+    "svgY": 776.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1015,8 +1016,8 @@
     "lineId": "2",
     "latitude": 37.5353,
     "longitude": 127.094,
-    "svgX": 1190.0,
-    "svgY": 800.0,
+    "svgX": 1960.0,
+    "svgY": 824.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1028,8 +1029,8 @@
     "lineId": "2",
     "latitude": 37.5214,
     "longitude": 127.1039,
-    "svgX": 1207.0,
-    "svgY": 828.0,
+    "svgX": 2000.0,
+    "svgY": 912.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1041,8 +1042,8 @@
     "lineId": "2",
     "latitude": 37.5133,
     "longitude": 127.0998,
-    "svgX": 1200.0,
-    "svgY": 845.0,
+    "svgX": 2000.0,
+    "svgY": 992.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1055,8 +1056,8 @@
     "lineId": "2",
     "latitude": 37.5117,
     "longitude": 127.0861,
-    "svgX": 1177.0,
-    "svgY": 848.0,
+    "svgX": 1972.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1068,8 +1069,8 @@
     "lineId": "2",
     "latitude": 37.5107,
     "longitude": 127.0738,
-    "svgX": 1156.0,
-    "svgY": 850.0,
+    "svgX": 1824.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1082,8 +1083,8 @@
     "lineId": "2",
     "latitude": 37.5088,
     "longitude": 127.0632,
-    "svgX": 1138.0,
-    "svgY": 854.0,
+    "svgX": 1728.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1095,8 +1096,8 @@
     "lineId": "2",
     "latitude": 37.5046,
     "longitude": 127.049,
-    "svgX": 1114.0,
-    "svgY": 862.0,
+    "svgX": 1616.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1109,8 +1110,8 @@
     "lineId": "2",
     "latitude": 37.5007,
     "longitude": 127.0365,
-    "svgX": 1093.0,
-    "svgY": 870.0,
+    "svgX": 1544.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1122,8 +1123,8 @@
     "lineId": "2",
     "latitude": 37.4979,
     "longitude": 127.0276,
-    "svgX": 1078.0,
-    "svgY": 876.0,
+    "svgX": 1464.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1136,8 +1137,8 @@
     "lineId": "2",
     "latitude": 37.4935,
     "longitude": 127.0145,
-    "svgX": 1056.0,
-    "svgY": 885.0,
+    "svgX": 1368.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1150,8 +1151,8 @@
     "lineId": "2",
     "latitude": 37.4918,
     "longitude": 127.0079,
-    "svgX": 1045.0,
-    "svgY": 888.0,
+    "svgX": 1280.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1163,8 +1164,8 @@
     "lineId": "2",
     "latitude": 37.4815,
     "longitude": 126.9977,
-    "svgX": 1028.0,
-    "svgY": 909.0,
+    "svgX": 1208.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1176,8 +1177,8 @@
     "lineId": "2",
     "latitude": 37.4765,
     "longitude": 126.9816,
-    "svgX": 1000.0,
-    "svgY": 919.0,
+    "svgX": 1120.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1190,8 +1191,8 @@
     "lineId": "2",
     "latitude": 37.4776,
     "longitude": 126.9636,
-    "svgX": 970.0,
-    "svgY": 917.0,
+    "svgX": 1076.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1203,8 +1204,8 @@
     "lineId": "2",
     "latitude": 37.4816,
     "longitude": 126.9529,
-    "svgX": 952.0,
-    "svgY": 909.0,
+    "svgX": 1008.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1216,8 +1217,8 @@
     "lineId": "2",
     "latitude": 37.4825,
     "longitude": 126.9419,
-    "svgX": 933.0,
-    "svgY": 907.0,
+    "svgX": 928.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1229,8 +1230,8 @@
     "lineId": "2",
     "latitude": 37.4843,
     "longitude": 126.9296,
-    "svgX": 913.0,
-    "svgY": 904.0,
+    "svgX": 868.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1243,8 +1244,8 @@
     "lineId": "2",
     "latitude": 37.4878,
     "longitude": 126.913,
-    "svgX": 885.0,
-    "svgY": 896.0,
+    "svgX": 792.0,
+    "svgY": 1064.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1256,8 +1257,8 @@
     "lineId": "2",
     "latitude": 37.4852,
     "longitude": 126.9016,
-    "svgX": 866.0,
-    "svgY": 902.0,
+    "svgX": 728.0,
+    "svgY": 1048.0,
     "isTransfer": true,
     "transferLines": [
       "2"
@@ -1269,8 +1270,8 @@
     "lineId": "2",
     "latitude": 37.4934,
     "longitude": 126.8962,
-    "svgX": 856.0,
-    "svgY": 885.0,
+    "svgX": 728.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1283,8 +1284,8 @@
     "lineId": "2",
     "latitude": 37.5091,
     "longitude": 126.8912,
-    "svgX": 848.0,
-    "svgY": 853.0,
+    "svgX": 692.0,
+    "svgY": 856.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -1297,8 +1298,8 @@
     "lineId": "2",
     "latitude": 37.5178,
     "longitude": 126.8954,
-    "svgX": 855.0,
-    "svgY": 836.0,
+    "svgX": 656.0,
+    "svgY": 776.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1310,8 +1311,8 @@
     "lineId": "2",
     "latitude": 37.5246,
     "longitude": 126.8965,
-    "svgX": 857.0,
-    "svgY": 822.0,
+    "svgX": 656.0,
+    "svgY": 712.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1324,8 +1325,8 @@
     "lineId": "2",
     "latitude": 37.5347,
     "longitude": 126.9026,
-    "svgX": 867.0,
-    "svgY": 801.0,
+    "svgX": 728.0,
+    "svgY": 688.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1338,8 +1339,8 @@
     "lineId": "2",
     "latitude": 37.55,
     "longitude": 126.914,
-    "svgX": 886.0,
-    "svgY": 770.0,
+    "svgX": 808.0,
+    "svgY": 688.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1352,8 +1353,8 @@
     "lineId": "2",
     "latitude": 37.5572,
     "longitude": 126.9259,
-    "svgX": 907.0,
-    "svgY": 756.0,
+    "svgX": 872.0,
+    "svgY": 632.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1367,8 +1368,8 @@
     "lineId": "2",
     "latitude": 37.5554,
     "longitude": 126.937,
-    "svgX": 925.0,
-    "svgY": 759.0,
+    "svgX": 872.0,
+    "svgY": 588.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1380,8 +1381,8 @@
     "lineId": "2",
     "latitude": 37.5569,
     "longitude": 126.9467,
-    "svgX": 942.0,
-    "svgY": 756.0,
+    "svgX": 872.0,
+    "svgY": 568.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1393,8 +1394,8 @@
     "lineId": "2",
     "latitude": 37.5577,
     "longitude": 126.9563,
-    "svgX": 958.0,
-    "svgY": 755.0,
+    "svgX": 872.0,
+    "svgY": 544.0,
     "isTransfer": false,
     "transferLines": [
       "2"
@@ -1406,8 +1407,8 @@
     "lineId": "2",
     "latitude": 37.56,
     "longitude": 126.9636,
-    "svgX": 970.0,
-    "svgY": 750.0,
+    "svgX": 960.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1420,8 +1421,8 @@
     "lineId": "3",
     "latitude": 37.6765,
     "longitude": 126.7512,
-    "svgX": 612.0,
-    "svgY": 514.0,
+    "svgX": 120.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1433,8 +1434,8 @@
     "lineId": "3",
     "latitude": 37.6706,
     "longitude": 126.7575,
-    "svgX": 623.0,
-    "svgY": 526.0,
+    "svgX": 184.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1446,8 +1447,8 @@
     "lineId": "3",
     "latitude": 37.6634,
     "longitude": 126.7628,
-    "svgX": 632.0,
-    "svgY": 540.0,
+    "svgX": 244.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1459,8 +1460,8 @@
     "lineId": "3",
     "latitude": 37.6516,
     "longitude": 126.7723,
-    "svgX": 648.0,
-    "svgY": 564.0,
+    "svgX": 303.2,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1472,8 +1473,8 @@
     "lineId": "3",
     "latitude": 37.6383,
     "longitude": 126.7858,
-    "svgX": 670.0,
-    "svgY": 591.0,
+    "svgX": 360.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1485,12 +1486,13 @@
     "lineId": "3",
     "latitude": 37.6534,
     "longitude": 126.7486,
-    "svgX": 608.0,
-    "svgY": 561.0,
+    "svgX": 404.0,
+    "svgY": 256.0,
     "isTransfer": true,
     "transferLines": [
       "3",
-      "경의중앙"
+      "경의중앙",
+      "GTX-A"
     ]
   },
   {
@@ -1499,8 +1501,8 @@
     "lineId": "3",
     "latitude": 37.6342,
     "longitude": 126.8315,
-    "svgX": 747.0,
-    "svgY": 600.0,
+    "svgX": 452.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1512,8 +1514,8 @@
     "lineId": "3",
     "latitude": 37.644,
     "longitude": 126.8342,
-    "svgX": 752.0,
-    "svgY": 580.0,
+    "svgX": 496.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1525,8 +1527,8 @@
     "lineId": "3",
     "latitude": 37.6499,
     "longitude": 126.8561,
-    "svgX": 789.0,
-    "svgY": 568.0,
+    "svgX": 576.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1538,8 +1540,8 @@
     "lineId": "3",
     "latitude": 37.6483,
     "longitude": 126.9135,
-    "svgX": 886.0,
-    "svgY": 571.0,
+    "svgX": 617.6,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1551,8 +1553,8 @@
     "lineId": "3",
     "latitude": 37.6369,
     "longitude": 126.9188,
-    "svgX": 895.0,
-    "svgY": 594.0,
+    "svgX": 662.4,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1564,12 +1566,13 @@
     "lineId": "3",
     "latitude": 37.619,
     "longitude": 126.9211,
-    "svgX": 898.0,
-    "svgY": 630.0,
+    "svgX": 690.6666666666666,
+    "svgY": 256.0,
     "isTransfer": true,
     "transferLines": [
       "3",
-      "6"
+      "6",
+      "GTX-A"
     ]
   },
   {
@@ -1578,8 +1581,8 @@
     "lineId": "3",
     "latitude": 37.6105,
     "longitude": 126.9296,
-    "svgX": 913.0,
-    "svgY": 648.0,
+    "svgX": 792.0,
+    "svgY": 256.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1592,8 +1595,8 @@
     "lineId": "3",
     "latitude": 37.6027,
     "longitude": 126.9357,
-    "svgX": 923.0,
-    "svgY": 663.0,
+    "svgX": 860.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1605,8 +1608,8 @@
     "lineId": "3",
     "latitude": 37.5892,
     "longitude": 126.9439,
-    "svgX": 937.0,
-    "svgY": 691.0,
+    "svgX": 912.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1618,8 +1621,8 @@
     "lineId": "3",
     "latitude": 37.5821,
     "longitude": 126.9504,
-    "svgX": 948.0,
-    "svgY": 705.0,
+    "svgX": 960.0,
+    "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1631,8 +1634,8 @@
     "lineId": "3",
     "latitude": 37.5727,
     "longitude": 126.9601,
-    "svgX": 964.0,
-    "svgY": 724.0,
+    "svgX": 1024.0,
+    "svgY": 296.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1644,8 +1647,8 @@
     "lineId": "3",
     "latitude": 37.576,
     "longitude": 126.9737,
-    "svgX": 987.0,
-    "svgY": 718.0,
+    "svgX": 1064.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1657,8 +1660,8 @@
     "lineId": "3",
     "latitude": 37.5766,
     "longitude": 126.9854,
-    "svgX": 1007.0,
-    "svgY": 716.0,
+    "svgX": 1096.0,
+    "svgY": 368.0,
     "isTransfer": true,
     "transferLines": [
       "3"
@@ -1670,8 +1673,8 @@
     "lineId": "3",
     "latitude": 37.5712,
     "longitude": 126.9916,
-    "svgX": 1017.0,
-    "svgY": 727.0,
+    "svgX": 1141.3333333333333,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -1685,8 +1688,8 @@
     "lineId": "3",
     "latitude": 37.5664,
     "longitude": 126.992,
-    "svgX": 1018.0,
-    "svgY": 737.0,
+    "svgX": 1144.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1699,8 +1702,8 @@
     "lineId": "3",
     "latitude": 37.5614,
     "longitude": 126.9949,
-    "svgX": 1023.0,
-    "svgY": 747.0,
+    "svgX": 1236.0,
+    "svgY": 616.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1713,8 +1716,8 @@
     "lineId": "3",
     "latitude": 37.5581,
     "longitude": 126.9884,
-    "svgX": 1012.0,
-    "svgY": 754.0,
+    "svgX": 1288.0,
+    "svgY": 672.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1726,8 +1729,8 @@
     "lineId": "3",
     "latitude": 37.5544,
     "longitude": 127.0104,
-    "svgX": 1049.0,
-    "svgY": 761.0,
+    "svgX": 1352.0,
+    "svgY": 736.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1740,8 +1743,8 @@
     "lineId": "3",
     "latitude": 37.5577,
     "longitude": 127.019,
-    "svgX": 1063.0,
-    "svgY": 755.0,
+    "svgX": 1368.0,
+    "svgY": 776.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1753,8 +1756,8 @@
     "lineId": "3",
     "latitude": 37.5397,
     "longitude": 127.0171,
-    "svgX": 1060.0,
-    "svgY": 791.0,
+    "svgX": 1368.0,
+    "svgY": 824.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1767,8 +1770,8 @@
     "lineId": "3",
     "latitude": 37.527,
     "longitude": 127.0288,
-    "svgX": 1080.0,
-    "svgY": 817.0,
+    "svgX": 1368.0,
+    "svgY": 888.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1780,8 +1783,8 @@
     "lineId": "3",
     "latitude": 37.5167,
     "longitude": 127.0201,
-    "svgX": 1065.0,
-    "svgY": 838.0,
+    "svgX": 1368.0,
+    "svgY": 924.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1794,8 +1797,8 @@
     "lineId": "3",
     "latitude": 37.5119,
     "longitude": 127.0092,
-    "svgX": 1047.0,
-    "svgY": 848.0,
+    "svgX": 1368.0,
+    "svgY": 952.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1807,8 +1810,8 @@
     "lineId": "3",
     "latitude": 37.5048,
     "longitude": 127.0043,
-    "svgX": 1039.0,
-    "svgY": 862.0,
+    "svgX": 1368.0,
+    "svgY": 1008.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1822,8 +1825,8 @@
     "lineId": "3",
     "latitude": 37.4935,
     "longitude": 127.0145,
-    "svgX": 1056.0,
-    "svgY": 885.0,
+    "svgX": 1368.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -1836,8 +1839,8 @@
     "lineId": "3",
     "latitude": 37.4863,
     "longitude": 127.0159,
-    "svgX": 1058.0,
-    "svgY": 899.0,
+    "svgX": 1400.0,
+    "svgY": 1096.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1849,8 +1852,8 @@
     "lineId": "3",
     "latitude": 37.4843,
     "longitude": 127.0354,
-    "svgX": 1091.0,
-    "svgY": 904.0,
+    "svgX": 1464.0,
+    "svgY": 1136.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1863,8 +1866,8 @@
     "lineId": "3",
     "latitude": 37.4871,
     "longitude": 127.0473,
-    "svgX": 1111.0,
-    "svgY": 898.0,
+    "svgX": 1528.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1876,8 +1879,8 @@
     "lineId": "3",
     "latitude": 37.4913,
     "longitude": 127.0555,
-    "svgX": 1125.0,
-    "svgY": 889.0,
+    "svgX": 1616.0,
+    "svgY": 1136.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1890,8 +1893,8 @@
     "lineId": "3",
     "latitude": 37.4944,
     "longitude": 127.062,
-    "svgX": 1136.0,
-    "svgY": 883.0,
+    "svgX": 1696.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1903,8 +1906,8 @@
     "lineId": "3",
     "latitude": 37.4968,
     "longitude": 127.0714,
-    "svgX": 1152.0,
-    "svgY": 878.0,
+    "svgX": 1768.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1916,8 +1919,8 @@
     "lineId": "3",
     "latitude": 37.4913,
     "longitude": 127.0831,
-    "svgX": 1172.0,
-    "svgY": 889.0,
+    "svgX": 1872.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1929,8 +1932,8 @@
     "lineId": "3",
     "latitude": 37.4835,
     "longitude": 127.0866,
-    "svgX": 1177.0,
-    "svgY": 905.0,
+    "svgX": 1944.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1942,12 +1945,13 @@
     "lineId": "3",
     "latitude": 37.4873,
     "longitude": 127.1017,
-    "svgX": 1203.0,
-    "svgY": 897.0,
+    "svgX": 2048.0,
+    "svgY": 1200.0,
     "isTransfer": true,
     "transferLines": [
       "3",
-      "수인분당"
+      "수인분당",
+      "GTX-A"
     ]
   },
   {
@@ -1956,8 +1960,8 @@
     "lineId": "3",
     "latitude": 37.4927,
     "longitude": 127.1183,
-    "svgX": 1231.0,
-    "svgY": 886.0,
+    "svgX": 2124.0,
+    "svgY": 1120.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -1970,8 +1974,8 @@
     "lineId": "3",
     "latitude": 37.4963,
     "longitude": 127.1247,
-    "svgX": 1242.0,
-    "svgY": 879.0,
+    "svgX": 2192.0,
+    "svgY": 1056.0,
     "isTransfer": false,
     "transferLines": [
       "3"
@@ -1983,8 +1987,8 @@
     "lineId": "3",
     "latitude": 37.502,
     "longitude": 127.1283,
-    "svgX": 1248.0,
-    "svgY": 868.0,
+    "svgX": 2248.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -2010,8 +2014,8 @@
     "lineId": "4",
     "latitude": 37.6535,
     "longitude": 127.0714,
-    "svgX": 1152.0,
-    "svgY": 560.0,
+    "svgX": 1904.0,
+    "svgY": 224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2023,8 +2027,8 @@
     "lineId": "4",
     "latitude": 37.6557,
     "longitude": 127.0611,
-    "svgX": 1134.0,
-    "svgY": 556.0,
+    "svgX": 1832.0,
+    "svgY": 224.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2037,8 +2041,8 @@
     "lineId": "4",
     "latitude": 37.6531,
     "longitude": 127.0469,
-    "svgX": 1110.0,
-    "svgY": 561.0,
+    "svgX": 1704.0,
+    "svgY": 224.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -2051,8 +2055,8 @@
     "lineId": "4",
     "latitude": 37.6484,
     "longitude": 127.0345,
-    "svgX": 1090.0,
-    "svgY": 571.0,
+    "svgX": 1640.0,
+    "svgY": 224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2064,8 +2068,8 @@
     "lineId": "4",
     "latitude": 37.6381,
     "longitude": 127.0251,
-    "svgX": 1074.0,
-    "svgY": 592.0,
+    "svgX": 1592.0,
+    "svgY": 224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2077,8 +2081,8 @@
     "lineId": "4",
     "latitude": 37.6265,
     "longitude": 127.0283,
-    "svgX": 1079.0,
-    "svgY": 615.0,
+    "svgX": 1520.0,
+    "svgY": 224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2090,8 +2094,8 @@
     "lineId": "4",
     "latitude": 37.6135,
     "longitude": 127.0302,
-    "svgX": 1082.0,
-    "svgY": 642.0,
+    "svgX": 1456.0,
+    "svgY": 224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2103,8 +2107,8 @@
     "lineId": "4",
     "latitude": 37.6035,
     "longitude": 127.0254,
-    "svgX": 1074.0,
-    "svgY": 662.0,
+    "svgX": 1400.0,
+    "svgY": 224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2116,8 +2120,8 @@
     "lineId": "4",
     "latitude": 37.5924,
     "longitude": 127.0165,
-    "svgX": 1059.0,
-    "svgY": 684.0,
+    "svgX": 1380.0,
+    "svgY": 248.0,
     "isTransfer": true,
     "transferLines": [
       "4"
@@ -2129,8 +2133,8 @@
     "lineId": "4",
     "latitude": 37.5876,
     "longitude": 127.0062,
-    "svgX": 1042.0,
-    "svgY": 694.0,
+    "svgX": 1376.0,
+    "svgY": 296.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2142,8 +2146,8 @@
     "lineId": "4",
     "latitude": 37.5825,
     "longitude": 127.0018,
-    "svgX": 1034.0,
-    "svgY": 704.0,
+    "svgX": 1376.0,
+    "svgY": 344.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2155,8 +2159,8 @@
     "lineId": "4",
     "latitude": 37.5712,
     "longitude": 127.0094,
-    "svgX": 1047.0,
-    "svgY": 727.0,
+    "svgX": 1376.0,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -2169,8 +2173,8 @@
     "lineId": "4",
     "latitude": 37.5654,
     "longitude": 127.0094,
-    "svgX": 1047.0,
-    "svgY": 739.0,
+    "svgX": 1352.0,
+    "svgY": 525.3333333333334,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -2184,8 +2188,8 @@
     "lineId": "4",
     "latitude": 37.5614,
     "longitude": 126.9949,
-    "svgX": 1023.0,
-    "svgY": 747.0,
+    "svgX": 1236.0,
+    "svgY": 616.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -2198,8 +2202,8 @@
     "lineId": "4",
     "latitude": 37.5606,
     "longitude": 126.986,
-    "svgX": 1008.0,
-    "svgY": 749.0,
+    "svgX": 1184.0,
+    "svgY": 616.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2211,8 +2215,8 @@
     "lineId": "4",
     "latitude": 37.5589,
     "longitude": 126.9786,
-    "svgX": 995.0,
-    "svgY": 752.0,
+    "svgX": 1136.0,
+    "svgY": 616.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2224,14 +2228,15 @@
     "lineId": "4",
     "latitude": 37.5547,
     "longitude": 126.9706,
-    "svgX": 982.0,
-    "svgY": 761.0,
+    "svgX": 1040.0,
+    "svgY": 618.0,
     "isTransfer": true,
     "transferLines": [
       "1",
       "4",
       "경의중앙",
-      "공항철도"
+      "공항철도",
+      "GTX-A"
     ]
   },
   {
@@ -2240,8 +2245,8 @@
     "lineId": "4",
     "latitude": 37.5457,
     "longitude": 126.9727,
-    "svgX": 985.0,
-    "svgY": 779.0,
+    "svgX": 1096.0,
+    "svgY": 672.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2253,8 +2258,8 @@
     "lineId": "4",
     "latitude": 37.5349,
     "longitude": 126.9732,
-    "svgX": 986.0,
-    "svgY": 801.0,
+    "svgX": 1120.0,
+    "svgY": 736.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2267,8 +2272,8 @@
     "lineId": "4",
     "latitude": 37.5299,
     "longitude": 126.9693,
-    "svgX": 980.0,
-    "svgY": 811.0,
+    "svgX": 1120.0,
+    "svgY": 800.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2280,8 +2285,8 @@
     "lineId": "4",
     "latitude": 37.5216,
     "longitude": 126.9692,
-    "svgX": 980.0,
-    "svgY": 828.0,
+    "svgX": 1120.0,
+    "svgY": 848.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2294,8 +2299,8 @@
     "lineId": "4",
     "latitude": 37.5085,
     "longitude": 126.9514,
-    "svgX": 950.0,
-    "svgY": 854.0,
+    "svgX": 1120.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2307,8 +2312,8 @@
     "lineId": "4",
     "latitude": 37.4863,
     "longitude": 126.9817,
-    "svgX": 1001.0,
-    "svgY": 899.0,
+    "svgX": 1120.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2321,8 +2326,8 @@
     "lineId": "4",
     "latitude": 37.4765,
     "longitude": 126.9816,
-    "svgX": 1000.0,
-    "svgY": 919.0,
+    "svgX": 1120.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -2335,8 +2340,8 @@
     "lineId": "4",
     "latitude": 37.4646,
     "longitude": 126.9884,
-    "svgX": 1012.0,
-    "svgY": 943.0,
+    "svgX": 1120.0,
+    "svgY": 1104.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2348,8 +2353,8 @@
     "lineId": "4",
     "latitude": 37.452,
     "longitude": 126.9901,
-    "svgX": 1015.0,
-    "svgY": 969.0,
+    "svgX": 1120.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2361,8 +2366,8 @@
     "lineId": "4",
     "latitude": 37.4433,
     "longitude": 126.9944,
-    "svgX": 1022.0,
-    "svgY": 987.0,
+    "svgX": 1104.0,
+    "svgY": 1168.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2374,8 +2379,8 @@
     "lineId": "4",
     "latitude": 37.4302,
     "longitude": 126.9967,
-    "svgX": 1026.0,
-    "svgY": 1013.0,
+    "svgX": 1072.0,
+    "svgY": 1200.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2387,8 +2392,8 @@
     "lineId": "4",
     "latitude": 37.4279,
     "longitude": 127.0088,
-    "svgX": 1046.0,
-    "svgY": 1018.0,
+    "svgX": 1040.0,
+    "svgY": 1224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2400,8 +2405,8 @@
     "lineId": "4",
     "latitude": 37.4245,
     "longitude": 127.0153,
-    "svgX": 1057.0,
-    "svgY": 1025.0,
+    "svgX": 984.0,
+    "svgY": 1224.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2413,8 +2418,8 @@
     "lineId": "4",
     "latitude": 37.3948,
     "longitude": 126.996,
-    "svgX": 1025.0,
-    "svgY": 1085.0,
+    "svgX": 912.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2426,8 +2431,8 @@
     "lineId": "4",
     "latitude": 37.3896,
     "longitude": 126.9862,
-    "svgX": 1008.0,
-    "svgY": 1096.0,
+    "svgX": 880.0,
+    "svgY": 1288.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2439,8 +2444,8 @@
     "lineId": "4",
     "latitude": 37.3905,
     "longitude": 126.9556,
-    "svgX": 957.0,
-    "svgY": 1094.0,
+    "svgX": 848.0,
+    "svgY": 1320.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2452,8 +2457,8 @@
     "lineId": "4",
     "latitude": 37.3717,
     "longitude": 126.9412,
-    "svgX": 932.0,
-    "svgY": 1132.0,
+    "svgX": 816.0,
+    "svgY": 1352.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2466,8 +2471,8 @@
     "lineId": "4",
     "latitude": 37.3597,
     "longitude": 126.9327,
-    "svgX": 918.0,
-    "svgY": 1156.0,
+    "svgX": 784.0,
+    "svgY": 1384.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2479,8 +2484,8 @@
     "lineId": "4",
     "latitude": 37.3551,
     "longitude": 126.9126,
-    "svgX": 884.0,
-    "svgY": 1165.0,
+    "svgX": 752.0,
+    "svgY": 1416.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2492,8 +2497,8 @@
     "lineId": "4",
     "latitude": 37.3428,
     "longitude": 126.8993,
-    "svgX": 862.0,
-    "svgY": 1190.0,
+    "svgX": 720.0,
+    "svgY": 1448.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2505,8 +2510,8 @@
     "lineId": "4",
     "latitude": 37.323,
     "longitude": 126.8656,
-    "svgX": 805.0,
-    "svgY": 1231.0,
+    "svgX": 648.0,
+    "svgY": 1488.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2518,8 +2523,8 @@
     "lineId": "4",
     "latitude": 37.3071,
     "longitude": 126.8625,
-    "svgX": 800.0,
-    "svgY": 1263.0,
+    "svgX": 600.0,
+    "svgY": 1488.0,
     "isTransfer": false,
     "transferLines": [
       "4"
@@ -2531,8 +2536,8 @@
     "lineId": "4",
     "latitude": 37.3087,
     "longitude": 126.8526,
-    "svgX": 783.0,
-    "svgY": 1260.0,
+    "svgX": 552.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2545,8 +2550,8 @@
     "lineId": "4",
     "latitude": 37.3118,
     "longitude": 126.8408,
-    "svgX": 763.0,
-    "svgY": 1253.0,
+    "svgX": 504.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2559,8 +2564,8 @@
     "lineId": "4",
     "latitude": 37.3156,
     "longitude": 126.8274,
-    "svgX": 740.0,
-    "svgY": 1246.0,
+    "svgX": 456.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2573,8 +2578,8 @@
     "lineId": "4",
     "latitude": 37.3192,
     "longitude": 126.8001,
-    "svgX": 694.0,
-    "svgY": 1238.0,
+    "svgX": 408.0,
+    "svgY": 1488.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2587,8 +2592,8 @@
     "lineId": "4",
     "latitude": 37.3248,
     "longitude": 126.7896,
-    "svgX": 677.0,
-    "svgY": 1227.0,
+    "svgX": 360.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2601,8 +2606,8 @@
     "lineId": "4",
     "latitude": 37.3327,
     "longitude": 126.7863,
-    "svgX": 671.0,
-    "svgY": 1211.0,
+    "svgX": 304.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2615,8 +2620,8 @@
     "lineId": "4",
     "latitude": 37.3458,
     "longitude": 126.739,
-    "svgX": 591.0,
-    "svgY": 1184.0,
+    "svgX": 240.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2629,8 +2634,8 @@
     "lineId": "4",
     "latitude": 37.3473,
     "longitude": 126.6878,
-    "svgX": 505.0,
-    "svgY": 1181.0,
+    "svgX": 152.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -2643,8 +2648,8 @@
     "lineId": "5",
     "latitude": 37.5742,
     "longitude": 126.8154,
-    "svgX": 720.0,
-    "svgY": 721.0,
+    "svgX": 328.0,
+    "svgY": 416.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2656,8 +2661,8 @@
     "lineId": "5",
     "latitude": 37.5727,
     "longitude": 126.8073,
-    "svgX": 707.0,
-    "svgY": 724.0,
+    "svgX": 328.0,
+    "svgY": 472.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2669,8 +2674,8 @@
     "lineId": "5",
     "latitude": 37.5624,
     "longitude": 126.8015,
-    "svgX": 697.0,
-    "svgY": 745.0,
+    "svgX": 328.0,
+    "svgY": 544.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -2684,8 +2689,8 @@
     "lineId": "5",
     "latitude": 37.5563,
     "longitude": 126.8029,
-    "svgX": 699.0,
-    "svgY": 758.0,
+    "svgX": 328.0,
+    "svgY": 580.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2697,8 +2702,8 @@
     "lineId": "5",
     "latitude": 37.5625,
     "longitude": 126.8247,
-    "svgX": 736.0,
-    "svgY": 745.0,
+    "svgX": 328.0,
+    "svgY": 620.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2710,8 +2715,8 @@
     "lineId": "5",
     "latitude": 37.5593,
     "longitude": 126.8381,
-    "svgX": 759.0,
-    "svgY": 751.0,
+    "svgX": 328.0,
+    "svgY": 662.4,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2723,8 +2728,8 @@
     "lineId": "5",
     "latitude": 37.5484,
     "longitude": 126.8368,
-    "svgX": 756.0,
-    "svgY": 774.0,
+    "svgX": 352.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2736,8 +2741,8 @@
     "lineId": "5",
     "latitude": 37.5414,
     "longitude": 126.8395,
-    "svgX": 761.0,
-    "svgY": 788.0,
+    "svgX": 400.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2749,8 +2754,8 @@
     "lineId": "5",
     "latitude": 37.531,
     "longitude": 126.8476,
-    "svgX": 775.0,
-    "svgY": 809.0,
+    "svgX": 456.0,
+    "svgY": 712.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -2763,8 +2768,8 @@
     "lineId": "5",
     "latitude": 37.5239,
     "longitude": 126.8539,
-    "svgX": 785.0,
-    "svgY": 823.0,
+    "svgX": 504.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2776,8 +2781,8 @@
     "lineId": "5",
     "latitude": 37.5256,
     "longitude": 126.8736,
-    "svgX": 818.0,
-    "svgY": 820.0,
+    "svgX": 544.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2789,8 +2794,8 @@
     "lineId": "5",
     "latitude": 37.5239,
     "longitude": 126.88,
-    "svgX": 829.0,
-    "svgY": 823.0,
+    "svgX": 584.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2802,8 +2807,8 @@
     "lineId": "5",
     "latitude": 37.5273,
     "longitude": 126.8874,
-    "svgX": 842.0,
-    "svgY": 816.0,
+    "svgX": 624.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2815,8 +2820,8 @@
     "lineId": "5",
     "latitude": 37.5246,
     "longitude": 126.8965,
-    "svgX": 857.0,
-    "svgY": 822.0,
+    "svgX": 656.0,
+    "svgY": 712.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -2829,8 +2834,8 @@
     "lineId": "5",
     "latitude": 37.5225,
     "longitude": 126.905,
-    "svgX": 871.0,
-    "svgY": 826.0,
+    "svgX": 700.0,
+    "svgY": 752.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2842,8 +2847,8 @@
     "lineId": "5",
     "latitude": 37.5151,
     "longitude": 126.9163,
-    "svgX": 890.0,
-    "svgY": 841.0,
+    "svgX": 756.0,
+    "svgY": 800.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -2856,8 +2861,8 @@
     "lineId": "5",
     "latitude": 37.5216,
     "longitude": 126.9244,
-    "svgX": 904.0,
-    "svgY": 828.0,
+    "svgX": 832.0,
+    "svgY": 784.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -2870,8 +2875,8 @@
     "lineId": "5",
     "latitude": 37.5272,
     "longitude": 126.932,
-    "svgX": 917.0,
-    "svgY": 817.0,
+    "svgX": 896.0,
+    "svgY": 784.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2883,8 +2888,8 @@
     "lineId": "5",
     "latitude": 37.5393,
     "longitude": 126.9459,
-    "svgX": 940.0,
-    "svgY": 792.0,
+    "svgX": 952.0,
+    "svgY": 784.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2896,8 +2901,8 @@
     "lineId": "5",
     "latitude": 37.5438,
     "longitude": 126.9517,
-    "svgX": 950.0,
-    "svgY": 783.0,
+    "svgX": 960.0,
+    "svgY": 724.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -2912,8 +2917,8 @@
     "lineId": "5",
     "latitude": 37.5537,
     "longitude": 126.9566,
-    "svgX": 958.0,
-    "svgY": 763.0,
+    "svgX": 960.0,
+    "svgY": 544.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2925,8 +2930,8 @@
     "lineId": "5",
     "latitude": 37.56,
     "longitude": 126.9636,
-    "svgX": 970.0,
-    "svgY": 750.0,
+    "svgX": 960.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -2939,8 +2944,8 @@
     "lineId": "5",
     "latitude": 37.5657,
     "longitude": 126.9667,
-    "svgX": 975.0,
-    "svgY": 738.0,
+    "svgX": 960.0,
+    "svgY": 456.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2952,8 +2957,8 @@
     "lineId": "5",
     "latitude": 37.5704,
     "longitude": 126.9768,
-    "svgX": 992.0,
-    "svgY": 729.0,
+    "svgX": 1024.0,
+    "svgY": 416.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -2965,8 +2970,8 @@
     "lineId": "5",
     "latitude": 37.5712,
     "longitude": 126.9916,
-    "svgX": 1017.0,
-    "svgY": 727.0,
+    "svgX": 1141.3333333333333,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -2980,8 +2985,8 @@
     "lineId": "5",
     "latitude": 37.5673,
     "longitude": 126.9981,
-    "svgX": 1028.0,
-    "svgY": 735.0,
+    "svgX": 1256.0,
+    "svgY": 524.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -2994,8 +2999,8 @@
     "lineId": "5",
     "latitude": 37.5654,
     "longitude": 127.0094,
-    "svgX": 1047.0,
-    "svgY": 739.0,
+    "svgX": 1352.0,
+    "svgY": 525.3333333333334,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -3009,8 +3014,8 @@
     "lineId": "5",
     "latitude": 37.5601,
     "longitude": 127.0149,
-    "svgX": 1057.0,
-    "svgY": 750.0,
+    "svgX": 1352.0,
+    "svgY": 608.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -3023,8 +3028,8 @@
     "lineId": "5",
     "latitude": 37.5537,
     "longitude": 127.0237,
-    "svgX": 1071.0,
-    "svgY": 763.0,
+    "svgX": 1440.0,
+    "svgY": 608.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3036,8 +3041,8 @@
     "lineId": "5",
     "latitude": 37.5577,
     "longitude": 127.0296,
-    "svgX": 1081.0,
-    "svgY": 755.0,
+    "svgX": 1504.0,
+    "svgY": 608.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3049,8 +3054,8 @@
     "lineId": "5",
     "latitude": 37.5614,
     "longitude": 127.037,
-    "svgX": 1094.0,
-    "svgY": 747.0,
+    "svgX": 1576.0,
+    "svgY": 600.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -3065,8 +3070,8 @@
     "lineId": "5",
     "latitude": 37.5667,
     "longitude": 127.0442,
-    "svgX": 1106.0,
-    "svgY": 736.0,
+    "svgX": 1648.0,
+    "svgY": 608.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3078,8 +3083,8 @@
     "lineId": "5",
     "latitude": 37.566,
     "longitude": 127.0536,
-    "svgX": 1122.0,
-    "svgY": 738.0,
+    "svgX": 1728.0,
+    "svgY": 608.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3091,8 +3096,8 @@
     "lineId": "5",
     "latitude": 37.5612,
     "longitude": 127.0645,
-    "svgX": 1140.0,
-    "svgY": 748.0,
+    "svgX": 1800.0,
+    "svgY": 608.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3104,8 +3109,8 @@
     "lineId": "5",
     "latitude": 37.5573,
     "longitude": 127.0789,
-    "svgX": 1164.0,
-    "svgY": 755.0,
+    "svgX": 1856.0,
+    "svgY": 608.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -3118,8 +3123,8 @@
     "lineId": "5",
     "latitude": 37.5516,
     "longitude": 127.0884,
-    "svgX": 1180.0,
-    "svgY": 767.0,
+    "svgX": 1968.0,
+    "svgY": 648.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3131,8 +3136,8 @@
     "lineId": "5",
     "latitude": 37.5449,
     "longitude": 127.0978,
-    "svgX": 1196.0,
-    "svgY": 781.0,
+    "svgX": 2032.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3144,8 +3149,8 @@
     "lineId": "5",
     "latitude": 37.5385,
     "longitude": 127.1233,
-    "svgX": 1239.0,
-    "svgY": 794.0,
+    "svgX": 2160.0,
+    "svgY": 840.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -3158,8 +3163,8 @@
     "lineId": "5",
     "latitude": 37.5351,
     "longitude": 127.1316,
-    "svgX": 1253.0,
-    "svgY": 800.0,
+    "svgX": 2248.0,
+    "svgY": 840.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3171,8 +3176,8 @@
     "lineId": "5",
     "latitude": 37.5275,
     "longitude": 127.1365,
-    "svgX": 1262.0,
-    "svgY": 816.0,
+    "svgX": 2248.0,
+    "svgY": 800.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3184,8 +3189,8 @@
     "lineId": "5",
     "latitude": 37.5195,
     "longitude": 127.1364,
-    "svgX": 1261.0,
-    "svgY": 832.0,
+    "svgX": 2248.0,
+    "svgY": 760.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3197,8 +3202,8 @@
     "lineId": "5",
     "latitude": 37.5168,
     "longitude": 127.142,
-    "svgX": 1271.0,
-    "svgY": 838.0,
+    "svgX": 2248.0,
+    "svgY": 720.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3210,8 +3215,8 @@
     "lineId": "5",
     "latitude": 37.5101,
     "longitude": 127.1537,
-    "svgX": 1291.0,
-    "svgY": 851.0,
+    "svgX": 2248.0,
+    "svgY": 680.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3223,8 +3228,8 @@
     "lineId": "5",
     "latitude": 37.5567,
     "longitude": 127.1656,
-    "svgX": 1311.0,
-    "svgY": 757.0,
+    "svgX": 2248.0,
+    "svgY": 640.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3236,8 +3241,8 @@
     "lineId": "5",
     "latitude": 37.5581,
     "longitude": 127.1747,
-    "svgX": 1326.0,
-    "svgY": 754.0,
+    "svgX": 2320.0,
+    "svgY": 640.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3249,8 +3254,8 @@
     "lineId": "5",
     "latitude": 37.5603,
     "longitude": 127.1889,
-    "svgX": 1350.0,
-    "svgY": 749.0,
+    "svgX": 2320.0,
+    "svgY": 672.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3262,8 +3267,8 @@
     "lineId": "5",
     "latitude": 37.5515,
     "longitude": 127.2058,
-    "svgX": 1378.0,
-    "svgY": 767.0,
+    "svgX": 2320.0,
+    "svgY": 704.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3275,8 +3280,8 @@
     "lineId": "5",
     "latitude": 37.541,
     "longitude": 127.2133,
-    "svgX": 1391.0,
-    "svgY": 789.0,
+    "svgX": 2320.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3288,8 +3293,8 @@
     "lineId": "5",
     "latitude": 37.5286,
     "longitude": 127.2222,
-    "svgX": 1406.0,
-    "svgY": 814.0,
+    "svgX": 2320.0,
+    "svgY": 768.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3301,8 +3306,8 @@
     "lineId": "5",
     "latitude": 37.5249,
     "longitude": 127.1367,
-    "svgX": 1262.0,
-    "svgY": 821.0,
+    "svgX": 2248.0,
+    "svgY": 880.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3314,8 +3319,8 @@
     "lineId": "5",
     "latitude": 37.5152,
     "longitude": 127.1286,
-    "svgX": 1248.0,
-    "svgY": 841.0,
+    "svgX": 2248.0,
+    "svgY": 920.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -3328,8 +3333,8 @@
     "lineId": "5",
     "latitude": 37.5096,
     "longitude": 127.1198,
-    "svgX": 1233.0,
-    "svgY": 852.0,
+    "svgX": 2248.0,
+    "svgY": 960.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3341,8 +3346,8 @@
     "lineId": "5",
     "latitude": 37.502,
     "longitude": 127.1283,
-    "svgX": 1248.0,
-    "svgY": 868.0,
+    "svgX": 2248.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -3355,8 +3360,8 @@
     "lineId": "5",
     "latitude": 37.492,
     "longitude": 127.1349,
-    "svgX": 1259.0,
-    "svgY": 888.0,
+    "svgX": 2248.0,
+    "svgY": 1040.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3368,8 +3373,8 @@
     "lineId": "5",
     "latitude": 37.4929,
     "longitude": 127.1432,
-    "svgX": 1273.0,
-    "svgY": 886.0,
+    "svgX": 2248.0,
+    "svgY": 1080.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3381,8 +3386,8 @@
     "lineId": "5",
     "latitude": 37.4961,
     "longitude": 127.1519,
-    "svgX": 1287.0,
-    "svgY": 880.0,
+    "svgX": 2248.0,
+    "svgY": 1120.0,
     "isTransfer": false,
     "transferLines": [
       "5"
@@ -3394,8 +3399,8 @@
     "lineId": "6",
     "latitude": 37.5988,
     "longitude": 126.9137,
-    "svgX": 886.0,
-    "svgY": 671.0,
+    "svgX": 744.0,
+    "svgY": 304.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3407,8 +3412,8 @@
     "lineId": "6",
     "latitude": 37.605,
     "longitude": 126.9217,
-    "svgX": 899.0,
-    "svgY": 659.0,
+    "svgX": 768.0,
+    "svgY": 280.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3420,8 +3425,8 @@
     "lineId": "6",
     "latitude": 37.6105,
     "longitude": 126.9296,
-    "svgX": 913.0,
-    "svgY": 648.0,
+    "svgX": 792.0,
+    "svgY": 256.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -3434,8 +3439,8 @@
     "lineId": "6",
     "latitude": 37.6131,
     "longitude": 126.9397,
-    "svgX": 930.0,
-    "svgY": 642.0,
+    "svgX": 744.0,
+    "svgY": 208.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3447,12 +3452,13 @@
     "lineId": "6",
     "latitude": 37.619,
     "longitude": 126.9211,
-    "svgX": 898.0,
-    "svgY": 630.0,
+    "svgX": 690.6666666666666,
+    "svgY": 256.0,
     "isTransfer": true,
     "transferLines": [
       "3",
-      "6"
+      "6",
+      "GTX-A"
     ]
   },
   {
@@ -3461,8 +3467,8 @@
     "lineId": "6",
     "latitude": 37.6095,
     "longitude": 126.9123,
-    "svgX": 884.0,
-    "svgY": 650.0,
+    "svgX": 720.0,
+    "svgY": 280.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3474,8 +3480,8 @@
     "lineId": "6",
     "latitude": 37.5993,
     "longitude": 126.9102,
-    "svgX": 880.0,
-    "svgY": 670.0,
+    "svgX": 744.0,
+    "svgY": 376.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3487,8 +3493,8 @@
     "lineId": "6",
     "latitude": 37.5836,
     "longitude": 126.9095,
-    "svgX": 879.0,
-    "svgY": 702.0,
+    "svgX": 744.0,
+    "svgY": 424.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3500,8 +3506,8 @@
     "lineId": "6",
     "latitude": 37.5762,
     "longitude": 126.8996,
-    "svgX": 862.0,
-    "svgY": 717.0,
+    "svgX": 744.0,
+    "svgY": 477.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -3515,8 +3521,8 @@
     "lineId": "6",
     "latitude": 37.5686,
     "longitude": 126.8972,
-    "svgX": 858.0,
-    "svgY": 733.0,
+    "svgX": 744.0,
+    "svgY": 536.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3528,8 +3534,8 @@
     "lineId": "6",
     "latitude": 37.5617,
     "longitude": 126.907,
-    "svgX": 875.0,
-    "svgY": 747.0,
+    "svgX": 744.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3541,8 +3547,8 @@
     "lineId": "6",
     "latitude": 37.5565,
     "longitude": 126.9104,
-    "svgX": 880.0,
-    "svgY": 757.0,
+    "svgX": 768.0,
+    "svgY": 648.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3554,8 +3560,8 @@
     "lineId": "6",
     "latitude": 37.55,
     "longitude": 126.914,
-    "svgX": 886.0,
-    "svgY": 770.0,
+    "svgX": 808.0,
+    "svgY": 688.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -3568,8 +3574,8 @@
     "lineId": "6",
     "latitude": 37.5479,
     "longitude": 126.9229,
-    "svgX": 901.0,
-    "svgY": 775.0,
+    "svgX": 832.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3581,8 +3587,8 @@
     "lineId": "6",
     "latitude": 37.5472,
     "longitude": 126.9311,
-    "svgX": 915.0,
-    "svgY": 776.0,
+    "svgX": 864.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3594,8 +3600,8 @@
     "lineId": "6",
     "latitude": 37.5475,
     "longitude": 126.9425,
-    "svgX": 934.0,
-    "svgY": 775.0,
+    "svgX": 920.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3607,8 +3613,8 @@
     "lineId": "6",
     "latitude": 37.5438,
     "longitude": 126.9517,
-    "svgX": 950.0,
-    "svgY": 783.0,
+    "svgX": 960.0,
+    "svgY": 724.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -3623,8 +3629,8 @@
     "lineId": "6",
     "latitude": 37.5393,
     "longitude": 126.9613,
-    "svgX": 966.0,
-    "svgY": 792.0,
+    "svgX": 1008.0,
+    "svgY": 728.0,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -3637,8 +3643,8 @@
     "lineId": "6",
     "latitude": 37.5349,
     "longitude": 126.9732,
-    "svgX": 986.0,
-    "svgY": 801.0,
+    "svgX": 1120.0,
+    "svgY": 736.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -3651,8 +3657,8 @@
     "lineId": "6",
     "latitude": 37.5341,
     "longitude": 126.9877,
-    "svgX": 1011.0,
-    "svgY": 803.0,
+    "svgX": 1152.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3664,8 +3670,8 @@
     "lineId": "6",
     "latitude": 37.5346,
     "longitude": 126.9938,
-    "svgX": 1021.0,
-    "svgY": 802.0,
+    "svgX": 1200.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3677,8 +3683,8 @@
     "lineId": "6",
     "latitude": 37.5396,
     "longitude": 127.0002,
-    "svgX": 1032.0,
-    "svgY": 791.0,
+    "svgX": 1264.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3690,8 +3696,8 @@
     "lineId": "6",
     "latitude": 37.5474,
     "longitude": 127.0075,
-    "svgX": 1044.0,
-    "svgY": 776.0,
+    "svgX": 1312.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3703,8 +3709,8 @@
     "lineId": "6",
     "latitude": 37.5544,
     "longitude": 127.0104,
-    "svgX": 1049.0,
-    "svgY": 761.0,
+    "svgX": 1352.0,
+    "svgY": 736.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -3717,8 +3723,8 @@
     "lineId": "6",
     "latitude": 37.5601,
     "longitude": 127.0149,
-    "svgX": 1057.0,
-    "svgY": 750.0,
+    "svgX": 1352.0,
+    "svgY": 608.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -3731,8 +3737,8 @@
     "lineId": "6",
     "latitude": 37.566,
     "longitude": 127.0177,
-    "svgX": 1061.0,
-    "svgY": 738.0,
+    "svgX": 1432.0,
+    "svgY": 528.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -3745,8 +3751,8 @@
     "lineId": "6",
     "latitude": 37.5715,
     "longitude": 127.0167,
-    "svgX": 1060.0,
-    "svgY": 727.0,
+    "svgX": 1432.0,
+    "svgY": 416.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -3759,8 +3765,8 @@
     "lineId": "6",
     "latitude": 37.5791,
     "longitude": 127.0165,
-    "svgX": 1059.0,
-    "svgY": 711.0,
+    "svgX": 1432.0,
+    "svgY": 384.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3772,8 +3778,8 @@
     "lineId": "6",
     "latitude": 37.5882,
     "longitude": 127.0198,
-    "svgX": 1065.0,
-    "svgY": 693.0,
+    "svgX": 1432.0,
+    "svgY": 356.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3785,8 +3791,8 @@
     "lineId": "6",
     "latitude": 37.5862,
     "longitude": 127.0289,
-    "svgX": 1080.0,
-    "svgY": 697.0,
+    "svgX": 1440.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3798,8 +3804,8 @@
     "lineId": "6",
     "latitude": 37.5905,
     "longitude": 127.034,
-    "svgX": 1089.0,
-    "svgY": 688.0,
+    "svgX": 1496.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3811,8 +3817,8 @@
     "lineId": "6",
     "latitude": 37.6022,
     "longitude": 127.0401,
-    "svgX": 1099.0,
-    "svgY": 664.0,
+    "svgX": 1544.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3824,8 +3830,8 @@
     "lineId": "6",
     "latitude": 37.6061,
     "longitude": 127.0502,
-    "svgX": 1116.0,
-    "svgY": 657.0,
+    "svgX": 1608.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3837,8 +3843,8 @@
     "lineId": "6",
     "latitude": 37.6104,
     "longitude": 127.0572,
-    "svgX": 1128.0,
-    "svgY": 648.0,
+    "svgX": 1664.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3850,8 +3856,8 @@
     "lineId": "6",
     "latitude": 37.6157,
     "longitude": 127.0655,
-    "svgX": 1142.0,
-    "svgY": 637.0,
+    "svgX": 1704.0,
+    "svgY": 336.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -3864,8 +3870,8 @@
     "lineId": "6",
     "latitude": 37.6175,
     "longitude": 127.0755,
-    "svgX": 1159.0,
-    "svgY": 633.0,
+    "svgX": 1856.0,
+    "svgY": 336.0,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -3878,8 +3884,8 @@
     "lineId": "6",
     "latitude": 37.6202,
     "longitude": 127.0838,
-    "svgX": 1173.0,
-    "svgY": 628.0,
+    "svgX": 1904.0,
+    "svgY": 336.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3891,8 +3897,8 @@
     "lineId": "6",
     "latitude": 37.6182,
     "longitude": 127.0927,
-    "svgX": 1188.0,
-    "svgY": 632.0,
+    "svgX": 1984.0,
+    "svgY": 360.0,
     "isTransfer": false,
     "transferLines": [
       "6"
@@ -3904,8 +3910,8 @@
     "lineId": "7",
     "latitude": 37.6989,
     "longitude": 127.0538,
-    "svgX": 1122.0,
-    "svgY": 468.0,
+    "svgX": 1840.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -3917,8 +3923,8 @@
     "lineId": "7",
     "latitude": 37.6892,
     "longitude": 127.0447,
-    "svgX": 1107.0,
-    "svgY": 488.0,
+    "svgX": 1704.0,
+    "svgY": 104.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -3931,8 +3937,8 @@
     "lineId": "7",
     "latitude": 37.6697,
     "longitude": 127.0551,
-    "svgX": 1124.0,
-    "svgY": 528.0,
+    "svgX": 1760.0,
+    "svgY": 152.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -3944,8 +3950,8 @@
     "lineId": "7",
     "latitude": 37.6649,
     "longitude": 127.0602,
-    "svgX": 1133.0,
-    "svgY": 537.0,
+    "svgX": 1792.0,
+    "svgY": 184.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -3957,8 +3963,8 @@
     "lineId": "7",
     "latitude": 37.6557,
     "longitude": 127.0611,
-    "svgX": 1134.0,
-    "svgY": 556.0,
+    "svgX": 1832.0,
+    "svgY": 224.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -3971,8 +3977,8 @@
     "lineId": "7",
     "latitude": 37.6451,
     "longitude": 127.0633,
-    "svgX": 1138.0,
-    "svgY": 577.0,
+    "svgX": 1856.0,
+    "svgY": 248.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -3984,8 +3990,8 @@
     "lineId": "7",
     "latitude": 37.637,
     "longitude": 127.0647,
-    "svgX": 1140.0,
-    "svgY": 594.0,
+    "svgX": 1856.0,
+    "svgY": 272.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -3997,8 +4003,8 @@
     "lineId": "7",
     "latitude": 37.6259,
     "longitude": 127.0727,
-    "svgX": 1154.0,
-    "svgY": 616.0,
+    "svgX": 1856.0,
+    "svgY": 296.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4010,8 +4016,8 @@
     "lineId": "7",
     "latitude": 37.6175,
     "longitude": 127.0755,
-    "svgX": 1159.0,
-    "svgY": 633.0,
+    "svgX": 1856.0,
+    "svgY": 336.0,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -4024,8 +4030,8 @@
     "lineId": "7",
     "latitude": 37.6105,
     "longitude": 127.0786,
-    "svgX": 1164.0,
-    "svgY": 648.0,
+    "svgX": 1856.0,
+    "svgY": 360.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4037,8 +4043,8 @@
     "lineId": "7",
     "latitude": 37.6027,
     "longitude": 127.0809,
-    "svgX": 1168.0,
-    "svgY": 663.0,
+    "svgX": 1856.0,
+    "svgY": 384.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4050,8 +4056,8 @@
     "lineId": "7",
     "latitude": 37.5968,
     "longitude": 127.0851,
-    "svgX": 1175.0,
-    "svgY": 675.0,
+    "svgX": 1856.0,
+    "svgY": 420.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -4065,8 +4071,8 @@
     "lineId": "7",
     "latitude": 37.5862,
     "longitude": 127.084,
-    "svgX": 1173.0,
-    "svgY": 697.0,
+    "svgX": 1856.0,
+    "svgY": 464.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4078,8 +4084,8 @@
     "lineId": "7",
     "latitude": 37.5784,
     "longitude": 127.0856,
-    "svgX": 1176.0,
-    "svgY": 713.0,
+    "svgX": 1856.0,
+    "svgY": 496.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4091,8 +4097,8 @@
     "lineId": "7",
     "latitude": 37.5731,
     "longitude": 127.0868,
-    "svgX": 1178.0,
-    "svgY": 723.0,
+    "svgX": 1856.0,
+    "svgY": 528.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4104,8 +4110,8 @@
     "lineId": "7",
     "latitude": 37.5656,
     "longitude": 127.0853,
-    "svgX": 1175.0,
-    "svgY": 739.0,
+    "svgX": 1856.0,
+    "svgY": 560.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4117,8 +4123,8 @@
     "lineId": "7",
     "latitude": 37.5573,
     "longitude": 127.0789,
-    "svgX": 1164.0,
-    "svgY": 755.0,
+    "svgX": 1856.0,
+    "svgY": 608.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -4131,8 +4137,8 @@
     "lineId": "7",
     "latitude": 37.5489,
     "longitude": 127.0747,
-    "svgX": 1157.0,
-    "svgY": 773.0,
+    "svgX": 1856.0,
+    "svgY": 672.0,
     "isTransfer": true,
     "transferLines": [
       "7"
@@ -4144,8 +4150,8 @@
     "lineId": "7",
     "latitude": 37.5404,
     "longitude": 127.0694,
-    "svgX": 1148.0,
-    "svgY": 790.0,
+    "svgX": 1856.0,
+    "svgY": 752.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -4158,8 +4164,8 @@
     "lineId": "7",
     "latitude": 37.5322,
     "longitude": 127.0675,
-    "svgX": 1145.0,
-    "svgY": 806.0,
+    "svgX": 1848.0,
+    "svgY": 784.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4171,7 +4177,7 @@
     "lineId": "7",
     "latitude": 37.5198,
     "longitude": 127.0518,
-    "svgX": 1119.0,
+    "svgX": 1800.0,
     "svgY": 832.0,
     "isTransfer": false,
     "transferLines": [
@@ -4184,8 +4190,8 @@
     "lineId": "7",
     "latitude": 37.5177,
     "longitude": 127.0414,
-    "svgX": 1101.0,
-    "svgY": 836.0,
+    "svgX": 1744.0,
+    "svgY": 888.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -4198,8 +4204,8 @@
     "lineId": "7",
     "latitude": 37.5146,
     "longitude": 127.0326,
-    "svgX": 1086.0,
-    "svgY": 842.0,
+    "svgX": 1640.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4211,8 +4217,8 @@
     "lineId": "7",
     "latitude": 37.5119,
     "longitude": 127.0233,
-    "svgX": 1071.0,
-    "svgY": 848.0,
+    "svgX": 1552.0,
+    "svgY": 940.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4224,8 +4230,8 @@
     "lineId": "7",
     "latitude": 37.5084,
     "longitude": 127.0138,
-    "svgX": 1055.0,
-    "svgY": 855.0,
+    "svgX": 1496.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4237,8 +4243,8 @@
     "lineId": "7",
     "latitude": 37.5048,
     "longitude": 127.0043,
-    "svgX": 1039.0,
-    "svgY": 862.0,
+    "svgX": 1368.0,
+    "svgY": 1008.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -4252,8 +4258,8 @@
     "lineId": "7",
     "latitude": 37.4881,
     "longitude": 126.9957,
-    "svgX": 1024.0,
-    "svgY": 896.0,
+    "svgX": 1264.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4265,8 +4271,8 @@
     "lineId": "7",
     "latitude": 37.4863,
     "longitude": 126.9817,
-    "svgX": 1001.0,
-    "svgY": 899.0,
+    "svgX": 1120.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -4279,8 +4285,8 @@
     "lineId": "7",
     "latitude": 37.4844,
     "longitude": 126.9729,
-    "svgX": 986.0,
-    "svgY": 903.0,
+    "svgX": 1088.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4292,8 +4298,8 @@
     "lineId": "7",
     "latitude": 37.4964,
     "longitude": 126.9539,
-    "svgX": 954.0,
-    "svgY": 879.0,
+    "svgX": 1032.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4305,8 +4311,8 @@
     "lineId": "7",
     "latitude": 37.5019,
     "longitude": 126.9479,
-    "svgX": 944.0,
-    "svgY": 868.0,
+    "svgX": 976.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4318,8 +4324,8 @@
     "lineId": "7",
     "latitude": 37.5063,
     "longitude": 126.9401,
-    "svgX": 930.0,
-    "svgY": 859.0,
+    "svgX": 928.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4331,8 +4337,8 @@
     "lineId": "7",
     "latitude": 37.4974,
     "longitude": 126.9249,
-    "svgX": 905.0,
-    "svgY": 877.0,
+    "svgX": 880.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4344,8 +4350,8 @@
     "lineId": "7",
     "latitude": 37.4948,
     "longitude": 126.9159,
-    "svgX": 890.0,
-    "svgY": 882.0,
+    "svgX": 828.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -4358,8 +4364,8 @@
     "lineId": "7",
     "latitude": 37.5094,
     "longitude": 126.903,
-    "svgX": 868.0,
-    "svgY": 853.0,
+    "svgX": 768.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4371,8 +4377,8 @@
     "lineId": "7",
     "latitude": 37.4934,
     "longitude": 126.8962,
-    "svgX": 856.0,
-    "svgY": 885.0,
+    "svgX": 728.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -4385,8 +4391,8 @@
     "lineId": "7",
     "latitude": 37.4867,
     "longitude": 126.8869,
-    "svgX": 841.0,
-    "svgY": 899.0,
+    "svgX": 688.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4398,8 +4404,8 @@
     "lineId": "7",
     "latitude": 37.4821,
     "longitude": 126.8825,
-    "svgX": 833.0,
-    "svgY": 908.0,
+    "svgX": 656.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -4412,8 +4418,8 @@
     "lineId": "7",
     "latitude": 37.4755,
     "longitude": 126.8683,
-    "svgX": 809.0,
-    "svgY": 921.0,
+    "svgX": 616.0,
+    "svgY": 1000.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4425,8 +4431,8 @@
     "lineId": "7",
     "latitude": 37.4673,
     "longitude": 126.8618,
-    "svgX": 798.0,
-    "svgY": 938.0,
+    "svgX": 560.0,
+    "svgY": 984.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4438,8 +4444,8 @@
     "lineId": "7",
     "latitude": 37.4643,
     "longitude": 126.8391,
-    "svgX": 760.0,
-    "svgY": 944.0,
+    "svgX": 536.0,
+    "svgY": 960.0,
     "isTransfer": false,
     "transferLines": [
       "7"
@@ -4451,8 +4457,8 @@
     "lineId": "7",
     "latitude": 37.4925,
     "longitude": 126.8234,
-    "svgX": 734.0,
-    "svgY": 887.0,
+    "svgX": 516.0,
+    "svgY": 936.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -4465,8 +4471,8 @@
     "lineId": "8",
     "latitude": 37.5504,
     "longitude": 127.1271,
-    "svgX": 1246.0,
-    "svgY": 769.0,
+    "svgX": 2160.0,
+    "svgY": 776.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4478,8 +4484,8 @@
     "lineId": "8",
     "latitude": 37.5385,
     "longitude": 127.1233,
-    "svgX": 1239.0,
-    "svgY": 794.0,
+    "svgX": 2160.0,
+    "svgY": 840.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -4492,8 +4498,8 @@
     "lineId": "8",
     "latitude": 37.5302,
     "longitude": 127.1254,
-    "svgX": 1243.0,
-    "svgY": 810.0,
+    "svgX": 2112.0,
+    "svgY": 886.4000000000001,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4505,8 +4511,8 @@
     "lineId": "8",
     "latitude": 37.5171,
     "longitude": 127.1122,
-    "svgX": 1221.0,
-    "svgY": 837.0,
+    "svgX": 2064.0,
+    "svgY": 932.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4518,8 +4524,8 @@
     "lineId": "8",
     "latitude": 37.5133,
     "longitude": 127.0998,
-    "svgX": 1200.0,
-    "svgY": 845.0,
+    "svgX": 2000.0,
+    "svgY": 992.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -4532,8 +4538,8 @@
     "lineId": "8",
     "latitude": 37.5054,
     "longitude": 127.1017,
-    "svgX": 1203.0,
-    "svgY": 861.0,
+    "svgX": 2040.0,
+    "svgY": 1036.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4545,8 +4551,8 @@
     "lineId": "8",
     "latitude": 37.5014,
     "longitude": 127.1083,
-    "svgX": 1214.0,
-    "svgY": 869.0,
+    "svgX": 2080.0,
+    "svgY": 1072.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4558,8 +4564,8 @@
     "lineId": "8",
     "latitude": 37.4927,
     "longitude": 127.1183,
-    "svgX": 1231.0,
-    "svgY": 886.0,
+    "svgX": 2124.0,
+    "svgY": 1120.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -4572,8 +4578,8 @@
     "lineId": "8",
     "latitude": 37.4857,
     "longitude": 127.1226,
-    "svgX": 1238.0,
-    "svgY": 901.0,
+    "svgX": 2152.0,
+    "svgY": 1144.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4585,8 +4591,8 @@
     "lineId": "8",
     "latitude": 37.4784,
     "longitude": 127.1264,
-    "svgX": 1245.0,
-    "svgY": 915.0,
+    "svgX": 2184.0,
+    "svgY": 1176.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4598,8 +4604,8 @@
     "lineId": "8",
     "latitude": 37.4706,
     "longitude": 127.1266,
-    "svgX": 1245.0,
-    "svgY": 931.0,
+    "svgX": 2208.0,
+    "svgY": 1200.0,
     "isTransfer": true,
     "transferLines": [
       "8",
@@ -4612,8 +4618,8 @@
     "lineId": "8",
     "latitude": 37.4577,
     "longitude": 127.1404,
-    "svgX": 1268.0,
-    "svgY": 957.0,
+    "svgX": 2248.0,
+    "svgY": 1240.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4625,8 +4631,8 @@
     "lineId": "8",
     "latitude": 37.456,
     "longitude": 127.1499,
-    "svgX": 1284.0,
-    "svgY": 961.0,
+    "svgX": 2272.0,
+    "svgY": 1272.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4638,8 +4644,8 @@
     "lineId": "8",
     "latitude": 37.4505,
     "longitude": 127.1577,
-    "svgX": 1297.0,
-    "svgY": 972.0,
+    "svgX": 2272.0,
+    "svgY": 1320.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4651,8 +4657,8 @@
     "lineId": "8",
     "latitude": 37.4438,
     "longitude": 127.1574,
-    "svgX": 1297.0,
-    "svgY": 986.0,
+    "svgX": 2220.0,
+    "svgY": 1328.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4664,8 +4670,8 @@
     "lineId": "8",
     "latitude": 37.4422,
     "longitude": 127.1475,
-    "svgX": 1280.0,
-    "svgY": 989.0,
+    "svgX": 2160.0,
+    "svgY": 1328.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4677,8 +4683,8 @@
     "lineId": "8",
     "latitude": 37.4385,
     "longitude": 127.1392,
-    "svgX": 1266.0,
-    "svgY": 996.0,
+    "svgX": 2096.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "8"
@@ -4690,8 +4696,8 @@
     "lineId": "8",
     "latitude": 37.432,
     "longitude": 127.1294,
-    "svgX": 1250.0,
-    "svgY": 1010.0,
+    "svgX": 2064.0,
+    "svgY": 1264.0,
     "isTransfer": true,
     "transferLines": [
       "8",
@@ -4704,8 +4710,8 @@
     "lineId": "9",
     "latitude": 37.5788,
     "longitude": 126.8042,
-    "svgX": 701.0,
-    "svgY": 712.0,
+    "svgX": 288.0,
+    "svgY": 416.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4717,8 +4723,8 @@
     "lineId": "9",
     "latitude": 37.5624,
     "longitude": 126.8015,
-    "svgX": 697.0,
-    "svgY": 745.0,
+    "svgX": 328.0,
+    "svgY": 544.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -4732,8 +4738,8 @@
     "lineId": "9",
     "latitude": 37.5614,
     "longitude": 126.8118,
-    "svgX": 714.0,
-    "svgY": 747.0,
+    "svgX": 360.0,
+    "svgY": 528.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4745,8 +4751,8 @@
     "lineId": "9",
     "latitude": 37.5624,
     "longitude": 126.8226,
-    "svgX": 732.0,
-    "svgY": 745.0,
+    "svgX": 400.0,
+    "svgY": 544.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4758,8 +4764,8 @@
     "lineId": "9",
     "latitude": 37.5665,
     "longitude": 126.8302,
-    "svgX": 745.0,
-    "svgY": 737.0,
+    "svgX": 432.0,
+    "svgY": 572.0,
     "isTransfer": true,
     "transferLines": [
       "9",
@@ -4772,8 +4778,8 @@
     "lineId": "9",
     "latitude": 37.5496,
     "longitude": 126.8505,
-    "svgX": 779.0,
-    "svgY": 771.0,
+    "svgX": 456.0,
+    "svgY": 600.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4785,8 +4791,8 @@
     "lineId": "9",
     "latitude": 37.5614,
     "longitude": 126.8546,
-    "svgX": 786.0,
-    "svgY": 747.0,
+    "svgX": 520.0,
+    "svgY": 640.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4798,8 +4804,8 @@
     "lineId": "9",
     "latitude": 37.5558,
     "longitude": 126.8732,
-    "svgX": 818.0,
-    "svgY": 759.0,
+    "svgX": 568.0,
+    "svgY": 640.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4811,8 +4817,8 @@
     "lineId": "9",
     "latitude": 37.55,
     "longitude": 126.8771,
-    "svgX": 824.0,
-    "svgY": 770.0,
+    "svgX": 608.0,
+    "svgY": 640.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4824,8 +4830,8 @@
     "lineId": "9",
     "latitude": 37.5468,
     "longitude": 126.8756,
-    "svgX": 822.0,
-    "svgY": 777.0,
+    "svgX": 656.0,
+    "svgY": 640.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4837,8 +4843,8 @@
     "lineId": "9",
     "latitude": 37.5378,
     "longitude": 126.8759,
-    "svgX": 822.0,
-    "svgY": 795.0,
+    "svgX": 696.0,
+    "svgY": 656.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4850,8 +4856,8 @@
     "lineId": "9",
     "latitude": 37.5337,
     "longitude": 126.8941,
-    "svgX": 853.0,
-    "svgY": 803.0,
+    "svgX": 712.0,
+    "svgY": 672.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4863,8 +4869,8 @@
     "lineId": "9",
     "latitude": 37.5347,
     "longitude": 126.9026,
-    "svgX": 867.0,
-    "svgY": 801.0,
+    "svgX": 728.0,
+    "svgY": 688.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -4877,8 +4883,8 @@
     "lineId": "9",
     "latitude": 37.5285,
     "longitude": 126.9174,
-    "svgX": 892.0,
-    "svgY": 814.0,
+    "svgX": 772.0,
+    "svgY": 728.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4890,8 +4896,8 @@
     "lineId": "9",
     "latitude": 37.5216,
     "longitude": 126.9244,
-    "svgX": 904.0,
-    "svgY": 828.0,
+    "svgX": 832.0,
+    "svgY": 784.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -4904,8 +4910,8 @@
     "lineId": "9",
     "latitude": 37.517,
     "longitude": 126.928,
-    "svgX": 910.0,
-    "svgY": 837.0,
+    "svgX": 865.6,
+    "svgY": 816.0,
     "isTransfer": true,
     "transferLines": [
       "9",
@@ -4918,8 +4924,8 @@
     "lineId": "9",
     "latitude": 37.5134,
     "longitude": 126.9428,
-    "svgX": 935.0,
-    "svgY": 844.0,
+    "svgX": 936.0,
+    "svgY": 880.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -4932,8 +4938,8 @@
     "lineId": "9",
     "latitude": 37.5128,
     "longitude": 126.9522,
-    "svgX": 951.0,
-    "svgY": 846.0,
+    "svgX": 976.0,
+    "svgY": 920.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4945,8 +4951,8 @@
     "lineId": "9",
     "latitude": 37.5085,
     "longitude": 126.9637,
-    "svgX": 970.0,
-    "svgY": 854.0,
+    "svgX": 1048.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4958,8 +4964,8 @@
     "lineId": "9",
     "latitude": 37.5085,
     "longitude": 126.9514,
-    "svgX": 950.0,
-    "svgY": 854.0,
+    "svgX": 1120.0,
+    "svgY": 936.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -4972,8 +4978,8 @@
     "lineId": "9",
     "latitude": 37.5068,
     "longitude": 126.9918,
-    "svgX": 1018.0,
-    "svgY": 858.0,
+    "svgX": 1216.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4985,8 +4991,8 @@
     "lineId": "9",
     "latitude": 37.5072,
     "longitude": 126.9967,
-    "svgX": 1026.0,
-    "svgY": 857.0,
+    "svgX": 1288.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -4998,8 +5004,8 @@
     "lineId": "9",
     "latitude": 37.5048,
     "longitude": 127.0043,
-    "svgX": 1039.0,
-    "svgY": 862.0,
+    "svgX": 1368.0,
+    "svgY": 1008.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -5013,8 +5019,8 @@
     "lineId": "9",
     "latitude": 37.5037,
     "longitude": 127.0122,
-    "svgX": 1052.0,
-    "svgY": 864.0,
+    "svgX": 1488.0,
+    "svgY": 1008.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5026,8 +5032,8 @@
     "lineId": "9",
     "latitude": 37.5045,
     "longitude": 127.0252,
-    "svgX": 1074.0,
-    "svgY": 863.0,
+    "svgX": 1552.0,
+    "svgY": 1012.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5039,8 +5045,8 @@
     "lineId": "9",
     "latitude": 37.5074,
     "longitude": 127.0353,
-    "svgX": 1091.0,
-    "svgY": 857.0,
+    "svgX": 1632.0,
+    "svgY": 1008.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5052,8 +5058,8 @@
     "lineId": "9",
     "latitude": 37.51,
     "longitude": 127.0445,
-    "svgX": 1106.0,
-    "svgY": 851.0,
+    "svgX": 1672.0,
+    "svgY": 1008.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5065,8 +5071,8 @@
     "lineId": "9",
     "latitude": 37.5107,
     "longitude": 127.059,
-    "svgX": 1131.0,
-    "svgY": 850.0,
+    "svgX": 1776.0,
+    "svgY": 1008.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5078,8 +5084,8 @@
     "lineId": "9",
     "latitude": 37.5135,
     "longitude": 127.066,
-    "svgX": 1143.0,
-    "svgY": 844.0,
+    "svgX": 1824.0,
+    "svgY": 1016.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5091,8 +5097,8 @@
     "lineId": "9",
     "latitude": 37.5107,
     "longitude": 127.0738,
-    "svgX": 1156.0,
-    "svgY": 850.0,
+    "svgX": 1824.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -5105,8 +5111,8 @@
     "lineId": "9",
     "latitude": 37.5082,
     "longitude": 127.085,
-    "svgX": 1175.0,
-    "svgY": 855.0,
+    "svgX": 1904.0,
+    "svgY": 1088.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5118,8 +5124,8 @@
     "lineId": "9",
     "latitude": 37.505,
     "longitude": 127.0926,
-    "svgX": 1188.0,
-    "svgY": 862.0,
+    "svgX": 2008.0,
+    "svgY": 1088.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5131,8 +5137,8 @@
     "lineId": "9",
     "latitude": 37.5054,
     "longitude": 127.1017,
-    "svgX": 1203.0,
-    "svgY": 861.0,
+    "svgX": 2040.0,
+    "svgY": 1036.0,
     "isTransfer": true,
     "transferLines": [
       "8",
@@ -5145,8 +5151,8 @@
     "lineId": "9",
     "latitude": 37.5083,
     "longitude": 127.1108,
-    "svgX": 1218.0,
-    "svgY": 855.0,
+    "svgX": 2096.0,
+    "svgY": 984.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5158,8 +5164,8 @@
     "lineId": "9",
     "latitude": 37.5168,
     "longitude": 127.1117,
-    "svgX": 1220.0,
-    "svgY": 838.0,
+    "svgX": 2144.0,
+    "svgY": 936.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5171,8 +5177,8 @@
     "lineId": "9",
     "latitude": 37.5152,
     "longitude": 127.1286,
-    "svgX": 1248.0,
-    "svgY": 841.0,
+    "svgX": 2248.0,
+    "svgY": 920.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -5185,8 +5191,8 @@
     "lineId": "9",
     "latitude": 37.5173,
     "longitude": 127.1391,
-    "svgX": 1266.0,
-    "svgY": 837.0,
+    "svgX": 2312.0,
+    "svgY": 920.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5198,8 +5204,8 @@
     "lineId": "9",
     "latitude": 37.5149,
     "longitude": 127.1476,
-    "svgX": 1280.0,
-    "svgY": 841.0,
+    "svgX": 2344.0,
+    "svgY": 880.0,
     "isTransfer": false,
     "transferLines": [
       "9"
@@ -5211,8 +5217,8 @@
     "lineId": "SB",
     "latitude": 37.5167,
     "longitude": 127.0201,
-    "svgX": 1065.0,
-    "svgY": 838.0,
+    "svgX": 1368.0,
+    "svgY": 924.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -5225,8 +5231,8 @@
     "lineId": "SB",
     "latitude": 37.5119,
     "longitude": 127.0233,
-    "svgX": 1071.0,
-    "svgY": 848.0,
+    "svgX": 1552.0,
+    "svgY": 940.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5238,8 +5244,8 @@
     "lineId": "SB",
     "latitude": 37.5045,
     "longitude": 127.0252,
-    "svgX": 1074.0,
-    "svgY": 863.0,
+    "svgX": 1552.0,
+    "svgY": 1012.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5251,8 +5257,8 @@
     "lineId": "SB",
     "latitude": 37.4979,
     "longitude": 127.0276,
-    "svgX": 1078.0,
-    "svgY": 876.0,
+    "svgX": 1464.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -5265,8 +5271,8 @@
     "lineId": "SB",
     "latitude": 37.4843,
     "longitude": 127.0354,
-    "svgX": 1091.0,
-    "svgY": 904.0,
+    "svgX": 1464.0,
+    "svgY": 1136.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -5279,8 +5285,8 @@
     "lineId": "SB",
     "latitude": 37.4706,
     "longitude": 127.0377,
-    "svgX": 1095.0,
-    "svgY": 931.0,
+    "svgX": 1480.0,
+    "svgY": 1216.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5292,8 +5298,8 @@
     "lineId": "SB",
     "latitude": 37.4536,
     "longitude": 127.0533,
-    "svgX": 1121.0,
-    "svgY": 966.0,
+    "svgX": 1560.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5305,8 +5311,8 @@
     "lineId": "SB",
     "latitude": 37.3949,
     "longitude": 127.1118,
-    "svgX": 1220.0,
-    "svgY": 1085.0,
+    "svgX": 1668.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5318,8 +5324,8 @@
     "lineId": "SB",
     "latitude": 37.3666,
     "longitude": 127.1083,
-    "svgX": 1214.0,
-    "svgY": 1142.0,
+    "svgX": 1731.2,
+    "svgY": 1304.0,
     "isTransfer": true,
     "transferLines": [
       "신분당",
@@ -5332,8 +5338,8 @@
     "lineId": "SB",
     "latitude": 37.3505,
     "longitude": 127.1093,
-    "svgX": 1216.0,
-    "svgY": 1175.0,
+    "svgX": 1700.0,
+    "svgY": 1335.2,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5345,8 +5351,8 @@
     "lineId": "SB",
     "latitude": 37.3379,
     "longitude": 127.1069,
-    "svgX": 1212.0,
-    "svgY": 1200.0,
+    "svgX": 1664.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5358,8 +5364,8 @@
     "lineId": "SB",
     "latitude": 37.3222,
     "longitude": 127.0975,
-    "svgX": 1196.0,
-    "svgY": 1232.0,
+    "svgX": 1608.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5371,8 +5377,8 @@
     "lineId": "SB",
     "latitude": 37.3116,
     "longitude": 127.0785,
-    "svgX": 1164.0,
-    "svgY": 1254.0,
+    "svgX": 1552.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5384,8 +5390,8 @@
     "lineId": "SB",
     "latitude": 37.3009,
     "longitude": 127.0685,
-    "svgX": 1147.0,
-    "svgY": 1275.0,
+    "svgX": 1496.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5397,8 +5403,8 @@
     "lineId": "SB",
     "latitude": 37.2887,
     "longitude": 127.0596,
-    "svgX": 1132.0,
-    "svgY": 1300.0,
+    "svgX": 1440.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5410,8 +5416,8 @@
     "lineId": "SB",
     "latitude": 37.2808,
     "longitude": 127.0476,
-    "svgX": 1112.0,
-    "svgY": 1316.0,
+    "svgX": 1384.0,
+    "svgY": 1312.0,
     "isTransfer": false,
     "transferLines": [
       "SB"
@@ -5423,8 +5429,8 @@
     "lineId": "경의중앙",
     "latitude": 37.8477,
     "longitude": 126.7807,
-    "svgX": 662.0,
-    "svgY": 167.0,
+    "svgX": 112.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5436,8 +5442,8 @@
     "lineId": "경의중앙",
     "latitude": 37.8241,
     "longitude": 126.7655,
-    "svgX": 636.0,
-    "svgY": 214.0,
+    "svgX": 152.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5449,8 +5455,8 @@
     "lineId": "경의중앙",
     "latitude": 37.8115,
     "longitude": 126.7627,
-    "svgX": 631.0,
-    "svgY": 240.0,
+    "svgX": 192.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5462,8 +5468,8 @@
     "lineId": "경의중앙",
     "latitude": 37.7926,
     "longitude": 126.7563,
-    "svgX": 621.0,
-    "svgY": 278.0,
+    "svgX": 232.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5475,8 +5481,8 @@
     "lineId": "경의중앙",
     "latitude": 37.7815,
     "longitude": 126.7449,
-    "svgX": 601.0,
-    "svgY": 301.0,
+    "svgX": 272.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5488,8 +5494,8 @@
     "lineId": "경의중앙",
     "latitude": 37.7351,
     "longitude": 126.7443,
-    "svgX": 600.0,
-    "svgY": 395.0,
+    "svgX": 312.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5501,8 +5507,8 @@
     "lineId": "경의중앙",
     "latitude": 37.7201,
     "longitude": 126.7456,
-    "svgX": 603.0,
-    "svgY": 425.0,
+    "svgX": 352.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5514,8 +5520,8 @@
     "lineId": "경의중앙",
     "latitude": 37.7075,
     "longitude": 126.7477,
-    "svgX": 606.0,
-    "svgY": 451.0,
+    "svgX": 392.0,
+    "svgY": 104.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5527,8 +5533,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6919,
     "longitude": 126.7696,
-    "svgX": 643.0,
-    "svgY": 483.0,
+    "svgX": 412.0,
+    "svgY": 120.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5540,8 +5546,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6822,
     "longitude": 126.7637,
-    "svgX": 633.0,
-    "svgY": 502.0,
+    "svgX": 412.0,
+    "svgY": 152.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5553,8 +5559,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6721,
     "longitude": 126.7695,
-    "svgX": 643.0,
-    "svgY": 523.0,
+    "svgX": 412.0,
+    "svgY": 184.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5566,8 +5572,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6632,
     "longitude": 126.756,
-    "svgX": 620.0,
-    "svgY": 541.0,
+    "svgX": 412.0,
+    "svgY": 216.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5579,12 +5585,13 @@
     "lineId": "경의중앙",
     "latitude": 37.6534,
     "longitude": 126.7486,
-    "svgX": 608.0,
-    "svgY": 561.0,
+    "svgX": 404.0,
+    "svgY": 256.0,
     "isTransfer": true,
     "transferLines": [
       "3",
-      "경의중앙"
+      "경의중앙",
+      "GTX-A"
     ]
   },
   {
@@ -5593,8 +5600,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6499,
     "longitude": 126.7738,
-    "svgX": 650.0,
-    "svgY": 568.0,
+    "svgX": 440.0,
+    "svgY": 318.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5606,8 +5613,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6132,
     "longitude": 126.8197,
-    "svgX": 727.0,
-    "svgY": 642.0,
+    "svgX": 472.0,
+    "svgY": 344.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5619,8 +5626,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6013,
     "longitude": 126.8346,
-    "svgX": 753.0,
-    "svgY": 666.0,
+    "svgX": 512.0,
+    "svgY": 384.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5632,8 +5639,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5965,
     "longitude": 126.8624,
-    "svgX": 799.0,
-    "svgY": 676.0,
+    "svgX": 544.0,
+    "svgY": 416.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5645,8 +5652,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5827,
     "longitude": 126.8924,
-    "svgX": 850.0,
-    "svgY": 704.0,
+    "svgX": 576.0,
+    "svgY": 448.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5658,8 +5665,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5762,
     "longitude": 126.8996,
-    "svgX": 862.0,
-    "svgY": 717.0,
+    "svgX": 744.0,
+    "svgY": 477.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -5673,8 +5680,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5673,
     "longitude": 126.9144,
-    "svgX": 887.0,
-    "svgY": 735.0,
+    "svgX": 784.0,
+    "svgY": 480.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5686,8 +5693,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5572,
     "longitude": 126.9259,
-    "svgX": 907.0,
-    "svgY": 756.0,
+    "svgX": 872.0,
+    "svgY": 632.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -5701,8 +5708,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5514,
     "longitude": 126.9322,
-    "svgX": 917.0,
-    "svgY": 767.0,
+    "svgX": 872.0,
+    "svgY": 680.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5714,8 +5721,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5438,
     "longitude": 126.9517,
-    "svgX": 950.0,
-    "svgY": 783.0,
+    "svgX": 960.0,
+    "svgY": 724.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -5730,8 +5737,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5393,
     "longitude": 126.9613,
-    "svgX": 966.0,
-    "svgY": 792.0,
+    "svgX": 1008.0,
+    "svgY": 728.0,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -5744,8 +5751,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5299,
     "longitude": 126.9648,
-    "svgX": 972.0,
-    "svgY": 811.0,
+    "svgX": 1040.0,
+    "svgY": 848.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -5758,8 +5765,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5216,
     "longitude": 126.9692,
-    "svgX": 980.0,
-    "svgY": 828.0,
+    "svgX": 1120.0,
+    "svgY": 848.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -5772,8 +5779,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5226,
     "longitude": 126.9822,
-    "svgX": 1001.0,
-    "svgY": 826.0,
+    "svgX": 1240.0,
+    "svgY": 848.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5785,8 +5792,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5369,
     "longitude": 127.0002,
-    "svgX": 1032.0,
-    "svgY": 797.0,
+    "svgX": 1312.0,
+    "svgY": 848.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5798,8 +5805,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5397,
     "longitude": 127.0171,
-    "svgX": 1060.0,
-    "svgY": 791.0,
+    "svgX": 1368.0,
+    "svgY": 824.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -5812,8 +5819,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5512,
     "longitude": 127.0297,
-    "svgX": 1081.0,
-    "svgY": 768.0,
+    "svgX": 1472.0,
+    "svgY": 720.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5825,8 +5832,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5614,
     "longitude": 127.037,
-    "svgX": 1094.0,
-    "svgY": 747.0,
+    "svgX": 1576.0,
+    "svgY": 600.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -5841,8 +5848,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5805,
     "longitude": 127.0475,
-    "svgX": 1111.0,
-    "svgY": 708.0,
+    "svgX": 1584.0,
+    "svgY": 421.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -5857,8 +5864,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5895,
     "longitude": 127.0579,
-    "svgX": 1129.0,
-    "svgY": 690.0,
+    "svgX": 1640.0,
+    "svgY": 424.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -5872,8 +5879,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5972,
     "longitude": 127.0684,
-    "svgX": 1147.0,
-    "svgY": 675.0,
+    "svgX": 1760.0,
+    "svgY": 428.0,
     "isTransfer": true,
     "transferLines": [
       "경의중앙",
@@ -5886,8 +5893,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5968,
     "longitude": 127.0851,
-    "svgX": 1175.0,
-    "svgY": 675.0,
+    "svgX": 1856.0,
+    "svgY": 420.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -5901,8 +5908,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5985,
     "longitude": 127.0915,
-    "svgX": 1186.0,
-    "svgY": 672.0,
+    "svgX": 1976.0,
+    "svgY": 428.0,
     "isTransfer": true,
     "transferLines": [
       "경의중앙",
@@ -5915,8 +5922,8 @@
     "lineId": "경의중앙",
     "latitude": 37.601,
     "longitude": 127.1056,
-    "svgX": 1209.0,
-    "svgY": 667.0,
+    "svgX": 2032.0,
+    "svgY": 432.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5928,8 +5935,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6036,
     "longitude": 127.1313,
-    "svgX": 1253.0,
-    "svgY": 662.0,
+    "svgX": 2072.0,
+    "svgY": 432.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5941,8 +5948,8 @@
     "lineId": "경의중앙",
     "latitude": 37.6076,
     "longitude": 127.1536,
-    "svgX": 1290.0,
-    "svgY": 653.0,
+    "svgX": 2128.0,
+    "svgY": 432.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5954,8 +5961,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5954,
     "longitude": 127.1751,
-    "svgX": 1327.0,
-    "svgY": 678.0,
+    "svgX": 2160.0,
+    "svgY": 432.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5967,8 +5974,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5851,
     "longitude": 127.2004,
-    "svgX": 1369.0,
-    "svgY": 699.0,
+    "svgX": 2192.0,
+    "svgY": 432.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5980,8 +5987,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5711,
     "longitude": 127.2313,
-    "svgX": 1421.0,
-    "svgY": 727.0,
+    "svgX": 2232.0,
+    "svgY": 432.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -5993,8 +6000,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5469,
     "longitude": 127.2831,
-    "svgX": 1509.0,
-    "svgY": 777.0,
+    "svgX": 2288.0,
+    "svgY": 456.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6006,8 +6013,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5337,
     "longitude": 127.318,
-    "svgX": 1567.0,
-    "svgY": 803.0,
+    "svgX": 2288.0,
+    "svgY": 488.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6019,8 +6026,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5259,
     "longitude": 127.3371,
-    "svgX": 1600.0,
-    "svgY": 819.0,
+    "svgX": 2288.0,
+    "svgY": 520.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6032,8 +6039,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5094,
     "longitude": 127.3589,
-    "svgX": 1636.0,
-    "svgY": 853.0,
+    "svgX": 2288.0,
+    "svgY": 552.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6045,8 +6052,8 @@
     "lineId": "경의중앙",
     "latitude": 37.5009,
     "longitude": 127.3807,
-    "svgX": 1673.0,
-    "svgY": 870.0,
+    "svgX": 2232.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6058,8 +6065,8 @@
     "lineId": "경의중앙",
     "latitude": 37.4897,
     "longitude": 127.425,
-    "svgX": 1748.0,
-    "svgY": 893.0,
+    "svgX": 2192.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6071,8 +6078,8 @@
     "lineId": "경의중앙",
     "latitude": 37.4802,
     "longitude": 127.4698,
-    "svgX": 1823.0,
-    "svgY": 912.0,
+    "svgX": 2144.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6084,8 +6091,8 @@
     "lineId": "경의중앙",
     "latitude": 37.4895,
     "longitude": 127.4879,
-    "svgX": 1854.0,
-    "svgY": 893.0,
+    "svgX": 624.0,
+    "svgY": 712.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6097,8 +6104,8 @@
     "lineId": "경의중앙",
     "latitude": 37.4816,
     "longitude": 127.5319,
-    "svgX": 1928.0,
-    "svgY": 909.0,
+    "svgX": 2072.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6110,8 +6117,8 @@
     "lineId": "경의중앙",
     "latitude": 37.4781,
     "longitude": 127.5833,
-    "svgX": 2015.0,
-    "svgY": 916.0,
+    "svgX": 2032.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6123,8 +6130,8 @@
     "lineId": "경의중앙",
     "latitude": 37.4731,
     "longitude": 127.6237,
-    "svgX": 2083.0,
-    "svgY": 926.0,
+    "svgX": 1992.0,
+    "svgY": 576.0,
     "isTransfer": false,
     "transferLines": [
       "경의중앙"
@@ -6136,14 +6143,15 @@
     "lineId": "경의중앙",
     "latitude": 37.5547,
     "longitude": 126.9706,
-    "svgX": 982.0,
-    "svgY": 761.0,
+    "svgX": 1040.0,
+    "svgY": 618.0,
     "isTransfer": true,
     "transferLines": [
       "1",
       "4",
       "경의중앙",
-      "공항철도"
+      "공항철도",
+      "GTX-A"
     ]
   },
   {
@@ -6152,8 +6160,8 @@
     "lineId": "경춘",
     "latitude": 37.5805,
     "longitude": 127.0475,
-    "svgX": 1111.0,
-    "svgY": 708.0,
+    "svgX": 1584.0,
+    "svgY": 421.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -6168,8 +6176,8 @@
     "lineId": "경춘",
     "latitude": 37.5895,
     "longitude": 127.0579,
-    "svgX": 1129.0,
-    "svgY": 690.0,
+    "svgX": 1640.0,
+    "svgY": 424.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -6183,8 +6191,8 @@
     "lineId": "경춘",
     "latitude": 37.5972,
     "longitude": 127.0684,
-    "svgX": 1147.0,
-    "svgY": 675.0,
+    "svgX": 1760.0,
+    "svgY": 428.0,
     "isTransfer": true,
     "transferLines": [
       "경의중앙",
@@ -6197,8 +6205,8 @@
     "lineId": "경춘",
     "latitude": 37.5968,
     "longitude": 127.0851,
-    "svgX": 1175.0,
-    "svgY": 675.0,
+    "svgX": 1856.0,
+    "svgY": 420.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -6212,8 +6220,8 @@
     "lineId": "경춘",
     "latitude": 37.5985,
     "longitude": 127.0915,
-    "svgX": 1186.0,
-    "svgY": 672.0,
+    "svgX": 1976.0,
+    "svgY": 428.0,
     "isTransfer": true,
     "transferLines": [
       "경의중앙",
@@ -6226,8 +6234,8 @@
     "lineId": "경춘",
     "latitude": 37.6126,
     "longitude": 127.1042,
-    "svgX": 1207.0,
-    "svgY": 643.0,
+    "svgX": 2008.0,
+    "svgY": 388.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6239,8 +6247,8 @@
     "lineId": "경춘",
     "latitude": 37.6344,
     "longitude": 127.1179,
-    "svgX": 1230.0,
-    "svgY": 599.0,
+    "svgX": 2040.0,
+    "svgY": 360.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6252,8 +6260,8 @@
     "lineId": "경춘",
     "latitude": 37.6448,
     "longitude": 127.1275,
-    "svgX": 1246.0,
-    "svgY": 578.0,
+    "svgX": 2072.0,
+    "svgY": 360.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6265,8 +6273,8 @@
     "lineId": "경춘",
     "latitude": 37.6553,
     "longitude": 127.1394,
-    "svgX": 1266.0,
-    "svgY": 557.0,
+    "svgX": 2104.0,
+    "svgY": 296.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6278,8 +6286,8 @@
     "lineId": "경춘",
     "latitude": 37.6596,
     "longitude": 127.1696,
-    "svgX": 1317.0,
-    "svgY": 548.0,
+    "svgX": 2136.0,
+    "svgY": 264.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6291,8 +6299,8 @@
     "lineId": "경춘",
     "latitude": 37.6638,
     "longitude": 127.1885,
-    "svgX": 1349.0,
-    "svgY": 540.0,
+    "svgX": 2168.0,
+    "svgY": 232.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6304,8 +6312,8 @@
     "lineId": "경춘",
     "latitude": 37.6541,
     "longitude": 127.212,
-    "svgX": 1389.0,
-    "svgY": 559.0,
+    "svgX": 2200.0,
+    "svgY": 216.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6317,8 +6325,8 @@
     "lineId": "경춘",
     "latitude": 37.667,
     "longitude": 127.24,
-    "svgX": 1436.0,
-    "svgY": 533.0,
+    "svgX": 2248.0,
+    "svgY": 216.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6330,8 +6338,8 @@
     "lineId": "경춘",
     "latitude": 37.6502,
     "longitude": 127.2933,
-    "svgX": 1526.0,
-    "svgY": 567.0,
+    "svgX": 2296.0,
+    "svgY": 216.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6343,8 +6351,8 @@
     "lineId": "경춘",
     "latitude": 37.6712,
     "longitude": 127.339,
-    "svgX": 1603.0,
-    "svgY": 525.0,
+    "svgX": 2344.0,
+    "svgY": 216.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6356,8 +6364,8 @@
     "lineId": "경춘",
     "latitude": 37.7152,
     "longitude": 127.3757,
-    "svgX": 1665.0,
-    "svgY": 435.0,
+    "svgX": 2376.0,
+    "svgY": 264.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6369,8 +6377,8 @@
     "lineId": "경춘",
     "latitude": 37.727,
     "longitude": 127.4008,
-    "svgX": 1707.0,
-    "svgY": 411.0,
+    "svgX": 2376.0,
+    "svgY": 304.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6382,8 +6390,8 @@
     "lineId": "경춘",
     "latitude": 37.8148,
     "longitude": 127.51,
-    "svgX": 1891.0,
-    "svgY": 233.0,
+    "svgX": 2376.0,
+    "svgY": 344.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6395,8 +6403,8 @@
     "lineId": "경춘",
     "latitude": 37.8217,
     "longitude": 127.5431,
-    "svgX": 1947.0,
-    "svgY": 219.0,
+    "svgX": 2376.0,
+    "svgY": 384.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6408,8 +6416,8 @@
     "lineId": "경춘",
     "latitude": 37.8312,
     "longitude": 127.575,
-    "svgX": 2001.0,
-    "svgY": 200.0,
+    "svgX": 2376.0,
+    "svgY": 424.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6421,8 +6429,8 @@
     "lineId": "경춘",
     "latitude": 37.8148,
     "longitude": 127.6168,
-    "svgX": 2071.0,
-    "svgY": 233.0,
+    "svgX": 2376.0,
+    "svgY": 464.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6434,8 +6442,8 @@
     "lineId": "경춘",
     "latitude": 37.8233,
     "longitude": 127.6409,
-    "svgX": 2112.0,
-    "svgY": 216.0,
+    "svgX": 2376.0,
+    "svgY": 504.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6447,8 +6455,8 @@
     "lineId": "경춘",
     "latitude": 37.8653,
     "longitude": 127.7188,
-    "svgX": 2243.0,
-    "svgY": 131.0,
+    "svgX": 2376.0,
+    "svgY": 544.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6460,8 +6468,8 @@
     "lineId": "경춘",
     "latitude": 37.8847,
     "longitude": 127.7178,
-    "svgX": 2241.0,
-    "svgY": 92.0,
+    "svgX": 2376.0,
+    "svgY": 584.0,
     "isTransfer": false,
     "transferLines": [
       "경춘"
@@ -6473,14 +6481,15 @@
     "lineId": "공항철도",
     "latitude": 37.5547,
     "longitude": 126.9706,
-    "svgX": 982.0,
-    "svgY": 761.0,
+    "svgX": 1040.0,
+    "svgY": 618.0,
     "isTransfer": true,
     "transferLines": [
       "1",
       "4",
       "경의중앙",
-      "공항철도"
+      "공항철도",
+      "GTX-A"
     ]
   },
   {
@@ -6489,8 +6498,8 @@
     "lineId": "공항철도",
     "latitude": 37.5438,
     "longitude": 126.9517,
-    "svgX": 950.0,
-    "svgY": 783.0,
+    "svgX": 960.0,
+    "svgY": 724.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -6505,8 +6514,8 @@
     "lineId": "공항철도",
     "latitude": 37.5572,
     "longitude": 126.9259,
-    "svgX": 907.0,
-    "svgY": 756.0,
+    "svgX": 872.0,
+    "svgY": 632.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -6520,8 +6529,8 @@
     "lineId": "공항철도",
     "latitude": 37.5762,
     "longitude": 126.8996,
-    "svgX": 862.0,
-    "svgY": 717.0,
+    "svgX": 744.0,
+    "svgY": 477.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "6",
@@ -6535,8 +6544,8 @@
     "lineId": "공항철도",
     "latitude": 37.5665,
     "longitude": 126.8302,
-    "svgX": 745.0,
-    "svgY": 737.0,
+    "svgX": 432.0,
+    "svgY": 572.0,
     "isTransfer": true,
     "transferLines": [
       "9",
@@ -6549,8 +6558,8 @@
     "lineId": "공항철도",
     "latitude": 37.5624,
     "longitude": 126.8015,
-    "svgX": 697.0,
-    "svgY": 745.0,
+    "svgX": 328.0,
+    "svgY": 544.0,
     "isTransfer": true,
     "transferLines": [
       "5",
@@ -6564,11 +6573,12 @@
     "lineId": "공항철도",
     "latitude": 37.5684,
     "longitude": 126.7605,
-    "svgX": 628.0,
-    "svgY": 733.0,
-    "isTransfer": false,
+    "svgX": 216.0,
+    "svgY": 536.0,
+    "isTransfer": true,
     "transferLines": [
-      "공항철도"
+      "공항철도",
+      "인천1"
     ]
   },
   {
@@ -6577,11 +6587,12 @@
     "lineId": "공항철도",
     "latitude": 37.5726,
     "longitude": 126.7418,
-    "svgX": 596.0,
-    "svgY": 724.0,
-    "isTransfer": false,
+    "svgX": 152.0,
+    "svgY": 576.0,
+    "isTransfer": true,
     "transferLines": [
-      "공항철도"
+      "공항철도",
+      "인천2"
     ]
   },
   {
@@ -6590,8 +6601,8 @@
     "lineId": "공항철도",
     "latitude": 37.534,
     "longitude": 126.662,
-    "svgX": 462.0,
-    "svgY": 803.0,
+    "svgX": 152.0,
+    "svgY": 616.0,
     "isTransfer": false,
     "transferLines": [
       "공항철도"
@@ -6603,8 +6614,8 @@
     "lineId": "공항철도",
     "latitude": 37.4993,
     "longitude": 126.5606,
-    "svgX": 291.0,
-    "svgY": 873.0,
+    "svgX": 152.0,
+    "svgY": 656.0,
     "isTransfer": false,
     "transferLines": [
       "공항철도"
@@ -6616,8 +6627,8 @@
     "lineId": "공항철도",
     "latitude": 37.4859,
     "longitude": 126.4935,
-    "svgX": 178.0,
-    "svgY": 900.0,
+    "svgX": 152.0,
+    "svgY": 696.0,
     "isTransfer": false,
     "transferLines": [
       "공항철도"
@@ -6629,8 +6640,8 @@
     "lineId": "공항철도",
     "latitude": 37.4642,
     "longitude": 126.4519,
-    "svgX": 107.0,
-    "svgY": 944.0,
+    "svgX": 152.0,
+    "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
       "공항철도"
@@ -6642,8 +6653,8 @@
     "lineId": "공항철도",
     "latitude": 37.4602,
     "longitude": 126.4407,
-    "svgX": 89.0,
-    "svgY": 952.0,
+    "svgX": 152.0,
+    "svgY": 776.0,
     "isTransfer": false,
     "transferLines": [
       "공항철도"
@@ -6655,8 +6666,8 @@
     "lineId": "공항철도",
     "latitude": 37.4601,
     "longitude": 126.42,
-    "svgX": 54.0,
-    "svgY": 953.0,
+    "svgX": 152.0,
+    "svgY": 816.0,
     "isTransfer": false,
     "transferLines": [
       "공항철도"
@@ -6668,8 +6679,8 @@
     "lineId": "수인분당",
     "latitude": 37.5805,
     "longitude": 127.0475,
-    "svgX": 1111.0,
-    "svgY": 708.0,
+    "svgX": 1584.0,
+    "svgY": 421.3333333333333,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -6684,8 +6695,8 @@
     "lineId": "수인분당",
     "latitude": 37.5614,
     "longitude": 127.037,
-    "svgX": 1094.0,
-    "svgY": 747.0,
+    "svgX": 1576.0,
+    "svgY": 600.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -6700,8 +6711,8 @@
     "lineId": "수인분당",
     "latitude": 37.5434,
     "longitude": 127.0447,
-    "svgX": 1107.0,
-    "svgY": 784.0,
+    "svgX": 1608.0,
+    "svgY": 752.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6713,8 +6724,8 @@
     "lineId": "수인분당",
     "latitude": 37.5279,
     "longitude": 127.0398,
-    "svgX": 1099.0,
-    "svgY": 815.0,
+    "svgX": 1688.0,
+    "svgY": 832.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6726,8 +6737,8 @@
     "lineId": "수인분당",
     "latitude": 37.5177,
     "longitude": 127.0414,
-    "svgX": 1101.0,
-    "svgY": 836.0,
+    "svgX": 1744.0,
+    "svgY": 888.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -6740,8 +6751,8 @@
     "lineId": "수인분당",
     "latitude": 37.51,
     "longitude": 127.0445,
-    "svgX": 1106.0,
-    "svgY": 851.0,
+    "svgX": 1672.0,
+    "svgY": 1008.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6753,8 +6764,8 @@
     "lineId": "수인분당",
     "latitude": 37.5046,
     "longitude": 127.049,
-    "svgX": 1114.0,
-    "svgY": 862.0,
+    "svgX": 1616.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -6767,8 +6778,8 @@
     "lineId": "수인분당",
     "latitude": 37.4982,
     "longitude": 127.0503,
-    "svgX": 1116.0,
-    "svgY": 875.0,
+    "svgX": 1616.0,
+    "svgY": 1096.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6780,8 +6791,8 @@
     "lineId": "수인분당",
     "latitude": 37.4913,
     "longitude": 127.0555,
-    "svgX": 1125.0,
-    "svgY": 889.0,
+    "svgX": 1616.0,
+    "svgY": 1136.0,
     "isTransfer": true,
     "transferLines": [
       "3",
@@ -6794,8 +6805,8 @@
     "lineId": "수인분당",
     "latitude": 37.4838,
     "longitude": 127.0617,
-    "svgX": 1135.0,
-    "svgY": 905.0,
+    "svgX": 1712.0,
+    "svgY": 1200.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6807,8 +6818,8 @@
     "lineId": "수인분당",
     "latitude": 37.4781,
     "longitude": 127.0658,
-    "svgX": 1142.0,
-    "svgY": 916.0,
+    "svgX": 1808.0,
+    "svgY": 1200.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6820,8 +6831,8 @@
     "lineId": "수인분당",
     "latitude": 37.4703,
     "longitude": 127.0771,
-    "svgX": 1161.0,
-    "svgY": 932.0,
+    "svgX": 1904.0,
+    "svgY": 1200.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6833,12 +6844,13 @@
     "lineId": "수인분당",
     "latitude": 37.4873,
     "longitude": 127.1017,
-    "svgX": 1203.0,
-    "svgY": 897.0,
+    "svgX": 2048.0,
+    "svgY": 1200.0,
     "isTransfer": true,
     "transferLines": [
       "3",
-      "수인분당"
+      "수인분당",
+      "GTX-A"
     ]
   },
   {
@@ -6847,8 +6859,8 @@
     "lineId": "수인분당",
     "latitude": 37.4706,
     "longitude": 127.1266,
-    "svgX": 1245.0,
-    "svgY": 931.0,
+    "svgX": 2208.0,
+    "svgY": 1200.0,
     "isTransfer": true,
     "transferLines": [
       "8",
@@ -6861,8 +6873,8 @@
     "lineId": "수인분당",
     "latitude": 37.4487,
     "longitude": 127.1281,
-    "svgX": 1247.0,
-    "svgY": 976.0,
+    "svgX": 2168.0,
+    "svgY": 1232.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6874,8 +6886,8 @@
     "lineId": "수인분당",
     "latitude": 37.4413,
     "longitude": 127.1266,
-    "svgX": 1245.0,
-    "svgY": 991.0,
+    "svgX": 2120.0,
+    "svgY": 1264.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6887,8 +6899,8 @@
     "lineId": "수인분당",
     "latitude": 37.432,
     "longitude": 127.1294,
-    "svgX": 1250.0,
-    "svgY": 1010.0,
+    "svgX": 2064.0,
+    "svgY": 1264.0,
     "isTransfer": true,
     "transferLines": [
       "8",
@@ -6901,8 +6913,8 @@
     "lineId": "수인분당",
     "latitude": 37.4115,
     "longitude": 127.1272,
-    "svgX": 1246.0,
-    "svgY": 1051.0,
+    "svgX": 1984.0,
+    "svgY": 1264.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6914,8 +6926,8 @@
     "lineId": "수인분당",
     "latitude": 37.3959,
     "longitude": 127.1264,
-    "svgX": 1245.0,
-    "svgY": 1083.0,
+    "svgX": 1928.0,
+    "svgY": 1260.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6927,8 +6939,8 @@
     "lineId": "수인분당",
     "latitude": 37.3844,
     "longitude": 127.1214,
-    "svgX": 1236.0,
-    "svgY": 1106.0,
+    "svgX": 1864.0,
+    "svgY": 1264.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6940,8 +6952,8 @@
     "lineId": "수인분당",
     "latitude": 37.3771,
     "longitude": 127.1138,
-    "svgX": 1223.0,
-    "svgY": 1121.0,
+    "svgX": 1808.0,
+    "svgY": 1264.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6953,8 +6965,8 @@
     "lineId": "수인분당",
     "latitude": 37.3666,
     "longitude": 127.1083,
-    "svgX": 1214.0,
-    "svgY": 1142.0,
+    "svgX": 1731.2,
+    "svgY": 1304.0,
     "isTransfer": true,
     "transferLines": [
       "수인분당",
@@ -6967,8 +6979,8 @@
     "lineId": "수인분당",
     "latitude": 37.3505,
     "longitude": 127.1093,
-    "svgX": 1216.0,
-    "svgY": 1175.0,
+    "svgX": 1700.0,
+    "svgY": 1335.2,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6980,8 +6992,8 @@
     "lineId": "수인분당",
     "latitude": 37.3391,
     "longitude": 127.1082,
-    "svgX": 1214.0,
-    "svgY": 1198.0,
+    "svgX": 1664.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -6993,8 +7005,8 @@
     "lineId": "수인분당",
     "latitude": 37.3267,
     "longitude": 127.1065,
-    "svgX": 1211.0,
-    "svgY": 1223.0,
+    "svgX": 1608.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7006,8 +7018,8 @@
     "lineId": "수인분당",
     "latitude": 37.3152,
     "longitude": 127.1022,
-    "svgX": 1204.0,
-    "svgY": 1246.0,
+    "svgX": 1552.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7019,8 +7031,8 @@
     "lineId": "수인분당",
     "latitude": 37.2994,
     "longitude": 127.0956,
-    "svgX": 1193.0,
-    "svgY": 1278.0,
+    "svgX": 1500.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7032,8 +7044,8 @@
     "lineId": "수인분당",
     "latitude": 37.2872,
     "longitude": 127.0841,
-    "svgX": 1173.0,
-    "svgY": 1303.0,
+    "svgX": 1424.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7045,8 +7057,8 @@
     "lineId": "수인분당",
     "latitude": 37.2755,
     "longitude": 127.0768,
-    "svgX": 1161.0,
-    "svgY": 1327.0,
+    "svgX": 1376.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7058,8 +7070,8 @@
     "lineId": "수인분당",
     "latitude": 37.2668,
     "longitude": 127.0644,
-    "svgX": 1140.0,
-    "svgY": 1345.0,
+    "svgX": 1328.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7071,8 +7083,8 @@
     "lineId": "수인분당",
     "latitude": 37.2578,
     "longitude": 127.0548,
-    "svgX": 1124.0,
-    "svgY": 1363.0,
+    "svgX": 1272.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7084,8 +7096,8 @@
     "lineId": "수인분당",
     "latitude": 37.251,
     "longitude": 127.0437,
-    "svgX": 1105.0,
-    "svgY": 1377.0,
+    "svgX": 1224.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7097,8 +7109,8 @@
     "lineId": "수인분당",
     "latitude": 37.2441,
     "longitude": 127.0287,
-    "svgX": 1080.0,
-    "svgY": 1391.0,
+    "svgX": 1168.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7110,8 +7122,8 @@
     "lineId": "수인분당",
     "latitude": 37.2555,
     "longitude": 127.027,
-    "svgX": 1077.0,
-    "svgY": 1367.0,
+    "svgX": 1104.0,
+    "svgY": 1368.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7123,8 +7135,8 @@
     "lineId": "수인분당",
     "latitude": 37.264,
     "longitude": 127.0141,
-    "svgX": 1055.0,
-    "svgY": 1350.0,
+    "svgX": 1064.0,
+    "svgY": 1400.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7136,8 +7148,8 @@
     "lineId": "수인분당",
     "latitude": 37.262,
     "longitude": 126.9991,
-    "svgX": 1030.0,
-    "svgY": 1354.0,
+    "svgX": 1064.0,
+    "svgY": 1432.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7149,8 +7161,8 @@
     "lineId": "수인분당",
     "latitude": 37.2667,
     "longitude": 126.9998,
-    "svgX": 1031.0,
-    "svgY": 1345.0,
+    "svgX": 1064.0,
+    "svgY": 1496.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7162,8 +7174,8 @@
     "lineId": "수인분당",
     "latitude": 37.2596,
     "longitude": 126.9637,
-    "svgX": 970.0,
-    "svgY": 1359.0,
+    "svgX": 984.0,
+    "svgY": 1520.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7175,8 +7187,8 @@
     "lineId": "수인분당",
     "latitude": 37.2636,
     "longitude": 126.9432,
-    "svgX": 936.0,
-    "svgY": 1351.0,
+    "svgX": 896.0,
+    "svgY": 1520.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7188,8 +7200,8 @@
     "lineId": "수인분당",
     "latitude": 37.273,
     "longitude": 126.9189,
-    "svgX": 895.0,
-    "svgY": 1332.0,
+    "svgX": 808.0,
+    "svgY": 1520.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7201,8 +7213,8 @@
     "lineId": "수인분당",
     "latitude": 37.2838,
     "longitude": 126.8995,
-    "svgX": 862.0,
-    "svgY": 1310.0,
+    "svgX": 720.0,
+    "svgY": 1520.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7214,8 +7226,8 @@
     "lineId": "수인분당",
     "latitude": 37.3033,
     "longitude": 126.8769,
-    "svgX": 824.0,
-    "svgY": 1271.0,
+    "svgX": 632.0,
+    "svgY": 1520.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7227,8 +7239,8 @@
     "lineId": "수인분당",
     "latitude": 37.3087,
     "longitude": 126.8526,
-    "svgX": 783.0,
-    "svgY": 1260.0,
+    "svgX": 552.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7241,8 +7253,8 @@
     "lineId": "수인분당",
     "latitude": 37.3118,
     "longitude": 126.8408,
-    "svgX": 763.0,
-    "svgY": 1253.0,
+    "svgX": 504.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7255,8 +7267,8 @@
     "lineId": "수인분당",
     "latitude": 37.3156,
     "longitude": 126.8274,
-    "svgX": 740.0,
-    "svgY": 1246.0,
+    "svgX": 456.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7269,8 +7281,8 @@
     "lineId": "수인분당",
     "latitude": 37.3192,
     "longitude": 126.8001,
-    "svgX": 694.0,
-    "svgY": 1238.0,
+    "svgX": 408.0,
+    "svgY": 1488.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7283,8 +7295,8 @@
     "lineId": "수인분당",
     "latitude": 37.3248,
     "longitude": 126.7896,
-    "svgX": 677.0,
-    "svgY": 1227.0,
+    "svgX": 360.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7297,8 +7309,8 @@
     "lineId": "수인분당",
     "latitude": 37.3327,
     "longitude": 126.7863,
-    "svgX": 671.0,
-    "svgY": 1211.0,
+    "svgX": 304.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7311,8 +7323,8 @@
     "lineId": "수인분당",
     "latitude": 37.3458,
     "longitude": 126.739,
-    "svgX": 591.0,
-    "svgY": 1184.0,
+    "svgX": 240.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7325,8 +7337,8 @@
     "lineId": "수인분당",
     "latitude": 37.3473,
     "longitude": 126.6878,
-    "svgX": 505.0,
-    "svgY": 1181.0,
+    "svgX": 152.0,
+    "svgY": 1492.0,
     "isTransfer": true,
     "transferLines": [
       "4",
@@ -7339,8 +7351,8 @@
     "lineId": "수인분당",
     "latitude": 37.349,
     "longitude": 126.6765,
-    "svgX": 486.0,
-    "svgY": 1178.0,
+    "svgX": 152.0,
+    "svgY": 1448.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7352,8 +7364,8 @@
     "lineId": "수인분당",
     "latitude": 37.3755,
     "longitude": 126.6627,
-    "svgX": 463.0,
-    "svgY": 1124.0,
+    "svgX": 184.0,
+    "svgY": 1416.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7365,8 +7377,8 @@
     "lineId": "수인분당",
     "latitude": 37.3952,
     "longitude": 126.6585,
-    "svgX": 456.0,
-    "svgY": 1084.0,
+    "svgX": 248.0,
+    "svgY": 1416.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7379,7 +7391,7 @@
     "latitude": 37.436,
     "longitude": 126.656,
     "svgX": 452.0,
-    "svgY": 1001.0,
+    "svgY": 1284.8,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7391,8 +7403,8 @@
     "lineId": "수인분당",
     "latitude": 37.4483,
     "longitude": 126.647,
-    "svgX": 436.0,
-    "svgY": 977.0,
+    "svgX": 432.0,
+    "svgY": 1264.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7404,8 +7416,8 @@
     "lineId": "수인분당",
     "latitude": 37.4684,
     "longitude": 126.6283,
-    "svgX": 405.0,
-    "svgY": 936.0,
+    "svgX": 400.0,
+    "svgY": 1256.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
@@ -7417,8 +7429,8 @@
     "lineId": "수인분당",
     "latitude": 37.4737,
     "longitude": 126.6241,
-    "svgX": 398.0,
-    "svgY": 925.0,
+    "svgX": 344.0,
+    "svgY": 1256.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -7431,8 +7443,8 @@
     "lineId": "신림",
     "latitude": 37.517,
     "longitude": 126.928,
-    "svgX": 910.0,
-    "svgY": 837.0,
+    "svgX": 865.6,
+    "svgY": 816.0,
     "isTransfer": true,
     "transferLines": [
       "9",
@@ -7445,8 +7457,8 @@
     "lineId": "신림",
     "latitude": 37.511,
     "longitude": 126.9264,
-    "svgX": 907.0,
-    "svgY": 849.0,
+    "svgX": 812.0,
+    "svgY": 852.0,
     "isTransfer": true,
     "transferLines": [
       "1",
@@ -7459,8 +7471,8 @@
     "lineId": "신림",
     "latitude": 37.502,
     "longitude": 126.922,
-    "svgX": 900.0,
-    "svgY": 868.0,
+    "svgX": 812.0,
+    "svgY": 928.0,
     "isTransfer": false,
     "transferLines": [
       "신림"
@@ -7472,8 +7484,8 @@
     "lineId": "신림",
     "latitude": 37.496,
     "longitude": 126.919,
-    "svgX": 895.0,
-    "svgY": 880.0,
+    "svgX": 828.0,
+    "svgY": 1000.0,
     "isTransfer": true,
     "transferLines": [
       "7",
@@ -7486,8 +7498,8 @@
     "lineId": "신림",
     "latitude": 37.491,
     "longitude": 126.922,
-    "svgX": 900.0,
-    "svgY": 890.0,
+    "svgX": 832.0,
+    "svgY": 1016.0,
     "isTransfer": false,
     "transferLines": [
       "신림"
@@ -7499,8 +7511,8 @@
     "lineId": "신림",
     "latitude": 37.488,
     "longitude": 126.926,
-    "svgX": 907.0,
-    "svgY": 896.0,
+    "svgX": 840.0,
+    "svgY": 1032.0,
     "isTransfer": false,
     "transferLines": [
       "신림"
@@ -7512,8 +7524,8 @@
     "lineId": "신림",
     "latitude": 37.4855,
     "longitude": 126.931,
-    "svgX": 915.0,
-    "svgY": 901.0,
+    "svgX": 856.0,
+    "svgY": 1048.0,
     "isTransfer": false,
     "transferLines": [
       "신림"
@@ -7525,8 +7537,8 @@
     "lineId": "신림",
     "latitude": 37.4843,
     "longitude": 126.9296,
-    "svgX": 913.0,
-    "svgY": 904.0,
+    "svgX": 868.0,
+    "svgY": 1064.0,
     "isTransfer": true,
     "transferLines": [
       "2",
@@ -7539,8 +7551,8 @@
     "lineId": "신림",
     "latitude": 37.479,
     "longitude": 126.934,
-    "svgX": 920.0,
-    "svgY": 914.0,
+    "svgX": 912.0,
+    "svgY": 1112.0,
     "isTransfer": false,
     "transferLines": [
       "신림"
@@ -7552,11 +7564,1609 @@
     "lineId": "신림",
     "latitude": 37.472,
     "longitude": 126.94,
-    "svgX": 930.0,
-    "svgY": 928.0,
+    "svgX": 1008.0,
+    "svgY": 1136.0,
     "isTransfer": false,
     "transferLines": [
       "신림"
+    ]
+  },
+  {
+    "id": "E01",
+    "name": "강남대",
+    "lineId": "에버라인",
+    "latitude": 37.2705,
+    "longitude": 127.1263,
+    "svgX": 1376.0,
+    "svgY": 1408.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E02",
+    "name": "지석",
+    "lineId": "에버라인",
+    "latitude": 37.264,
+    "longitude": 127.1395,
+    "svgX": 1408.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E03",
+    "name": "어정",
+    "lineId": "에버라인",
+    "latitude": 37.2572,
+    "longitude": 127.1574,
+    "svgX": 1464.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E04",
+    "name": "동백",
+    "lineId": "에버라인",
+    "latitude": 37.269,
+    "longitude": 127.1617,
+    "svgX": 1520.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E05",
+    "name": "초당",
+    "lineId": "에버라인",
+    "latitude": 37.263,
+    "longitude": 127.1767,
+    "svgX": 1576.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E06",
+    "name": "삼가",
+    "lineId": "에버라인",
+    "latitude": 37.256,
+    "longitude": 127.19,
+    "svgX": 1632.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E07",
+    "name": "시청·용인대",
+    "lineId": "에버라인",
+    "latitude": 37.2405,
+    "longitude": 127.2085,
+    "svgX": 1696.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E08",
+    "name": "명지대",
+    "lineId": "에버라인",
+    "latitude": 37.2375,
+    "longitude": 127.2172,
+    "svgX": 1760.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E09",
+    "name": "김량장",
+    "lineId": "에버라인",
+    "latitude": 37.234,
+    "longitude": 127.2294,
+    "svgX": 1816.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E10",
+    "name": "용인중앙시장",
+    "lineId": "에버라인",
+    "latitude": 37.2342,
+    "longitude": 127.211,
+    "svgX": 1880.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E11",
+    "name": "고진",
+    "lineId": "에버라인",
+    "latitude": 37.228,
+    "longitude": 127.2069,
+    "svgX": 1944.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E12",
+    "name": "보평",
+    "lineId": "에버라인",
+    "latitude": 37.3135,
+    "longitude": 127.205,
+    "svgX": 2000.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E13",
+    "name": "둔전",
+    "lineId": "에버라인",
+    "latitude": 37.2985,
+    "longitude": 127.199,
+    "svgX": 2056.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "E14",
+    "name": "전대·에버랜드",
+    "lineId": "에버라인",
+    "latitude": 37.2905,
+    "longitude": 127.2015,
+    "svgX": 2112.0,
+    "svgY": 1432.0,
+    "isTransfer": false,
+    "transferLines": [
+      "에버라인"
+    ]
+  },
+  {
+    "id": "I01",
+    "name": "검단호수공원",
+    "lineId": "인천1",
+    "latitude": 37.5949,
+    "longitude": 126.6348,
+    "svgX": 216.0,
+    "svgY": 376.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I02",
+    "name": "신검단중앙",
+    "lineId": "인천1",
+    "latitude": 37.592,
+    "longitude": 126.6415,
+    "svgX": 216.0,
+    "svgY": 424.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I03",
+    "name": "아라(북부법원검찰청)",
+    "lineId": "인천1",
+    "latitude": 37.5862,
+    "longitude": 126.657,
+    "svgX": 216.0,
+    "svgY": 456.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I04",
+    "name": "계양",
+    "lineId": "인천1",
+    "latitude": 37.5684,
+    "longitude": 126.7605,
+    "svgX": 216.0,
+    "svgY": 536.0,
+    "isTransfer": true,
+    "transferLines": [
+      "공항철도",
+      "인천1"
+    ]
+  },
+  {
+    "id": "I05",
+    "name": "귤현",
+    "lineId": "인천1",
+    "latitude": 37.5542,
+    "longitude": 126.7415,
+    "svgX": 216.0,
+    "svgY": 608.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I06",
+    "name": "박촌",
+    "lineId": "인천1",
+    "latitude": 37.548,
+    "longitude": 126.734,
+    "svgX": 216.0,
+    "svgY": 648.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I07",
+    "name": "임학",
+    "lineId": "인천1",
+    "latitude": 37.542,
+    "longitude": 126.726,
+    "svgX": 216.0,
+    "svgY": 688.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I08",
+    "name": "계산",
+    "lineId": "인천1",
+    "latitude": 37.535,
+    "longitude": 126.718,
+    "svgX": 216.0,
+    "svgY": 744.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I09",
+    "name": "경인교대입구",
+    "lineId": "인천1",
+    "latitude": 37.528,
+    "longitude": 126.71,
+    "svgX": 216.0,
+    "svgY": 784.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I10",
+    "name": "작전",
+    "lineId": "인천1",
+    "latitude": 37.521,
+    "longitude": 126.702,
+    "svgX": 216.0,
+    "svgY": 832.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I11",
+    "name": "갈산",
+    "lineId": "인천1",
+    "latitude": 37.514,
+    "longitude": 126.694,
+    "svgX": 216.0,
+    "svgY": 872.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I12",
+    "name": "부평시장",
+    "lineId": "인천1",
+    "latitude": 37.507,
+    "longitude": 126.723,
+    "svgX": 216.0,
+    "svgY": 992.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I13",
+    "name": "동수",
+    "lineId": "인천1",
+    "latitude": 37.5,
+    "longitude": 126.715,
+    "svgX": 240.0,
+    "svgY": 1120.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I14",
+    "name": "부평삼거리",
+    "lineId": "인천1",
+    "latitude": 37.493,
+    "longitude": 126.707,
+    "svgX": 296.0,
+    "svgY": 1120.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I15",
+    "name": "간석오거리",
+    "lineId": "인천1",
+    "latitude": 37.486,
+    "longitude": 126.699,
+    "svgX": 368.0,
+    "svgY": 1120.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I16",
+    "name": "인천시청",
+    "lineId": "인천1",
+    "latitude": 37.4563,
+    "longitude": 126.6724,
+    "svgX": 416.0,
+    "svgY": 1152.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I17",
+    "name": "예술회관",
+    "lineId": "인천1",
+    "latitude": 37.4452,
+    "longitude": 126.6683,
+    "svgX": 441.6,
+    "svgY": 1192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I18",
+    "name": "인천터미널",
+    "lineId": "인천1",
+    "latitude": 37.4405,
+    "longitude": 126.6615,
+    "svgX": 465.6,
+    "svgY": 1224.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I19",
+    "name": "문학경기장",
+    "lineId": "인천1",
+    "latitude": 37.4309,
+    "longitude": 126.657,
+    "svgX": 496.0,
+    "svgY": 1264.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I20",
+    "name": "선학",
+    "lineId": "인천1",
+    "latitude": 37.427,
+    "longitude": 126.663,
+    "svgX": 520.0,
+    "svgY": 1296.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I21",
+    "name": "신연수",
+    "lineId": "인천1",
+    "latitude": 37.421,
+    "longitude": 126.678,
+    "svgX": 544.0,
+    "svgY": 1328.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I22",
+    "name": "원인재",
+    "lineId": "인천1",
+    "latitude": 37.408,
+    "longitude": 126.683,
+    "svgX": 504.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I23",
+    "name": "동춘",
+    "lineId": "인천1",
+    "latitude": 37.394,
+    "longitude": 126.685,
+    "svgX": 432.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I24",
+    "name": "동막",
+    "lineId": "인천1",
+    "latitude": 37.387,
+    "longitude": 126.69,
+    "svgX": 376.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I25",
+    "name": "캠퍼스타운",
+    "lineId": "인천1",
+    "latitude": 37.381,
+    "longitude": 126.695,
+    "svgX": 320.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I26",
+    "name": "테크노파크",
+    "lineId": "인천1",
+    "latitude": 37.375,
+    "longitude": 126.7,
+    "svgX": 248.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I27",
+    "name": "지식정보단지",
+    "lineId": "인천1",
+    "latitude": 37.369,
+    "longitude": 126.705,
+    "svgX": 168.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I28",
+    "name": "인천대입구",
+    "lineId": "인천1",
+    "latitude": 37.363,
+    "longitude": 126.71,
+    "svgX": 88.0,
+    "svgY": 1344.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I29",
+    "name": "센트럴파크",
+    "lineId": "인천1",
+    "latitude": 37.38,
+    "longitude": 126.661,
+    "svgX": 64.0,
+    "svgY": 1376.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I30",
+    "name": "국제업무지구",
+    "lineId": "인천1",
+    "latitude": 37.381,
+    "longitude": 126.656,
+    "svgX": 64.0,
+    "svgY": 1416.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "I31",
+    "name": "송도달빛축제공원",
+    "lineId": "인천1",
+    "latitude": 37.382,
+    "longitude": 126.651,
+    "svgX": 64.0,
+    "svgY": 1456.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천1"
+    ]
+  },
+  {
+    "id": "J01",
+    "name": "검단오류",
+    "lineId": "인천2",
+    "latitude": 37.5975,
+    "longitude": 126.5972,
+    "svgX": 56.0,
+    "svgY": 336.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J02",
+    "name": "왕길",
+    "lineId": "인천2",
+    "latitude": 37.5897,
+    "longitude": 126.6062,
+    "svgX": 56.0,
+    "svgY": 392.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J03",
+    "name": "검단사거리",
+    "lineId": "인천2",
+    "latitude": 37.5846,
+    "longitude": 126.6148,
+    "svgX": 56.0,
+    "svgY": 424.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J04",
+    "name": "마전",
+    "lineId": "인천2",
+    "latitude": 37.5775,
+    "longitude": 126.6228,
+    "svgX": 56.0,
+    "svgY": 464.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J05",
+    "name": "완정",
+    "lineId": "인천2",
+    "latitude": 37.5703,
+    "longitude": 126.631,
+    "svgX": 80.0,
+    "svgY": 504.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J06",
+    "name": "독정",
+    "lineId": "인천2",
+    "latitude": 37.564,
+    "longitude": 126.639,
+    "svgX": 104.0,
+    "svgY": 528.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J07",
+    "name": "검암",
+    "lineId": "인천2",
+    "latitude": 37.5726,
+    "longitude": 126.7418,
+    "svgX": 152.0,
+    "svgY": 576.0,
+    "isTransfer": true,
+    "transferLines": [
+      "공항철도",
+      "인천2"
+    ]
+  },
+  {
+    "id": "J08",
+    "name": "검바위",
+    "lineId": "인천2",
+    "latitude": 37.56,
+    "longitude": 126.653,
+    "svgX": 104.0,
+    "svgY": 624.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J09",
+    "name": "아시아드경기장",
+    "lineId": "인천2",
+    "latitude": 37.549,
+    "longitude": 126.64,
+    "svgX": 56.0,
+    "svgY": 696.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J10",
+    "name": "서구청",
+    "lineId": "인천2",
+    "latitude": 37.542,
+    "longitude": 126.645,
+    "svgX": 56.0,
+    "svgY": 752.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J11",
+    "name": "가정",
+    "lineId": "인천2",
+    "latitude": 37.535,
+    "longitude": 126.65,
+    "svgX": 56.0,
+    "svgY": 800.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J12",
+    "name": "가정중앙시장",
+    "lineId": "인천2",
+    "latitude": 37.528,
+    "longitude": 126.655,
+    "svgX": 56.0,
+    "svgY": 848.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J13",
+    "name": "서부여성회관",
+    "lineId": "인천2",
+    "latitude": 37.47,
+    "longitude": 126.673,
+    "svgX": 56.0,
+    "svgY": 960.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J14",
+    "name": "인천가좌",
+    "lineId": "인천2",
+    "latitude": 37.465,
+    "longitude": 126.678,
+    "svgX": 56.0,
+    "svgY": 1008.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J15",
+    "name": "가재울",
+    "lineId": "인천2",
+    "latitude": 37.46,
+    "longitude": 126.683,
+    "svgX": 56.0,
+    "svgY": 1056.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J16",
+    "name": "주안국가산단",
+    "lineId": "인천2",
+    "latitude": 37.455,
+    "longitude": 126.688,
+    "svgX": 56.0,
+    "svgY": 1104.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J17",
+    "name": "시민공원",
+    "lineId": "인천2",
+    "latitude": 37.4563,
+    "longitude": 126.69,
+    "svgX": 232.0,
+    "svgY": 1152.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J18",
+    "name": "석바위시장",
+    "lineId": "인천2",
+    "latitude": 37.458,
+    "longitude": 126.7,
+    "svgX": 320.0,
+    "svgY": 1152.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J19",
+    "name": "석천사거리",
+    "lineId": "인천2",
+    "latitude": 37.453,
+    "longitude": 126.72,
+    "svgX": 464.0,
+    "svgY": 1152.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J20",
+    "name": "모래내시장",
+    "lineId": "인천2",
+    "latitude": 37.447,
+    "longitude": 126.738,
+    "svgX": 520.0,
+    "svgY": 1176.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J21",
+    "name": "만수",
+    "lineId": "인천2",
+    "latitude": 37.441,
+    "longitude": 126.745,
+    "svgX": 552.0,
+    "svgY": 1208.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J22",
+    "name": "남동구청",
+    "lineId": "인천2",
+    "latitude": 37.435,
+    "longitude": 126.752,
+    "svgX": 584.0,
+    "svgY": 1240.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J23",
+    "name": "인천대공원",
+    "lineId": "인천2",
+    "latitude": 37.429,
+    "longitude": 126.759,
+    "svgX": 608.0,
+    "svgY": 1272.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "J24",
+    "name": "운연",
+    "lineId": "인천2",
+    "latitude": 37.423,
+    "longitude": 126.766,
+    "svgX": 608.0,
+    "svgY": 1312.0,
+    "isTransfer": false,
+    "transferLines": [
+      "인천2"
+    ]
+  },
+  {
+    "id": "P01",
+    "name": "양촌",
+    "lineId": "김포골드",
+    "latitude": 37.5744,
+    "longitude": 126.5847,
+    "svgX": 128.0,
+    "svgY": 464.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P02",
+    "name": "구래",
+    "lineId": "김포골드",
+    "latitude": 37.5822,
+    "longitude": 126.5895,
+    "svgX": 128.0,
+    "svgY": 408.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P03",
+    "name": "마산",
+    "lineId": "김포골드",
+    "latitude": 37.5903,
+    "longitude": 126.5945,
+    "svgX": 128.0,
+    "svgY": 368.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P04",
+    "name": "장기",
+    "lineId": "김포골드",
+    "latitude": 37.5982,
+    "longitude": 126.599,
+    "svgX": 144.0,
+    "svgY": 336.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P05",
+    "name": "운양",
+    "lineId": "김포골드",
+    "latitude": 37.6055,
+    "longitude": 126.6035,
+    "svgX": 200.0,
+    "svgY": 336.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P06",
+    "name": "걸포북변",
+    "lineId": "김포골드",
+    "latitude": 37.6128,
+    "longitude": 126.6085,
+    "svgX": 232.0,
+    "svgY": 368.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P07",
+    "name": "사우 (김포시청)",
+    "lineId": "김포골드",
+    "latitude": 37.6147,
+    "longitude": 126.6272,
+    "svgX": 232.0,
+    "svgY": 416.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P08",
+    "name": "풍무",
+    "lineId": "김포골드",
+    "latitude": 37.604,
+    "longitude": 126.6425,
+    "svgX": 232.0,
+    "svgY": 464.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "P09",
+    "name": "고촌",
+    "lineId": "김포골드",
+    "latitude": 37.588,
+    "longitude": 126.6621,
+    "svgX": 264.0,
+    "svgY": 520.0,
+    "isTransfer": false,
+    "transferLines": [
+      "김포골드"
+    ]
+  },
+  {
+    "id": "H01",
+    "name": "원종",
+    "lineId": "서해",
+    "latitude": 37.505,
+    "longitude": 126.7942,
+    "svgX": 320.0,
+    "svgY": 736.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H02",
+    "name": "소새울",
+    "lineId": "서해",
+    "latitude": 37.462,
+    "longitude": 126.766,
+    "svgX": 512.0,
+    "svgY": 1080.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H03",
+    "name": "시흥대야",
+    "lineId": "서해",
+    "latitude": 37.4415,
+    "longitude": 126.748,
+    "svgX": 592.0,
+    "svgY": 1152.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H04",
+    "name": "신천",
+    "lineId": "서해",
+    "latitude": 37.424,
+    "longitude": 126.731,
+    "svgX": 672.0,
+    "svgY": 1232.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H05",
+    "name": "신현",
+    "lineId": "서해",
+    "latitude": 37.409,
+    "longitude": 126.726,
+    "svgX": 720.0,
+    "svgY": 1312.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H06",
+    "name": "시흥시청",
+    "lineId": "서해",
+    "latitude": 37.381,
+    "longitude": 126.8026,
+    "svgX": 672.0,
+    "svgY": 1384.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H07",
+    "name": "시흥능곡",
+    "lineId": "서해",
+    "latitude": 37.372,
+    "longitude": 126.812,
+    "svgX": 608.0,
+    "svgY": 1424.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H08",
+    "name": "달미",
+    "lineId": "서해",
+    "latitude": 37.345,
+    "longitude": 126.771,
+    "svgX": 504.0,
+    "svgY": 1440.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H09",
+    "name": "선부",
+    "lineId": "서해",
+    "latitude": 37.335,
+    "longitude": 126.755,
+    "svgX": 424.0,
+    "svgY": 1440.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H10",
+    "name": "시우",
+    "lineId": "서해",
+    "latitude": 37.328,
+    "longitude": 126.735,
+    "svgX": 352.0,
+    "svgY": 1520.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H11",
+    "name": "원시",
+    "lineId": "서해",
+    "latitude": 37.323,
+    "longitude": 126.718,
+    "svgX": 296.0,
+    "svgY": 1520.0,
+    "isTransfer": false,
+    "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "U01",
+    "name": "탑석",
+    "lineId": "의정부",
+    "latitude": 37.7519,
+    "longitude": 127.05,
+    "svgX": 928.0,
+    "svgY": 88.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U02",
+    "name": "송산",
+    "lineId": "의정부",
+    "latitude": 37.745,
+    "longitude": 127.047,
+    "svgX": 952.0,
+    "svgY": 112.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U03",
+    "name": "어룡",
+    "lineId": "의정부",
+    "latitude": 37.738,
+    "longitude": 127.042,
+    "svgX": 992.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U04",
+    "name": "곤제",
+    "lineId": "의정부",
+    "latitude": 37.732,
+    "longitude": 127.038,
+    "svgX": 1032.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U05",
+    "name": "효자",
+    "lineId": "의정부",
+    "latitude": 37.726,
+    "longitude": 127.034,
+    "svgX": 1072.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U06",
+    "name": "경기도청북부청사",
+    "lineId": "의정부",
+    "latitude": 37.719,
+    "longitude": 127.029,
+    "svgX": 1132.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U07",
+    "name": "새말",
+    "lineId": "의정부",
+    "latitude": 37.713,
+    "longitude": 127.026,
+    "svgX": 1192.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U08",
+    "name": "동오",
+    "lineId": "의정부",
+    "latitude": 37.707,
+    "longitude": 127.023,
+    "svgX": 1232.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U09",
+    "name": "의정부중앙",
+    "lineId": "의정부",
+    "latitude": 37.701,
+    "longitude": 127.019,
+    "svgX": 1296.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U10",
+    "name": "흥선",
+    "lineId": "의정부",
+    "latitude": 37.695,
+    "longitude": 127.016,
+    "svgX": 1356.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U11",
+    "name": "의정부시청",
+    "lineId": "의정부",
+    "latitude": 37.689,
+    "longitude": 127.013,
+    "svgX": 1416.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U12",
+    "name": "경전철의정부",
+    "lineId": "의정부",
+    "latitude": 37.683,
+    "longitude": 127.01,
+    "svgX": 1504.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U13",
+    "name": "범골",
+    "lineId": "의정부",
+    "latitude": 37.677,
+    "longitude": 127.007,
+    "svgX": 1568.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U14",
+    "name": "발곡",
+    "lineId": "의정부",
+    "latitude": 37.671,
+    "longitude": 127.004,
+    "svgX": 1560.0,
+    "svgY": 48.0,
+    "isTransfer": false,
+    "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "W01",
+    "name": "북한산우이",
+    "lineId": "우이신설",
+    "latitude": 37.672,
+    "longitude": 127.0117,
+    "svgX": 832.0,
+    "svgY": 128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W02",
+    "name": "솔밭공원",
+    "lineId": "우이신설",
+    "latitude": 37.665,
+    "longitude": 127.0155,
+    "svgX": 912.0,
+    "svgY": 152.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W03",
+    "name": "4·19민주묘지",
+    "lineId": "우이신설",
+    "latitude": 37.653,
+    "longitude": 127.013,
+    "svgX": 968.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W04",
+    "name": "가오리",
+    "lineId": "우이신설",
+    "latitude": 37.646,
+    "longitude": 127.0145,
+    "svgX": 1032.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W05",
+    "name": "화계",
+    "lineId": "우이신설",
+    "latitude": 37.639,
+    "longitude": 127.0168,
+    "svgX": 1080.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W06",
+    "name": "삼양",
+    "lineId": "우이신설",
+    "latitude": 37.632,
+    "longitude": 127.02,
+    "svgX": 1128.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W07",
+    "name": "삼양사거리",
+    "lineId": "우이신설",
+    "latitude": 37.6255,
+    "longitude": 127.0225,
+    "svgX": 1184.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W08",
+    "name": "솔샘",
+    "lineId": "우이신설",
+    "latitude": 37.618,
+    "longitude": 127.0195,
+    "svgX": 1240.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W09",
+    "name": "북한산보국문",
+    "lineId": "우이신설",
+    "latitude": 37.611,
+    "longitude": 127.021,
+    "svgX": 1296.0,
+    "svgY": 192.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W10",
+    "name": "정릉",
+    "lineId": "우이신설",
+    "latitude": 37.604,
+    "longitude": 127.0241,
+    "svgX": 1336.0,
+    "svgY": 200.0,
+    "isTransfer": false,
+    "transferLines": [
+      "우이신설"
+    ]
+  },
+  {
+    "id": "G01",
+    "name": "운정중앙",
+    "lineId": "GTX-A",
+    "latitude": 37.72,
+    "longitude": 126.736,
+    "svgX": 104.0,
+    "svgY": 200.0,
+    "isTransfer": false,
+    "transferLines": [
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G02",
+    "name": "킨텍스",
+    "lineId": "GTX-A",
+    "latitude": 37.67,
+    "longitude": 126.75,
+    "svgX": 208.0,
+    "svgY": 200.0,
+    "isTransfer": false,
+    "transferLines": [
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G03",
+    "name": "대곡",
+    "lineId": "GTX-A",
+    "latitude": 37.6534,
+    "longitude": 126.7486,
+    "svgX": 404.0,
+    "svgY": 256.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "경의중앙",
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G04",
+    "name": "연신내",
+    "lineId": "GTX-A",
+    "latitude": 37.619,
+    "longitude": 126.9211,
+    "svgX": 690.6666666666666,
+    "svgY": 256.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "6",
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G05",
+    "name": "서울역",
+    "lineId": "GTX-A",
+    "latitude": 37.5547,
+    "longitude": 126.9706,
+    "svgX": 1040.0,
+    "svgY": 618.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4",
+      "경의중앙",
+      "공항철도",
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G06",
+    "name": "수서",
+    "lineId": "GTX-A",
+    "latitude": 37.4873,
+    "longitude": 127.1017,
+    "svgX": 2048.0,
+    "svgY": 1200.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "수인분당",
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G07",
+    "name": "성남",
+    "lineId": "GTX-A",
+    "latitude": 37.42,
+    "longitude": 127.126,
+    "svgX": 1836.0,
+    "svgY": 1248.0,
+    "isTransfer": false,
+    "transferLines": [
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G08",
+    "name": "구성",
+    "lineId": "GTX-A",
+    "latitude": 37.2994,
+    "longitude": 127.0956,
+    "svgX": 1500.0,
+    "svgY": 1368.0,
+    "isTransfer": false,
+    "transferLines": [
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "G09",
+    "name": "동탄",
+    "lineId": "GTX-A",
+    "latitude": 37.2,
+    "longitude": 127.057,
+    "svgX": 1272.0,
+    "svgY": 1336.0,
+    "isTransfer": false,
+    "transferLines": [
+      "GTX-A"
     ]
   }
 ]

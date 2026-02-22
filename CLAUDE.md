@@ -21,8 +21,14 @@ flutter test test/graph/shortest_path_test.dart  # 단일 파일
 # 정적 분석
 flutter analyze
 
-# 역/노선 JSON 에셋 재생성
+# SVG에서 역 좌표 추출 (svg_station_coords.json 생성)
+dart run tool/extract_svg_stations.dart
+
+# 역/노선 JSON 에셋 재생성 (svg_station_coords.json 참조)
 dart run tool/generate_station_data.dart
+
+# WebView용 HTML 생성 (seoul_metro_map.svg → map.html)
+dart run tool/build_map_html.dart
 ```
 
 **중요:** 실 디바이스(iPhone 등) 빌드는 반드시 `--release` 모드를 사용해야 한다. 디버그 빌드는 Dart VM 연결이 필요하므로 앱을 백그라운드로 보냈다 다시 열면 크래시가 발생한다.
@@ -54,7 +60,7 @@ lib/
 
 ### 핵심 도메인 개념
 
-- **역(Station)** 은 캔버스 렌더링용 `svgX`/`svgY` 좌표를 가짐 (위경도 → 2400x1500 캔버스로 사전 변환)
+- **역(Station)** 은 캔버스 렌더링용 `svgX`/`svgY` 좌표를 가짐 (원본 SVG의 circle 좌표에서 추출, `extract_svg_stations.dart`로 생성)
 - **그래프 노드 ID 형식:** `"{stationId}_{lineId}"` (예: `"216_2"` = 2호선 강남역)
 - **환승 시간 키 형식:** `"{역이름}_{lineId1}_{lineId2}"` (`transfer_times.json` 내)
 ### 노선 정보
@@ -78,6 +84,14 @@ lib/
 | `'공항철도'` | 공항철도 | `#0090D2` (파랑) | A01–A14 | 14 |
 | `'수인분당'` | 수인분당선 | `#F5A200` (금색) | B01–B57 | 57 |
 | `'신림'` | 신림선 | `#6789CA` (연파랑) | S01–S10 | 10 |
+| `'에버라인'` | 에버라인 | `#36A805` (녹색) | E01–E14 | 14 |
+| `'인천1'` | 인천1호선 | `#6496DF` (연파랑) | I01–I31 | 31 |
+| `'인천2'` | 인천2호선 | `#CF843C` (주황갈) | J01–J24 | 24 |
+| `'김포골드'` | 김포골드라인 | `#A18F57` (금갈) | P01–P09 | 9 |
+| `'서해'` | 서해선 | `#40A607` (녹색) | H01–H11 | 11 |
+| `'의정부'` | 의정부경전철 | `#D9750D` (주황) | U01–U14 | 14 |
+| `'우이신설'` | 우이신설경전철 | `#878787` (회색) | W01–W10 | 10 |
+| `'GTX-A'` | GTX-A | `#9F6181` (자주) | G01–G09 | 9 |
 
 신분당선은 `'SB'`와 `'신분당'` 두 가지 ID가 모두 색상/이름 맵에 등록되어 있다. `lines.json`에서는 `'SB'`를 사용한다.
 경의중앙선 K54(서울역)는 K24(효창공원앞)에서 분기하는 dead-end 지선이다.
@@ -105,7 +119,77 @@ Riverpod 2.x + 코드 생성 (`@riverpod` 어노테이션). 주요 프로바이�
 
 ### 지도 렌더링
 
-지하철 지도는 SVG가 아닌 `CustomPainter`로 렌더링된다. `SubwayMapPainter`가 연결선을, `StationMarker`가 역 원형을 그리며, 전체가 `InteractiveViewer`(줌 0.2x~5x)로 감싸져 있다.
+지하철 지도는 `webview_flutter`로 원본 SVG를 HTML 내에서 네이티브 렌더링한다:
+
+```
+Expanded → WebViewWidget (전체 화면)
+  └─ HTML 페이지 (assets/html/map.html)
+      ├─ <svg> 원본 (seoul_metro_map.svg 인라인, 한국어 텍스트 포함)
+      ├─ 경로 하이라이트 (SVG overlay <g>)
+      ├─ 출발/도착 마커 (SVG <circle>)
+      ├─ 툴팁 (HTML div, position:absolute)
+      ├─ 줌/팬 핸들러 (CSS transform + 터치/포인터 이벤트)
+      └─ 탭 핸들러 → JavaScriptChannel → Flutter
+```
+
+**SvgWebView** (`svg_web_view.dart`) — WebView 래퍼 위젯:
+- `loadFlutterAsset('assets/html/map.html')`로 HTML 로드
+- `JavaScriptChannel('StationChannel')`로 탭/액션 이벤트 수신
+- `runJavaScript()`로 경로 하이라이트, 마커, 툴팁 제어
+- 줌/팬은 JS에서 CSS `transform: matrix(...)` 기반으로 처리 (0.1x~5.0x)
+- 초기 뷰: 2호선 순환 중심(1260, 1240), 스케일 0.25
+
+### SVG 데이터 파이프라인
+
+원본 SVG(`seoul_metro_map.svg`)에서 앱 에셋을 생성하는 3단계 파이프라인:
+
+```bash
+# 1단계: SVG에서 역 좌표 추출
+dart run tool/extract_svg_stations.dart
+# → assets/json/svg_station_coords.json (653개 역의 SVG 좌표)
+
+# 2단계: 역/노선/연결 JSON 생성 (SVG 좌표 참조)
+dart run tool/generate_station_data.dart
+# → assets/json/stations.json, connections.json, lines.json, transfer_times.json
+
+# 3단계: WebView용 HTML 생성 (SVG를 HTML에 인라인 삽입)
+dart run tool/build_map_html.dart
+# → assets/html/map.html
+```
+
+**SVG 좌표 추출** (`extract_svg_stations.dart`):
+- SVG의 `<text data-station="역명">` 라벨과 가장 가까운 `<circle>` 좌표를 매칭
+- 역명의 줄바꿈 문자 자동 제거 (SVG `<tspan>` 분할 역명 처리)
+- 모든 `data-line` 값을 추출 (GTX-A `1-GA` 포함)
+
+**HTML 빌드** (`build_map_html.dart`):
+- 원본 SVG를 HTML 템플릿에 인라인 삽입
+- SVG 최소 변환: `width="100%" height="100%"` → `width="2416" height="1560"`, `style="background: white;"` 제거
+- JS로 줌/팬, 탭 감지, 경로 하이라이트, 마커, 툴팁 기능 구현
+
+**SVG data-line 매핑** (원본 SVG의 노선 코드 → 앱 lineId):
+
+| data-line | 앱 lineId | 비고 |
+|---|---|---|
+| `2-1` | `1` | 1호선 |
+| `3-2` ~ `10-9` | `2` ~ `9` | 2~9호선 (N-M 형식, M이 호선 번호) |
+| `S` | `SB` | 신분당선 |
+| `K` | `경의중앙` | 경의중앙선 |
+| `KK` | `경춘` | SVG 내 경강선 역, 앱에서는 경춘 lineId로 매핑 |
+| `A` | `공항철도` | 공항철도 |
+| `B` | `수인분당` | 수인분당선 |
+| `SL` | `신림` | 신림선 |
+| `E` | `에버라인` | 에버라인 (용인경전철) |
+| `G` | `경춘` | 경춘선 고유구간 (SVG 경로용, 별도 노선 아님) |
+| `I` | `인천1` | 인천1호선 |
+| `I2` | `인천2` | 인천2호선 |
+| `KP` | `김포골드` | 김포골드라인 |
+| `SH` | `서해` | 서해선 |
+| `U` | `의정부` | 의정부경전철 |
+| `W` | `우이신설` | 우이신설경전철 |
+| `1-GA` | `GTX-A` | GTX-A 광역급행철도 |
+
+**중요:** 원본 SVG를 수정한 후 반드시 3단계 파이프라인을 순서대로 재실행해야 한다.
 
 ### 네트워크 및 캐싱
 
@@ -131,4 +215,4 @@ Riverpod 2.x + 코드 생성 (`@riverpod` 어노테이션). 주요 프로바이�
 
 ## 미사용 의존성
 
-`hive_flutter`와 `flutter_svg`는 pubspec.yaml에 등록되어 있으나 현재 코드에서 사용되지 않음.
+`hive_flutter`는 pubspec.yaml에 등록되어 있으나 현재 코드에서 사용되지 않음.

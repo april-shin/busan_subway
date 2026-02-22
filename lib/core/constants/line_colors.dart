@@ -17,6 +17,14 @@ const Map<String, Color> lineColors = {
   '공항철도': Color(0xFF0090D2),
   '수인분당': Color(0xFFF5A200),
   '신림': Color(0xFF6789CA),
+  '에버라인': Color(0xFF36A805),
+  '인천1': Color(0xFF6496DF),
+  '인천2': Color(0xFFCF843C),
+  '김포골드': Color(0xFFA18F57),
+  '서해': Color(0xFF40A607),
+  '의정부': Color(0xFFD9750D),
+  '우이신설': Color(0xFF878787),
+  'GTX-A': Color(0xFF9F6181),
 };
 
 const Map<String, String> lineNames = {
@@ -36,4 +44,12 @@ const Map<String, String> lineNames = {
   '공항철도': '공항철도',
   '수인분당': '수인분당선',
   '신림': '신림선',
+  '에버라인': '에버라인',
+  '인천1': '인천1호선',
+  '인천2': '인천2호선',
+  '김포골드': '김포골드라인',
+  '서해': '서해선',
+  '의정부': '의정부경전철',
+  '우이신설': '우이신설경전철',
+  'GTX-A': 'GTX-A',
 };

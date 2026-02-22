@@ -32,8 +32,10 @@ dependencies:
   shared_preferences: ^2.3.4
   path_provider: ^2.1.5
 
-  # SVG & UI
-  flutter_svg: ^2.0.17
+  # WebView
+  webview_flutter: ^4.10.0
+
+  # XML
   xml: ^6.5.0
 
   # Utilities
@@ -63,3 +65,4 @@ flutter:
     - .env
     - assets/svg/
     - assets/json/
+    - assets/html/
