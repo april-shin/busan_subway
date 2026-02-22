@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/line_colors.dart';
+import '../../../../domain/entities/arrival_info.dart';
+import '../../../../domain/entities/line_schedule.dart';
 import '../../../../domain/entities/route_result.dart';
 import '../../../arrival_info/presentation/providers/arrival_providers.dart';
+import '../providers/timetable_providers.dart';
 import '../../utils/departure_time_calculator.dart';
 
 class RouteResultScreen extends ConsumerWidget {
@@ -19,12 +22,42 @@ class RouteResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final arrivalAsync = ref.watch(arrivalInfoProvider(departureStationName));
+    final schedulesAsync = ref.watch(lineSchedulesProvider);
     final totalMinutes = routeResult.totalTimeSeconds ~/ 60;
-    final isLoading = arrivalAsync is AsyncLoading;
+    // 시간표는 정적 데이터이므로 빠르게 로드됨. 실시간 API만 로딩 표시 대상.
+    final isLoading =
+        arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
+
+    final schedules = schedulesAsync.valueOrNull ?? <String, LineSchedule>{};
+    final firstLineId = routeResult.segments.isNotEmpty
+        ? routeResult.segments.first.lineId
+        : null;
+    final firstLineSchedule =
+        firstLineId != null ? schedules[firstLineId] : null;
+
+    // 환승역 실시간 도착정보 수집
+    final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{};
+    for (var i = 0; i < routeResult.segments.length - 1; i++) {
+      final transferName = routeResult.segments[i + 1].stations.first.name;
+      transferArrivals[transferName] =
+          ref.watch(arrivalInfoProvider(transferName));
+    }
+
+    final now = DateTime.now();
     final departureTime = computeDepartureTime(
       arrivalAsync: arrivalAsync,
       routeResult: routeResult,
-      now: DateTime.now(),
+      now: now,
+      lineSchedule: firstLineSchedule,
+    );
+
+    // 환승역에서도 실시간 API → 시간표 → afterTransfer 폴백 구조 적용
+    final segmentDepartures = computeSegmentDepartures(
+      routeResult: routeResult,
+      initialDeparture: departureTime,
+      schedules: schedules,
+      transferArrivals: transferArrivals,
+      now: now,
     );
 
     return Scaffold(
@@ -44,6 +77,7 @@ class RouteResultScreen extends ConsumerWidget {
             child: _RouteTimeline(
               routeResult: routeResult,
               departureTime: departureTime,
+              segmentDepartures: segmentDepartures,
             ),
           ),
         ],
@@ -180,15 +214,17 @@ class _ChipDivider extends StatelessWidget {
 class _RouteTimeline extends StatelessWidget {
   final RouteResult routeResult;
   final DateTime departureTime;
+  final List<DateTime> segmentDepartures;
 
   const _RouteTimeline({
     required this.routeResult,
     required this.departureTime,
+    required this.segmentDepartures,
   });
 
   @override
   Widget build(BuildContext context) {
-    final items = _buildTimelineItems(departureTime);
+    final items = _buildTimelineItems();
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -197,22 +233,25 @@ class _RouteTimeline extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildTimelineItems(DateTime departureTime) {
+  List<Widget> _buildTimelineItems() {
     final items = <Widget>[];
-    var currentTime = departureTime;
 
     for (var i = 0; i < routeResult.segments.length; i++) {
       final isLast = i == routeResult.segments.length - 1;
-      currentTime = _addSegmentItems(items, i, currentTime, isLast);
+      final segStartTime =
+          i < segmentDepartures.length ? segmentDepartures[i] : departureTime;
+      _addSegmentItems(items, i, segStartTime, isLast);
       if (!isLast) {
-        currentTime = _addTransferItem(items, i, currentTime);
+        final segEndTime =
+            segStartTime.add(Duration(seconds: routeResult.segments[i].durationSeconds));
+        _addTransferItem(items, i, segEndTime);
       }
     }
 
     return items;
   }
 
-  DateTime _addSegmentItems(
+  void _addSegmentItems(
     List<Widget> items,
     int segIndex,
     DateTime startTime,
@@ -251,11 +290,9 @@ class _RouteTimeline extends StatelessWidget {
         isTransferStation: station.isTransfer,
       ));
     }
-
-    return startTime.add(Duration(seconds: segment.durationSeconds));
   }
 
-  DateTime _addTransferItem(
+  void _addTransferItem(
     List<Widget> items,
     int transferIndex,
     DateTime startTime,
@@ -265,7 +302,6 @@ class _RouteTimeline extends StatelessWidget {
             ? routeResult.transferDurations[transferIndex]
             : 0;
     items.add(_TransferRow(transferMinutes: (transferSeconds / 60).ceil()));
-    return startTime.add(Duration(seconds: transferSeconds));
   }
 }
 

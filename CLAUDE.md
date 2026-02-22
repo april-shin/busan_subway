@@ -199,7 +199,57 @@ dart run tool/build_map_html.dart
 
 ### 정적 데이터
 
-`assets/json/`의 번들 JSON (stations, connections, lines, transfer_times)은 `LocalDataSource`가 `rootBundle`로 로드하며 세션 내 메모리에 캐시된다.
+`assets/json/`의 번들 JSON (stations, connections, lines, transfer_times, line_schedules)은 `LocalDataSource` / `TimetableDataSource`가 `rootBundle`로 로드하며 세션 내 메모리에 캐시된다.
+
+### 열차 시간표 (배차간격 기반, 양방향)
+
+`assets/json/line_schedules.json`에 22개 노선의 양방향 운행 스케줄을 컴팩트 JSON으로 보유한다:
+- 노선별 상행(내선)/하행(외선) 첫차·막차 시간
+- 시간대별 배차간격 (첨두 06:30-09:00/16:30-19:30, 비첨두, 심야)
+- 하행 전용 배차간격이 상행과 다를 경우 `pD` 키로 별도 저장
+
+**컴팩트 JSON 스키마:**
+```json
+{
+  "id": "1",
+  "wd": {
+    "f": ["05:20","05:18"],
+    "l": ["00:48","00:42"],
+    "p": [["05:00","06:00",5],["06:00","09:00",4]]
+  },
+  "we": { ... }
+}
+```
+- `id` = lineId, `wd` = 평일 (필수), `we` = 주말 (옵셔널, 없으면 `wd`와 동일)
+- `f` = firstTrains [상행/내선, 하행/외선], `l` = lastTrains [상행/내선, 하행/외선]
+- `p` = 공유 배차간격 [[시작,종료,배차분]], `pD` = 하행 전용 배차간격 (상이할 경우만)
+- 상하행 첫차/막차가 동일하고 `pD` 없으면 하행 데이터는 상행으로 자동 폴백
+
+**방향 결정 로직** (`direction_resolver.dart`):
+- `RouteSegment`의 역 ID 순서로 방향 판별
+- 일반 노선: ID 증가 = 하행(index 1), ID 감소 = 상행(index 0)
+- 2호선 순환: 첫 두 역 ID 비교 + 순환 경계(201↔243) 처리
+
+**출발시각 계산 우선순위:**
+1. 실시간 도착정보 API (가장 정확, 방향 필터 적용)
+2. 배차간격 기반 시간표 추정 (방향별, API 미가용 시)
+3. 현재 시각 폴백 (운행 시간 외이거나 데이터 없음)
+
+**핵심 함수:**
+- `findNextDeparture()` — `lib/domain/usecases/find_next_departure.dart`: 배차간격으로 다음 출발 시각 계산 (`isDown` 파라미터로 방향 지정)
+- `computeDepartureTime()` — `lib/features/route_search/utils/departure_time_calculator.dart`: 실시간 + 시간표 통합 계산 (방향 자동 결정)
+- `computeSegmentDepartures()` — 환승역에서도 방향별 시간표 기반 출발시각 계산
+- `isDownDirection()` — `lib/features/route_search/utils/direction_resolver.dart`: RouteSegment에서 하행/외선 여부 결정
+
+**데이터소스:**
+- `TimetableDataSource` (`lib/data/local/timetable_data_source.dart`): 컴팩트 JSON 파싱 (레거시 포맷 호환)
+- `timetableProviders` (`lib/features/route_search/presentation/providers/timetable_providers.dart`): Riverpod 프로바이더
+
+**시간표 재생성:**
+```bash
+dart run tool/extract_schedules.dart
+# → assets/json/line_schedules.json (양방향 컴팩트 포맷)
+```
 
 ## 코드 생성
 

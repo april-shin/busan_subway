@@ -13,7 +13,7 @@ class SeoulApiDataSource {
   SeoulApiDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
 
   Future<List<ArrivalInfoDto>> getRealtimeArrival(String stationName) async {
-    final apiKey = dotenv.env['SEOUL_API_KEY'];
+    final apiKey = dotenv.env['SEOUL_SUBWAY_API_KEY'];
     if (apiKey == null || apiKey.isEmpty || apiKey == 'your_api_key_here') {
       developer.log(
         'API 키 오류: SEOUL_API_KEY가 설정되지 않았습니다',
