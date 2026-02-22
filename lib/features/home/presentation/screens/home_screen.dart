@@ -73,7 +73,10 @@ class HomeScreen extends ConsumerWidget {
       Navigator.of(context).pop();
 
       if (result != null) {
-        context.go('/route-result', extra: result);
+        context.go('/route-result', extra: (
+          routeResult: result,
+          departureStationName: selected.departure!.name,
+        ));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('경로를 찾을 수 없습니다')),

@@ -65,5 +65,21 @@ void main() {
       expect(result, isNotNull);
       expect(result!.stationCount, greaterThanOrEqualTo(2));
     });
+
+    test('same line route has empty transferDurations', () async {
+      final result = await searchRoute.execute('201', '203');
+
+      expect(result, isNotNull);
+      expect(result!.transferDurations, isEmpty);
+    });
+
+    test('transfer route collects transferDurations', () async {
+      final result = await searchRoute.execute('201', '317');
+
+      expect(result, isNotNull);
+      expect(result!.transferDurations, isNotEmpty);
+      expect(result.transferDurations.length, result.transferCount);
+      expect(result.transferDurations.first, 180);
+    });
   });
 }

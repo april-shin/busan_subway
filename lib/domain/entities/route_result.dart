@@ -11,6 +11,7 @@ class RouteResult with _$RouteResult {
     required int totalTimeSeconds,
     required int transferCount,
     required int stationCount,
+    @Default([]) List<int> transferDurations,
   }) = _RouteResult;
 }
 

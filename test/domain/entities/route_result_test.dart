@@ -16,6 +16,7 @@ void main() {
       expect(result.transferCount, 1);
       expect(result.stationCount, 5);
       expect(result.segments, isEmpty);
+      expect(result.transferDurations, isEmpty);
     });
 
     test('copyWith creates modified copy', () {

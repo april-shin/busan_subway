@@ -58,6 +58,15 @@ dev_dependencies:
   # Testing
   mocktail: ^1.0.4
 
+  # App Icon
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/images/app_icon.png"
+
 flutter:
   uses-material-design: true
 

@@ -37,7 +37,8 @@ class SearchRoute {
     if (results.isEmpty) return null;
 
     final bestPath = results.first;
-    final segments = _buildSegments(bestPath, graph, stationMap);
+    final (:segments, :transferDurations) =
+        _buildSegments(bestPath, graph, stationMap);
 
     return RouteResult(
       segments: segments,
@@ -46,17 +47,21 @@ class SearchRoute {
       stationCount:
           segments.fold(0, (sum, seg) => sum + seg.stations.length) -
               (segments.length - 1),
+      transferDurations: transferDurations,
     );
   }
 
-  List<RouteSegment> _buildSegments(
+  ({List<RouteSegment> segments, List<int> transferDurations}) _buildSegments(
     PathResult path,
     dynamic graph,
     Map<String, Station> stationMap,
   ) {
-    if (path.edges.isEmpty) return [];
+    if (path.edges.isEmpty) {
+      return (segments: <RouteSegment>[], transferDurations: <int>[]);
+    }
 
     final segments = <RouteSegment>[];
+    final transferDurations = <int>[];
     var currentLineId = path.edges.first.lineId;
     var currentStations = <Station>[];
     var currentDurationSeconds = 0;
@@ -72,6 +77,7 @@ class SearchRoute {
             currentDurationSeconds,
           ));
         }
+        transferDurations.add(edge.weightSeconds);
         currentStations = [];
         currentDurationSeconds = 0;
         if (i + 1 < path.edges.length) {
@@ -118,7 +124,10 @@ class SearchRoute {
       ));
     }
 
-    return segments;
+    return (
+      segments: List.unmodifiable(segments),
+      transferDurations: List.unmodifiable(transferDurations),
+    );
   }
 
   RouteSegment _createSegment(

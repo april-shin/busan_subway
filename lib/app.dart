@@ -24,9 +24,18 @@ final GoRouter router = GoRouter(
         ),
         GoRoute(
           path: 'route-result',
-          builder: (context, state) => RouteResultScreen(
-            routeResult: state.extra! as RouteResult,
-          ),
+          builder: (context, state) {
+            final extra = state.extra;
+            if (extra is! ({RouteResult routeResult, String departureStationName})) {
+              return const Scaffold(
+                body: Center(child: Text('잘못된 경로입니다')),
+              );
+            }
+            return RouteResultScreen(
+              routeResult: extra.routeResult,
+              departureStationName: extra.departureStationName,
+            );
+          },
         ),
         GoRoute(
           path: 'station/:stationId',
