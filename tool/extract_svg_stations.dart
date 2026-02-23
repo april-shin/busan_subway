@@ -132,6 +132,8 @@ void main() {
   // 수동 좌표 오버라이드 (텍스트-circle 거리가 임계값 초과하는 경우)
   const manualOverrides = {
     '장자호수공원': {'svgX': 2072.0, 'svgY': 576.0},
+    '영등포구청': {'svgX': 656.0, 'svgY': 712.0},
+    '영등포시장': {'svgX': 700.0, 'svgY': 752.0},
   };
   for (final entry in manualOverrides.entries) {
     if (stationCoords.containsKey(entry.key)) {

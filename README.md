@@ -323,6 +323,12 @@ dart run tool/generate_station_data.dart
 dart run tool/build_map_html.dart
 ```
 
+### SVG 역이름 좌표 수정이 필요한 역
+- 남동인더스파크
+- 영등포구청
+- 별내
+- 신대방삼거리
+
 ## 라이선스
 
 MIT License

@@ -53,7 +53,7 @@
     "dataLine": "1-GA",
     "svgX": 690.6666666666666,
     "svgY": 256.0,
-    "distance": 14
+    "distance": 31
   },
   "서울역": {
     "name": "서울역",
@@ -809,7 +809,7 @@
     "dataLine": "3-2",
     "svgX": 656.0,
     "svgY": 712.0,
-    "distance": 14
+    "distance": 0
   },
   "당산": {
     "name": "당산",
@@ -1768,7 +1768,7 @@
     "dataLine": "6-5",
     "svgX": 700.0,
     "svgY": 752.0,
-    "distance": 9
+    "distance": 0
   },
   "여의도": {
     "name": "여의도",
@@ -2335,7 +2335,7 @@
     "dataLine": "8-7",
     "svgX": 880.0,
     "svgY": 1000.0,
-    "distance": 10
+    "distance": 22
   },
   "장승배기": {
     "name": "장승배기",
@@ -3896,7 +3896,7 @@
     "dataLine": "B",
     "svgX": 448.0,
     "svgY": 1416.0,
-    "distance": 10
+    "distance": 24
   },
   "호구포": {
     "name": "호구포",
