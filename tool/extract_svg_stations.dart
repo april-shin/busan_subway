@@ -45,10 +45,10 @@ void main() {
     stationDots.add(_Circle(cx, cy, fill, className));
   }
 
-  // 2. 모든 interchange rect 추출 (중심 좌표 계산)
+  // 2. 모든 캡슐형 rect 추출 (환승역 마커, rx 속성으로 식별)
   for (final rect in svg.findAllElements('rect')) {
-    final className = rect.getAttribute('class') ?? '';
-    if (!className.contains('interchange')) continue;
+    final rx = rect.getAttribute('rx');
+    if (rx == null) continue;
 
     final x = double.tryParse(rect.getAttribute('x') ?? '');
     final y = double.tryParse(rect.getAttribute('y') ?? '');
@@ -56,7 +56,7 @@ void main() {
     final h = double.tryParse(rect.getAttribute('height') ?? '');
     if (x == null || y == null || w == null || h == null) continue;
 
-    stationDots.add(_Circle(x + w / 2, y + h / 2, '', 'interchange'));
+    stationDots.add(_Circle(x + w / 2, y + h / 2, '', 'capsule'));
   }
 
   // 3. 모든 text (역명 라벨) 추출 — data-line 필터 없이 전부
@@ -82,26 +82,31 @@ void main() {
   var matched = 0;
   var unmatched = 0;
 
+  final usedCircles = <int>{};
   for (final label in textLabels) {
     // 키: 역명 (동일 역은 하나의 좌표만 저장)
     final key = label.name;
     if (stationCoords.containsKey(key)) continue;
 
-    // text 좌표 근처에서 가장 가까운 circle 찾기
-    _Circle? bestCircle;
+    // text 좌표 근처에서 가장 가까운 미사용 circle 찾기
+    var bestCircleIdx = -1;
     var bestDist = double.infinity;
 
-    for (final dot in stationDots) {
+    for (var i = 0; i < stationDots.length; i++) {
+      if (usedCircles.contains(i)) continue;
+      final dot = stationDots[i];
       final dx = dot.cx - label.x;
       final dy = dot.cy - label.y;
       final dist = sqrt(dx * dx + dy * dy);
       if (dist < bestDist) {
         bestDist = dist;
-        bestCircle = dot;
+        bestCircleIdx = i;
       }
     }
 
-    if (bestCircle != null && bestDist < _maxMatchingDistance) {
+    if (bestCircleIdx >= 0 && bestDist < _maxMatchingDistance) {
+      final bestCircle = stationDots[bestCircleIdx];
+      usedCircles.add(bestCircleIdx);
       stationCoords[key] = {
         'name': label.name,
         'dataLine': label.dataLine,
@@ -121,6 +126,18 @@ void main() {
         'distance': -1,
       };
       unmatched++;
+    }
+  }
+
+  // 수동 좌표 오버라이드 (텍스트-circle 거리가 임계값 초과하는 경우)
+  const manualOverrides = {
+    '장자호수공원': {'svgX': 2072.0, 'svgY': 576.0},
+  };
+  for (final entry in manualOverrides.entries) {
+    if (stationCoords.containsKey(entry.key)) {
+      stationCoords[entry.key]!['svgX'] = entry.value['svgX'];
+      stationCoords[entry.key]!['svgY'] = entry.value['svgY'];
+      stationCoords[entry.key]!['distance'] = 0;
     }
   }
 

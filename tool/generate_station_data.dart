@@ -21,7 +21,7 @@ class StationData {
 }
 
 // Geographic bounds of Seoul subway system (expanded for 경의중앙/경춘/공항철도/수인분당/신림)
-const double minLat = 37.20;
+const double minLat = 36.70;
 const double maxLat = 37.92;
 const double minLng = 126.40;
 const double maxLng = 127.80;
@@ -42,6 +42,10 @@ void main() {
 
   // ======= 1호선 (서울 구간) =======
   final line1 = [
+    // 북쪽 연장 (연천→소요산)
+    StationData('165', '연천', '1', 37.7950, 127.0650),
+    StationData('164', '전곡', '1', 37.8290, 127.0645),
+    StationData('163', '청산', '1', 37.8510, 127.0750),
     StationData('101', '소요산', '1', 37.7472, 127.0612),
     StationData('102', '동두천', '1', 37.7382, 127.0594),
     StationData('103', '보산', '1', 37.7290, 127.0629),
@@ -107,6 +111,47 @@ void main() {
   ];
   stations.addAll(line1);
 
+  // ======= 1호선 경부선 남쪽 분기 (구로→신창 + 광명 지선) =======
+  final line1South = [
+    StationData('166', '금천구청', '1', 37.4568, 126.8953),
+    StationData('167', '독산', '1', 37.4683, 126.8958),
+    StationData('168', '관악', '1', 37.4625, 126.9072),
+    StationData('169', '석수', '1', 37.4492, 126.9175),
+    StationData('170', '안양', '1', 37.4009, 126.9222),
+    StationData('171', '명학', '1', 37.3910, 126.9240),
+    StationData('172', '군포', '1', 37.3611, 126.9350),
+    StationData('173', '당정', '1', 37.3501, 126.9366),
+    StationData('174', '의왕', '1', 37.3443, 126.9686),
+    StationData('175', '성균관대', '1', 37.2997, 126.9724),
+    StationData('176', '화서', '1', 37.2847, 126.9887),
+    StationData('177', '수원', '1', 37.2667, 126.9998, isTransfer: true, transferLines: ['1', '수인분당']),
+    StationData('178', '세류', '1', 37.2540, 127.0052),
+    StationData('179', '병점', '1', 37.2307, 127.0118),
+    StationData('180', '서동탄', '1', 37.2208, 127.0232), // 병점에서 분기하는 dead-end 지선
+    StationData('181', '세마', '1', 37.2114, 127.0258),
+    StationData('182', '오산대', '1', 37.1873, 127.0422),
+    StationData('183', '오산', '1', 37.1741, 127.0517),
+    StationData('184', '진위', '1', 37.1555, 127.0568),
+    StationData('185', '송탄', '1', 37.1438, 127.0548),
+    StationData('186', '서정리', '1', 37.1070, 127.0604),
+    StationData('187', '평택지제', '1', 37.0818, 127.0570, isTransfer: true, transferLines: ['1', 'GTX-A']),
+    StationData('188', '평택', '1', 37.0744, 127.0888),
+    StationData('189', '성환', '1', 36.9326, 127.0118),
+    StationData('190', '직산', '1', 36.9210, 127.0265),
+    StationData('191', '두정', '1', 36.8552, 127.1415),
+    StationData('192', '천안', '1', 36.8102, 127.1471),
+    StationData('193', '봉명', '1', 36.7970, 127.1303),
+    StationData('194', '쌍용', '1', 36.7848, 127.1088),
+    StationData('195', '아산', '1', 36.7910, 127.0078),
+    StationData('196', '배방', '1', 36.7860, 127.0262),
+    StationData('197', '온양온천', '1', 36.7836, 126.9717),
+    StationData('198', '탕정', '1', 36.7779, 127.0437),
+    StationData('199', '신창', '1', 36.7642, 126.9511),
+    // 광명 지선 (금천구청에서 분기하는 단일역)
+    StationData('1A1', '광명', '1', 37.4176, 126.8853),
+  ];
+  stations.addAll(line1South);
+
   // ======= 2호선 (순환선 - 43개역) =======
   final line2 = [
     StationData('201', '시청', '2', 37.5641, 126.9770, isTransfer: true, transferLines: ['1', '2']),
@@ -152,6 +197,14 @@ void main() {
     StationData('241', '이대', '2', 37.5569, 126.9467),
     StationData('242', '아현', '2', 37.5577, 126.9563),
     StationData('243', '충정로', '2', 37.5600, 126.9636, isTransfer: true, transferLines: ['2', '5']),
+    // 성수 지선 (성수에서 분기)
+    StationData('244', '용답', '2', 37.5660, 127.0518),
+    StationData('245', '신답', '2', 37.5748, 127.0548),
+    StationData('246', '용두', '2', 37.5796, 127.0438),
+    // 신정 지선 (신도림에서 분기)
+    StationData('247', '도림천', '2', 37.5162, 126.8828),
+    StationData('248', '양천구청', '2', 37.5184, 126.8664),
+    StationData('249', '신정네거리', '2', 37.5198, 126.8552),
   ];
   stations.addAll(line2);
 
@@ -166,6 +219,7 @@ void main() {
     StationData('307', '화정', '3', 37.6342, 126.8315),
     StationData('308', '원당', '3', 37.6440, 126.8342),
     StationData('309', '삼송', '3', 37.6499, 126.8561),
+    StationData('344', '원흥', '3', 37.6450, 126.8730),
     StationData('310', '지축', '3', 37.6483, 126.9135),
     StationData('311', '구파발', '3', 37.6369, 126.9188),
     StationData('312', '연신내', '3', 37.6190, 126.9211, isTransfer: true, transferLines: ['3', '6', 'GTX-A']),
@@ -205,14 +259,18 @@ void main() {
 
   // ======= 4호선 =======
   final line4 = [
-    StationData('401', '당고개', '4', 37.6641, 127.0765),
+    // 진접선 연장 (진접→불암산→상계)
+    StationData('449', '진접', '4', 37.7202, 127.1888),
+    StationData('450', '오남', '4', 37.7028, 127.1726),
+    StationData('451', '별내별가람', '4', 37.6883, 127.1438),
+    StationData('452', '불암산', '4', 37.6760, 127.1270),
     StationData('402', '상계', '4', 37.6535, 127.0714),
     StationData('403', '노원', '4', 37.6557, 127.0611, isTransfer: true, transferLines: ['4', '7']),
     StationData('404', '창동', '4', 37.6531, 127.0469, isTransfer: true, transferLines: ['1', '4']),
     StationData('405', '쌍문', '4', 37.6484, 127.0345),
     StationData('406', '수유', '4', 37.6381, 127.0251),
     StationData('407', '미아', '4', 37.6265, 127.0283),
-    StationData('408', '미아삼거리', '4', 37.6135, 127.0302),
+    StationData('408', '미아사거리', '4', 37.6135, 127.0302),
     StationData('409', '길음', '4', 37.6035, 127.0254),
     StationData('410', '성신여대입구', '4', 37.5924, 127.0165, isTransfer: true, transferLines: ['4']),
     StationData('411', '한성대입구', '4', 37.5876, 127.0062),
@@ -405,11 +463,30 @@ void main() {
     StationData('740', '광명사거리', '7', 37.4673, 126.8618),
     StationData('741', '천왕', '7', 37.4643, 126.8391),
     StationData('742', '온수', '7', 37.4925, 126.8234, isTransfer: true, transferLines: ['1', '7']),
+    // 서쪽 연장 (온수→석남)
+    StationData('743', '까치울', '7', 37.4849, 126.7935),
+    StationData('744', '부천종합운동장', '7', 37.4837, 126.7757),
+    StationData('745', '춘의', '7', 37.4877, 126.7587),
+    StationData('746', '신중동', '7', 37.4903, 126.7484),
+    StationData('747', '부천시청', '7', 37.4974, 126.7630),
+    StationData('748', '상동', '7', 37.5006, 126.7530),
+    StationData('749', '삼산체육관', '7', 37.5052, 126.7456),
+    StationData('750', '굴포천', '7', 37.5101, 126.7345),
+    StationData('751', '부평구청', '7', 37.5078, 126.7218, isTransfer: true, transferLines: ['7', '인천1']),
+    StationData('752', '산곡', '7', 37.5107, 126.7028),
+    StationData('753', '석남', '7', 37.5167, 126.6697),
   ];
   stations.addAll(line7);
 
   // ======= 8호선 =======
   final line8 = [
+    // 별내선 연장 (별내→암사)
+    StationData('819', '별내', '8', 37.6448, 127.1275, isTransfer: true, transferLines: ['8', '경춘']),
+    StationData('820', '다산', '8', 37.6340, 127.1189),
+    StationData('821', '동구릉', '8', 37.6260, 127.1180),
+    StationData('822', '구리', '8', 37.6036, 127.1313, isTransfer: true, transferLines: ['8', '경의중앙']),
+    StationData('823', '장자호수공원', '8', 37.5870, 127.1340),
+    StationData('824', '암사역사공원', '8', 37.5620, 127.1290),
     StationData('801', '암사', '8', 37.5504, 127.1271),
     StationData('802', '천호', '8', 37.5385, 127.1233, isTransfer: true, transferLines: ['5', '8']),
     StationData('803', '강동구청', '8', 37.5302, 127.1254),
@@ -497,6 +574,9 @@ void main() {
 
   // ======= 경의중앙선 (문산↔지평 + 서울역 지선) =======
   final gyeonguiJungang = [
+    // 북쪽 연장 (임진강→문산)
+    StationData('K55', '임진강', '경의중앙', 37.8910, 126.7427),
+    StationData('K56', '운천', '경의중앙', 37.8790, 126.7488),
     StationData('K01', '문산', '경의중앙', 37.8477, 126.7807),
     StationData('K02', '파주', '경의중앙', 37.8241, 126.7655),
     StationData('K03', '월롱', '경의중앙', 37.8115, 126.7627),
@@ -534,7 +614,7 @@ void main() {
     StationData('K35', '상봉', '경의중앙', 37.5968, 127.0851, isTransfer: true, transferLines: ['7', '경의중앙', '경춘']),
     StationData('K36', '망우', '경의중앙', 37.5985, 127.0915, isTransfer: true, transferLines: ['경의중앙', '경춘']),
     StationData('K37', '양원', '경의중앙', 37.6010, 127.1056),
-    StationData('K38', '구리', '경의중앙', 37.6036, 127.1313),
+    StationData('K38', '구리', '경의중앙', 37.6036, 127.1313, isTransfer: true, transferLines: ['경의중앙', '8']),
     StationData('K39', '도농', '경의중앙', 37.6076, 127.1536),
     StationData('K40', '양정', '경의중앙', 37.5954, 127.1751),
     StationData('K41', '덕소', '경의중앙', 37.5851, 127.2004),
@@ -564,7 +644,7 @@ void main() {
     StationData('C05', '망우', '경춘', 37.5985, 127.0915, isTransfer: true, transferLines: ['경의중앙', '경춘']),
     StationData('C06', '신내', '경춘', 37.6126, 127.1042),
     StationData('C07', '갈매', '경춘', 37.6344, 127.1179),
-    StationData('C08', '별내', '경춘', 37.6448, 127.1275),
+    StationData('C08', '별내', '경춘', 37.6448, 127.1275, isTransfer: true, transferLines: ['경춘', '8']),
     StationData('C09', '퇴계원', '경춘', 37.6553, 127.1394),
     StationData('C10', '사릉', '경춘', 37.6596, 127.1696),
     StationData('C11', '금곡', '경춘', 37.6638, 127.1885),
@@ -581,6 +661,16 @@ void main() {
     StationData('C22', '김유정', '경춘', 37.8233, 127.6409),
     StationData('C23', '남춘천', '경춘', 37.8653, 127.7188),
     StationData('C24', '춘천', '경춘', 37.8847, 127.7178),
+    // 경강선 (lineId='경춘'으로 매핑, 물리적으로 분리됨 — 수인분당 이매에서 환승)
+    StationData('C25', '삼동', '경춘', 37.3800, 127.1300, isTransfer: true, transferLines: ['경춘', '수인분당']),
+    StationData('C26', '경기광주', '경춘', 37.3680, 127.2195),
+    StationData('C27', '초월', '경춘', 37.3760, 127.2578),
+    StationData('C28', '곤지암', '경춘', 37.3600, 127.3224),
+    StationData('C29', '신둔도예촌', '경춘', 37.3440, 127.3700),
+    StationData('C30', '이천', '경춘', 37.2765, 127.4433),
+    StationData('C31', '부발', '경춘', 37.2500, 127.4700),
+    StationData('C32', '세종대왕릉', '경춘', 37.2400, 127.5100),
+    StationData('C33', '여주', '경춘', 37.2912, 127.6372),
   ];
   stations.addAll(gyeongchun);
 
@@ -623,7 +713,7 @@ void main() {
     StationData('B16', '태평', '수인분당', 37.4413, 127.1266),
     StationData('B17', '모란', '수인분당', 37.4320, 127.1294, isTransfer: true, transferLines: ['8', '수인분당']),
     StationData('B18', '야탑', '수인분당', 37.4115, 127.1272),
-    StationData('B19', '이매', '수인분당', 37.3959, 127.1264),
+    StationData('B19', '이매', '수인분당', 37.3959, 127.1264, isTransfer: true, transferLines: ['수인분당', '경춘']),
     StationData('B20', '서현', '수인분당', 37.3844, 127.1214),
     StationData('B21', '수내', '수인분당', 37.3771, 127.1138),
     StationData('B22', '정자', '수인분당', 37.3666, 127.1083, isTransfer: true, transferLines: ['수인분당', 'SB']),
@@ -641,7 +731,7 @@ void main() {
     StationData('B34', '매탄권선', '수인분당', 37.2555, 127.0270),
     StationData('B35', '수원시청', '수인분당', 37.2640, 127.0141),
     StationData('B36', '매교', '수인분당', 37.2620, 126.9991),
-    StationData('B37', '수원', '수인분당', 37.2667, 126.9998),
+    StationData('B37', '수원', '수인분당', 37.2667, 126.9998, isTransfer: true, transferLines: ['수인분당', '1']),
     StationData('B38', '고색', '수인분당', 37.2596, 126.9637),
     StationData('B39', '오목천', '수인분당', 37.2636, 126.9432),
     StationData('B40', '어천', '수인분당', 37.2730, 126.9189),
@@ -658,6 +748,11 @@ void main() {
     StationData('B51', '달월', '수인분당', 37.3490, 126.6765),
     StationData('B52', '월곶', '수인분당', 37.3755, 126.6627),
     StationData('B53', '소래포구', '수인분당', 37.3952, 126.6585),
+    StationData('B58', '남동인더스파크', '수인분당', 37.3870, 126.7325),
+    StationData('B59', '호구포', '수인분당', 37.3942, 126.7477),
+    StationData('B60', '인천논현', '수인분당', 37.3941, 126.7254),
+    StationData('B61', '연수', '수인분당', 37.4100, 126.6783),
+    StationData('B62', '송도', '수인분당', 37.3830, 126.6668),
     StationData('B54', '인하대', '수인분당', 37.4360, 126.6560),
     StationData('B55', '숭의', '수인분당', 37.4483, 126.6470),
     StationData('B56', '신포', '수인분당', 37.4684, 126.6283),
@@ -676,6 +771,7 @@ void main() {
     StationData('S07', '당곡', '신림', 37.4855, 126.9310),
     StationData('S08', '신림', '신림', 37.4843, 126.9296, isTransfer: true, transferLines: ['2', '신림']),
     StationData('S09', '서원', '신림', 37.4790, 126.9340),
+    StationData('S11', '서울대벤처타운', '신림', 37.4740, 126.9370),
     StationData('S10', '관악산', '신림', 37.4720, 126.9400),
   ];
   stations.addAll(shinlim);
@@ -865,7 +961,6 @@ void main() {
   // SVG data-station 속성과 generator 역명이 다른 경우
   const generatorToSvgName = {
     '관악산': '관악산(서울대)',
-    '미아삼거리': '미아사거리',
     '뚝섬유원지': '자양', // SVG에서 7호선 자양으로 표기
     '화전': '한국항공대', // 경의중앙선 역명 변경
   };
@@ -895,9 +990,10 @@ void main() {
       print('  경고: SVG 좌표 없음 — ${s.id} ${s.name} (${s.lineId})');
     }
 
+    final outputName = generatorToSvgName[s.name] ?? s.name;
     stationJsonList.add({
       'id': s.id,
-      'name': s.name,
+      'name': outputName,
       'lineId': s.lineId,
       'latitude': s.lat,
       'longitude': s.lng,
@@ -938,8 +1034,51 @@ void main() {
         'isTransfer': false,
       });
     }
-    // Handle Line 2 circular connection (시청 → 충정로)
+    // Handle 1호선 분기 연결
+    if (lineId == '1') {
+      // 인천(162)→금천구청(166) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '162' &&
+          c['toStationId'] == '166' &&
+          c['lineId'] == '1');
+      // 구로(142)→금천구청(166) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '142',
+        'toStationId': '166',
+        'lineId': '1',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
+      // 서동탄(180)→세마(181) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '180' &&
+          c['toStationId'] == '181' &&
+          c['lineId'] == '1');
+      // 병점(179)→세마(181) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '179',
+        'toStationId': '181',
+        'lineId': '1',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
+      // 신창(199)→광명(1A1) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '199' &&
+          c['toStationId'] == '1A1' &&
+          c['lineId'] == '1');
+      // 금천구청(166)→광명(1A1) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '166',
+        'toStationId': '1A1',
+        'lineId': '1',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
+    }
+    // Handle Line 2 circular connection + 지선 처리
     if (lineId == '2') {
+      // 순환 연결 (충정로→시청)
       connectionsList.add({
         'fromStationId': '243', // 충정로
         'toStationId': '201', // 시청
@@ -947,9 +1086,35 @@ void main() {
         'travelTimeSeconds': 90,
         'isTransfer': false,
       });
+      // 성수 지선: 충정로(243)→용답(244) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '243' &&
+          c['toStationId'] == '244' &&
+          c['lineId'] == '2');
+      // 성수(211)→용답(244) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '211',
+        'toStationId': '244',
+        'lineId': '2',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
+      // 신정 지선: 용두(246)→도림천(247) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '246' &&
+          c['toStationId'] == '247' &&
+          c['lineId'] == '2');
+      // 신도림(234)→도림천(247) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '234',
+        'toStationId': '247',
+        'lineId': '2',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
     }
     // Handle 경의중앙선 서울역 지선 (효창공원앞 ↔ 서울역)
-    // 자동 생성된 K53(지평)→K54(서울역) 연결을 제거하고 K24(효창공원앞)→K54(서울역) 추가
+    // 자동 생성된 지평(K53)→K54(서울역) 연결을 제거하고 K24(효창공원앞)→K54(서울역) 추가
     if (lineId == '경의중앙') {
       connectionsList.removeWhere((conn) =>
           conn['fromStationId'] == 'K53' && conn['toStationId'] == 'K54');
@@ -961,7 +1126,78 @@ void main() {
         'isTransfer': false,
       });
     }
+    // Handle 경춘선 경강선 분리 (춘천→삼동 잘못된 연결 제거)
+    if (lineId == '경춘') {
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == 'C24' &&
+          c['toStationId'] == 'C25' &&
+          c['lineId'] == '경춘');
+    }
   }
+
+  // 이매(B19)↔삼동(C25) 환승 연결 추가 (역명이 달라 자동 생성 안 됨)
+  connectionsList.add({
+    'fromStationId': 'B19', // 이매 (수인분당)
+    'toStationId': 'C25', // 삼동 (경춘/경강)
+    'lineId': '수인분당',
+    'travelTimeSeconds': 240,
+    'isTransfer': true,
+  });
+  connectionsList.add({
+    'fromStationId': 'C25', // 삼동 (경춘/경강)
+    'toStationId': 'B19', // 이매 (수인분당)
+    'lineId': '경춘',
+    'travelTimeSeconds': 240,
+    'isTransfer': true,
+  });
+
+  // 별내(819, 8호선)↔별내(C08, 경춘선) 환승 연결 추가 (같은 이름이지만 다른 ID)
+  connectionsList.add({
+    'fromStationId': '819', // 별내 (8호선)
+    'toStationId': 'C08', // 별내 (경춘선)
+    'lineId': '8',
+    'travelTimeSeconds': 180,
+    'isTransfer': true,
+  });
+  connectionsList.add({
+    'fromStationId': 'C08', // 별내 (경춘선)
+    'toStationId': '819', // 별내 (8호선)
+    'lineId': '경춘',
+    'travelTimeSeconds': 180,
+    'isTransfer': true,
+  });
+
+  // 구리(822, 8호선)↔구리(K38, 경의중앙선) 환승 연결 추가
+  connectionsList.add({
+    'fromStationId': '822', // 구리 (8호선)
+    'toStationId': 'K38', // 구리 (경의중앙선)
+    'lineId': '8',
+    'travelTimeSeconds': 240,
+    'isTransfer': true,
+  });
+  connectionsList.add({
+    'fromStationId': 'K38', // 구리 (경의중앙선)
+    'toStationId': '822', // 구리 (8호선)
+    'lineId': '경의중앙',
+    'travelTimeSeconds': 240,
+    'isTransfer': true,
+  });
+
+  // 수원(177, 1호선)↔수원(B37, 수인분당선) 환승 연결 추가
+  connectionsList.add({
+    'fromStationId': '177', // 수원 (1호선)
+    'toStationId': 'B37', // 수원 (수인분당선)
+    'lineId': '1',
+    'travelTimeSeconds': 180,
+    'isTransfer': true,
+  });
+  connectionsList.add({
+    'fromStationId': 'B37', // 수원 (수인분당선)
+    'toStationId': '177', // 수원 (1호선)
+    'lineId': '수인분당',
+    'travelTimeSeconds': 180,
+    'isTransfer': true,
+  });
 
   // Build lines data
   final linesData = <Map<String, dynamic>>[];
@@ -979,7 +1215,7 @@ void main() {
     '경의중앙': 0x77C4A3,
     '경춘': 0x0C8E72,
     '공항철도': 0x0090D2,
-    '수인분당': 0xF5A200,
+    '수인분당': 0xFFD400,
     '신림': 0x6789CA,
     '에버라인': 0x36A805,
     '인천1': 0x6496DF,
@@ -1128,6 +1364,20 @@ void main() {
   transferTimesMap['계양_공항철도_인천1'] = 240;
   // 인천2호선 환승
   transferTimesMap['검암_공항철도_인천2'] = 240;
+  // 1호선 수원 환승
+  transferTimesMap['수원_1_수인분당'] = 180;
+  // 1호선 평택지제 환승
+  transferTimesMap['평택지제_1_GTX-A'] = 300;
+  // 7호선 부평구청 환승
+  transferTimesMap['부평구청_7_인천1'] = 240;
+  // 8호선 별내 환승
+  transferTimesMap['별내_8_경춘'] = 180;
+  // 8호선 구리 환승
+  transferTimesMap['구리_8_경의중앙'] = 240;
+  // 경강선(경춘) ↔ 수인분당 이매 환승
+  transferTimesMap['이매_수인분당_경춘'] = 240;
+  // 삼동은 이매와 같은 역은 아니므로 별도 환승 연결은 transferTimes로 처리
+  // (이매↔삼동은 역명이 다르므로 transferStationsByName으로 자동 생성되지 않음)
 
   // Write output files
   final encoder = const JsonEncoder.withIndent('  ');

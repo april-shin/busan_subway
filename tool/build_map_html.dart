@@ -189,10 +189,10 @@ $svgContent
   // 상수
   // ============================================================
   var CANVAS_W = 2416, CANVAS_H = 1560;
-  var MIN_SCALE = 0.1, MAX_SCALE = 5.0;
+  var MIN_SCALE = 1.0, MAX_SCALE = 5.0;
   var TAP_RADIUS = 12;
-  var INITIAL_SCALE = 0.25;
-  var INITIAL_CENTER_X = 1260, INITIAL_CENTER_Y = 1240;
+  var INITIAL_SCALE = 1.0;
+  var INITIAL_CENTER_X = 1040, INITIAL_CENTER_Y = 618;
 
   // ============================================================
   // 상태
@@ -361,8 +361,39 @@ $svgContent
   }, { passive: false });
 
   // ============================================================
-  // 탭 감지
+  // 탭 감지 (텍스트 라벨 + circle 좌표 하이브리드)
   // ============================================================
+  var svgTextTargets = []; // SVG text 요소의 바운딩 박스
+
+  function buildTextTargets() {
+    svgTextTargets = [];
+    var texts = document.querySelectorAll('text[data-station]');
+    for (var i = 0; i < texts.length; i++) {
+      var el = texts[i];
+      var name = el.getAttribute('data-station').split('\\n').join('').split('\\r').join('');
+      try {
+        var bbox = el.getBBox();
+        svgTextTargets.push({
+          name: name,
+          cx: bbox.x + bbox.width / 2,
+          cy: bbox.y + bbox.height / 2,
+          halfW: bbox.width / 2 + 6,
+          halfH: bbox.height / 2 + 6
+        });
+      } catch(e) {}
+    }
+  }
+
+  // SVG 렌더링 후 텍스트 타겟 구축
+  buildTextTargets();
+
+  function findStationByName(name) {
+    for (var i = 0; i < stations.length; i++) {
+      if (stations[i].name === name) return stations[i];
+    }
+    return null;
+  }
+
   tapLayer.addEventListener('pointerup', function(e) {
     if (hasMoved) return;
 
@@ -372,16 +403,28 @@ $svgContent
     var svgY = (e.clientY - rect.top) / scale;
 
     var nearest = null;
-    var nearestDistSq = TAP_RADIUS * TAP_RADIUS;
 
-    for (var i = 0; i < stations.length; i++) {
-      var s = stations[i];
-      var dx = s.svgX - svgX;
-      var dy = s.svgY - svgY;
-      var distSq = dx * dx + dy * dy;
-      if (distSq < nearestDistSq) {
-        nearestDistSq = distSq;
-        nearest = s;
+    // 1차: SVG 텍스트 라벨 영역 매칭 (사용자가 보는 역명 기준)
+    for (var i = 0; i < svgTextTargets.length; i++) {
+      var t = svgTextTargets[i];
+      if (Math.abs(svgX - t.cx) <= t.halfW && Math.abs(svgY - t.cy) <= t.halfH) {
+        nearest = findStationByName(t.name);
+        if (nearest) break;
+      }
+    }
+
+    // 2차: circle 좌표 기반 근접 매칭 (폴백)
+    if (!nearest) {
+      var nearestDistSq = TAP_RADIUS * TAP_RADIUS;
+      for (var i = 0; i < stations.length; i++) {
+        var s = stations[i];
+        var dx = s.svgX - svgX;
+        var dy = s.svgY - svgY;
+        var distSq = dx * dx + dy * dy;
+        if (distSq < nearestDistSq) {
+          nearestDistSq = distSq;
+          nearest = s;
+        }
       }
     }
 
@@ -655,6 +698,49 @@ $svgContent
   window._viewArrivalInfo = function(stationName) {
     window.hideTooltip();
     sendToFlutter({ action: 'viewArrivalInfo', stationName: stationName });
+  };
+
+  // ============================================================
+  // 디버그: 탭 영역 시각화
+  // ============================================================
+  window.debugTapTargets = function(show) {
+    var svg = document.querySelector('svg');
+    var existing = document.getElementById('debug-tap-overlay');
+    if (existing) existing.remove();
+    if (show === false) return;
+
+    var ns = 'http://www.w3.org/2000/svg';
+    var g = document.createElementNS(ns, 'g');
+    g.id = 'debug-tap-overlay';
+
+    // 텍스트 바운딩 박스 (1차 탭 영역, 파란색)
+    for (var i = 0; i < svgTextTargets.length; i++) {
+      var t = svgTextTargets[i];
+      var rect = document.createElementNS(ns, 'rect');
+      rect.setAttribute('x', t.cx - t.halfW);
+      rect.setAttribute('y', t.cy - t.halfH);
+      rect.setAttribute('width', t.halfW * 2);
+      rect.setAttribute('height', t.halfH * 2);
+      rect.setAttribute('fill', 'rgba(0,100,255,0.25)');
+      rect.setAttribute('stroke', 'rgba(0,100,255,0.6)');
+      rect.setAttribute('stroke-width', '0.5');
+      g.appendChild(rect);
+    }
+
+    // circle 좌표 기반 TAP_RADIUS (2차 폴백, 빨간색)
+    for (var i = 0; i < stations.length; i++) {
+      var s = stations[i];
+      var circle = document.createElementNS(ns, 'circle');
+      circle.setAttribute('cx', s.svgX);
+      circle.setAttribute('cy', s.svgY);
+      circle.setAttribute('r', TAP_RADIUS);
+      circle.setAttribute('fill', 'rgba(255,50,50,0.2)');
+      circle.setAttribute('stroke', 'rgba(255,50,50,0.5)');
+      circle.setAttribute('stroke-width', '0.5');
+      g.appendChild(circle);
+    }
+
+    svg.appendChild(g);
   };
 
   // ============================================================

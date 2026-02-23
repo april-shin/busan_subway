@@ -15,7 +15,7 @@ const Map<String, Color> lineColors = {
   '경의중앙': Color(0xFF77C4A3),
   '경춘': Color(0xFF0C8E72),
   '공항철도': Color(0xFF0090D2),
-  '수인분당': Color(0xFFF5A200),
+  '수인분당': Color(0xFFFFD400),
   '신림': Color(0xFF6789CA),
   '에버라인': Color(0xFF36A805),
   '인천1': Color(0xFF6496DF),

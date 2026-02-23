@@ -1,5 +1,26 @@
 [
   {
+    "fromStationId": "165",
+    "toStationId": "164",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "164",
+    "toStationId": "163",
+    "lineId": "1",
+    "travelTimeSeconds": 270,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "163",
+    "toStationId": "101",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "101",
     "toStationId": "102",
     "lineId": "1",
@@ -427,6 +448,251 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "166",
+    "toStationId": "167",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "167",
+    "toStationId": "168",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "168",
+    "toStationId": "169",
+    "lineId": "1",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "169",
+    "toStationId": "170",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "170",
+    "toStationId": "171",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "171",
+    "toStationId": "172",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "172",
+    "toStationId": "173",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "173",
+    "toStationId": "174",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "174",
+    "toStationId": "175",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "175",
+    "toStationId": "176",
+    "lineId": "1",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "176",
+    "toStationId": "177",
+    "lineId": "1",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "177",
+    "toStationId": "178",
+    "lineId": "1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "178",
+    "toStationId": "179",
+    "lineId": "1",
+    "travelTimeSeconds": 270,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "179",
+    "toStationId": "180",
+    "lineId": "1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "181",
+    "toStationId": "182",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "182",
+    "toStationId": "183",
+    "lineId": "1",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "183",
+    "toStationId": "184",
+    "lineId": "1",
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "184",
+    "toStationId": "185",
+    "lineId": "1",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "185",
+    "toStationId": "186",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "186",
+    "toStationId": "187",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "187",
+    "toStationId": "188",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "188",
+    "toStationId": "189",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "189",
+    "toStationId": "190",
+    "lineId": "1",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "190",
+    "toStationId": "191",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "191",
+    "toStationId": "192",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "192",
+    "toStationId": "193",
+    "lineId": "1",
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "193",
+    "toStationId": "194",
+    "lineId": "1",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "194",
+    "toStationId": "195",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "195",
+    "toStationId": "196",
+    "lineId": "1",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "196",
+    "toStationId": "197",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "197",
+    "toStationId": "198",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "198",
+    "toStationId": "199",
+    "lineId": "1",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "142",
+    "toStationId": "166",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "179",
+    "toStationId": "181",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "166",
+    "toStationId": "1A1",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "201",
     "toStationId": "202",
     "lineId": "2",
@@ -721,10 +987,52 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "244",
+    "toStationId": "245",
+    "lineId": "2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "245",
+    "toStationId": "246",
+    "lineId": "2",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "247",
+    "toStationId": "248",
+    "lineId": "2",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "248",
+    "toStationId": "249",
+    "lineId": "2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "243",
     "toStationId": "201",
     "lineId": "2",
     "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "211",
+    "toStationId": "244",
+    "lineId": "2",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "234",
+    "toStationId": "247",
+    "lineId": "2",
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -785,6 +1093,13 @@
   },
   {
     "fromStationId": "309",
+    "toStationId": "344",
+    "lineId": "3",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "344",
     "toStationId": "310",
     "lineId": "3",
     "travelTimeSeconds": 300,
@@ -1022,10 +1337,31 @@
     "isTransfer": false
   },
   {
-    "fromStationId": "401",
+    "fromStationId": "449",
+    "toStationId": "450",
+    "lineId": "4",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "450",
+    "toStationId": "451",
+    "lineId": "4",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "451",
+    "toStationId": "452",
+    "lineId": "4",
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "452",
     "toStationId": "402",
     "lineId": "4",
-    "travelTimeSeconds": 120,
+    "travelTimeSeconds": 300,
     "isTransfer": false
   },
   {
@@ -2282,6 +2618,125 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "742",
+    "toStationId": "743",
+    "lineId": "7",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "743",
+    "toStationId": "744",
+    "lineId": "7",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "744",
+    "toStationId": "745",
+    "lineId": "7",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "745",
+    "toStationId": "746",
+    "lineId": "7",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "746",
+    "toStationId": "747",
+    "lineId": "7",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "747",
+    "toStationId": "748",
+    "lineId": "7",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "748",
+    "toStationId": "749",
+    "lineId": "7",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "749",
+    "toStationId": "750",
+    "lineId": "7",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "750",
+    "toStationId": "751",
+    "lineId": "7",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "751",
+    "toStationId": "752",
+    "lineId": "7",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "752",
+    "toStationId": "753",
+    "lineId": "7",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "819",
+    "toStationId": "820",
+    "lineId": "8",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "820",
+    "toStationId": "821",
+    "lineId": "8",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "821",
+    "toStationId": "822",
+    "lineId": "8",
+    "travelTimeSeconds": 270,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "822",
+    "toStationId": "823",
+    "lineId": "8",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "823",
+    "toStationId": "824",
+    "lineId": "8",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "824",
+    "toStationId": "801",
+    "lineId": "8",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "801",
     "toStationId": "802",
     "lineId": "8",
@@ -2762,6 +3217,20 @@
     "toStationId": "D16",
     "lineId": "SB",
     "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "K55",
+    "toStationId": "K56",
+    "lineId": "경의중앙",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "K56",
+    "toStationId": "K01",
+    "lineId": "경의중앙",
+    "travelTimeSeconds": 300,
     "isTransfer": false
   },
   {
@@ -3297,6 +3766,62 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "C25",
+    "toStationId": "C26",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C26",
+    "toStationId": "C27",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C27",
+    "toStationId": "C28",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C28",
+    "toStationId": "C29",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C29",
+    "toStationId": "C30",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C30",
+    "toStationId": "C31",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C31",
+    "toStationId": "C32",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "C32",
+    "toStationId": "C33",
+    "lineId": "경춘",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "A01",
     "toStationId": "A02",
     "lineId": "공항철도",
@@ -3753,6 +4278,41 @@
   },
   {
     "fromStationId": "B53",
+    "toStationId": "B58",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "B58",
+    "toStationId": "B59",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "B59",
+    "toStationId": "B60",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "B60",
+    "toStationId": "B61",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "B61",
+    "toStationId": "B62",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 300,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "B62",
     "toStationId": "B54",
     "lineId": "수인분당",
     "travelTimeSeconds": 300,
@@ -3837,9 +4397,16 @@
   },
   {
     "fromStationId": "S09",
+    "toStationId": "S11",
+    "lineId": "신림",
+    "travelTimeSeconds": 60,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "S11",
     "toStationId": "S10",
     "lineId": "신림",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 60,
     "isTransfer": false
   },
   {
@@ -4639,5 +5206,61 @@
     "lineId": "GTX-A",
     "travelTimeSeconds": 300,
     "isTransfer": false
+  },
+  {
+    "fromStationId": "B19",
+    "toStationId": "C25",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 240,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "C25",
+    "toStationId": "B19",
+    "lineId": "경춘",
+    "travelTimeSeconds": 240,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "819",
+    "toStationId": "C08",
+    "lineId": "8",
+    "travelTimeSeconds": 180,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "C08",
+    "toStationId": "819",
+    "lineId": "경춘",
+    "travelTimeSeconds": 180,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "822",
+    "toStationId": "K38",
+    "lineId": "8",
+    "travelTimeSeconds": 240,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "K38",
+    "toStationId": "822",
+    "lineId": "경의중앙",
+    "travelTimeSeconds": 240,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "177",
+    "toStationId": "B37",
+    "lineId": "1",
+    "travelTimeSeconds": 180,
+    "isTransfer": true
+  },
+  {
+    "fromStationId": "B37",
+    "toStationId": "177",
+    "lineId": "수인분당",
+    "travelTimeSeconds": 180,
+    "isTransfer": true
   }
 ]

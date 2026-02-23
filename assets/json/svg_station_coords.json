@@ -2516,8 +2516,8 @@
     "name": "별내",
     "dataLine": "9-8",
     "svgX": 2072.0,
-    "svgY": 360.0,
-    "distance": 13
+    "svgY": 332.0,
+    "distance": 19
   },
   "다산": {
     "name": "다산",
@@ -2544,8 +2544,8 @@
     "name": "장자호수공원",
     "dataLine": "9-8",
     "svgX": 2072.0,
-    "svgY": 464.0,
-    "distance": 9
+    "svgY": 576.0,
+    "distance": 0
   },
   "암사역사공원": {
     "name": "암사역사공원",
