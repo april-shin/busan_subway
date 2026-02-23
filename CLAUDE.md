@@ -166,6 +166,19 @@ dart run tool/build_map_html.dart
 - 원본 SVG를 HTML 템플릿에 인라인 삽입
 - SVG 최소 변환: `width="100%" height="100%"` → `width="2416" height="1560"`, `style="background: white;"` 제거
 - JS로 줌/팬, 탭 감지, 경로 하이라이트, 마커, 툴팁 기능 구현
+- 오버스크롤 여백: 상하좌우 70px (`clampTranslation` 함수)
+
+**SVG 스타일 규격** (원본 SVG 교체 시에도 유지해야 할 값):
+
+| 요소 | 속성 | 값 | 비고 |
+|---|---|---|---|
+| 역이름 텍스트 (`<text>`) | `font-size` | `12px` | 인라인 스타일 |
+| 역이름 텍스트 (`<text>`) | CSS `stroke` | `white`, `2px`, `paint-order: stroke` | `build_map_html.dart`의 `<style>` 블록에서 적용, 흰색 테두리 |
+| 역이름 줄바꿈 | `<tspan>` | `dy="14"` | 띄어쓰기 포함 역이름은 `<tspan>`으로 분리 |
+| 일반역 원 (`<circle>`) | `r` | `4.5` | |
+| 환승역 원 (`<circle>`) | `r` | `5` | |
+| 노선 경로 (`<path>`) | `stroke-width` | `3` | 2호선 제외 |
+| 2호선 경로 (`data-line="3-2"`) | `stroke-width` | `4` | 순환+지선 |
 
 **SVG data-line 매핑** (원본 SVG의 노선 코드 → 앱 lineId):
 

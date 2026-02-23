@@ -260,10 +260,10 @@ $svgContent
   function clampTranslation() {
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var minTx = vw - CANVAS_W * scale - 200;
-    var minTy = vh - CANVAS_H * scale - 200;
-    tx = Math.min(200, Math.max(minTx, tx));
-    ty = Math.min(200, Math.max(minTy, ty));
+    var minTx = vw - CANVAS_W * scale - 70;
+    var minTy = vh - CANVAS_H * scale - 70;
+    tx = Math.min(70, Math.max(minTx, tx));
+    ty = Math.min(70, Math.max(minTy, ty));
   }
 
   document.addEventListener('pointerdown', function(e) {
