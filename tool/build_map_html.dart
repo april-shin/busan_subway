@@ -159,6 +159,12 @@ html, body {
 .action-btn .label {
   font-size: 10px;
 }
+svg text {
+  stroke: white;
+  stroke-width: 2px;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
 </style>
 </head>
 <body>

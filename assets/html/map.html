@@ -108,6 +108,12 @@ html, body {
 .action-btn .label {
   font-size: 10px;
 }
+svg text {
+  stroke: white;
+  stroke-width: 2px;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
 </style>
 </head>
 <body>
@@ -153,19 +159,10 @@ html, body {
   // 상수
   // ============================================================
   var CANVAS_W = 2416, CANVAS_H = 1560;
-  var MAX_SCALE = 5.0;
+  var MIN_SCALE = 0.1, MAX_SCALE = 5.0;
   var TAP_RADIUS = 12;
-  var ZOOM_PADDING = 40; // 상하 20px씩
+  var INITIAL_SCALE = 0.25;
   var INITIAL_CENTER_X = 1260, INITIAL_CENTER_Y = 1240;
-
-  // 뷰포트 높이 기준 최소 스케일 계산 (상하 50px 패딩)
-  function calcMinScale() {
-    var vh = window.innerHeight;
-    return Math.max(0.05, (vh - ZOOM_PADDING) / CANVAS_H);
-  }
-
-  var MIN_SCALE = calcMinScale();
-  var INITIAL_SCALE = Math.max(MIN_SCALE, 0.25);
 
   // ============================================================
   // 상태
@@ -195,8 +192,6 @@ html, body {
   function setInitialView() {
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    MIN_SCALE = calcMinScale();
-    if (scale < MIN_SCALE) scale = MIN_SCALE;
     tx = vw / 2 - INITIAL_CENTER_X * scale;
     ty = vh / 2 - INITIAL_CENTER_Y * scale;
     applyTransform();
@@ -637,8 +632,6 @@ html, body {
   // ============================================================
   setInitialView();
   window.addEventListener('resize', function() {
-    MIN_SCALE = calcMinScale();
-    if (scale < MIN_SCALE) scale = MIN_SCALE;
     clampTranslation();
     applyTransform();
   });
