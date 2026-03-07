@@ -73,7 +73,7 @@ lib/
   graph/         # 독립된 최단경로 모듈 (Dijkstra)
 ```
 
-**데이터 흐름:** UI (ConsumerWidget) → Riverpod 프로바이더 → 리포지토리 구현체 → 데이터소스 (번들 JSON 또는 서울 API via Dio)
+**데이터 흐름:** UI (ConsumerWidget / Consumer) → Riverpod 프로바이더 → 리포지토리 구현체 → 데이터소스 (번들 JSON 또는 서울 API via Dio)
 
 의존성 주입은 Riverpod 프로바이더 내부에서 수동으로 수행 (서비스 로케이터 미사용).
 
@@ -125,6 +125,10 @@ Riverpod 2.x + 코드 생성 (`@riverpod` 어노테이션). 주요 프로바이�
 - `selectedStationsProvider` — 출발/도착역 선택용 `StateNotifier<SelectedStations>` (수동 작성, 비생성)
 - `tappedStationProvider` — 지도 탭 상호작용용 `StateProvider<Station?>`
 - `arrivalInfoProvider(stationName)` — 실시간 도착 정보 family 프로바이더
+
+**리빌드 최적화 패턴:**
+- `HomeScreen`은 `StatelessWidget`이며, `selectedStationsProvider`를 watch하는 부분을 `Consumer` 위젯으로 분리하여 `SubwayMapScreen`의 불필요한 리빌드 방지
+- `SubwayMapScreen`은 `ConsumerStatefulWidget`이며, `getAllConnections()` Future를 `initState`에서 한 번만 생성하여 FutureBuilder 리빌드 방지
 
 ### 라우팅 (go_router)
 
@@ -186,6 +190,11 @@ dart run tool/build_map_html.dart
 - SVG 최소 변환: `width="100%" height="100%"` → `width="2416" height="1560"`, `style="background: white;"` 제거
 - JS로 줌/팬, 탭 감지, 경로 하이라이트, 마커, 툴팁 기능 구현
 - 오버스크롤 여백: 상하좌우 70px (`clampTranslation` 함수)
+
+**JS 성능 패턴** (저사양 기기 대응):
+- **rAF 스케줄링**: `pointermove`/`wheel`/`resize` 이벤트에서 `scheduleTransform()` 사용. `rafPending` 플래그로 프레임당 1회만 `applyTransform()` 실행. 초기화(`setInitialView`)나 애니메이션(`panTo`)에서는 직접 `applyTransform()` 호출.
+- **CSS 클래스 기반 강조/흐림**: 노선 강조 시 개별 `style.opacity` 대신 `.dimmed` CSS 클래스를 토글. `transition: opacity 0.3s`는 CSS에서 일괄 적용.
+- **overlay circle 분리**: overlay 내부에서 생성하는 모든 `<circle>`에 `data-overlay` 속성 부여. 강조 처리 시 `circle:not([data-overlay])` 셀렉터로 원본 SVG circle만 대상. `closest()` DOM 탐색 불필요.
 
 **SVG 스타일 규격** (원본 SVG 교체 시에도 유지해야 할 값):
 

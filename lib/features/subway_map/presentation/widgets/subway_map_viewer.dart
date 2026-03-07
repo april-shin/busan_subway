@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../domain/entities/connection.dart';
+import '../../../../domain/entities/route_result.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../../domain/usecases/search_route.dart';
 import '../providers/subway_map_providers.dart';
@@ -31,6 +33,10 @@ class SubwayMapViewer extends ConsumerStatefulWidget {
 class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
   Set<String> _highlightedLineIds = const {};
   ({double x, double y})? _panTarget;
+  ({double x, double y})? _toolbarTarget;
+  RouteResult? _fastestRoute;
+  RouteResult? _leastTransferRoute;
+  String _activeRouteMode = 'fastest';
   int _computeRevision = 0;
 
   @override
@@ -52,15 +58,24 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       routeStationIds: widget.routeStationIds,
       highlightedLineIds: _highlightedLineIds,
       panTarget: _panTarget,
+      routeToolbarTarget: _toolbarTarget,
+      hasTwoRoutes: _leastTransferRoute != null &&
+          _fastestRoute != null &&
+          _leastTransferRoute != _fastestRoute,
+      onRouteToolbarSelect: _handleRouteToolbarSelect,
     );
   }
 
   void _onSelectedStationsChanged(SelectedStations selected) {
     if (!selected.isComplete) {
-      if (_highlightedLineIds.isNotEmpty) {
+      _fastestRoute = null;
+      _leastTransferRoute = null;
+      _activeRouteMode = 'fastest';
+      if (_highlightedLineIds.isNotEmpty || _toolbarTarget != null) {
         setState(() {
           _highlightedLineIds = const {};
           _panTarget = null;
+          _toolbarTarget = null;
         });
       }
       return;
@@ -88,17 +103,11 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
 
       if (!mounted || revision != _computeRevision) return;
 
-      final lineIds = <String>{};
-      if (fastest != null) {
-        for (final segment in fastest.segments) {
-          lineIds.add(segment.lineId);
-        }
-      }
-      if (leastTransfer != null) {
-        for (final segment in leastTransfer.segments) {
-          lineIds.add(segment.lineId);
-        }
-      }
+      _fastestRoute = fastest;
+      _leastTransferRoute = leastTransfer;
+      _activeRouteMode = 'fastest';
+
+      final lineIds = _getLineIdsForMode('fastest');
 
       setState(() {
         _highlightedLineIds = lineIds;
@@ -106,13 +115,52 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
           x: selected.departure!.svgX,
           y: selected.departure!.svgY,
         );
+        _toolbarTarget = (
+          x: selected.departure!.svgX,
+          y: selected.departure!.svgY,
+        );
       });
     } catch (_) {
       if (!mounted || revision != _computeRevision) return;
+      _fastestRoute = null;
+      _leastTransferRoute = null;
       setState(() {
         _highlightedLineIds = const {};
         _panTarget = null;
+        _toolbarTarget = null;
       });
     }
+  }
+
+  Set<String> _getLineIdsForMode(String mode) {
+    final route =
+        mode == 'leastTransfer' ? _leastTransferRoute : _fastestRoute;
+    if (route == null) return const {};
+    return {for (final seg in route.segments) seg.lineId};
+  }
+
+  void _handleRouteToolbarSelect(String mode) {
+    if (mode == 'cancel') {
+      ref.read(selectedStationsProvider.notifier).clear();
+      return;
+    }
+
+    if (mode == 'result') {
+      if (_fastestRoute != null) {
+        final selected = ref.read(selectedStationsProvider);
+        context.go('/route-result', extra: (
+          fastest: _fastestRoute!,
+          leastTransfer: _leastTransferRoute,
+          departureStationName: selected.departure!.name,
+        ));
+      }
+      return;
+    }
+
+    if (mode == _activeRouteMode) return;
+    _activeRouteMode = mode;
+    setState(() {
+      _highlightedLineIds = _getLineIdsForMode(mode);
+    });
   }
 }

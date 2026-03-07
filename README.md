@@ -280,11 +280,16 @@ GET http://swopenapi.seoul.go.kr/api/subway/{apiKey}/json/realtimeStationArrival
 
 - **방식**: WebView에서 SVG를 HTML로 렌더링
 - **인터랙션**:
-  - 줌/팬: CSS `transform: matrix(...)` (0.1x~5.0x)
+  - 줌/팬: CSS `transform: matrix(...)` (1.0x~5.0x)
   - 역 탭: JavaScriptChannel을 통해 Flutter로 전달
   - 경로 하이라이트: SVG `<g>` 오버레이 동적 추가
+  - 노선 강조/흐림: CSS `.dimmed` 클래스 토글
   - 마커/툴팁: SVG `<circle>` + HTML `div` (position:absolute)
-- **초기 뷰**: 2호선 순환선 중심 (1260, 1240), 스케일 0.25
+- **초기 뷰**: 2호선 순환선 중심 (1040, 618), 스케일 1.0
+- **성능 최적화** (저사양 Android 대응):
+  - 터치/휠 이벤트를 `requestAnimationFrame`으로 프레임당 1회 처리
+  - 노선 강조 시 인라인 style 대신 CSS 클래스 토글로 DOM 조작 최소화
+  - Flutter 측 `Consumer` 위젯 분리로 지도 WebView 불필요한 리빌드 방지
 
 ### 라우팅
 

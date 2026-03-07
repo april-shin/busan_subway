@@ -165,6 +165,48 @@ svg text {
   paint-order: stroke;
   stroke-linejoin: round;
 }
+path[data-line], text[data-line], circle {
+  transition: opacity 0.3s;
+}
+.dimmed {
+  opacity: 0.12;
+}
+.route-toolbar {
+  position: absolute;
+  display: none;
+  z-index: 99;
+  pointer-events: auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  padding: 4px;
+  gap: 0;
+  white-space: nowrap;
+}
+.route-toolbar-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s;
+}
+.route-toolbar-btn.active {
+  background: #2196F3;
+  color: white;
+  font-weight: 600;
+}
+.route-toolbar-btn.close-btn {
+  padding: 6px 10px;
+  color: #999;
+  font-size: 16px;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -180,6 +222,7 @@ $svgContent
 </div>
 
 <div id="tooltip" class="tooltip"></div>
+<div id="route-toolbar" class="route-toolbar"></div>
 
 <script>
 (function() {
@@ -203,10 +246,25 @@ $svgContent
   var connections = [];
   var lineColors = {};
   var lineNames = {};
+  var stationLineMap = {};
+
+  var rafPending = false;
+  function scheduleTransform() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function() {
+      rafPending = false;
+      applyTransform();
+    });
+  }
 
   var container = document.getElementById('map-container');
   var tapLayer = document.getElementById('tap-layer');
   var tooltip = document.getElementById('tooltip');
+  var routeToolbar = document.getElementById('route-toolbar');
+  var toolbarSvgX = 0, toolbarSvgY = 0;
+  var toolbarVisible = false;
+  var cachedTbW = 0, cachedTbH = 0;
   var overlayBg = document.getElementById('route-overlay-bg');
   var routeLines = document.getElementById('route-lines');
   var routeMarkers = document.getElementById('route-markers');
@@ -217,6 +275,7 @@ $svgContent
   // ============================================================
   function applyTransform() {
     container.style.transform = 'matrix(' + scale + ',0,0,' + scale + ',' + tx + ',' + ty + ')';
+    updateRouteToolbarPosition();
   }
 
   function setInitialView() {
@@ -267,6 +326,7 @@ $svgContent
   }
 
   document.addEventListener('pointerdown', function(e) {
+    panAnimId++;
     pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
     if (getPointerCount() === 1) {
       isDragging = true;
@@ -301,7 +361,7 @@ $svgContent
       tx = dragStartTx + dx;
       ty = dragStartTy + dy;
       clampTranslation();
-      applyTransform();
+      scheduleTransform();
     } else if (getPointerCount() === 2) {
       hasMoved = true;
       if (tooltip.style.display !== 'none') {
@@ -330,7 +390,7 @@ $svgContent
       lastMidY = mid.y;
 
       clampTranslation();
-      applyTransform();
+      scheduleTransform();
     }
   });
 
@@ -367,7 +427,7 @@ $svgContent
     ty = e.clientY - contentY * scale;
 
     clampTranslation();
-    applyTransform();
+    scheduleTransform();
   }, { passive: false });
 
   // ============================================================
@@ -472,6 +532,14 @@ $svgContent
     connections = JSON.parse(connectionsJson);
     lineColors = JSON.parse(colorsJson);
     lineNames = JSON.parse(namesJson);
+
+    // 역명 → 소속 노선 lineId 집합 캐시 (환승역 text/circle 매칭용)
+    stationLineMap = {};
+    for (var i = 0; i < stations.length; i++) {
+      var sn = stations[i].name;
+      if (!stationLineMap[sn]) stationLineMap[sn] = {};
+      stationLineMap[sn][stations[i].lineId] = true;
+    }
   };
 
   // 경로 하이라이트
@@ -536,6 +604,7 @@ $svgContent
         bg.setAttribute('fill', 'white');
         bg.setAttribute('stroke', color);
         bg.setAttribute('stroke-width', '2');
+        bg.setAttribute('data-overlay', '');
         routeMarkers.appendChild(bg);
       } else {
         var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -543,6 +612,7 @@ $svgContent
         dot.setAttribute('cy', s.svgY);
         dot.setAttribute('r', r);
         dot.setAttribute('fill', color);
+        dot.setAttribute('data-overlay', '');
         routeMarkers.appendChild(dot);
       }
     }
@@ -572,6 +642,7 @@ $svgContent
     bg.setAttribute('r', '12');
     bg.setAttribute('fill', color);
     bg.setAttribute('opacity', '0.2');
+    bg.setAttribute('data-overlay', '');
     g.appendChild(bg);
 
     // 테두리 링
@@ -582,6 +653,7 @@ $svgContent
     ring.setAttribute('fill', 'none');
     ring.setAttribute('stroke', color);
     ring.setAttribute('stroke-width', '2.5');
+    ring.setAttribute('data-overlay', '');
     g.appendChild(ring);
 
     selectionMarkers.appendChild(g);
@@ -748,7 +820,6 @@ $svgContent
 
     // lineId → data-line 코드 집합 변환
     var codeSet = {};
-    var highlightColorSet = {};
     for (var i = 0; i < lineIds.length; i++) {
       var codes = lineIdToDataLine[lineIds[i]];
       if (codes) {
@@ -756,68 +827,76 @@ $svgContent
           codeSet[codes[j]] = true;
         }
       }
-      // 노선 색상 수집 (circle 매칭용)
-      var color = lineColors[lineIds[i]];
-      if (color) highlightColorSet[color.toLowerCase()] = true;
     }
 
     // path[data-line] 요소 처리
     var paths = document.querySelectorAll('path[data-line]');
     for (var i = 0; i < paths.length; i++) {
       var dl = paths[i].getAttribute('data-line');
-      paths[i].style.opacity = codeSet[dl] ? '1' : '0.12';
-      paths[i].style.transition = 'opacity 0.3s';
+      if (codeSet[dl]) {
+        paths[i].classList.remove('dimmed');
+      } else {
+        paths[i].classList.add('dimmed');
+      }
+    }
+
+    // lineId 집합 (text의 역명→노선 확인용, circle 좌표 매칭용)
+    var lineIdSet = {};
+    for (var i = 0; i < lineIds.length; i++) {
+      lineIdSet[lineIds[i]] = true;
     }
 
     // text[data-line] 요소 처리
     var texts = document.querySelectorAll('text[data-line]');
     for (var i = 0; i < texts.length; i++) {
       var dl = texts[i].getAttribute('data-line');
-      texts[i].style.opacity = codeSet[dl] ? '1' : '0.12';
-      texts[i].style.transition = 'opacity 0.3s';
+      var matched = !!codeSet[dl];
+
+      // data-line 불일치 시 역명의 소속 노선으로 재확인 (환승역 대응)
+      if (!matched) {
+        var sName = (texts[i].getAttribute('data-station') || '').replace(/[\\n\\r]/g, '');
+        var sLines = stationLineMap[sName];
+        if (sLines) {
+          for (var lid in sLines) {
+            if (lineIdSet[lid]) { matched = true; break; }
+          }
+        }
+      }
+
+      if (matched) {
+        texts[i].classList.remove('dimmed');
+      } else {
+        texts[i].classList.add('dimmed');
+      }
     }
 
-    // circle 요소 처리 (data-line 없으므로 fill 색상으로 매칭)
-    var circles = document.querySelectorAll('circle');
+    // 강조 노선에 속하는 역의 SVG 좌표 집합 (circle 매칭용)
+    var highlightCoords = {};
+    for (var si = 0; si < stations.length; si++) {
+      var s = stations[si];
+      if (lineIdSet[s.lineId]) {
+        highlightCoords[parseFloat(s.svgX) + ',' + parseFloat(s.svgY)] = true;
+      }
+    }
+
+    // circle 요소 처리 (좌표 매칭, overlay 제외)
+    var circles = document.querySelectorAll('circle:not([data-overlay])');
     for (var i = 0; i < circles.length; i++) {
       var c = circles[i];
-      // overlay SVG 내부의 circle은 건드리지 않음
-      if (c.closest('#overlay') || c.closest('#selection-markers') || c.closest('#route-markers')) continue;
-
-      var fill = (c.getAttribute('fill') || '').toLowerCase();
-      var stroke = (c.getAttribute('stroke') || '').toLowerCase();
-      // 환승역 (흰색 배경 + 컬러 테두리)은 항상 표시
-      if (fill === 'white' || fill === '#ffffff' || fill === '#fff') {
-        c.style.opacity = '1';
-      } else if (highlightColorSet[fill] || highlightColorSet[stroke]) {
-        c.style.opacity = '1';
+      var coordKey = parseFloat(c.getAttribute('cx')) + ',' + parseFloat(c.getAttribute('cy'));
+      if (highlightCoords[coordKey]) {
+        c.classList.remove('dimmed');
       } else {
-        c.style.opacity = '0.12';
+        c.classList.add('dimmed');
       }
-      c.style.transition = 'opacity 0.3s';
     }
   };
 
   // 강조 해제, 모든 요소 원래 opacity로 복원
   window.clearLineHighlight = function() {
-    var paths = document.querySelectorAll('path[data-line]');
-    for (var i = 0; i < paths.length; i++) {
-      paths[i].style.opacity = '';
-      paths[i].style.transition = 'opacity 0.3s';
-    }
-
-    var texts = document.querySelectorAll('text[data-line]');
-    for (var i = 0; i < texts.length; i++) {
-      texts[i].style.opacity = '';
-      texts[i].style.transition = 'opacity 0.3s';
-    }
-
-    var circles = document.querySelectorAll('circle');
-    for (var i = 0; i < circles.length; i++) {
-      var c = circles[i];
-      if (c.closest('#overlay') || c.closest('#selection-markers') || c.closest('#route-markers')) continue;
-      c.style.opacity = '';
-      c.style.transition = 'opacity 0.3s';
+    var dimmed = document.querySelectorAll('.dimmed');
+    for (var i = 0; i < dimmed.length; i++) {
+      dimmed[i].classList.remove('dimmed');
     }
   };
 
@@ -865,6 +944,78 @@ $svgContent
     }
 
     requestAnimationFrame(step);
+  };
+
+  // ============================================================
+  // 경로 선택 툴바
+  // ============================================================
+
+  function updateRouteToolbarPosition() {
+    if (!toolbarVisible) return;
+    var screenX = toolbarSvgX * scale + tx;
+    var screenY = toolbarSvgY * scale + ty;
+
+    var left = screenX - cachedTbW / 2;
+    var top = screenY - cachedTbH - 18;
+
+    routeToolbar.style.left = left + 'px';
+    routeToolbar.style.top = top + 'px';
+  }
+
+  window.showRouteToolbar = function(svgX, svgY, hasTwoRoutes) {
+    toolbarSvgX = svgX;
+    toolbarSvgY = svgY;
+
+    routeToolbar.textContent = '';
+
+    var modes = [{key: 'fastest', label: '최단경로'}];
+    if (hasTwoRoutes) {
+      modes.push({key: 'leastTransfer', label: '최소환승'});
+    }
+    modes.push({key: 'result', label: '경로 검색결과'});
+
+    for (var i = 0; i < modes.length; i++) {
+      var m = modes[i];
+      var btn = document.createElement('button');
+      btn.className = 'route-toolbar-btn';
+      btn.textContent = m.label;
+      btn.setAttribute('data-mode', m.key);
+      if (m.key === 'fastest') btn.classList.add('active');
+
+      btn.addEventListener('click', (function(mode) {
+        return function() {
+          if (mode !== 'result') {
+            var btns = routeToolbar.querySelectorAll('.route-toolbar-btn:not(.close-btn)');
+            for (var j = 0; j < btns.length; j++) {
+              btns[j].classList.remove('active');
+            }
+            this.classList.add('active');
+          }
+          sendToFlutter({ action: 'routeToolbarSelect', mode: mode });
+        };
+      })(m.key));
+
+      routeToolbar.appendChild(btn);
+    }
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'route-toolbar-btn close-btn';
+    closeBtn.textContent = '\u00d7';
+    closeBtn.addEventListener('click', function() {
+      sendToFlutter({ action: 'routeToolbarSelect', mode: 'cancel' });
+    });
+    routeToolbar.appendChild(closeBtn);
+
+    toolbarVisible = true;
+    routeToolbar.style.display = 'inline-block';
+    cachedTbW = routeToolbar.offsetWidth;
+    cachedTbH = routeToolbar.offsetHeight;
+    updateRouteToolbarPosition();
+  };
+
+  window.hideRouteToolbar = function() {
+    routeToolbar.style.display = 'none';
+    toolbarVisible = false;
   };
 
   // ============================================================
@@ -916,7 +1067,7 @@ $svgContent
   setInitialView();
   window.addEventListener('resize', function() {
     clampTranslation();
-    applyTransform();
+    scheduleTransform();
   });
 })();
 </script>

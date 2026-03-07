@@ -21,6 +21,9 @@ class SvgWebView extends ConsumerStatefulWidget {
   final Set<String> routeStationIds;
   final Set<String> highlightedLineIds;
   final ({double x, double y})? panTarget;
+  final ({double x, double y})? routeToolbarTarget;
+  final bool hasTwoRoutes;
+  final void Function(String mode)? onRouteToolbarSelect;
 
   const SvgWebView({
     super.key,
@@ -29,6 +32,9 @@ class SvgWebView extends ConsumerStatefulWidget {
     this.routeStationIds = const {},
     this.highlightedLineIds = const {},
     this.panTarget,
+    this.routeToolbarTarget,
+    this.hasTwoRoutes = false,
+    this.onRouteToolbarSelect,
   });
 
   @override
@@ -69,6 +75,14 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
 
     if (widget.highlightedLineIds.isNotEmpty) {
       _highlightLines(widget.highlightedLineIds);
+    }
+
+    if (widget.routeToolbarTarget != null) {
+      _showRouteToolbar(
+        widget.routeToolbarTarget!.x,
+        widget.routeToolbarTarget!.y,
+        widget.hasTwoRoutes,
+      );
     }
 
     // 기존 선택된 역 마커 복원
@@ -151,6 +165,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
           final stationName = data['stationName'];
           if (stationName is! String) return;
           _handleViewArrivalInfo(stationName);
+        case 'routeToolbarSelect':
+          final mode = data['mode'];
+          if (mode is! String) return;
+          widget.onRouteToolbarSelect?.call(mode);
         case 'dismiss':
           ref.read(tappedStationProvider.notifier).state = null;
       }
@@ -256,6 +274,18 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _runJs("window.panTo($svgX, $svgY, $durationMs)");
   }
 
+  void _showRouteToolbar(double svgX, double svgY, bool hasTwoRoutes) {
+    if (!_isReady) return;
+    _runJs(
+      "window.showRouteToolbar($svgX, $svgY, ${hasTwoRoutes ? 'true' : 'false'})",
+    );
+  }
+
+  void _hideRouteToolbar() {
+    if (!_isReady) return;
+    _runJs("window.hideRouteToolbar()");
+  }
+
   void _hideTooltip() {
     if (!_isReady) return;
     _runJs("window.hideTooltip()");
@@ -312,6 +342,20 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     // 카메라 이동 감지
     if (widget.panTarget != oldWidget.panTarget && widget.panTarget != null) {
       _panTo(widget.panTarget!.x, widget.panTarget!.y);
+    }
+
+    // 툴바 표시/숨김
+    if (widget.routeToolbarTarget != oldWidget.routeToolbarTarget ||
+        widget.hasTwoRoutes != oldWidget.hasTwoRoutes) {
+      if (widget.routeToolbarTarget == null) {
+        _hideRouteToolbar();
+      } else {
+        _showRouteToolbar(
+          widget.routeToolbarTarget!.x,
+          widget.routeToolbarTarget!.y,
+          widget.hasTwoRoutes,
+        );
+      }
     }
   }
 

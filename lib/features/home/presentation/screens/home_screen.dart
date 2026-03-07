@@ -7,40 +7,50 @@ import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../../../subway_map/presentation/screens/subway_map_screen.dart';
 import '../widgets/search_bar_widget.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedStations = ref.watch(selectedStationsProvider);
-
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('서울 지하철'),
         actions: [
-          if (selectedStations.departure != null ||
-              selectedStations.arrival != null)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                ref.read(selectedStationsProvider.notifier).clear();
-              },
-            ),
+          Consumer(
+            builder: (context, ref, _) {
+              final selectedStations = ref.watch(selectedStationsProvider);
+              if (selectedStations.departure == null &&
+                  selectedStations.arrival == null) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  ref.read(selectedStationsProvider.notifier).clear();
+                },
+              );
+            },
+          ),
         ],
       ),
       body: Column(
         children: [
-          RouteSearchBar(
-            departure: selectedStations.departure,
-            arrival: selectedStations.arrival,
-            onDepartureTap: () => context.go('/pick-station/departure'),
-            onArrivalTap: () => context.go('/pick-station/arrival'),
-            onSwap: () {
-              ref.read(selectedStationsProvider.notifier).swap();
+          Consumer(
+            builder: (context, ref, _) {
+              final selectedStations = ref.watch(selectedStationsProvider);
+              return RouteSearchBar(
+                departure: selectedStations.departure,
+                arrival: selectedStations.arrival,
+                onDepartureTap: () => context.go('/pick-station/departure'),
+                onArrivalTap: () => context.go('/pick-station/arrival'),
+                onSwap: () {
+                  ref.read(selectedStationsProvider.notifier).swap();
+                },
+                onSearchRoute: selectedStations.isComplete
+                    ? () => _searchRoute(context, ref)
+                    : null,
+              );
             },
-            onSearchRoute: selectedStations.isComplete
-                ? () => _searchRoute(context, ref)
-                : null,
           ),
           const Expanded(
             child: SubwayMapScreen(),
