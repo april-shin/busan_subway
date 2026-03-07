@@ -44,6 +44,11 @@ class LineSchedule with _$LineSchedule {
 }
 
 /// 요일별 운행 스케줄
+///
+/// [stationDepartures]는 역별 정확한 출발시각(자정 기준 분) 맵이다.
+/// 키는 stationId, 값은 정렬된 분 단위 정수 배열이다.
+/// 이 값이 있고 해당 역 데이터가 존재하면 배차간격 대신 정확한 시간표를 사용한다.
+/// null이면 기존 배차간격([periods]) 기반 추정으로 폴백한다.
 @freezed
 class DaySchedule with _$DaySchedule {
   const DaySchedule._();
@@ -52,6 +57,7 @@ class DaySchedule with _$DaySchedule {
     required String firstTrain,
     required String lastTrain,
     required List<TimePeriod> periods,
+    Map<String, List<int>>? stationDepartures,
   }) = _DaySchedule;
 
   factory DaySchedule.fromJson(Map<String, dynamic> json) =>

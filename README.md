@@ -172,11 +172,12 @@ DataSource (Local JSON / Remote API)
     - 서울역(다중 환승): 240~360초
 
 #### 5. `assets/json/line_schedules.json`
-- **내용**: 22개 노선의 양방향 운행 스케줄 (배차간격 기반)
+- **내용**: 22개 노선의 양방향 운행 스케줄 (배차간격 + 역별 시간표 하이브리드)
 - **포함 정보**:
   - 노선별 상행(내선)/하행(외선) 첫차·막차 시간
   - 시간대별 배차간격 (첨두, 비첨두, 심야)
   - 평일(`wd`)과 주말(`we`) 별도 스케줄
+  - 역별 정확한 출발시각 목록 (`t` 키, 구간운행 등으로 역마다 배차가 다른 노선용)
 - **컴팩트 JSON 스키마**:
   ```json
   {
@@ -184,7 +185,11 @@ DataSource (Local JSON / Remote API)
     "wd": {
       "f": ["05:20", "05:18"],
       "l": ["00:48", "00:42"],
-      "p": [["05:00", "06:00", 5], ["06:00", "09:00", 4]]
+      "p": [["05:00", "06:00", 5], ["06:00", "09:00", 4]],
+      "t": {
+        "P01": [null, [330, 340, 350]],
+        "P05": [[335, 345], [328, 338]]
+      }
     },
     "we": { ... }
   }
@@ -198,11 +203,14 @@ DataSource (Local JSON / Remote API)
   | `l` | 막차 시간 [상행/내선, 하행/외선] |
   | `p` | 공유 배차간격 [[시작, 종료, 간격(분)], ...] |
   | `pD` | 하행 전용 배차간격 (상행과 다를 경우만) |
-- **생성**: `tool/extract_schedules.dart`
-- **활용**: 실시간 API 미가용 시 배차간격 기반으로 다음 출발 시각을 추정
+  | `t` | 역별 시간표 (옵셔널). `stationId → [상행분배열, 하행분배열]`. 자정 기준 분 단위 정수. `null`은 해당 방향 출발 없음. |
+- **생성**: `tool/extract_schedules.dart` (배차간격), `tool/build_gimpo_json.dart` (김포골드라인 역별 시간표)
+- **활용**: 역별 시간표가 있으면 이진탐색으로 정확한 다음 출발시각 반환, 없으면 배차간격 기반 추정으로 폴백
 - **데이터 출처**:
   - **18개 노선** (1~9호선, 신분당선, 경춘선, 공항철도, 수인분당선, 신림선, 에버라인, 인천2호선, 서해선, 의정부경전철, GTX-A): data.go.kr API에서 실제 발차 시각을 수집하고 배차간격을 자동 역산
-  - **4개 노선** (경의중앙선, 인천1호선, 김포골드라인, 우이신설경전철): API 미지원 → 수동 추정치
+  - **2개 노선** (인천1호선, 우이신설경전철): API 미지원 → 배차간격 수동 추정치
+  - **김포골드라인**: korailinfo.com에서 9개 역(P01~P09) 전체 출발시각을 역별로 수집. 구간운행 포함하여 역별 실제 배차 반영 (평일/주말 모두)
+  - **경의중앙선**: 코레일 시간표 엑셀(`assets/excel/center_line260228.xlsx`)에서 56개 역(K01~K56) 전체 출발시각 추출. 경의중앙선+경의선 열차를 역별로 통합 (출처: https://www.korail.com/ticket/reserve/train-timeTable)
   - 2호선은 순환선이므로 `상행`/`하행` 대신 `내선`/`외선`으로 조회
 
 #### 데이터 생성 파이프라인
@@ -222,7 +230,14 @@ dart run tool/build_map_html.dart
 
 # 시간표 데이터 생성 (독립 실행 가능)
 dart run tool/extract_schedules.dart
-# → assets/json/line_schedules.json
+# → assets/json/line_schedules.json (배차간격)
+
+# 김포골드라인 역별 시간표 갱신 (독립 실행 가능)
+dart run tool/build_gimpo_json.dart
+# → line_schedules.json의 김포골드 항목에 't' 키 갱신
+
+# 경의중앙선 역별 시간표 추출 (Python + openpyxl 필요)
+# assets/excel/center_line260228.xlsx → line_schedules.json의 경의중앙 항목에 't' 키 갱신
 ```
 
 **좌표 출처**:
@@ -300,6 +315,8 @@ flutter test test/domain/usecases/
 - 환승 시간 계산
 - 경로 결과 엔티티 변환
 - 리포지토리 mock 테스트
+- 시간표 파싱 (배차간격, 역별 시간표, 컴팩트 JSON)
+- 출발시각 계산 (실시간 도착정보, 역별 시간표, 배차간격 폴백)
 
 ## 개발 참고사항
 
@@ -321,7 +338,7 @@ flutter test test/domain/usecases/
 dart run tool/extract_svg_stations.dart
 dart run tool/generate_station_data.dart
 dart run tool/build_map_html.dart
-```
+```
 
 ### SVG 역이름 좌표 수정이 필요한 역
 - 남동인더스파크

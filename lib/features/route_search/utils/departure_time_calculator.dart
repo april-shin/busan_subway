@@ -32,12 +32,13 @@ DateTime computeDepartureTime({
   );
   if (realtimeDeparture != null) return realtimeDeparture;
 
-  // 2순위: 시간표 기반 추정 (방향별)
+  // 2순위: 시간표 기반 추정 (방향별, 역별 시간표 포함)
   if (lineSchedule != null) {
     final timetableDeparture = findNextDeparture(
       schedule: lineSchedule,
       now: now,
       isDown: isDown,
+      stationId: firstSegment.stations.first.id,
     );
     if (timetableDeparture != null) return timetableDeparture;
   }
@@ -98,7 +99,7 @@ List<DateTime> computeSegmentDepartures({
         );
       }
 
-      // 2순위: 시간표 기반 다음 출발
+      // 2순위: 시간표 기반 다음 출발 (역별 시간표 포함)
       if (nextDeparture == null) {
         final nextSchedule = schedules[nextSegment.lineId];
         if (nextSchedule != null) {
@@ -106,6 +107,7 @@ List<DateTime> computeSegmentDepartures({
             schedule: nextSchedule,
             now: afterTransfer,
             isDown: nextIsDown,
+            stationId: nextSegment.stations.first.id,
           );
         }
       }

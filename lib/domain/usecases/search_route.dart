@@ -51,6 +51,79 @@ class SearchRoute {
     );
   }
 
+  /// 최단시간 경로와 최소환승 경로를 동시에 반환한다.
+  /// 두 경로가 동일하면 leastTransfer는 null.
+  Future<({RouteResult? fastest, RouteResult? leastTransfer})> executeAll(
+    String fromStationId,
+    String toStationId,
+  ) async {
+    final stations = await _stationRepository.getAllStations();
+    final connections = await _stationRepository.getAllConnections();
+    final transferTimes = await _stationRepository.getTransferTimes();
+
+    final graph = GraphBuilder().build(
+      stations: stations,
+      connections: connections,
+      transferTimes: transferTimes,
+    );
+
+    final stationMap = {for (final s in stations) s.id: s};
+
+    final fromStation = stationMap[fromStationId];
+    final toStation = stationMap[toStationId];
+    if (fromStation == null || toStation == null) {
+      return (fastest: null, leastTransfer: null);
+    }
+
+    final finder = ShortestPathFinder(graph: graph);
+
+    final fastestResults = finder.findShortestPathBetweenStations(
+      fromStation.name,
+      toStation.name,
+    );
+    final minTransferResults = finder.findMinTransferPathBetweenStations(
+      fromStation.name,
+      toStation.name,
+    );
+
+    final fastest = fastestResults.isEmpty
+        ? null
+        : _buildRouteResult(fastestResults.first, graph, stationMap);
+    final leastTransfer = minTransferResults.isEmpty
+        ? null
+        : _buildRouteResult(minTransferResults.first, graph, stationMap);
+
+    // 두 경로가 동일하면 leastTransfer를 null로 반환
+    final isSame = fastest != null &&
+        leastTransfer != null &&
+        fastest.totalTimeSeconds == leastTransfer.totalTimeSeconds &&
+        fastest.transferCount == leastTransfer.transferCount;
+
+    return (
+      fastest: fastest,
+      leastTransfer: isSame ? null : leastTransfer,
+    );
+  }
+
+  RouteResult _buildRouteResult(
+    PathResult path,
+    dynamic graph,
+    Map<String, Station> stationMap,
+  ) {
+    final (:segments, :transferDurations) =
+        _buildSegments(path, graph, stationMap);
+
+    return RouteResult(
+      segments: segments,
+      totalTimeSeconds: path.totalTimeSeconds,
+      transferCount: segments.length - 1,
+      stationCount:
+          segments.fold(0, (sum, seg) => sum + seg.stations.length) -
+              (segments.length - 1),
+      transferDurations: transferDurations,
+    );
+  }
+
   ({List<RouteSegment> segments, List<int> transferDurations}) _buildSegments(
     PathResult path,
     dynamic graph,
@@ -70,6 +143,14 @@ class SearchRoute {
       final edge = path.edges[i];
 
       if (edge.isTransfer) {
+        // 환승역을 이전 세그먼트의 마지막 역으로 추가
+        final fromNodeId = edge.fromNodeId;
+        final stationId = fromNodeId.split('_').first;
+        final station = stationMap[stationId];
+        if (station != null && !currentStations.contains(station)) {
+          currentStations.add(station);
+        }
+
         if (currentStations.isNotEmpty) {
           segments.add(_createSegment(
             currentLineId,

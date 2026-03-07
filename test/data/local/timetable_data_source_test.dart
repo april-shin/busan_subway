@@ -5,6 +5,26 @@ import 'package:seoul_subway/domain/entities/line_schedule.dart';
 // 파싱 함수를 직접 테스트하기 어렵다.
 // 대신 컴팩트 JSON → LineSchedule 변환 로직을 단위 테스트한다.
 
+/// 역별 출발시각 맵을 파싱한다.
+Map<String, List<int>>? parseStationDepartures(
+  Map<String, dynamic> day,
+  int dirIndex,
+) {
+  final tRaw = day['t'] as Map<String, dynamic>?;
+  if (tRaw == null || tRaw.isEmpty) return null;
+
+  final result = <String, List<int>>{};
+  for (final entry in tRaw.entries) {
+    final dirList = entry.value as List;
+    if (dirIndex >= dirList.length) continue;
+    final minutes = dirList[dirIndex];
+    if (minutes == null) continue;
+    result[entry.key] = (minutes as List).cast<int>();
+  }
+
+  return result.isEmpty ? null : result;
+}
+
 /// 컴팩트 JSON의 DaySchedule 파싱 테스트용 헬퍼
 DaySchedule parseDayScheduleAt(Map<String, dynamic> day, int dirIndex) {
   final f = day['f'] as List;
@@ -17,10 +37,12 @@ DaySchedule parseDayScheduleAt(Map<String, dynamic> day, int dirIndex) {
       headwayMinutes: arr[2] as int,
     );
   }).toList();
+  final stationDepartures = parseStationDepartures(day, dirIndex);
   return DaySchedule(
     firstTrain: f[dirIndex] as String,
     lastTrain: l[dirIndex] as String,
     periods: periods,
+    stationDepartures: stationDepartures,
   );
 }
 
@@ -28,9 +50,13 @@ DaySchedule? parseDayScheduleDown(Map<String, dynamic> day) {
   final f = day['f'] as List;
   final l = day['l'] as List;
   if (f.length < 2) return null;
-  // pD가 없고 첫차/막차도 동일하면 null (상행과 동일)
+
+  final hasStationDepartures = day.containsKey('t');
   final hasDedicatedPeriods = day.containsKey('pD');
-  if (!hasDedicatedPeriods && f[0] == f[1] && l[0] == l[1]) {
+
+  // pD/t가 없고 첫차/막차도 동일하면 null (상행과 동일)
+  if (!hasDedicatedPeriods && !hasStationDepartures &&
+      f[0] == f[1] && l[0] == l[1]) {
     return null;
   }
   final periodsRaw = day['pD'] as List? ?? day['p'] as List;
@@ -42,10 +68,12 @@ DaySchedule? parseDayScheduleDown(Map<String, dynamic> day) {
       headwayMinutes: arr[2] as int,
     );
   }).toList();
+  final stationDepartures = parseStationDepartures(day, 1);
   return DaySchedule(
     firstTrain: f[1] as String,
     lastTrain: l[1] as String,
     periods: periods,
+    stationDepartures: stationDepartures,
   );
 }
 
@@ -206,6 +234,97 @@ void main() {
       final schedule = parseCompactSchedule(json);
       expect(schedule.weekdayDown, isNull);
       expect(schedule.weekendDown, isNull);
+    });
+
+    test('t 키가 있으면 역별 시간표를 파싱한다', () {
+      final json = {
+        'id': '김포골드',
+        'wd': {
+          'f': ['05:30', '05:26'],
+          'l': ['00:00', '23:55'],
+          'p': [
+            ['05:00', '00:00', 6],
+          ],
+          't': {
+            'P01': [null, [330, 340, 350, 360]],
+            'P05': [[335, 345, 355], [328, 338, 348]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      // 상행 (dirIndex=0)
+      expect(schedule.weekday.stationDepartures, isNotNull);
+      // P01 상행은 null → 상행 맵에 포함되지 않음
+      expect(schedule.weekday.stationDepartures!.containsKey('P01'), isFalse);
+      // P05 상행
+      expect(schedule.weekday.stationDepartures!['P05'], [335, 345, 355]);
+
+      // 하행 (dirIndex=1)
+      expect(schedule.weekdayDown, isNotNull);
+      expect(schedule.weekdayDown!.stationDepartures, isNotNull);
+      // P01 하행
+      expect(schedule.weekdayDown!.stationDepartures!['P01'], [330, 340, 350, 360]);
+      // P05 하행
+      expect(schedule.weekdayDown!.stationDepartures!['P05'], [328, 338, 348]);
+    });
+
+    test('t 키가 있으면 상하행 동일해도 하행 데이터를 생성한다', () {
+      final json = {
+        'id': '김포골드',
+        'wd': {
+          'f': ['05:30', '05:30'],
+          'l': ['23:30', '23:30'],
+          'p': [
+            ['05:00', '23:30', 6],
+          ],
+          't': {
+            'P05': [[335, 345], [328, 338]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      // t가 있으므로 첫차/막차 동일해도 하행 생성
+      expect(schedule.weekdayDown, isNotNull);
+      expect(schedule.weekdayDown!.stationDepartures, isNotNull);
+      expect(schedule.weekdayDown!.stationDepartures!['P05'], [328, 338]);
+    });
+
+    test('t 키가 없으면 stationDepartures는 null이다', () {
+      final json = {
+        'id': '2',
+        'wd': {
+          'f': ['05:00', '05:02'],
+          'l': ['00:00', '23:55'],
+          'p': [
+            ['05:00', '00:00', 5],
+          ],
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+      expect(schedule.weekday.stationDepartures, isNull);
+      expect(schedule.weekdayDown!.stationDepartures, isNull);
+    });
+
+    test('t 키가 빈 맵이면 stationDepartures는 null이다', () {
+      final json = {
+        'id': 'test',
+        'wd': {
+          'f': ['05:00', '05:02'],
+          'l': ['00:00', '23:55'],
+          'p': [
+            ['05:00', '00:00', 5],
+          ],
+          't': <String, dynamic>{},
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+      expect(schedule.weekday.stationDepartures, isNull);
     });
   });
 

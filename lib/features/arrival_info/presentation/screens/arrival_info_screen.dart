@@ -50,14 +50,20 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
   Widget build(BuildContext context) {
     final arrivalAsync = ref.watch(arrivalInfoProvider(widget.stationName));
 
+    // 2호선 전용역이면 내선/외선, 그 외 상행/하행
+    final isLine2Only = arrivalAsync.valueOrNull?.isNotEmpty == true &&
+        arrivalAsync.valueOrNull!.every((a) => a.subwayId == '1002');
+    final upLabel = isLine2Only ? '내선' : '상행';
+    final downLabel = isLine2Only ? '외선' : '하행';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.stationName} 실시간 도착'),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: '상행/내선'),
-            Tab(text: '하행/외선'),
+          tabs: [
+            Tab(text: upLabel),
+            Tab(text: downLabel),
           ],
         ),
         actions: [
@@ -83,8 +89,8 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildArrivalList(upbound, '상행/내선'),
-              _buildArrivalList(downbound, '하행/외선'),
+              _buildArrivalList(upbound, upLabel),
+              _buildArrivalList(downbound, downLabel),
             ],
           );
         },

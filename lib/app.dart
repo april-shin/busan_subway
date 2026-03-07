@@ -26,14 +26,32 @@ final GoRouter router = GoRouter(
           path: 'route-result',
           builder: (context, state) {
             final extra = state.extra;
-            if (extra is! ({RouteResult routeResult, String departureStationName})) {
-              return const Scaffold(
-                body: Center(child: Text('잘못된 경로입니다')),
+            if (extra
+                is ({
+                  RouteResult fastest,
+                  RouteResult? leastTransfer,
+                  String departureStationName,
+                })) {
+              return RouteResultScreen(
+                fastest: extra.fastest,
+                leastTransfer: extra.leastTransfer,
+                departureStationName: extra.departureStationName,
               );
             }
-            return RouteResultScreen(
-              routeResult: extra.routeResult,
-              departureStationName: extra.departureStationName,
+            // 하위 호환: 기존 단일 경로 전달 방식 지원
+            if (extra
+                is ({
+                  RouteResult routeResult,
+                  String departureStationName,
+                })) {
+              return RouteResultScreen(
+                fastest: extra.routeResult,
+                leastTransfer: null,
+                departureStationName: extra.departureStationName,
+              );
+            }
+            return const Scaffold(
+              body: Center(child: Text('잘못된 경로입니다')),
             );
           },
         ),

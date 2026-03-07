@@ -64,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
     );
 
     try {
-      final result = await useCase.execute(
+      final (:fastest, :leastTransfer) = await useCase.executeAll(
         selected.departure!.id,
         selected.arrival!.id,
       );
@@ -72,9 +72,10 @@ class HomeScreen extends ConsumerWidget {
       if (!context.mounted) return;
       Navigator.of(context).pop();
 
-      if (result != null) {
+      if (fastest != null) {
         context.go('/route-result', extra: (
-          routeResult: result,
+          fastest: fastest,
+          leastTransfer: leastTransfer,
           departureStationName: selected.departure!.name,
         ));
       } else {

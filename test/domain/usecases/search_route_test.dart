@@ -81,5 +81,51 @@ void main() {
       expect(result.transferDurations.length, result.transferCount);
       expect(result.transferDurations.first, 180);
     });
+
+    test('executeAll returns fastest and leastTransfer', () async {
+      final result = await searchRoute.executeAll('201', '317');
+
+      expect(result.fastest, isNotNull);
+      expect(result.fastest!.totalTimeSeconds, 450);
+      // 이 그래프에서는 경로가 하나뿐이므로 leastTransfer는 null (동일 경로)
+      expect(result.leastTransfer, isNull);
+    });
+
+    test('executeAll returns null for non-existent station', () async {
+      final result = await searchRoute.executeAll('999', '201');
+
+      expect(result.fastest, isNull);
+      expect(result.leastTransfer, isNull);
+    });
+
+    test('executeAll same-line route has null leastTransfer', () async {
+      final result = await searchRoute.executeAll('201', '203');
+
+      expect(result.fastest, isNotNull);
+      expect(result.fastest!.segments.length, 1);
+      // 환승 없는 같은 노선 경로 → leastTransfer null
+      expect(result.leastTransfer, isNull);
+    });
+
+    test('환승역이 이전 세그먼트의 마지막 역에 포함된다', () async {
+      // 201(시청) → 317(충무로): 2호선 → 을지로3가 환승 → 3호선
+      final result = await searchRoute.execute('201', '317');
+
+      expect(result, isNotNull);
+      expect(result!.segments.length, 2);
+
+      // 2호선 세그먼트: 시청, 을지로입구, 을지로3가 (환승역 포함)
+      final firstSegment = result.segments[0];
+      expect(firstSegment.lineId, '2');
+      expect(firstSegment.stations.length, 3);
+      expect(firstSegment.stations.last.name, '을지로3가');
+
+      // 3호선 세그먼트: 을지로3가, 충무로
+      final secondSegment = result.segments[1];
+      expect(secondSegment.lineId, '3');
+      expect(secondSegment.stations.length, 2);
+      expect(secondSegment.stations.first.name, '을지로3가');
+      expect(secondSegment.stations.last.name, '충무로');
+    });
   });
 }

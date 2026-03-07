@@ -81,35 +81,69 @@ DaySchedule _parseDayScheduleAt(Map<String, dynamic> day, int dirIndex) {
   final f = day['f'] as List;
   final l = day['l'] as List;
   final periods = _parsePeriods(day['p'] as List);
+  final stationDepartures = _parseStationDepartures(day, dirIndex);
 
   return DaySchedule(
     firstTrain: f[dirIndex] as String,
     lastTrain: l[dirIndex] as String,
     periods: periods,
+    stationDepartures: stationDepartures,
   );
 }
 
 /// 하행 전용 DaySchedule을 파싱한다. 상행과 동일하면 null 반환.
+///
+/// 단, 't' 키(역별 시간표)가 있으면 상하행 배차간격이 동일하더라도
+/// 역별 시간표가 다를 수 있으므로 non-null을 반환한다.
 DaySchedule? _parseDayScheduleDown(Map<String, dynamic> day) {
   final f = day['f'] as List;
   final l = day['l'] as List;
   if (f.length < 2) return null;
 
-  // pD가 없고 첫차/막차도 동일하면 상행과 같으므로 null 반환 (폴백)
+  final hasStationDepartures = day.containsKey('t');
   final hasDedicatedPeriods = day.containsKey('pD');
-  if (!hasDedicatedPeriods && f[0] == f[1] && l[0] == l[1]) {
+
+  // pD/t가 없고 첫차/막차도 동일하면 상행과 같으므로 null 반환 (폴백)
+  if (!hasDedicatedPeriods && !hasStationDepartures &&
+      f[0] == f[1] && l[0] == l[1]) {
     return null;
   }
 
   // pD(하행 전용 배차간격)가 있으면 사용, 없으면 p(공유) 사용
   final periodsRaw = day['pD'] as List? ?? day['p'] as List;
   final periods = _parsePeriods(periodsRaw);
+  final stationDepartures = _parseStationDepartures(day, 1);
 
   return DaySchedule(
     firstTrain: f[1] as String,
     lastTrain: l[1] as String,
     periods: periods,
+    stationDepartures: stationDepartures,
   );
+}
+
+/// 역별 출발시각 맵을 파싱한다.
+///
+/// JSON의 't' 키: `{ stationId: [상행분목록, 하행분목록], ... }`
+/// [dirIndex]에 해당하는 방향의 출발분 목록만 추출한다.
+/// 't' 키가 없거나 빈 맵이면 null을 반환한다.
+Map<String, List<int>>? _parseStationDepartures(
+  Map<String, dynamic> day,
+  int dirIndex,
+) {
+  final tRaw = day['t'] as Map<String, dynamic>?;
+  if (tRaw == null || tRaw.isEmpty) return null;
+
+  final result = <String, List<int>>{};
+  for (final entry in tRaw.entries) {
+    final dirList = entry.value as List;
+    if (dirIndex >= dirList.length) continue;
+    final minutes = dirList[dirIndex];
+    if (minutes == null) continue;
+    result[entry.key] = (minutes as List).cast<int>();
+  }
+
+  return result.isEmpty ? null : result;
 }
 
 /// 배열 형태의 배차간격 리스트를 TimePeriod 리스트로 변환한다.

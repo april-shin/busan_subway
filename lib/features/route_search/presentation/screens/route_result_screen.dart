@@ -9,22 +9,109 @@ import '../../../arrival_info/presentation/providers/arrival_providers.dart';
 import '../providers/timetable_providers.dart';
 import '../../utils/departure_time_calculator.dart';
 
-class RouteResultScreen extends ConsumerWidget {
-  final RouteResult routeResult;
+class RouteResultScreen extends ConsumerStatefulWidget {
+  final RouteResult fastest;
+  final RouteResult? leastTransfer;
   final String departureStationName;
 
   const RouteResultScreen({
     super.key,
-    required this.routeResult,
+    required this.fastest,
+    this.leastTransfer,
     required this.departureStationName,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RouteResultScreen> createState() => _RouteResultScreenState();
+}
+
+class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
+    with SingleTickerProviderStateMixin {
+  TabController? _tabController;
+
+  bool get _hasTwoRoutes => widget.leastTransfer != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_hasTwoRoutes) {
+      _tabController = TabController(length: 2, vsync: this);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant RouteResultScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final hadTwo = oldWidget.leastTransfer != null;
+    if (hadTwo != _hasTwoRoutes) {
+      _tabController?.dispose();
+      _tabController =
+          _hasTwoRoutes ? TabController(length: 2, vsync: this) : null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('경로 검색 결과'),
+        bottom: _hasTwoRoutes
+            ? TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간'),
+                  Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승'),
+                ],
+              )
+            : null,
+      ),
+      body: _hasTwoRoutes
+          ? TabBarView(
+              controller: _tabController,
+              children: [
+                _RouteView(
+                  routeResult: widget.fastest,
+                  departureStationName: widget.departureStationName,
+                  ref: ref,
+                ),
+                _RouteView(
+                  routeResult: widget.leastTransfer!,
+                  departureStationName: widget.departureStationName,
+                  ref: ref,
+                ),
+              ],
+            )
+          : _RouteView(
+              routeResult: widget.fastest,
+              departureStationName: widget.departureStationName,
+              ref: ref,
+            ),
+    );
+  }
+}
+
+class _RouteView extends StatelessWidget {
+  final RouteResult routeResult;
+  final String departureStationName;
+  final WidgetRef ref;
+
+  const _RouteView({
+    required this.routeResult,
+    required this.departureStationName,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final arrivalAsync = ref.watch(arrivalInfoProvider(departureStationName));
     final schedulesAsync = ref.watch(lineSchedulesProvider);
     final totalMinutes = routeResult.totalTimeSeconds ~/ 60;
-    // 시간표는 정적 데이터이므로 빠르게 로드됨. 실시간 API만 로딩 표시 대상.
     final isLoading =
         arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
 
@@ -35,7 +122,6 @@ class RouteResultScreen extends ConsumerWidget {
     final firstLineSchedule =
         firstLineId != null ? schedules[firstLineId] : null;
 
-    // 환승역 실시간 도착정보 수집
     final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{};
     for (var i = 0; i < routeResult.segments.length - 1; i++) {
       final transferName = routeResult.segments[i + 1].stations.first.name;
@@ -51,7 +137,6 @@ class RouteResultScreen extends ConsumerWidget {
       lineSchedule: firstLineSchedule,
     );
 
-    // 환승역에서도 실시간 API → 시간표 → afterTransfer 폴백 구조 적용
     final segmentDepartures = computeSegmentDepartures(
       routeResult: routeResult,
       initialDeparture: departureTime,
@@ -60,28 +145,23 @@ class RouteResultScreen extends ConsumerWidget {
       now: now,
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('경로 검색 결과'),
-      ),
-      body: Column(
-        children: [
-          _RouteSummaryHeader(
+    return Column(
+      children: [
+        _RouteSummaryHeader(
+          routeResult: routeResult,
+          totalMinutes: totalMinutes,
+          departureTime: departureTime,
+          isLoading: isLoading,
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: _RouteTimeline(
             routeResult: routeResult,
-            totalMinutes: totalMinutes,
             departureTime: departureTime,
-            isLoading: isLoading,
+            segmentDepartures: segmentDepartures,
           ),
-          const Divider(height: 1),
-          Expanded(
-            child: _RouteTimeline(
-              routeResult: routeResult,
-              departureTime: departureTime,
-              segmentDepartures: segmentDepartures,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

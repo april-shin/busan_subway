@@ -20,7 +20,11 @@ class ShortestPathFinder {
 
   const ShortestPathFinder({required this.graph});
 
-  PathResult? findShortestPath(String fromNodeId, String toNodeId) {
+  PathResult? findShortestPath(
+    String fromNodeId,
+    String toNodeId, {
+    int transferPenalty = 0,
+  }) {
     if (!graph.containsNode(fromNodeId) || !graph.containsNode(toNodeId)) {
       return null;
     }
@@ -62,7 +66,11 @@ class ShortestPathFinder {
       for (final edge in graph.getNeighbors(current.nodeId)) {
         if (visited.contains(edge.toNodeId)) continue;
 
-        final newDistance = distances[current.nodeId]! + edge.weightSeconds;
+        final penalty = (transferPenalty > 0 && edge.isTransfer)
+            ? transferPenalty
+            : 0;
+        final newDistance =
+            distances[current.nodeId]! + edge.weightSeconds + penalty;
 
         if (newDistance < distances[edge.toNodeId]!) {
           distances[edge.toNodeId] = newDistance;
@@ -89,10 +97,14 @@ class ShortestPathFinder {
     path.reversed;
     edges.reversed;
 
+    final reversedEdges = edges.reversed.toList();
+    final actualTime =
+        reversedEdges.fold(0, (sum, edge) => sum + edge.weightSeconds);
+
     return PathResult(
       nodeIds: path.reversed.toList(),
-      edges: edges.reversed.toList(),
-      totalTimeSeconds: distances[toNodeId]!,
+      edges: reversedEdges,
+      totalTimeSeconds: actualTime,
     );
   }
 
@@ -118,6 +130,44 @@ class ShortestPathFinder {
     return results;
   }
 
+  /// 환승 횟수를 최소화한 경로를 반환한다.
+  /// 환승 엣지에 큰 페널티를 부여하여 환승을 피하도록 유도하고,
+  /// 동일 환승 횟수 내에서는 시간이 짧은 경로를 선택한다.
+  List<PathResult> findMinTransferPathBetweenStations(
+    String fromStationName,
+    String toStationName,
+  ) {
+    final fromNodeIds = graph.getNodeIdsForStation(fromStationName);
+    final toNodeIds = graph.getNodeIdsForStation(toStationName);
+
+    if (fromNodeIds.isEmpty || toNodeIds.isEmpty) return [];
+
+    final results = <PathResult>[];
+
+    for (final fromId in fromNodeIds) {
+      for (final toId in toNodeIds) {
+        final result = findShortestPath(
+          fromId,
+          toId,
+          transferPenalty: _transferPenalty,
+        );
+        if (result != null) results.add(result);
+      }
+    }
+
+    results.sort((a, b) {
+      final transferA =
+          a.edges.where((e) => e.isTransfer).length;
+      final transferB =
+          b.edges.where((e) => e.isTransfer).length;
+      final cmp = transferA.compareTo(transferB);
+      if (cmp != 0) return cmp;
+      return a.totalTimeSeconds.compareTo(b.totalTimeSeconds);
+    });
+    return results;
+  }
+
+  static const int _transferPenalty = 100000;
   static const int _infinity = 999999999;
 }
 

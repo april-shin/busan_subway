@@ -386,6 +386,125 @@ void main() {
     });
   });
 
+  group('computeDepartureTime - 역별 시간표', () {
+    test('역별 시간표가 있으면 정확한 출발시각을 반환한다', () {
+      // 김포골드라인 P05역, 시간표: [540(09:00), 545, 550, 555, 560, ...]
+      final route = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '김포골드',
+            lineName: '김포골드라인',
+            stations: const [
+              Station(id: 'P05', name: '운양', lineId: '김포골드', latitude: 0, longitude: 0),
+              Station(id: 'P06', name: '걸포북변', lineId: '김포골드', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 120,
+            direction: '김포공항 방면',
+          ),
+        ],
+        totalTimeSeconds: 120,
+        transferCount: 0,
+        stationCount: 2,
+      );
+
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P05': [330, 345, 360, 540, 545, 550, 555, 560],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+        weekdayDown: DaySchedule(
+          firstTrain: '05:26',
+          lastTrain: '23:50',
+          periods: const [
+            TimePeriod(start: '05:26', end: '23:50', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P05': [328, 343, 358, 538, 543, 548, 553, 558],
+          },
+        ),
+      );
+
+      // ID 증가(P05→P06) = 하행
+      // now=09:00(540분) → P05 하행: [328,343,358,538,543,...] → 543분(09:03)
+      final result = computeDepartureTime(
+        arrivalAsync: const AsyncLoading(),
+        routeResult: route,
+        now: fixedNow,
+        lineSchedule: schedule,
+      );
+
+      expect(result, DateTime(2026, 2, 23, 9, 3));
+    });
+
+    test('역별 시간표가 없는 역이면 배차간격으로 폴백한다', () {
+      final route = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '김포골드',
+            lineName: '김포골드라인',
+            stations: const [
+              Station(id: 'P09', name: '고촌', lineId: '김포골드', latitude: 0, longitude: 0),
+              Station(id: 'P08', name: '풍무', lineId: '김포골드', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 120,
+            direction: '양촌 방면',
+          ),
+        ],
+        totalTimeSeconds: 120,
+        transferCount: 0,
+        stationCount: 2,
+      );
+
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P05': [335, 345, 355],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      // P09는 stationDepartures에 없음 → 배차간격 6분 사용
+      // ID 감소(P09→P08) = 상행
+      final result = computeDepartureTime(
+        arrivalAsync: const AsyncLoading(),
+        routeResult: route,
+        now: fixedNow,
+        lineSchedule: schedule,
+      );
+
+      // 배차간격 기반 추정: 09:00 → 다음 출발
+      expect(result, isNotNull);
+      expect(result.isAfter(fixedNow), isTrue);
+    });
+  });
+
   group('computeSegmentDepartures', () {
     test('단일 구간이면 출발시각만 반환한다', () {
       final route = makeRouteResult(lineId: '2');
@@ -506,6 +625,89 @@ void main() {
       expect(result[0], departure);
       // 구간 종료 09:10, 환승 3분 → 09:13
       expect(result[1], DateTime(2026, 2, 23, 9, 13));
+    });
+  });
+
+  group('computeSegmentDepartures - 환승역 역별 시간표', () {
+    test('환승역에서 역별 시간표가 있으면 정확한 출발시각을 사용한다', () {
+      // 2호선 → 김포골드라인 환승
+      const route = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '2',
+            lineName: '2호선',
+            stations: [
+              Station(id: '216', name: '강남', lineId: '2', latitude: 0, longitude: 0),
+              Station(id: '222', name: '시청', lineId: '2', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 600, // 10분
+            direction: '시청 방면',
+          ),
+          RouteSegment(
+            lineId: '김포골드',
+            lineName: '김포골드라인',
+            stations: [
+              Station(id: 'P05', name: '운양', lineId: '김포골드', latitude: 0, longitude: 0),
+              Station(id: 'P06', name: '걸포북변', lineId: '김포골드', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 300,
+            direction: '김포공항 방면',
+          ),
+        ],
+        totalTimeSeconds: 1080,
+        transferCount: 1,
+        stationCount: 4,
+        transferDurations: [180], // 환승 3분
+      );
+
+      final departure = DateTime(2026, 2, 23, 9, 5);
+      // 구간 종료: 09:15, 환승: +3분 = 09:18 (558분)
+
+      final gimpoSchedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            // P05 상행: afterTransfer(558분) 이후 → 560분(09:20) 반환
+            'P05': [330, 345, 540, 550, 560, 570, 580],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+        weekdayDown: DaySchedule(
+          firstTrain: '05:26',
+          lastTrain: '23:50',
+          periods: const [
+            TimePeriod(start: '05:26', end: '23:50', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P05': [328, 343, 538, 548, 558, 568, 578],
+          },
+        ),
+      );
+
+      final result = computeSegmentDepartures(
+        routeResult: route,
+        initialDeparture: departure,
+        schedules: {'2': makeSchedule(), '김포골드': gimpoSchedule},
+        now: fixedNow,
+      );
+
+      expect(result.length, 2);
+      expect(result[0], departure);
+      // P05→P06 (ID 증가) = 하행
+      // 하행 시간표: [328,343,538,548,558,568,578]
+      // afterTransfer=09:18(558분), findNextDeparture(now=09:18) → 558 이후 = 568분(09:28)
+      expect(result[1], DateTime(2026, 2, 23, 9, 28));
     });
   });
 

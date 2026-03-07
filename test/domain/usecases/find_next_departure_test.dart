@@ -209,6 +209,131 @@ void main() {
     });
   });
 
+  group('findNextDeparture - 역별 시간표', () {
+    LineSchedule makeScheduleWithStationDepartures() {
+      return LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P01': [330, 350, 370, 390, 410],
+            'P05': [335, 345, 355, 365, 375],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+        weekdayDown: DaySchedule(
+          firstTrain: '05:26',
+          lastTrain: '23:50',
+          periods: const [
+            TimePeriod(start: '05:26', end: '23:50', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P01': [327, 340, 360, 380, 400],
+            'P05': [332, 342, 352, 362, 372],
+          },
+        ),
+      );
+    }
+
+    test('stationId 지정 시 정확한 출발시각을 반환한다', () {
+      // 05:40 (340분) → P01 상행: [330, 350, ...] → 350분(05:50)
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 23, 5, 50));
+    });
+
+    test('stationId 지정 + isDown=true이면 하행 시간표를 사용한다', () {
+      // 05:40 (340분) → P01 하행: [327, 340, 360, ...] → 360분(06:00)
+      // 340은 현재 시각과 같으므로 다음인 360 반환
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+        isDown: true,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 23, 6, 0));
+    });
+
+    test('현재 시각 이후 출발이 없으면 null을 반환한다', () {
+      // 07:00 (420분) → P01 상행: [330, 350, 370, 390, 410] → 모두 ≤420 → null
+      final now = DateTime(2026, 2, 23, 7, 0);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, isNull);
+    });
+
+    test('stationId가 시간표에 없으면 배차간격으로 폴백한다', () {
+      // P09는 stationDepartures에 없음 → 배차간격 6분 사용
+      final now = DateTime(2026, 2, 23, 10, 0);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+        stationId: 'P09',
+      );
+
+      // 배차간격 폴백: 05:30~23:55, 6분 간격
+      expect(result, isNotNull);
+    });
+
+    test('stationId가 null이면 배차간격으로 폴백한다', () {
+      final now = DateTime(2026, 2, 23, 10, 0);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+      );
+
+      // stationId null → 배차간격 사용
+      expect(result, isNotNull);
+    });
+
+    test('주말에는 stationDepartures가 없으면 배차간격을 사용한다', () {
+      // 주말 스케줄에 stationDepartures 없음
+      final now = DateTime(2026, 2, 22, 10, 0); // 일요일
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      // 주말 배차 8분 → 폴백
+      expect(result, isNotNull);
+    });
+
+    test('정확히 출발 시각이면 다음 출발을 반환한다', () {
+      // P05 상행: [335, 345, 355, 365, 375]
+      // 현재 345분(05:45) → 다음은 355분(05:55)
+      final now = DateTime(2026, 2, 23, 5, 45);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithStationDepartures(),
+        now: now,
+        stationId: 'P05',
+      );
+
+      expect(result, DateTime(2026, 2, 23, 5, 55));
+    });
+  });
+
   group('getExpectedWaitMinutes', () {
     test('러시아워 평균 대기시간은 배차간격/2이다', () {
       final now = DateTime(2026, 2, 23, 8, 0); // 월요일 08:00
@@ -241,6 +366,73 @@ void main() {
 
       // 배차 8분 → 평균 대기 4분
       expect(result, 4);
+    });
+
+    test('역별 시간표가 있으면 정확한 대기시간을 반환한다', () {
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P05': [335, 345, 355, 365, 375, 600, 610, 620],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      // 현재 05:48 (348분) → P05 상행: [335, 345, 355, ...] → 다음 355분(05:55)
+      // 대기: 355 - 348 = 7분
+      final now = DateTime(2026, 2, 23, 5, 48);
+      final result = getExpectedWaitMinutes(
+        schedule: schedule,
+        now: now,
+        stationId: 'P05',
+      );
+
+      expect(result, 7);
+    });
+
+    test('역별 시간표에서 1분 미만 대기는 1분을 반환한다', () {
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P05': [335, 336, 345],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      // 현재 05:35 (335분) → 다음 336분 → 대기 1분 미만 → 1 반환
+      final now = DateTime(2026, 2, 23, 5, 35);
+      final result = getExpectedWaitMinutes(
+        schedule: schedule,
+        now: now,
+        stationId: 'P05',
+      );
+
+      expect(result, 1);
     });
   });
 }

@@ -126,5 +126,39 @@ void main() {
       expect(restored.weekend.periods[0].headwayMinutes, 8);
       expect(restored, schedule);
     });
+
+    test('stationDepartures 포함 JSON 라운드트립이 동작한다', () {
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:00',
+          periods: const [
+            TimePeriod(start: '05:30', end: '00:00', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P01': [330, 340, 350, 360],
+            'P05': [335, 345, 355, 365],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      final jsonString = json.encode(schedule.toJson());
+      final restored = LineSchedule.fromJson(
+        json.decode(jsonString) as Map<String, dynamic>,
+      );
+
+      expect(restored.weekday.stationDepartures, isNotNull);
+      expect(restored.weekday.stationDepartures!['P01'], [330, 340, 350, 360]);
+      expect(restored.weekday.stationDepartures!['P05'], [335, 345, 355, 365]);
+      expect(restored.weekend.stationDepartures, isNull);
+    });
   });
 }
