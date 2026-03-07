@@ -285,8 +285,8 @@ void main() {
     StationData('420', '삼각지', '4', 37.5349, 126.9732, isTransfer: true, transferLines: ['4', '6']),
     StationData('421', '신용산', '4', 37.5299, 126.9693),
     StationData('422', '이촌', '4', 37.5216, 126.9692, isTransfer: true, transferLines: ['4', '경의중앙']),
-    StationData('423', '동작', '4', 37.5085, 126.9514),
-    StationData('424', '총신대입구', '4', 37.4863, 126.9817, isTransfer: true, transferLines: ['4', '7']),
+    StationData('423', '동작', '4', 37.5085, 126.9514, isTransfer: true, transferLines: ['4', '9']),
+    StationData('424', '총신대입구(이수)', '4', 37.4863, 126.9817, isTransfer: true, transferLines: ['4', '7']),
     StationData('425', '사당', '4', 37.4765, 126.9816, isTransfer: true, transferLines: ['2', '4']),
     StationData('426', '남태령', '4', 37.4646, 126.9884),
     StationData('427', '선바위', '4', 37.4520, 126.9901),
@@ -444,11 +444,11 @@ void main() {
     StationData('721', '청담', '7', 37.5198, 127.0518),
     StationData('722', '강남구청', '7', 37.5177, 127.0414, isTransfer: true, transferLines: ['7', '수인분당']),
     StationData('723', '학동', '7', 37.5146, 127.0326),
-    StationData('724', '논현', '7', 37.5119, 127.0233),
+    StationData('724', '논현', '7', 37.5119, 127.0233, isTransfer: true, transferLines: ['7', '신분당']),
     StationData('725', '반포', '7', 37.5084, 127.0138),
     StationData('726', '고속터미널', '7', 37.5048, 127.0043, isTransfer: true, transferLines: ['3', '7', '9']),
     StationData('727', '내방', '7', 37.4881, 126.9957),
-    StationData('728', '총신대입구', '7', 37.4863, 126.9817, isTransfer: true, transferLines: ['4', '7']),
+    StationData('728', '총신대입구(이수)', '7', 37.4863, 126.9817, isTransfer: true, transferLines: ['4', '7']),
     StationData('729', '남성', '7', 37.4844, 126.9729),
     StationData('730', '숭실대입구', '7', 37.4964, 126.9539),
     StationData('731', '상도', '7', 37.5019, 126.9479),
@@ -492,7 +492,7 @@ void main() {
     StationData('803', '강동구청', '8', 37.5302, 127.1254),
     StationData('804', '몽촌토성', '8', 37.5171, 127.1122),
     StationData('805', '잠실', '8', 37.5133, 127.0998, isTransfer: true, transferLines: ['2', '8']),
-    StationData('806', '석촌', '8', 37.5054, 127.1017),
+    StationData('806', '석촌', '8', 37.5054, 127.1017, isTransfer: true, transferLines: ['8', '9']),
     StationData('807', '송파', '8', 37.5014, 127.1083),
     StationData('808', '가락시장', '8', 37.4927, 127.1183, isTransfer: true, transferLines: ['3', '8']),
     StationData('809', '문정', '8', 37.4857, 127.1226),
@@ -534,9 +534,9 @@ void main() {
     StationData('922', '신반포', '9', 37.5072, 126.9967),
     StationData('923', '고속터미널', '9', 37.5048, 127.0043, isTransfer: true, transferLines: ['3', '7', '9']),
     StationData('924', '사평', '9', 37.5037, 127.0122),
-    StationData('925', '신논현', '9', 37.5045, 127.0252),
+    StationData('925', '신논현', '9', 37.5045, 127.0252, isTransfer: true, transferLines: ['9', '신분당']),
     StationData('926', '언주', '9', 37.5074, 127.0353),
-    StationData('927', '선정릉', '9', 37.5100, 127.0445),
+    StationData('927', '선정릉', '9', 37.5100, 127.0445, isTransfer: true, transferLines: ['9', '수인분당']),
     StationData('928', '삼성중앙', '9', 37.5107, 127.0590),
     StationData('929', '봉은사', '9', 37.5135, 127.0660),
     StationData('930', '종합운동장', '9', 37.5107, 127.0738, isTransfer: true, transferLines: ['2', '9']),
@@ -554,15 +554,15 @@ void main() {
   // ======= 신분당선 =======
   final shinbundang = [
     StationData('D01', '신사', 'SB', 37.5167, 127.0201, isTransfer: true, transferLines: ['3', '신분당']),
-    StationData('D02', '논현', 'SB', 37.5119, 127.0233),
-    StationData('D03', '신논현', 'SB', 37.5045, 127.0252),
+    StationData('D02', '논현', 'SB', 37.5119, 127.0233, isTransfer: true, transferLines: ['7', '신분당']),
+    StationData('D03', '신논현', 'SB', 37.5045, 127.0252, isTransfer: true, transferLines: ['9', '신분당']),
     StationData('D04', '강남', 'SB', 37.4979, 127.0276, isTransfer: true, transferLines: ['2', '신분당']),
     StationData('D05', '양재', 'SB', 37.4843, 127.0354, isTransfer: true, transferLines: ['3', '신분당']),
     StationData('D06', '양재시민의숲', 'SB', 37.4706, 127.0377),
     StationData('D07', '청계산입구', 'SB', 37.4536, 127.0533),
     StationData('D08', '판교', 'SB', 37.3949, 127.1118),
     StationData('D09', '정자', 'SB', 37.3666, 127.1083, isTransfer: true, transferLines: ['신분당', '수인분당']),
-    StationData('D10', '미금', 'SB', 37.3505, 127.1093),
+    StationData('D10', '미금', 'SB', 37.3505, 127.1093, isTransfer: true, transferLines: ['신분당', '수인분당']),
     StationData('D11', '동천', 'SB', 37.3379, 127.1069),
     StationData('D12', '수지구청', 'SB', 37.3222, 127.0975),
     StationData('D13', '성복', 'SB', 37.3116, 127.0785),
@@ -700,7 +700,7 @@ void main() {
     StationData('B03', '서울숲', '수인분당', 37.5434, 127.0447),
     StationData('B04', '압구정로데오', '수인분당', 37.5279, 127.0398),
     StationData('B05', '강남구청', '수인분당', 37.5177, 127.0414, isTransfer: true, transferLines: ['7', '수인분당']),
-    StationData('B06', '선정릉', '수인분당', 37.5100, 127.0445),
+    StationData('B06', '선정릉', '수인분당', 37.5100, 127.0445, isTransfer: true, transferLines: ['9', '수인분당']),
     StationData('B07', '선릉', '수인분당', 37.5046, 127.0490, isTransfer: true, transferLines: ['2', '수인분당']),
     StationData('B08', '한티', '수인분당', 37.4982, 127.0503),
     StationData('B09', '도곡', '수인분당', 37.4913, 127.0555, isTransfer: true, transferLines: ['3', '수인분당']),
@@ -717,11 +717,11 @@ void main() {
     StationData('B20', '서현', '수인분당', 37.3844, 127.1214),
     StationData('B21', '수내', '수인분당', 37.3771, 127.1138),
     StationData('B22', '정자', '수인분당', 37.3666, 127.1083, isTransfer: true, transferLines: ['수인분당', 'SB']),
-    StationData('B23', '미금', '수인분당', 37.3505, 127.1093),
+    StationData('B23', '미금', '수인분당', 37.3505, 127.1093, isTransfer: true, transferLines: ['신분당', '수인분당']),
     StationData('B24', '오리', '수인분당', 37.3391, 127.1082),
     StationData('B25', '죽전', '수인분당', 37.3267, 127.1065),
     StationData('B26', '보정', '수인분당', 37.3152, 127.1022),
-    StationData('B27', '구성', '수인분당', 37.2994, 127.0956),
+    StationData('B27', '구성', '수인분당', 37.2994, 127.0956, isTransfer: true, transferLines: ['수인분당', 'GTX-A']),
     StationData('B28', '신갈', '수인분당', 37.2872, 127.0841),
     StationData('B29', '기흥', '수인분당', 37.2755, 127.0768),
     StationData('B30', '상갈', '수인분당', 37.2668, 127.0644),
@@ -933,7 +933,7 @@ void main() {
     StationData('G05', '서울역', 'GTX-A', 37.5547, 126.9706, isTransfer: true, transferLines: ['1', '4', '경의중앙', '공항철도', 'GTX-A']),
     StationData('G06', '수서', 'GTX-A', 37.4873, 127.1017, isTransfer: true, transferLines: ['3', '수인분당', 'GTX-A']),
     StationData('G07', '성남', 'GTX-A', 37.4200, 127.1260),
-    StationData('G08', '구성', 'GTX-A', 37.2994, 127.0956),
+    StationData('G08', '구성', 'GTX-A', 37.2994, 127.0956, isTransfer: true, transferLines: ['수인분당', 'GTX-A']),
     StationData('G09', '동탄', 'GTX-A', 37.2000, 127.0570),
   ];
   stations.addAll(gtxA);
@@ -1285,57 +1285,97 @@ void main() {
     }
   }
 
-  // Special longer transfer times
-  transferTimesMap['강남_2_신분당'] = 300;
+  // === 실제 환승시간 오버라이드 (나무위키/공식데이터 기반) ===
+  //
+  // 기준: 개념환승 60~120초, 보통 150~240초, 막장환승 300~480초
+  // 출처: 나무위키 각 역 문서, 서울교통공사 환승역거리 소요시간 정보
+
+  // -- 1호선 환승 --
+  transferTimesMap['도봉산_1_7'] = 90; // 개념환승, 같은 층
+  transferTimesMap['석계_1_6'] = 300; // 지상2층↔지하3층, 5층 차이
+  transferTimesMap['동묘앞_1_6'] = 120; // 개념환승, 통로 짧음
+  transferTimesMap['동대문_1_4'] = 240; // 환승거리 ~150m, 2층 차이
+  transferTimesMap['시청_1_2'] = 240; // ┘형 구조, 고저차
+  transferTimesMap['서울역_1_4'] = 300;
+  transferTimesMap['서울역_1_경의중앙'] = 360;
+  transferTimesMap['서울역_1_공항철도'] = 360;
+  transferTimesMap['서울역_1_GTX-A'] = 360;
+  transferTimesMap['서울역_4_경의중앙'] = 360;
+  transferTimesMap['서울역_4_공항철도'] = 360;
+  transferTimesMap['서울역_4_GTX-A'] = 360;
+  transferTimesMap['서울역_경의중앙_공항철도'] = 240;
+  transferTimesMap['서울역_경의중앙_GTX-A'] = 360;
+  transferTimesMap['서울역_공항철도_GTX-A'] = 360;
+  transferTimesMap['용산_1_경의중앙'] = 240;
+  transferTimesMap['노량진_1_9'] = 240; // 지상↔지하2층
+  transferTimesMap['대방_1_신림'] = 480; // 막장환승, ~8분, 에스컬레이터 4~7개
+  transferTimesMap['신길_1_5'] = 240; // 지상↔지하, 긴 통로
+  transferTimesMap['신도림_1_2'] = 240; // 지상1층↔지하2층, 혼잡
+  transferTimesMap['수원_1_수인분당'] = 180;
+  transferTimesMap['인천_1_수인분당'] = 180;
+  transferTimesMap['평택지제_1_GTX-A'] = 300;
+
+  // -- 1호선 (기본값 유지) --
+  // 창동(1↔4) 180, 회기(1↔경의중앙/경춘) 180, 온수(1↔7) 180,
+  // 신설동(1↔2) 180, 신길(1↔5) → 위에서 오버라이드
+
+  // -- 2호선 환승 --
+  transferTimesMap['을지로3가_2_3'] = 120; // 개념환승급, T자, 1층 차이
+  transferTimesMap['을지로4가_2_5'] = 120; // 개념환승, 계단 2번
+  transferTimesMap['동대문역사문화공원_2_4'] = 90; // 개념환승, 계단 1개
+  transferTimesMap['동대문역사문화공원_2_5'] = 300; // 막장환승, 4호선 전체 통과
+  transferTimesMap['동대문역사문화공원_4_5'] = 120; // 개념환승급, 2층 차이
+  transferTimesMap['신당_2_6'] = 300; // 막장환승, 243m
   transferTimesMap['왕십리_2_5'] = 240;
   transferTimesMap['왕십리_2_경의중앙'] = 300;
   transferTimesMap['왕십리_2_수인분당'] = 300;
   transferTimesMap['왕십리_5_경의중앙'] = 300;
   transferTimesMap['왕십리_5_수인분당'] = 300;
-  transferTimesMap['서울역_1_4'] = 300;
-  transferTimesMap['서울역_1_경의중앙'] = 360;
-  transferTimesMap['서울역_1_공항철도'] = 360;
-  transferTimesMap['서울역_4_경의중앙'] = 360;
-  transferTimesMap['서울역_4_공항철도'] = 360;
-  transferTimesMap['서울역_경의중앙_공항철도'] = 240;
-  transferTimesMap['청량리_1_경의중앙'] = 240;
-  transferTimesMap['청량리_1_수인분당'] = 240;
-  transferTimesMap['청량리_1_경춘'] = 240;
-  transferTimesMap['청량리_경의중앙_경춘'] = 120;
-  transferTimesMap['청량리_경의중앙_수인분당'] = 180;
-  transferTimesMap['청량리_수인분당_경춘'] = 180;
-  transferTimesMap['공덕_5_6'] = 240;
-  transferTimesMap['공덕_5_경의중앙'] = 300;
-  transferTimesMap['공덕_5_공항철도'] = 300;
-  transferTimesMap['공덕_6_경의중앙'] = 240;
-  transferTimesMap['공덕_6_공항철도'] = 240;
-  transferTimesMap['종로3가_1_3'] = 180;
-  transferTimesMap['종로3가_1_5'] = 240;
-  transferTimesMap['종로3가_3_5'] = 180;
-  // 홍대입구 환승
+  transferTimesMap['왕십리_경의중앙_수인분당'] = 180;
+  transferTimesMap['건대입구_2_7'] = 240; // 지상3층↔지하2층, 5층 차이
+  transferTimesMap['잠실_2_8'] = 300; // 막장환승, ~200m, 무빙워크 없음
+  transferTimesMap['종합운동장_2_9'] = 300; // 막장환승, 긴 거리
+  transferTimesMap['선릉_2_수인분당'] = 240;
+  transferTimesMap['강남_2_SB'] = 210; // T자형, 2층 차이
+  transferTimesMap['교대_2_3'] = 240; // 한쪽 끝 치우침, 혼잡
+  transferTimesMap['신림_2_신림'] = 210; // T자 대합실 경유
+  transferTimesMap['대림_2_7'] = 300; // 막장환승, 276m, 고가↔지하
+  transferTimesMap['영등포구청_2_5'] = 240; // 3층 차이(지하2↔지하5)
+  transferTimesMap['당산_2_9'] = 300; // 막장환승, 6층 차이, 48m 에스컬레이터
+  transferTimesMap['합정_2_6'] = 90; // 개념환승, ~75m
   transferTimesMap['홍대입구_2_경의중앙'] = 300;
   transferTimesMap['홍대입구_2_공항철도'] = 300;
-  // 디지털미디어시티 환승
-  transferTimesMap['디지털미디어시티_6_경의중앙'] = 240;
-  transferTimesMap['디지털미디어시티_6_공항철도'] = 240;
-  // 이촌/옥수/용산 환승
-  transferTimesMap['이촌_4_경의중앙'] = 300;
+  transferTimesMap['홍대입구_경의중앙_공항철도'] = 180;
+  transferTimesMap['충정로_2_5'] = 300; // 막장환승, 긴 오르막 통로
+
+  // -- 3호선 환승 --
+  transferTimesMap['불광_3_6'] = 120; // 개념환승급, 에스컬레이터 2번
+  transferTimesMap['충무로_3_4'] = 60; // 개념환승, 17m, 계단 하나
+  transferTimesMap['약수_3_6'] = 210; // 올라갔다 내려감
   transferTimesMap['옥수_3_경의중앙'] = 300;
-  transferTimesMap['용산_1_경의중앙'] = 240;
-  transferTimesMap['대곡_3_경의중앙'] = 300;
-  // 상봉 환승
-  transferTimesMap['상봉_7_경의중앙'] = 240;
-  transferTimesMap['상봉_7_경춘'] = 240;
-  transferTimesMap['상봉_경의중앙_경춘'] = 120;
-  // 회기/중랑/망우 공유구간 (경의중앙↔경춘 동일 플랫폼)
-  transferTimesMap['회기_경의중앙_경춘'] = 120;
-  transferTimesMap['중랑_경의중앙_경춘'] = 120;
-  transferTimesMap['망우_경의중앙_경춘'] = 120;
-  // 수인분당선 환승
-  transferTimesMap['선릉_2_수인분당'] = 240;
-  transferTimesMap['강남구청_7_수인분당'] = 240;
+  transferTimesMap['신사_3_SB'] = 180; // 십자환승, 2층 차이
+  transferTimesMap['고속터미널_3_7'] = 210; // 좁은 통로, 1층 차이
+  transferTimesMap['고속터미널_3_9'] = 240; // 에스컬레이터, 무빙워크, 2층 차이
+  transferTimesMap['고속터미널_7_9'] = 240; // 긴 통로, 무빙워크, 1층 차이
+  transferTimesMap['도곡_3_수인분당'] = 90; // 십자 개념환승
   transferTimesMap['수서_3_수인분당'] = 240;
-  transferTimesMap['정자_SB_수인분당'] = 240;
+  transferTimesMap['수서_3_GTX-A'] = 300;
+  transferTimesMap['수서_수인분당_GTX-A'] = 300;
+  transferTimesMap['가락시장_3_8'] = 90; // 개념환승, 계단 2회
+  transferTimesMap['오금_3_5'] = 120; // 개념환승, 에스컬레이터 2번
+  transferTimesMap['대곡_3_경의중앙'] = 300;
+  transferTimesMap['대곡_3_GTX-A'] = 300;
+  transferTimesMap['대곡_경의중앙_GTX-A'] = 300;
+  transferTimesMap['연신내_3_6'] = 180;
+  transferTimesMap['연신내_3_GTX-A'] = 300;
+  transferTimesMap['연신내_6_GTX-A'] = 300;
+
+  // -- 4호선 환승 --
+  transferTimesMap['노원_4_7'] = 480; // 최악급 막장환승, 240m+, 10~12층
+  transferTimesMap['삼각지_4_6'] = 210; // 무빙워크(출퇴근), 2층 차이
+  transferTimesMap['이촌_4_경의중앙'] = 300;
+  transferTimesMap['동작_4_9'] = 360; // 막장환승, 245m, 무빙워크
+  transferTimesMap['총신대입구(이수)_4_7'] = 240; // L자 교차, 무빙워크
   // 한대앞~오이도 공유구간 (4호선↔수인분당 동일 플랫폼)
   transferTimesMap['한대앞_4_수인분당'] = 120;
   transferTimesMap['중앙_4_수인분당'] = 120;
@@ -1345,39 +1385,81 @@ void main() {
   transferTimesMap['신길온천_4_수인분당'] = 120;
   transferTimesMap['정왕_4_수인분당'] = 120;
   transferTimesMap['오이도_4_수인분당'] = 120;
-  // 공항철도 환승
+
+  // -- 5호선 환승 --
+  transferTimesMap['김포공항_5_9'] = 180;
   transferTimesMap['김포공항_5_공항철도'] = 300;
   transferTimesMap['김포공항_9_공항철도'] = 300;
-  transferTimesMap['마곡나루_9_공항철도'] = 240;
-  // GTX-A 환승
-  transferTimesMap['수서_3_GTX-A'] = 300;
-  transferTimesMap['수서_수인분당_GTX-A'] = 300;
-  transferTimesMap['서울역_1_GTX-A'] = 360;
-  transferTimesMap['서울역_4_GTX-A'] = 360;
-  transferTimesMap['서울역_경의중앙_GTX-A'] = 360;
-  transferTimesMap['서울역_공항철도_GTX-A'] = 360;
-  transferTimesMap['연신내_3_GTX-A'] = 300;
-  transferTimesMap['연신내_6_GTX-A'] = 300;
-  transferTimesMap['대곡_3_GTX-A'] = 300;
-  transferTimesMap['대곡_경의중앙_GTX-A'] = 300;
-  // 인천1호선 환승
-  transferTimesMap['계양_공항철도_인천1'] = 240;
-  // 인천2호선 환승
-  transferTimesMap['검암_공항철도_인천2'] = 240;
-  // 1호선 수원 환승
-  transferTimesMap['수원_1_수인분당'] = 180;
-  // 1호선 평택지제 환승
-  transferTimesMap['평택지제_1_GTX-A'] = 300;
-  // 7호선 부평구청 환승
+  transferTimesMap['여의도_5_9'] = 300; // 막장환승, 에스컬레이터 없음
+  transferTimesMap['공덕_5_6'] = 240;
+  transferTimesMap['공덕_5_경의중앙'] = 300;
+  transferTimesMap['공덕_5_공항철도'] = 300;
+  transferTimesMap['공덕_6_경의중앙'] = 240;
+  transferTimesMap['공덕_6_공항철도'] = 240;
+  transferTimesMap['공덕_경의중앙_공항철도'] = 180;
+  transferTimesMap['청구_5_6'] = 150; // 개념환승급, 2층 차이
+  transferTimesMap['군자_5_7'] = 240; // 환승거리 김, 에스컬레이터 미설치
+  transferTimesMap['천호_5_8'] = 90; // 개념환승, 계단 하나
+  transferTimesMap['올림픽공원_5_9'] = 120; // 개념환승, 1층 내려감
+  transferTimesMap['종로3가_1_3'] = 180;
+  transferTimesMap['종로3가_1_5'] = 240;
+  transferTimesMap['종로3가_3_5'] = 180;
+
+  // -- 6호선 환승 --
+  transferTimesMap['디지털미디어시티_6_경의중앙'] = 240;
+  transferTimesMap['디지털미디어시티_6_공항철도'] = 240;
+  transferTimesMap['디지털미디어시티_경의중앙_공항철도'] = 180;
+  transferTimesMap['효창공원앞_6_경의중앙'] = 210; // 2층 차이
+  transferTimesMap['태릉입구_6_7'] = 120; // 개념환승(1~2칸 한정)
+
+  // -- 7호선 환승 --
+  transferTimesMap['상봉_7_경의중앙'] = 240;
+  transferTimesMap['상봉_7_경춘'] = 240;
+  transferTimesMap['상봉_경의중앙_경춘'] = 120;
+  transferTimesMap['강남구청_7_수인분당'] = 240;
+  transferTimesMap['논현_7_SB'] = 60; // 개념환승, ~1분
+  transferTimesMap['보라매_7_신림'] = 150; // 1층 차이
   transferTimesMap['부평구청_7_인천1'] = 240;
-  // 8호선 별내 환승
+
+  // -- 8호선 환승 --
   transferTimesMap['별내_8_경춘'] = 180;
-  // 8호선 구리 환승
   transferTimesMap['구리_8_경의중앙'] = 240;
-  // 경강선(경춘) ↔ 수인분당 이매 환승
+  transferTimesMap['석촌_8_9'] = 120; // 개념환승, 에스컬레이터 하나
+  transferTimesMap['복정_8_수인분당'] = 60; // 최고 개념환승, 16m
+  transferTimesMap['모란_8_수인분당'] = 150; // ~100m, 1층 차이
+
+  // -- 9호선 환승 --
+  transferTimesMap['마곡나루_9_공항철도'] = 240;
+  transferTimesMap['샛강_9_신림'] = 150; // 1층 차이
+  transferTimesMap['신논현_9_SB'] = 180; // 지하2층↔지하5층
+  transferTimesMap['선정릉_9_수인분당'] = 180; // 지하3층↔지하5층
+
+  // -- 신분당선 환승 --
+  transferTimesMap['정자_SB_수인분당'] = 240;
+  transferTimesMap['미금_SB_수인분당'] = 180; // 같은 대합실
+
+  // -- 경의중앙/경춘 공유구간 (동일 플랫폼) --
+  transferTimesMap['회기_경의중앙_경춘'] = 120;
+  transferTimesMap['중랑_경의중앙_경춘'] = 120;
+  transferTimesMap['망우_경의중앙_경춘'] = 120;
+
+  // -- 청량리 환승 --
+  transferTimesMap['청량리_1_경의중앙'] = 240;
+  transferTimesMap['청량리_1_수인분당'] = 240;
+  transferTimesMap['청량리_1_경춘'] = 240;
+  transferTimesMap['청량리_경의중앙_경춘'] = 120;
+  transferTimesMap['청량리_경의중앙_수인분당'] = 180;
+  transferTimesMap['청량리_수인분당_경춘'] = 180;
+
+  // -- 인천 노선 환승 --
+  transferTimesMap['계양_공항철도_인천1'] = 240;
+  transferTimesMap['검암_공항철도_인천2'] = 240;
+
+  // -- GTX-A 환승 --
+  transferTimesMap['구성_수인분당_GTX-A'] = 360; // 막장환승
+
+  // -- 경강선(경춘) ↔ 수인분당 이매 환승 --
   transferTimesMap['이매_수인분당_경춘'] = 240;
-  // 삼동은 이매와 같은 역은 아니므로 별도 환승 연결은 transferTimes로 처리
-  // (이매↔삼동은 역명이 다르므로 transferStationsByName으로 자동 생성되지 않음)
 
   // Write output files
   final encoder = const JsonEncoder.withIndent('  ');

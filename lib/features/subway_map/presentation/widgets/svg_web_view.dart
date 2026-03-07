@@ -19,12 +19,16 @@ class SvgWebView extends ConsumerStatefulWidget {
   final List<Station> stations;
   final List<Connection> connections;
   final Set<String> routeStationIds;
+  final Set<String> highlightedLineIds;
+  final ({double x, double y})? panTarget;
 
   const SvgWebView({
     super.key,
     required this.stations,
     required this.connections,
     this.routeStationIds = const {},
+    this.highlightedLineIds = const {},
+    this.panTarget,
   });
 
   @override
@@ -61,6 +65,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
 
     if (widget.routeStationIds.isNotEmpty) {
       _highlightRoute(widget.routeStationIds);
+    }
+
+    if (widget.highlightedLineIds.isNotEmpty) {
+      _highlightLines(widget.highlightedLineIds);
     }
 
     // 기존 선택된 역 마커 복원
@@ -232,6 +240,22 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _runJs("window.showTooltip(${_jsString(json)})");
   }
 
+  void _highlightLines(Set<String> lineIds) {
+    if (!_isReady) return;
+    final json = jsonEncode(lineIds.toList());
+    _runJs("window.highlightLines(${_jsString(json)})");
+  }
+
+  void _clearLineHighlight() {
+    if (!_isReady) return;
+    _runJs("window.clearLineHighlight()");
+  }
+
+  void _panTo(double svgX, double svgY, {int durationMs = 400}) {
+    if (!_isReady) return;
+    _runJs("window.panTo($svgX, $svgY, $durationMs)");
+  }
+
   void _hideTooltip() {
     if (!_isReady) return;
     _runJs("window.hideTooltip()");
@@ -274,6 +298,20 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
       } else {
         _highlightRoute(widget.routeStationIds);
       }
+    }
+
+    // 노선 강조 변경 감지
+    if (widget.highlightedLineIds != oldWidget.highlightedLineIds) {
+      if (widget.highlightedLineIds.isEmpty) {
+        _clearLineHighlight();
+      } else {
+        _highlightLines(widget.highlightedLineIds);
+      }
+    }
+
+    // 카메라 이동 감지
+    if (widget.panTarget != oldWidget.panTarget && widget.panTarget != null) {
+      _panTo(widget.panTarget!.x, widget.panTarget!.y);
     }
   }
 

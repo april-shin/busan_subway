@@ -291,13 +291,23 @@ $svgContent
     if (getPointerCount() === 1 && isDragging) {
       var dx = e.clientX - dragStartX;
       var dy = e.clientY - dragStartY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasMoved = true;
+        if (tooltip.style.display !== 'none') {
+          tooltip.style.display = 'none';
+          sendToFlutter({ action: 'dismiss' });
+        }
+      }
       tx = dragStartTx + dx;
       ty = dragStartTy + dy;
       clampTranslation();
       applyTransform();
     } else if (getPointerCount() === 2) {
       hasMoved = true;
+      if (tooltip.style.display !== 'none') {
+        tooltip.style.display = 'none';
+        sendToFlutter({ action: 'dismiss' });
+      }
       var dist = getDist();
       var mid = getMidpoint();
       if (lastDist > 0) {
@@ -698,6 +708,163 @@ $svgContent
   window._viewArrivalInfo = function(stationName) {
     window.hideTooltip();
     sendToFlutter({ action: 'viewArrivalInfo', stationName: stationName });
+  };
+
+  // ============================================================
+  // 노선 강조/흐림 처리
+  // ============================================================
+
+  // 앱 lineId → SVG data-line 코드 매핑
+  var lineIdToDataLine = {
+    '1': ['2-1'],
+    '2': ['3-2'],
+    '3': ['4-3'],
+    '4': ['5-4'],
+    '5': ['6-5'],
+    '6': ['7-6'],
+    '7': ['8-7'],
+    '8': ['9-8'],
+    '9': ['10-9'],
+    'SB': ['S'],
+    '경의중앙': ['K'],
+    '경춘': ['G', 'KK'],
+    '공항철도': ['A'],
+    '수인분당': ['B'],
+    '신림': ['SL'],
+    '에버라인': ['E'],
+    '인천1': ['I'],
+    '인천2': ['I2'],
+    '김포골드': ['KP'],
+    '서해': ['SH'],
+    '의정부': ['U'],
+    '우이신설': ['W'],
+    'GTX-A': ['1-GA']
+  };
+
+  // 특정 노선만 강조, 나머지 흐림 처리
+  window.highlightLines = function(lineIdsJson) {
+    if (!lineColors || Object.keys(lineColors).length === 0) return;
+    var lineIds = JSON.parse(lineIdsJson);
+
+    // lineId → data-line 코드 집합 변환
+    var codeSet = {};
+    var highlightColorSet = {};
+    for (var i = 0; i < lineIds.length; i++) {
+      var codes = lineIdToDataLine[lineIds[i]];
+      if (codes) {
+        for (var j = 0; j < codes.length; j++) {
+          codeSet[codes[j]] = true;
+        }
+      }
+      // 노선 색상 수집 (circle 매칭용)
+      var color = lineColors[lineIds[i]];
+      if (color) highlightColorSet[color.toLowerCase()] = true;
+    }
+
+    // path[data-line] 요소 처리
+    var paths = document.querySelectorAll('path[data-line]');
+    for (var i = 0; i < paths.length; i++) {
+      var dl = paths[i].getAttribute('data-line');
+      paths[i].style.opacity = codeSet[dl] ? '1' : '0.12';
+      paths[i].style.transition = 'opacity 0.3s';
+    }
+
+    // text[data-line] 요소 처리
+    var texts = document.querySelectorAll('text[data-line]');
+    for (var i = 0; i < texts.length; i++) {
+      var dl = texts[i].getAttribute('data-line');
+      texts[i].style.opacity = codeSet[dl] ? '1' : '0.12';
+      texts[i].style.transition = 'opacity 0.3s';
+    }
+
+    // circle 요소 처리 (data-line 없으므로 fill 색상으로 매칭)
+    var circles = document.querySelectorAll('circle');
+    for (var i = 0; i < circles.length; i++) {
+      var c = circles[i];
+      // overlay SVG 내부의 circle은 건드리지 않음
+      if (c.closest('#overlay') || c.closest('#selection-markers') || c.closest('#route-markers')) continue;
+
+      var fill = (c.getAttribute('fill') || '').toLowerCase();
+      var stroke = (c.getAttribute('stroke') || '').toLowerCase();
+      // 환승역 (흰색 배경 + 컬러 테두리)은 항상 표시
+      if (fill === 'white' || fill === '#ffffff' || fill === '#fff') {
+        c.style.opacity = '1';
+      } else if (highlightColorSet[fill] || highlightColorSet[stroke]) {
+        c.style.opacity = '1';
+      } else {
+        c.style.opacity = '0.12';
+      }
+      c.style.transition = 'opacity 0.3s';
+    }
+  };
+
+  // 강조 해제, 모든 요소 원래 opacity로 복원
+  window.clearLineHighlight = function() {
+    var paths = document.querySelectorAll('path[data-line]');
+    for (var i = 0; i < paths.length; i++) {
+      paths[i].style.opacity = '';
+      paths[i].style.transition = 'opacity 0.3s';
+    }
+
+    var texts = document.querySelectorAll('text[data-line]');
+    for (var i = 0; i < texts.length; i++) {
+      texts[i].style.opacity = '';
+      texts[i].style.transition = 'opacity 0.3s';
+    }
+
+    var circles = document.querySelectorAll('circle');
+    for (var i = 0; i < circles.length; i++) {
+      var c = circles[i];
+      if (c.closest('#overlay') || c.closest('#selection-markers') || c.closest('#route-markers')) continue;
+      c.style.opacity = '';
+      c.style.transition = 'opacity 0.3s';
+    }
+  };
+
+  // ============================================================
+  // 부드러운 카메라 이동
+  // ============================================================
+  var panAnimId = 0;
+
+  // SVG 좌표(svgX, svgY)를 화면 중앙에 배치하도록 부드럽게 이동
+  window.panTo = function(svgX, svgY, durationMs) {
+    var dur = durationMs || 400;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+
+    var targetTx = vw / 2 - svgX * scale;
+    var targetTy = vh / 2 - svgY * scale;
+
+    // clamp 적용
+    var minTx = vw - CANVAS_W * scale - 70;
+    var minTy = vh - CANVAS_H * scale - 70;
+    targetTx = Math.min(70, Math.max(minTx, targetTx));
+    targetTy = Math.min(70, Math.max(minTy, targetTy));
+
+    var startTx = tx, startTy = ty;
+    var startTime = performance.now();
+    var animId = ++panAnimId;
+
+    function easeInOut(t) {
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
+
+    function step(now) {
+      if (animId !== panAnimId) return;
+      var elapsed = now - startTime;
+      var progress = Math.min(1, elapsed / dur);
+      var ease = easeInOut(progress);
+
+      tx = startTx + (targetTx - startTx) * ease;
+      ty = startTy + (targetTy - startTy) * ease;
+      applyTransform();
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    }
+
+    requestAnimationFrame(step);
   };
 
   // ============================================================

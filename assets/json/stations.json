@@ -2927,14 +2927,15 @@
     "longitude": 126.9514,
     "svgX": 1120.0,
     "svgY": 936.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "4"
+      "4",
+      "9"
     ]
   },
   {
     "id": "424",
-    "name": "총신대입구",
+    "name": "총신대입구(이수)",
     "lineId": "4",
     "latitude": 37.4863,
     "longitude": 126.9817,
@@ -4845,9 +4846,10 @@
     "longitude": 127.0233,
     "svgX": 1552.0,
     "svgY": 940.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "7"
+      "7",
+      "신분당"
     ]
   },
   {
@@ -4893,7 +4895,7 @@
   },
   {
     "id": "728",
-    "name": "총신대입구",
+    "name": "총신대입구(이수)",
     "lineId": "7",
     "latitude": 37.4863,
     "longitude": 126.9817,
@@ -5390,9 +5392,10 @@
     "longitude": 127.1017,
     "svgX": 2040.0,
     "svgY": 1036.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "8"
+      "8",
+      "9"
     ]
   },
   {
@@ -5884,9 +5887,10 @@
     "longitude": 127.0252,
     "svgX": 1552.0,
     "svgY": 1012.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "9"
+      "9",
+      "신분당"
     ]
   },
   {
@@ -5910,9 +5914,10 @@
     "longitude": 127.0445,
     "svgX": 1672.0,
     "svgY": 1008.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "9"
+      "9",
+      "수인분당"
     ]
   },
   {
@@ -6083,9 +6088,10 @@
     "longitude": 127.0233,
     "svgX": 1552.0,
     "svgY": 940.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "SB"
+      "7",
+      "신분당"
     ]
   },
   {
@@ -6096,9 +6102,10 @@
     "longitude": 127.0252,
     "svgX": 1552.0,
     "svgY": 1012.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "SB"
+      "9",
+      "신분당"
     ]
   },
   {
@@ -6190,9 +6197,10 @@
     "longitude": 127.1093,
     "svgX": 1700.0,
     "svgY": 1335.2,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "SB"
+      "신분당",
+      "수인분당"
     ]
   },
   {
@@ -7749,8 +7757,9 @@
     "longitude": 127.0445,
     "svgX": 1672.0,
     "svgY": 1008.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
+      "9",
       "수인분당"
     ]
   },
@@ -7978,8 +7987,9 @@
     "longitude": 127.1093,
     "svgX": 1700.0,
     "svgY": 1335.2,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
+      "신분당",
       "수인분당"
     ]
   },
@@ -8030,9 +8040,10 @@
     "longitude": 127.0956,
     "svgX": 1500.0,
     "svgY": 1368.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "수인분당"
+      "수인분당",
+      "GTX-A"
     ]
   },
   {
@@ -10227,8 +10238,9 @@
     "longitude": 127.0956,
     "svgX": 1500.0,
     "svgY": 1368.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
+      "수인분당",
       "GTX-A"
     ]
   },
