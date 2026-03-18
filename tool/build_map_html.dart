@@ -49,6 +49,12 @@ void main() {
 }
 
 String _buildHtml(String svgContent) {
+  // text 요소를 별도 레이어로 분리 (줌아웃 시 역명 크기 유지)
+  final textPattern = RegExp(r'<text[^>]*>.*?</text>', dotAll: true);
+  final textElements =
+      textPattern.allMatches(svgContent).map((m) => m.group(0)!).join('\n');
+  final mapOnlyContent = svgContent.replaceAll(textPattern, '');
+
   return '''<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -159,13 +165,21 @@ html, body {
 .action-btn .label {
   font-size: 10px;
 }
-svg text {
+#text-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+#text-layer text {
+  font-size: inherit !important;
   stroke: white;
-  stroke-width: 2px;
+  stroke-width: var(--stroke-w, 2px);
   paint-order: stroke;
   stroke-linejoin: round;
 }
-path[data-line], text[data-line], circle {
+path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   transition: opacity 0.3s;
 }
 .dimmed {
@@ -174,19 +188,21 @@ path[data-line], text[data-line], circle {
 .route-toolbar {
   position: absolute;
   display: none;
+  flex-direction: column;
   z-index: 99;
   pointer-events: auto;
   background: white;
-  border-radius: 20px;
+  border-radius: 14px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.18);
   padding: 4px;
-  gap: 0;
-  white-space: nowrap;
+  padding-top: 28px;
+  gap: 2px;
 }
 .route-toolbar-btn {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 16px;
+  display: block;
+  width: 100%;
+  padding: 7px 16px;
+  border-radius: 10px;
   border: none;
   background: none;
   font-size: 13px;
@@ -195,6 +211,8 @@ path[data-line], text[data-line], circle {
   cursor: pointer;
   pointer-events: auto;
   transition: all 0.2s;
+  white-space: nowrap;
+  text-align: center;
 }
 .route-toolbar-btn.active {
   background: #2196F3;
@@ -202,16 +220,21 @@ path[data-line], text[data-line], circle {
   font-weight: 600;
 }
 .route-toolbar-btn.close-btn {
-  padding: 6px 10px;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: auto;
+  padding: 2px 8px;
   color: #999;
   font-size: 16px;
   font-weight: bold;
+  border-radius: 10px;
 }
 </style>
 </head>
 <body>
 <div id="map-container">
-$svgContent
+$mapOnlyContent
 <svg id="overlay" xmlns="http://www.w3.org/2000/svg" width="2416" height="1560">
   <rect id="route-overlay-bg" width="2416" height="1560" fill="white" opacity="0" />
   <g id="route-lines"></g>
@@ -220,6 +243,11 @@ $svgContent
 </svg>
 <div id="tap-layer"></div>
 </div>
+
+<svg id="text-layer" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 2416 1560">
+$textElements
+</svg>
 
 <div id="tooltip" class="tooltip"></div>
 <div id="route-toolbar" class="route-toolbar"></div>
@@ -232,8 +260,10 @@ $svgContent
   // 상수
   // ============================================================
   var CANVAS_W = 2416, CANVAS_H = 1560;
-  var MIN_SCALE = 1.0, MAX_SCALE = 5.0;
+  var MIN_SCALE = 0.5, MAX_SCALE = 5.0;
   var TAP_RADIUS = 12;
+  var TEXT_BASE_FONT_SIZE = 12;
+  var TEXT_BASE_STROKE_W = 2;
   var INITIAL_SCALE = 1.0;
   var INITIAL_CENTER_X = 1040, INITIAL_CENTER_Y = 618;
 
@@ -269,12 +299,25 @@ $svgContent
   var routeLines = document.getElementById('route-lines');
   var routeMarkers = document.getElementById('route-markers');
   var selectionMarkers = document.getElementById('selection-markers');
+  var textLayer = document.getElementById('text-layer');
 
   // ============================================================
   // 변환 적용
   // ============================================================
   function applyTransform() {
     container.style.transform = 'matrix(' + scale + ',0,0,' + scale + ',' + tx + ',' + ty + ')';
+
+    // 텍스트 레이어: viewBox로 맵과 동일 영역 표시
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var x0 = -tx / scale, y0 = -ty / scale;
+    var vbW = vw / scale, vbH = vh / scale;
+    textLayer.setAttribute('viewBox', x0 + ' ' + y0 + ' ' + vbW + ' ' + vbH);
+
+    // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로)
+    var cs = Math.min(scale, 1);
+    textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
+    textLayer.style.setProperty('--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+
     updateRouteToolbarPosition();
   }
 
@@ -437,7 +480,7 @@ $svgContent
 
   function buildTextTargets() {
     svgTextTargets = [];
-    var texts = document.querySelectorAll('text[data-station]');
+    var texts = textLayer.querySelectorAll('text[data-station]');
     for (var i = 0; i < texts.length; i++) {
       var el = texts[i];
       var name = el.getAttribute('data-station').split('\\n').join('').split('\\r').join('');
@@ -872,10 +915,13 @@ $svgContent
 
     // 강조 노선에 속하는 역의 SVG 좌표 집합 (circle 매칭용)
     var highlightCoords = {};
+    var highlightCoordsList = [];
     for (var si = 0; si < stations.length; si++) {
       var s = stations[si];
       if (lineIdSet[s.lineId]) {
-        highlightCoords[parseFloat(s.svgX) + ',' + parseFloat(s.svgY)] = true;
+        var px = parseFloat(s.svgX), py = parseFloat(s.svgY);
+        highlightCoords[px + ',' + py] = true;
+        highlightCoordsList.push([px, py]);
       }
     }
 
@@ -888,6 +934,33 @@ $svgContent
         c.classList.remove('dimmed');
       } else {
         c.classList.add('dimmed');
+      }
+    }
+
+    // rect 요소 처리 (환승역 연결선, 확장 영역 매칭)
+    // 여유값 8px: 환승역 circle 반지름(r=5) + 3px 마진
+    var RECT_MATCH_MARGIN = 8;
+    var rects = document.querySelectorAll('rect:not(#route-overlay-bg)');
+    for (var i = 0; i < rects.length; i++) {
+      var r = rects[i];
+      var rx = parseFloat(r.getAttribute('x') || '0');
+      var ry = parseFloat(r.getAttribute('y') || '0');
+      var rw = parseFloat(r.getAttribute('width') || '0');
+      var rh = parseFloat(r.getAttribute('height') || '0');
+      var matched = false;
+      for (var k = 0; k < highlightCoordsList.length; k++) {
+        var sx = highlightCoordsList[k][0];
+        var sy = highlightCoordsList[k][1];
+        if (sx >= rx - RECT_MATCH_MARGIN && sx <= rx + rw + RECT_MATCH_MARGIN &&
+            sy >= ry - RECT_MATCH_MARGIN && sy <= ry + rh + RECT_MATCH_MARGIN) {
+          matched = true;
+          break;
+        }
+      }
+      if (matched) {
+        r.classList.remove('dimmed');
+      } else {
+        r.classList.add('dimmed');
       }
     }
   };
@@ -955,7 +1028,7 @@ $svgContent
     var screenX = toolbarSvgX * scale + tx;
     var screenY = toolbarSvgY * scale + ty;
 
-    var left = screenX - cachedTbW / 2;
+    var left = screenX;
     var top = screenY - cachedTbH - 18;
 
     routeToolbar.style.left = left + 'px';
@@ -967,6 +1040,14 @@ $svgContent
     toolbarSvgY = svgY;
 
     routeToolbar.textContent = '';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'route-toolbar-btn close-btn';
+    closeBtn.textContent = '\u00d7';
+    closeBtn.addEventListener('click', function() {
+      sendToFlutter({ action: 'routeToolbarSelect', mode: 'cancel' });
+    });
+    routeToolbar.appendChild(closeBtn);
 
     var modes = [{key: 'fastest', label: '최단경로'}];
     if (hasTwoRoutes) {
@@ -998,16 +1079,8 @@ $svgContent
       routeToolbar.appendChild(btn);
     }
 
-    var closeBtn = document.createElement('button');
-    closeBtn.className = 'route-toolbar-btn close-btn';
-    closeBtn.textContent = '\u00d7';
-    closeBtn.addEventListener('click', function() {
-      sendToFlutter({ action: 'routeToolbarSelect', mode: 'cancel' });
-    });
-    routeToolbar.appendChild(closeBtn);
-
     toolbarVisible = true;
-    routeToolbar.style.display = 'inline-block';
+    routeToolbar.style.display = 'flex';
     cachedTbW = routeToolbar.offsetWidth;
     cachedTbH = routeToolbar.offsetHeight;
     updateRouteToolbarPosition();

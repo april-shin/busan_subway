@@ -6,6 +6,8 @@ import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/route_result.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../../domain/usecases/search_route.dart';
+import '../../../route_search/utils/direction_resolver.dart';
+import '../providers/live_train_provider.dart';
 import '../providers/subway_map_providers.dart';
 import 'svg_web_view.dart';
 
@@ -52,6 +54,10 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _onSelectedStationsChanged(next);
     });
 
+    // 실시간 열차 데이터 watch
+    final liveTrainsAsync = ref.watch(liveTrainsProvider);
+    final liveTrains = liveTrainsAsync.valueOrNull ?? [];
+
     return SvgWebView(
       stations: widget.stations,
       connections: widget.connections,
@@ -63,6 +69,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
           _fastestRoute != null &&
           _leastTransferRoute != _fastestRoute,
       onRouteToolbarSelect: _handleRouteToolbarSelect,
+      liveTrains: liveTrains,
     );
   }
 
@@ -71,6 +78,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _fastestRoute = null;
       _leastTransferRoute = null;
       _activeRouteMode = 'fastest';
+      ref.read(activeRouteFilterProvider.notifier).state = null;
       if (_highlightedLineIds.isNotEmpty || _toolbarTarget != null) {
         setState(() {
           _highlightedLineIds = const {};
@@ -108,6 +116,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _activeRouteMode = 'fastest';
 
       final lineIds = _getLineIdsForMode('fastest');
+      _updateRouteFilter('fastest');
 
       setState(() {
         _highlightedLineIds = lineIds;
@@ -124,12 +133,36 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       if (!mounted || revision != _computeRevision) return;
       _fastestRoute = null;
       _leastTransferRoute = null;
+      ref.read(activeRouteFilterProvider.notifier).state = null;
       setState(() {
         _highlightedLineIds = const {};
         _panTarget = null;
         _toolbarTarget = null;
       });
     }
+  }
+
+  /// 활성 경로의 첫 번째 유효 세그먼트 방향 정보를 프로바이더에 설정한다.
+  void _updateRouteFilter(String mode) {
+    final route =
+        mode == 'leastTransfer' ? _leastTransferRoute : _fastestRoute;
+    if (route == null || route.segments.isEmpty) {
+      ref.read(activeRouteFilterProvider.notifier).state = null;
+      return;
+    }
+    // 역이 2개 이상인 첫 번째 세그먼트를 찾는다 (방향 판별에 최소 2역 필요)
+    final validSeg = route.segments.cast<RouteSegment?>().firstWhere(
+          (seg) => seg!.stations.length >= 2,
+          orElse: () => null,
+        );
+    if (validSeg == null) {
+      ref.read(activeRouteFilterProvider.notifier).state = null;
+      return;
+    }
+    ref.read(activeRouteFilterProvider.notifier).state = ActiveRouteFilter(
+      lineId: validSeg.lineId,
+      isDown: isDownDirection(validSeg),
+    );
   }
 
   Set<String> _getLineIdsForMode(String mode) {
@@ -159,6 +192,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
 
     if (mode == _activeRouteMode) return;
     _activeRouteMode = mode;
+    _updateRouteFilter(mode);
     setState(() {
       _highlightedLineIds = _getLineIdsForMode(mode);
     });

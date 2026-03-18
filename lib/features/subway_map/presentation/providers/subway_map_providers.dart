@@ -69,3 +69,27 @@ final selectedStationsProvider =
 );
 
 final tappedStationProvider = StateProvider<Station?>((ref) => null);
+
+/// 현재 활성 경로의 출발역 세그먼트 필터 정보.
+///
+/// 열차 방향 필터링에 사용된다. lineId와 isDown(하행/외선 여부)으로
+/// 출발역에 도착하는 올바른 방향의 열차만 표시한다.
+class ActiveRouteFilter {
+  final String lineId;
+  final bool isDown;
+
+  const ActiveRouteFilter({required this.lineId, required this.isDown});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ActiveRouteFilter &&
+          lineId == other.lineId &&
+          isDown == other.isDown;
+
+  @override
+  int get hashCode => Object.hash(lineId, isDown);
+}
+
+final activeRouteFilterProvider =
+    StateProvider<ActiveRouteFilter?>((ref) => null);

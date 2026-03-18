@@ -9,6 +9,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/constants/line_colors.dart';
 import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/station.dart';
+import '../providers/live_train_provider.dart';
 import '../providers/subway_map_providers.dart';
 
 /// WebView 기반 지하철 노선도 뷰어.
@@ -24,6 +25,7 @@ class SvgWebView extends ConsumerStatefulWidget {
   final ({double x, double y})? routeToolbarTarget;
   final bool hasTwoRoutes;
   final void Function(String mode)? onRouteToolbarSelect;
+  final List<LiveTrain> liveTrains;
 
   const SvgWebView({
     super.key,
@@ -35,6 +37,7 @@ class SvgWebView extends ConsumerStatefulWidget {
     this.routeToolbarTarget,
     this.hasTwoRoutes = false,
     this.onRouteToolbarSelect,
+    this.liveTrains = const [],
   });
 
   @override
@@ -92,6 +95,11 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     }
     if (selected.arrival != null) {
       _setMarker('arrival', selected.arrival!.svgX, selected.arrival!.svgY);
+    }
+
+    // 초기 열차 데이터 표시
+    if (widget.liveTrains.isNotEmpty) {
+      _showTrains(widget.liveTrains);
     }
   }
 
@@ -286,6 +294,17 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _runJs("window.hideRouteToolbar()");
   }
 
+  void _showTrains(List<LiveTrain> trains) {
+    if (!_isReady) return;
+    final json = jsonEncode([for (final t in trains) t.toJson()]);
+    _runJs("window.showTrains(${_jsString(json)})");
+  }
+
+  void _clearTrains() {
+    if (!_isReady) return;
+    _runJs("window.clearTrains()");
+  }
+
   void _hideTooltip() {
     if (!_isReady) return;
     _runJs("window.hideTooltip()");
@@ -355,6 +374,15 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
           widget.routeToolbarTarget!.y,
           widget.hasTwoRoutes,
         );
+      }
+    }
+
+    // 실시간 열차 데이터 변경 감지
+    if (!identical(widget.liveTrains, oldWidget.liveTrains)) {
+      if (widget.liveTrains.isEmpty) {
+        _clearTrains();
+      } else {
+        _showTrains(widget.liveTrains);
       }
     }
   }
