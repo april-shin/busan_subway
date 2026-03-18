@@ -91,6 +91,98 @@ void main() {
     });
   });
 
+  group('isDownDirection - 4호선', () {
+    test('본선 내부: ID 증가 = 하행(오이도 방향)', () {
+      // 당고개(402) → 창동(406)
+      final segment = makeSegment(lineId: '4', stationIds: ['402', '406']);
+      expect(isDownDirection(segment), isTrue);
+    });
+
+    test('본선 내부: ID 감소 = 상행(진접 방향)', () {
+      // 창동(406) → 당고개(402)
+      final segment = makeSegment(lineId: '4', stationIds: ['406', '402']);
+      expect(isDownDirection(segment), isFalse);
+    });
+
+    test('진접선 내부: ID 증가 = 하행(남쪽, 오이도 방향)', () {
+      // 진접(449) → 오남(450): 남쪽 이동 = 하행
+      final segment = makeSegment(lineId: '4', stationIds: ['449', '450']);
+      expect(isDownDirection(segment), isTrue);
+    });
+
+    test('진접선 내부: ID 감소 = 상행(북쪽, 진접 방향)', () {
+      // 오남(450) → 진접(449): 북쪽 이동 = 상행
+      final segment = makeSegment(lineId: '4', stationIds: ['450', '449']);
+      expect(isDownDirection(segment), isFalse);
+    });
+
+    test('진접선 → 본선: 하행(남쪽, 오이도 방향)', () {
+      // 불암산(452) → 상계(402): ID 감소하지만 남쪽 이동 = 하행
+      final segment = makeSegment(lineId: '4', stationIds: ['452', '402']);
+      expect(isDownDirection(segment), isTrue);
+    });
+
+    test('본선 → 진접선: 상행(북쪽, 진접 방향)', () {
+      // 상계(402) → 불암산(452): ID 증가하지만 북쪽 이동 = 상행
+      final segment = makeSegment(lineId: '4', stationIds: ['402', '452']);
+      expect(isDownDirection(segment), isFalse);
+    });
+  });
+
+  group('findFirstDirectionalSegment', () {
+    test('역 2개 이상인 첫 세그먼트를 반환한다', () {
+      final route = RouteResult(
+        segments: [
+          makeSegment(lineId: '2', stationIds: ['201', '202']),
+        ],
+        totalTimeSeconds: 120,
+        transferCount: 0,
+        stationCount: 2,
+      );
+      final result = findFirstDirectionalSegment(route);
+      expect(result, isNotNull);
+      expect(result!.lineId, '2');
+    });
+
+    test('첫 세그먼트가 1역이면 두 번째 세그먼트를 반환한다', () {
+      final route = RouteResult(
+        segments: [
+          makeSegment(lineId: '2', stationIds: ['201']),
+          makeSegment(lineId: '3', stationIds: ['330', '331']),
+        ],
+        totalTimeSeconds: 240,
+        transferCount: 1,
+        stationCount: 3,
+      );
+      final result = findFirstDirectionalSegment(route);
+      expect(result, isNotNull);
+      expect(result!.lineId, '3');
+    });
+
+    test('모든 세그먼트가 1역이면 null을 반환한다', () {
+      final route = RouteResult(
+        segments: [
+          makeSegment(lineId: '2', stationIds: ['201']),
+          makeSegment(lineId: '3', stationIds: ['330']),
+        ],
+        totalTimeSeconds: 240,
+        transferCount: 1,
+        stationCount: 2,
+      );
+      expect(findFirstDirectionalSegment(route), isNull);
+    });
+
+    test('segments가 비어있으면 null을 반환한다', () {
+      const route = RouteResult(
+        segments: [],
+        totalTimeSeconds: 0,
+        transferCount: 0,
+        stationCount: 0,
+      );
+      expect(findFirstDirectionalSegment(route), isNull);
+    });
+  });
+
   group('isDownDirectionString', () {
     test('"하행"은 true', () {
       expect(isDownDirectionString('하행'), isTrue);

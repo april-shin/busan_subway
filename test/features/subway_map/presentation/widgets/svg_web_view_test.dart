@@ -4,15 +4,6 @@ import 'package:seoul_subway/features/subway_map/presentation/widgets/subway_map
 
 void main() {
   group('SubwayMapViewer', () {
-    test('routeStationIds 기본값은 빈 Set이다', () {
-      const viewer = SubwayMapViewer(
-        stations: [],
-        connections: [],
-      );
-
-      expect(viewer.routeStationIds, isEmpty);
-    });
-
     test('stations와 connections를 올바르게 전달받는다', () {
       const stations = [
         Station(
@@ -29,12 +20,10 @@ void main() {
       const viewer = SubwayMapViewer(
         stations: stations,
         connections: [],
-        routeStationIds: {'201'},
       );
 
       expect(viewer.stations, hasLength(1));
       expect(viewer.stations.first.name, '시청');
-      expect(viewer.routeStationIds, contains('201'));
     });
   });
 }

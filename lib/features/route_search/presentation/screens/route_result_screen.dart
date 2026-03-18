@@ -111,7 +111,6 @@ class _RouteView extends StatelessWidget {
   Widget build(BuildContext context) {
     final arrivalAsync = ref.watch(arrivalInfoProvider(departureStationName));
     final schedulesAsync = ref.watch(lineSchedulesProvider);
-    final totalMinutes = routeResult.totalTimeSeconds ~/ 60;
     final isLoading =
         arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
 
@@ -145,13 +144,28 @@ class _RouteView extends StatelessWidget {
       now: now,
     );
 
+    // 실제 도착시간: 마지막 세그먼트 출발 + 마지막 세그먼트 소요시간
+    final DateTime arrivalTime;
+    final int totalMinutes;
+    if (routeResult.segments.isEmpty) {
+      arrivalTime = departureTime;
+      totalMinutes = 0;
+    } else {
+      final lastSegment = routeResult.segments.last;
+      arrivalTime = segmentDepartures.last
+          .add(Duration(seconds: lastSegment.durationSeconds));
+      totalMinutes = arrivalTime.difference(departureTime).inMinutes;
+    }
+
     return Column(
       children: [
         _RouteSummaryHeader(
-          routeResult: routeResult,
           totalMinutes: totalMinutes,
           departureTime: departureTime,
+          arrivalTime: arrivalTime,
           isLoading: isLoading,
+          transferCount: routeResult.transferCount,
+          stationCount: routeResult.stationCount,
         ),
         const Divider(height: 1),
         Expanded(
@@ -171,24 +185,24 @@ String _formatTime(DateTime time) {
 }
 
 class _RouteSummaryHeader extends StatelessWidget {
-  final RouteResult routeResult;
   final int totalMinutes;
   final DateTime departureTime;
+  final DateTime arrivalTime;
   final bool isLoading;
+  final int transferCount;
+  final int stationCount;
 
   const _RouteSummaryHeader({
-    required this.routeResult,
     required this.totalMinutes,
     required this.departureTime,
+    required this.arrivalTime,
     required this.isLoading,
+    required this.transferCount,
+    required this.stationCount,
   });
 
   @override
   Widget build(BuildContext context) {
-    final arrivalTime = departureTime.add(
-      Duration(seconds: routeResult.totalTimeSeconds),
-    );
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       color: Theme.of(context).colorScheme.surface,
@@ -242,12 +256,12 @@ class _RouteSummaryHeader extends StatelessWidget {
               const _ChipDivider(),
               _InfoChip(
                 icon: Icons.swap_horiz,
-                text: '환승 ${routeResult.transferCount}회',
+                text: '환승 $transferCount회',
               ),
               const _ChipDivider(),
               _InfoChip(
                 icon: Icons.train,
-                text: '${routeResult.stationCount}개역',
+                text: '$stationCount개역',
               ),
             ],
           ),

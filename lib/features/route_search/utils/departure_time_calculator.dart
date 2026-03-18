@@ -20,13 +20,16 @@ DateTime computeDepartureTime({
 }) {
   if (routeResult.segments.isEmpty) return now;
 
-  final firstSegment = routeResult.segments.first;
-  final isDown = isDownDirection(firstSegment);
+  // 방향 판별이 가능한 세그먼트를 찾는다 (역 2개 이상)
+  final validSeg = findFirstDirectionalSegment(routeResult);
+  if (validSeg == null) return now;
+
+  final isDown = isDownDirection(validSeg);
 
   // 1순위: 실시간 도착정보로 보정 (방향 필터 적용)
   final realtimeDeparture = _getRealtimeDeparture(
     arrivalAsync: arrivalAsync,
-    lineId: firstSegment.lineId,
+    lineId: validSeg.lineId,
     isDown: isDown,
     now: now,
   );
@@ -38,7 +41,7 @@ DateTime computeDepartureTime({
       schedule: lineSchedule,
       now: now,
       isDown: isDown,
-      stationId: firstSegment.stations.first.id,
+      stationId: validSeg.stations.first.id,
     );
     if (timetableDeparture != null) return timetableDeparture;
   }
@@ -80,9 +83,11 @@ List<DateTime> computeSegmentDepartures({
       final afterTransfer =
           segmentEnd.add(Duration(seconds: transferSeconds));
 
-      // 다음 구간 정보
+      // 다음 구간 정보 (1역 세그먼트이면 방향 판별 불가 → false 폴백)
       final nextSegment = routeResult.segments[i + 1];
-      final nextIsDown = isDownDirection(nextSegment);
+      final nextIsDown = nextSegment.stations.length >= 2
+          ? isDownDirection(nextSegment)
+          : false;
       final transferStationName = nextSegment.stations.first.name;
 
       // 1순위: 환승역 실시간 도착정보 (afterTransfer 이후 열차만 유효)

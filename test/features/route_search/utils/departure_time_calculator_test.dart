@@ -23,6 +23,13 @@ void main() {
               latitude: 37.49,
               longitude: 127.02,
             ),
+            Station(
+              id: '202',
+              name: '교대',
+              lineId: '2',
+              latitude: 37.49,
+              longitude: 127.01,
+            ),
           ],
           durationSeconds: 120,
           direction: '강남 방면',
@@ -30,7 +37,7 @@ void main() {
       ],
       totalTimeSeconds: 120,
       transferCount: 0,
-      stationCount: 1,
+      stationCount: 2,
     );
   }
 
@@ -223,13 +230,32 @@ void main() {
     });
 
     test('subwayId 매핑에 없는 값은 그대로 lineId와 비교한다', () {
+      // 일반 노선: ID 감소 = 상행 (makeArrival의 direction '상행'과 일치)
+      final route = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: 'SB',
+            lineName: '신분당선',
+            stations: const [
+              Station(id: 'D10', name: '판교', lineId: 'SB', latitude: 0, longitude: 0),
+              Station(id: 'D01', name: '강남', lineId: 'SB', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 120,
+            direction: '강남 방면',
+          ),
+        ],
+        totalTimeSeconds: 120,
+        transferCount: 0,
+        stationCount: 2,
+      );
+
       final arrivals = [
         makeArrival(subwayId: 'SB', arrivalSeconds: 90),
       ];
 
       final result = computeDepartureTime(
         arrivalAsync: AsyncData(arrivals),
-        routeResult: makeRouteResult(lineId: 'SB'),
+        routeResult: route,
         now: fixedNow,
       );
 

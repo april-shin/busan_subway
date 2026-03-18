@@ -19,13 +19,11 @@ import 'svg_web_view.dart';
 class SubwayMapViewer extends ConsumerStatefulWidget {
   final List<Station> stations;
   final List<Connection> connections;
-  final Set<String> routeStationIds;
 
   const SubwayMapViewer({
     super.key,
     required this.stations,
     required this.connections,
-    this.routeStationIds = const {},
   });
 
   @override
@@ -34,6 +32,7 @@ class SubwayMapViewer extends ConsumerStatefulWidget {
 
 class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
   Set<String> _highlightedLineIds = const {};
+  Set<String> _routeStationIds = const {};
   ({double x, double y})? _panTarget;
   ({double x, double y})? _toolbarTarget;
   RouteResult? _fastestRoute;
@@ -61,7 +60,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     return SvgWebView(
       stations: widget.stations,
       connections: widget.connections,
-      routeStationIds: widget.routeStationIds,
+      routeStationIds: _routeStationIds,
       highlightedLineIds: _highlightedLineIds,
       panTarget: _panTarget,
       routeToolbarTarget: _toolbarTarget,
@@ -79,9 +78,12 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _leastTransferRoute = null;
       _activeRouteMode = 'fastest';
       ref.read(activeRouteFilterProvider.notifier).state = null;
-      if (_highlightedLineIds.isNotEmpty || _toolbarTarget != null) {
+      if (_highlightedLineIds.isNotEmpty ||
+          _routeStationIds.isNotEmpty ||
+          _toolbarTarget != null) {
         setState(() {
           _highlightedLineIds = const {};
+          _routeStationIds = const {};
           _panTarget = null;
           _toolbarTarget = null;
         });
@@ -115,11 +117,12 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _leastTransferRoute = leastTransfer;
       _activeRouteMode = 'fastest';
 
-      final lineIds = _getLineIdsForMode('fastest');
-      _updateRouteFilter('fastest');
+      final lineIds = _getLineIdsForMode(_activeRouteMode);
+      _updateRouteFilter(_activeRouteMode);
 
       setState(() {
         _highlightedLineIds = lineIds;
+        _routeStationIds = _getRouteStationIdsForMode(_activeRouteMode);
         _panTarget = (
           x: selected.departure!.svgX,
           y: selected.departure!.svgY,
@@ -136,6 +139,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       ref.read(activeRouteFilterProvider.notifier).state = null;
       setState(() {
         _highlightedLineIds = const {};
+        _routeStationIds = const {};
         _panTarget = null;
         _toolbarTarget = null;
       });
@@ -144,17 +148,12 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
 
   /// 활성 경로의 첫 번째 유효 세그먼트 방향 정보를 프로바이더에 설정한다.
   void _updateRouteFilter(String mode) {
-    final route =
-        mode == 'leastTransfer' ? _leastTransferRoute : _fastestRoute;
+    final route = _routeForMode(mode);
     if (route == null || route.segments.isEmpty) {
       ref.read(activeRouteFilterProvider.notifier).state = null;
       return;
     }
-    // 역이 2개 이상인 첫 번째 세그먼트를 찾는다 (방향 판별에 최소 2역 필요)
-    final validSeg = route.segments.cast<RouteSegment?>().firstWhere(
-          (seg) => seg!.stations.length >= 2,
-          orElse: () => null,
-        );
+    final validSeg = findFirstDirectionalSegment(route);
     if (validSeg == null) {
       ref.read(activeRouteFilterProvider.notifier).state = null;
       return;
@@ -165,11 +164,22 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     );
   }
 
+  RouteResult? _routeForMode(String mode) =>
+      mode == 'leastTransfer' ? _leastTransferRoute : _fastestRoute;
+
   Set<String> _getLineIdsForMode(String mode) {
-    final route =
-        mode == 'leastTransfer' ? _leastTransferRoute : _fastestRoute;
+    final route = _routeForMode(mode);
     if (route == null) return const {};
     return {for (final seg in route.segments) seg.lineId};
+  }
+
+  Set<String> _getRouteStationIdsForMode(String mode) {
+    final route = _routeForMode(mode);
+    if (route == null) return const {};
+    return {
+      for (final seg in route.segments)
+        for (final station in seg.stations) station.id,
+    };
   }
 
   void _handleRouteToolbarSelect(String mode) {
@@ -195,6 +205,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     _updateRouteFilter(mode);
     setState(() {
       _highlightedLineIds = _getLineIdsForMode(mode);
+      _routeStationIds = _getRouteStationIdsForMode(mode);
     });
   }
 }

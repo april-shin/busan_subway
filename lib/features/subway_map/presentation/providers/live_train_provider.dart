@@ -27,6 +27,8 @@ class LiveTrain {
   final double fromSvgX;
   final double fromSvgY;
   final List<({double x, double y})> pathToTarget;
+  final List<int> segmentDurations;
+  final double initialProgress;
 
   const LiveTrain({
     required this.trainNo,
@@ -39,6 +41,8 @@ class LiveTrain {
     required this.fromSvgX,
     required this.fromSvgY,
     required this.pathToTarget,
+    this.segmentDurations = const [],
+    this.initialProgress = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -54,6 +58,8 @@ class LiveTrain {
         'pathToTarget': [
           for (final p in pathToTarget) {'x': p.x, 'y': p.y},
         ],
+        'segmentDurations': segmentDurations,
+        'initialProgress': initialProgress,
       };
 
   @override
@@ -70,10 +76,16 @@ class LiveTrain {
       Object.hash(trainNo, lineId, arrivalSeconds, currentStation);
 }
 
-/// 같은 노선 내에서 [fromStationName] → [toStationName] 까지의 경유 역 SVG 좌표 리스트 반환.
+/// findPathOnLine의 반환 타입: 경유 좌표 + 세그먼트별 소요시간
+typedef PathWithDurations = ({
+  List<({double x, double y})> points,
+  List<int> durations,
+});
+
+/// 같은 노선 내에서 [fromStationName] → [toStationName] 까지의 경유 역 SVG 좌표 및 세그먼트별 소요시간 반환.
 ///
-/// 경로를 찾을 수 없으면 빈 리스트를 반환한다.
-List<({double x, double y})> findPathOnLine({
+/// 경로를 찾을 수 없으면 null을 반환한다.
+PathWithDurations? findPathOnLine({
   required String fromStationName,
   required String toStationName,
   required String lineId,
@@ -92,7 +104,7 @@ List<({double x, double y})> findPathOnLine({
 
   final fromIds = nameToIds[fromStationName];
   final toIds = nameToIds[toStationName];
-  if (fromIds == null || toIds == null) return [];
+  if (fromIds == null || toIds == null) return null;
 
   // 해당 노선의 비환승 연결로 인접 리스트 구축
   final adjacency = <String, List<String>>{};
@@ -102,21 +114,40 @@ List<({double x, double y})> findPathOnLine({
     adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
   }
 
+  // Connection lookup 맵 (양방향): "fromId_toId" → travelTimeSeconds
+  final travelTimeMap = <String, int>{};
+  for (final c in connections) {
+    if (c.lineId != lineId || c.isTransfer) continue;
+    travelTimeMap['${c.fromStationId}_${c.toStationId}'] =
+        c.travelTimeSeconds;
+    travelTimeMap['${c.toStationId}_${c.fromStationId}'] =
+        c.travelTimeSeconds;
+  }
+
   // BFS: fromId → toId
   for (final fromId in fromIds) {
     for (final toId in toIds) {
       final path = _bfs(fromId, toId, adjacency);
       if (path != null) {
-        return [
-          for (final id in path)
-            if (idToStation[id] case final s?)
-              (x: s.svgX, y: s.svgY),
-        ];
+        final points = <({double x, double y})>[];
+        final durations = <int>[];
+
+        for (var i = 0; i < path.length; i++) {
+          if (idToStation[path[i]] case final s?) {
+            points.add((x: s.svgX, y: s.svgY));
+          }
+          if (i > 0) {
+            final key = '${path[i - 1]}_${path[i]}';
+            durations.add(travelTimeMap[key] ?? 120);
+          }
+        }
+
+        return (points: points, durations: durations);
       }
     }
   }
 
-  return [];
+  return null;
 }
 
 List<String>? _bfs(
@@ -151,6 +182,29 @@ List<String>? _bfs(
   }
 
   return null;
+}
+
+/// arvlCd/positionStatus 기반 첫 세그먼트 내 초기 진행률 (0.0~1.0)
+double _calculateInitialProgress(int? arrivalCode, String positionStatus) {
+  if (arrivalCode != null && arrivalCode != 99) {
+    return switch (arrivalCode) {
+      1 => 0.0, // 도착: 역에 정차 중
+      2 => 0.15, // 출발: 역을 막 떠남
+      0 => 0.85, // 진입: 거의 도착
+      3 => 0.15, // 전역출발: 이전역 출발
+      4 => 0.85, // 전역진입: 이전역 거의 도착
+      5 => 0.0, // 전역도착: 이전역 도착
+      _ => 0.0,
+    };
+  }
+
+  // arvlCd가 null/99일 때 positionStatus 문자열로 폴백
+  return switch (positionStatus) {
+    '출발' => 0.15,
+    '도착' => 0.0,
+    '진입' => 0.85,
+    _ => 0.0,
+  };
 }
 
 /// 네트워크 오류 시 마지막 성공 데이터를 유지하기 위한 캐시
@@ -232,8 +286,8 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     // 도착 예상 초
     final arrivalSecs = arrival.arrivalSeconds ?? 0;
 
-    // 현재역 → 출발역 경유 좌표 계산
-    final path = findPathOnLine(
+    // 현재역 → 출발역 경유 좌표 및 세그먼트 소요시간 계산
+    final pathResult = findPathOnLine(
       fromStationName: currentName,
       toStationName: departureStationName,
       lineId: lineId,
@@ -242,10 +296,15 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     );
 
     // 경로를 찾을 수 없으면 건너뜀
-    if (path.isEmpty) continue;
+    if (pathResult == null || pathResult.points.isEmpty) continue;
 
     // trainNo가 비어있으면 고유 식별 불가 → 건너뜀
     if (arrival.trainNo.isEmpty) continue;
+
+    final initialProgress = _calculateInitialProgress(
+      arrival.arrivalCode,
+      arrival.positionStatus,
+    );
 
     result.add(LiveTrain(
       trainNo: arrival.trainNo,
@@ -257,7 +316,9 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       currentStation: currentName,
       fromSvgX: currentStation.svgX,
       fromSvgY: currentStation.svgY,
-      pathToTarget: path,
+      pathToTarget: pathResult.points,
+      segmentDurations: pathResult.durations,
+      initialProgress: initialProgress,
     ));
   }
 
@@ -301,6 +362,8 @@ List<LiveTrain> _applyOverlapOffset(List<LiveTrain> trains) {
           fromSvgX: t.fromSvgX,
           fromSvgY: t.fromSvgY + offset,
           pathToTarget: t.pathToTarget,
+          segmentDurations: t.segmentDurations,
+          initialProgress: t.initialProgress,
         );
       }(),
   ];

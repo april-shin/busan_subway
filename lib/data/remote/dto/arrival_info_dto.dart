@@ -21,6 +21,17 @@ String _extractStationName(String? raw) {
   return raw;
 }
 
+/// arvlMsg3에서 위치 상태만 추출 ("강남 출발" → "출발")
+String _extractPositionStatus(String? raw) {
+  if (raw == null || raw.isEmpty) return '';
+  final parts = raw.split(' ');
+  if (parts.length >= 2) {
+    const suffixes = {'출발', '도착', '진입', '전역'};
+    if (suffixes.contains(parts.last)) return parts.last;
+  }
+  return '';
+}
+
 @freezed
 class ArrivalInfoDto with _$ArrivalInfoDto {
   const ArrivalInfoDto._();
@@ -60,6 +71,8 @@ class ArrivalInfoDto with _$ArrivalInfoDto {
           : DateTime.now(),
       currentStationName: _extractStationName(arvlMsg3),
       trainNo: btrainNo ?? ordkey ?? '',
+      positionStatus: _extractPositionStatus(arvlMsg3),
+      arrivalCode: arvlCd != null ? int.tryParse(arvlCd!) : null,
     );
   }
 }

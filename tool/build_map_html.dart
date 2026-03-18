@@ -10,6 +10,7 @@
 /// 사용법: dart run tool/build_map_html.dart
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 void main() {
@@ -34,7 +35,16 @@ void main() {
     '',
   );
 
-  final html = _buildHtml(svgContent);
+  // 열차 이미지 Base64 인코딩
+  const trainImagePath = 'assets/images/train.webp';
+  final trainImageFile = File(trainImagePath);
+  if (!trainImageFile.existsSync()) {
+    stderr.writeln('열차 이미지 없음: $trainImagePath');
+    exit(1);
+  }
+  final trainImageBase64 = base64Encode(trainImageFile.readAsBytesSync());
+
+  final html = _buildHtml(svgContent, trainImageBase64);
 
   final htmlFile = File(htmlPath);
   htmlFile.parent.createSync(recursive: true);
@@ -48,7 +58,7 @@ void main() {
   stdout.writeln('  HTML: ${(htmlSize / 1024).toStringAsFixed(1)}KB');
 }
 
-String _buildHtml(String svgContent) {
+String _buildHtml(String svgContent, String trainImageBase64) {
   // text 요소를 별도 레이어로 분리 (줌아웃 시 역명 크기 유지)
   final textPattern = RegExp(r'<text[^>]*>.*?</text>', dotAll: true);
   final textElements =
@@ -240,6 +250,7 @@ $mapOnlyContent
   <g id="route-lines"></g>
   <g id="route-markers"></g>
   <g id="selection-markers"></g>
+  <g id="live-trains"></g>
 </svg>
 <div id="tap-layer"></div>
 </div>
@@ -266,6 +277,7 @@ $textElements
   var TEXT_BASE_STROKE_W = 2;
   var INITIAL_SCALE = 1.0;
   var INITIAL_CENTER_X = 1040, INITIAL_CENTER_Y = 618;
+  var TRAIN_IMG = 'data:image/webp;base64,$trainImageBase64';
 
   // ============================================================
   // 상태
@@ -299,6 +311,9 @@ $textElements
   var routeLines = document.getElementById('route-lines');
   var routeMarkers = document.getElementById('route-markers');
   var selectionMarkers = document.getElementById('selection-markers');
+  var liveTrainsGroup = document.getElementById('live-trains');
+  var activeTrains = {};
+  var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
 
   // ============================================================
@@ -1017,6 +1032,276 @@ $textElements
     }
 
     requestAnimationFrame(step);
+  };
+
+  // ============================================================
+  // 실시간 열차 표시 (애니메이션)
+  // ============================================================
+
+  function createTrainIcon(train, color) {
+    var g = document.createElementNS(SVG_NS, 'g');
+
+    var img = document.createElementNS(SVG_NS, 'image');
+    img.setAttribute('href', TRAIN_IMG);
+    img.setAttribute('x', '-14');
+    img.setAttribute('y', '-5');
+    img.setAttribute('width', '28');
+    img.setAttribute('height', '10');
+    g.appendChild(img);
+
+    var labelBg = document.createElementNS(SVG_NS, 'rect');
+    labelBg.setAttribute('x', '-14');
+    labelBg.setAttribute('y', '-16');
+    labelBg.setAttribute('width', '28');
+    labelBg.setAttribute('height', '9');
+    labelBg.setAttribute('rx', '2');
+    labelBg.setAttribute('fill', color);
+    labelBg.setAttribute('opacity', '0.85');
+    g.appendChild(labelBg);
+
+    var label = document.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', '0');
+    label.setAttribute('y', '-9');
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('font-size', '6');
+    label.setAttribute('fill', '#fff');
+    label.setAttribute('font-family', 'sans-serif');
+    label.textContent = train.destination || '';
+    g.appendChild(label);
+
+    // initialProgress 반영: 첫 세그먼트 내 보간 위치에 배치
+    var startX = train.fromSvgX;
+    var startY = train.fromSvgY;
+    var path = train.pathToTarget;
+    if (train.initialProgress > 0 && path && path.length >= 2) {
+      var p = train.initialProgress;
+      startX = path[0].x + (path[1].x - path[0].x) * p;
+      startY = path[0].y + (path[1].y - path[0].y) * p;
+    }
+
+    g.setAttribute('transform', 'translate(' + startX + ',' + startY + ')');
+    return g;
+  }
+
+  function startTrainAnimation(trainState, trainData) {
+    var path = trainData.pathToTarget;
+    if (!path || path.length < 2) {
+      if (path && path.length === 1) {
+        trainState.element.setAttribute('transform',
+          'translate(' + path[0].x + ',' + path[0].y + ')');
+      }
+      return;
+    }
+
+    var animPath = path;
+    var durationMs = Math.max(trainData.arrivalSeconds, 1) * 1000;
+    var segDurations = trainData.segmentDurations || [];
+    var initProgress = trainData.initialProgress || 0;
+    var sliceOffset = 0; // 이어서 진행 시 잘린 세그먼트 수
+
+    // 기존 열차의 현재 시각적 위치 읽기
+    // 15초마다 API 갱신 시, 같은 역을 보고하면 애니메이션이 처음으로 되돌아가는 문제 방지
+    var transformAttr = trainState.element.getAttribute('transform');
+    if (transformAttr) {
+      var match = transformAttr.match(/translate\\(\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)/);
+      if (match) {
+        var curX = parseFloat(match[1]);
+        var curY = parseFloat(match[2]);
+        var dx0 = curX - path[0].x;
+        var dy0 = curY - path[0].y;
+        var distFromStart = Math.sqrt(dx0 * dx0 + dy0 * dy0);
+
+        if (distFromStart > 2) {
+          // 경로에서 현재 위치와 가장 가까운 세그먼트 찾기
+          var bestSeg = 0;
+          var minDist = Infinity;
+          for (var si = 0; si < path.length - 1; si++) {
+            var ax = path[si].x, ay = path[si].y;
+            var bx = path[si + 1].x, by = path[si + 1].y;
+            var sdx = bx - ax, sdy = by - ay;
+            var len2 = sdx * sdx + sdy * sdy;
+            var t = len2 > 0
+              ? Math.max(0, Math.min(1, ((curX - ax) * sdx + (curY - ay) * sdy) / len2))
+              : 0;
+            var px = ax + t * sdx, py = ay + t * sdy;
+            var d = Math.sqrt((curX - px) * (curX - px) + (curY - py) * (curY - py));
+            if (d < minDist) { minDist = d; bestSeg = si; }
+          }
+
+          // 경로에서 가까운 위치(30px 이내)면 현재 위치에서 이어서 진행
+          if (minDist < 30) {
+            var remaining = path.slice(bestSeg + 1);
+            if (remaining.length > 0) {
+              animPath = [{ x: curX, y: curY }].concat(remaining);
+              sliceOffset = bestSeg; // 잘린 세그먼트 수 기록
+              initProgress = 0; // 이어서 진행 시 initialProgress 무시
+            } else {
+              // 마지막 세그먼트를 지남 → 목적지에 고정
+              var last = path[path.length - 1];
+              trainState.element.setAttribute('transform',
+                'translate(' + last.x + ',' + last.y + ')');
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    // 세그먼트별 시간 가중치 구축
+    var segTimes = [];
+    var hasDurations = segDurations.length === path.length - 1;
+
+    if (sliceOffset > 0 && hasDurations) {
+      // 이어서 진행: 첫 세그먼트는 현재→다음역 (잘린 세그먼트 시간 사용)
+      var slicedDurations = segDurations.slice(sliceOffset);
+      // 첫 세그먼트는 부분 구간이므로 원래 시간 그대로 사용 (근사)
+      segTimes = slicedDurations.length > 0 ? slicedDurations : [];
+      // animPath 첫 점은 현재 위치이므로 segTimes 길이가 animPath.length-1과 다를 수 있음
+      // animPath = [curPos, path[bestSeg+1], ...] → segTimes에 첫 세그먼트 추가
+      if (segTimes.length < animPath.length - 1) {
+        segTimes.unshift(segTimes.length > 0 ? segTimes[0] : 120);
+      }
+    } else if (hasDurations) {
+      segTimes = segDurations.slice();
+    }
+
+    // segTimes가 유효하지 않으면 SVG 거리 기반 폴백
+    var useTimes = segTimes.length === animPath.length - 1;
+    var totalTime = 0;
+    var segDists = [];
+
+    if (useTimes) {
+      for (var i = 0; i < segTimes.length; i++) {
+        totalTime += segTimes[i];
+      }
+    }
+
+    // SVG 거리도 항상 계산 (보간에 필요)
+    var totalDist = 0;
+    for (var i = 1; i < animPath.length; i++) {
+      var dx = animPath[i].x - animPath[i - 1].x;
+      var dy = animPath[i].y - animPath[i - 1].y;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      segDists.push(d);
+      totalDist += d;
+    }
+
+    if (totalDist === 0) return;
+    if (useTimes && totalTime === 0) useTimes = false;
+
+    var startTime = performance.now();
+
+    function step(now) {
+      var elapsed = now - startTime;
+      var timeProgress = Math.min(elapsed / durationMs, 1.0);
+
+      var pos = animPath[animPath.length - 1];
+
+      if (useTimes) {
+        // 시간 가중 보간
+        // initialProgress: 첫 세그먼트 시간의 일정 비율을 이미 진행한 것으로 간주
+        var startTimeOffset = initProgress * segTimes[0];
+        var effectiveTotalTime = totalTime - startTimeOffset;
+        if (effectiveTotalTime <= 0) effectiveTotalTime = totalTime;
+
+        var targetTime = startTimeOffset + timeProgress * effectiveTotalTime;
+        var accumulated = 0;
+
+        for (var i = 0; i < segTimes.length; i++) {
+          if (accumulated + segTimes[i] >= targetTime) {
+            var segProgress = segTimes[i] > 0
+              ? (targetTime - accumulated) / segTimes[i]
+              : 0;
+            pos = {
+              x: animPath[i].x + (animPath[i + 1].x - animPath[i].x) * segProgress,
+              y: animPath[i].y + (animPath[i + 1].y - animPath[i].y) * segProgress
+            };
+            break;
+          }
+          accumulated += segTimes[i];
+        }
+      } else {
+        // SVG 거리 기반 폴백 (기존 방식)
+        var targetDist = timeProgress * totalDist;
+        var accumulated = 0;
+
+        for (var i = 0; i < segDists.length; i++) {
+          if (accumulated + segDists[i] >= targetDist) {
+            var segProgress = segDists[i] > 0
+              ? (targetDist - accumulated) / segDists[i]
+              : 0;
+            pos = {
+              x: animPath[i].x + (animPath[i + 1].x - animPath[i].x) * segProgress,
+              y: animPath[i].y + (animPath[i + 1].y - animPath[i].y) * segProgress
+            };
+            break;
+          }
+          accumulated += segDists[i];
+        }
+      }
+
+      trainState.element.setAttribute('transform',
+        'translate(' + pos.x + ',' + pos.y + ')');
+
+      if (timeProgress < 1.0) {
+        trainState.animationId = requestAnimationFrame(step);
+      }
+    }
+
+    trainState.animationId = requestAnimationFrame(step);
+  }
+
+  function cancelTrainAnimation(trainState) {
+    if (trainState.animationId) {
+      cancelAnimationFrame(trainState.animationId);
+      trainState.animationId = null;
+    }
+  }
+
+  window.showTrains = function(trainsJson) {
+    var trains = JSON.parse(trainsJson);
+    var newTrainIds = {};
+
+    for (var i = 0; i < trains.length; i++) {
+      var t = trains[i];
+      newTrainIds[t.trainNo] = true;
+      var color = lineColors[t.lineId] || '#999';
+
+      if (activeTrains[t.trainNo]) {
+        cancelTrainAnimation(activeTrains[t.trainNo]);
+        var texts = activeTrains[t.trainNo].element.querySelectorAll('text');
+        if (texts.length > 0) {
+          texts[0].textContent = t.destination || '';
+        }
+        startTrainAnimation(activeTrains[t.trainNo], t);
+      } else {
+        var g = createTrainIcon(t, color);
+        liveTrainsGroup.appendChild(g);
+        activeTrains[t.trainNo] = { element: g, animationId: null };
+        startTrainAnimation(activeTrains[t.trainNo], t);
+      }
+    }
+
+    var toRemove = [];
+    for (var id in activeTrains) {
+      if (!newTrainIds[id]) {
+        toRemove.push(id);
+      }
+    }
+    for (var i = 0; i < toRemove.length; i++) {
+      var id = toRemove[i];
+      cancelTrainAnimation(activeTrains[id]);
+      activeTrains[id].element.remove();
+      delete activeTrains[id];
+    }
+  };
+
+  window.clearTrains = function() {
+    for (var id in activeTrains) {
+      cancelTrainAnimation(activeTrains[id]);
+    }
+    activeTrains = {};
+    liveTrainsGroup.replaceChildren();
   };
 
   // ============================================================
