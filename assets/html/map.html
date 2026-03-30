@@ -122,6 +122,7 @@ html, body {
   paint-order: stroke;
   stroke-linejoin: round;
 }
+path[data-line] { stroke-width: 5 !important; }
 path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   transition: opacity 0.3s;
 }
@@ -900,6 +901,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var selectionMarkers = document.getElementById('selection-markers');
   var liveTrainsGroup = document.getElementById('live-trains');
   var activeTrains = {};
+  var arrivedTrains = {};
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
 
@@ -1630,31 +1632,34 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
     var img = document.createElementNS(SVG_NS, 'image');
     img.setAttribute('href', TRAIN_IMG);
-    img.setAttribute('x', '-14');
-    img.setAttribute('y', '-5');
-    img.setAttribute('width', '28');
-    img.setAttribute('height', '10');
+    img.setAttribute('x', '-18');
+    img.setAttribute('y', '-6.5');
+    img.setAttribute('width', '36');
+    img.setAttribute('height', '13');
     g.appendChild(img);
 
     var labelBg = document.createElementNS(SVG_NS, 'rect');
-    labelBg.setAttribute('x', '-14');
-    labelBg.setAttribute('y', '-16');
-    labelBg.setAttribute('width', '28');
-    labelBg.setAttribute('height', '9');
-    labelBg.setAttribute('rx', '2');
+    labelBg.setAttribute('x', '-18');
+    labelBg.setAttribute('y', '-20');
+    labelBg.setAttribute('width', '36');
+    labelBg.setAttribute('height', '11');
+    labelBg.setAttribute('rx', '3');
     labelBg.setAttribute('fill', color);
     labelBg.setAttribute('opacity', '0.85');
     g.appendChild(labelBg);
 
     var label = document.createElementNS(SVG_NS, 'text');
     label.setAttribute('x', '0');
-    label.setAttribute('y', '-9');
+    label.setAttribute('y', '-11.5');
     label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('font-size', '6');
+    label.setAttribute('font-size', '8');
     label.setAttribute('fill', '#fff');
     label.setAttribute('font-family', 'sans-serif');
     label.textContent = train.destination || '';
     g.appendChild(label);
+
+    // [디버그용] 열차 위치 결정 요소 표시
+    g.appendChild(buildDebugGroup(train));
 
     // initialProgress 반영: 첫 세그먼트 내 보간 위치에 배치
     var startX = train.fromSvgX;
@@ -1670,12 +1675,64 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     return g;
   }
 
+  // [디버그용] 열차 위치 결정 요소를 멀티라인 텍스트로 생성한다.
+  function buildDebugGroup(train) {
+    var dg = document.createElementNS(SVG_NS, 'g');
+    dg.setAttribute('class', 'train-debug-info');
+
+    var lines = [
+      '#' + (train.trainNo || '?'),
+      '방향: ' + (train.direction || '?'),
+      '행선: ' + (train.destination || '?'),
+      '현재역: ' + (train.currentStation || '?'),
+      'code: ' + (train.arrivalCode != null ? train.arrivalCode : '?'),
+      '상태: ' + (train.positionStatus || '?'),
+      'prog: ' + (train.initialProgress != null ? train.initialProgress.toFixed(2) : '?'),
+      '초: ' + (train.arrivalSeconds != null ? train.arrivalSeconds : '?'),
+      'msg: ' + (train.message || '?'),
+      '경유: ' + (train.pathToTarget ? train.pathToTarget.length : '0'),
+      '구간: [' + (train.segmentDurations ? train.segmentDurations.join(',') : '') + ']',
+    ];
+
+    var bgW = 90;
+    var bgH = lines.length * 9 + 4;
+    var bg = document.createElementNS(SVG_NS, 'rect');
+    bg.setAttribute('x', String(-bgW / 2));
+    bg.setAttribute('y', '8');
+    bg.setAttribute('width', String(bgW));
+    bg.setAttribute('height', String(bgH));
+    bg.setAttribute('rx', '2');
+    bg.setAttribute('fill', 'rgba(0,0,0,0.75)');
+    dg.appendChild(bg);
+
+    for (var i = 0; i < lines.length; i++) {
+      var t = document.createElementNS(SVG_NS, 'text');
+      t.setAttribute('x', String(-bgW / 2 + 3));
+      t.setAttribute('y', String(8 + 9 + i * 9));
+      t.setAttribute('font-size', '6');
+      t.setAttribute('fill', '#0f0');
+      t.setAttribute('font-family', 'monospace');
+      t.textContent = lines[i];
+      dg.appendChild(t);
+    }
+
+    return dg;
+  }
+
+  // [디버그용] 기존 열차 아이콘의 디버그 정보 텍스트를 갱신한다.
+  function updateTrainDebugInfo(element, train) {
+    var old = element.querySelector('.train-debug-info');
+    if (old) old.remove();
+    element.appendChild(buildDebugGroup(train));
+  }
+
   function startTrainAnimation(trainState, trainData) {
     var path = trainData.pathToTarget;
     if (!path || path.length < 2) {
       if (path && path.length === 1) {
         trainState.element.setAttribute('transform',
           'translate(' + path[0].x + ',' + path[0].y + ')');
+        playArrivalEffect(trainState, trainData.trainNo);
       }
       return;
     }
@@ -1832,10 +1889,50 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
       if (timeProgress < 1.0) {
         trainState.animationId = requestAnimationFrame(step);
+      } else {
+        playArrivalEffect(trainState, trainData.trainNo);
       }
     }
 
     trainState.animationId = requestAnimationFrame(step);
+  }
+
+  function playArrivalEffect(trainState, trainNo) {
+    arrivedTrains[trainNo] = true;
+    var el = trainState.element;
+    var currentTransform = el.getAttribute('transform') || '';
+
+    // 펄스 확대 + 페이드아웃 애니메이션 (0.6초)
+    var duration = 600;
+    var startTime = performance.now();
+
+    function animate(now) {
+      var elapsed = now - startTime;
+      var progress = Math.min(elapsed / duration, 1.0);
+
+      // easeOutCubic
+      var eased = 1 - Math.pow(1 - progress, 3);
+
+      var scale = 1 + eased;
+      var opacity = 1 - eased;
+
+      el.setAttribute('transform', currentTransform + ' scale(' + scale + ')');
+      el.setAttribute('opacity', opacity);
+
+      if (progress < 1.0) {
+        trainState.animationId = requestAnimationFrame(animate);
+      } else {
+        trainState.animationId = null;
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+        delete activeTrains[trainNo];
+      }
+    }
+
+    trainState.animationId = requestAnimationFrame(animate);
+
+    sendToFlutter({ action: 'trainArrived', trainNo: trainNo, destination: trainState.destination || '' });
   }
 
   function cancelTrainAnimation(trainState) {
@@ -1851,20 +1948,24 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
     for (var i = 0; i < trains.length; i++) {
       var t = trains[i];
+      if (arrivedTrains[t.trainNo]) continue;
       newTrainIds[t.trainNo] = true;
       var color = lineColors[t.lineId] || '#999';
 
       if (activeTrains[t.trainNo]) {
         cancelTrainAnimation(activeTrains[t.trainNo]);
+        activeTrains[t.trainNo].destination = t.destination || '';
         var texts = activeTrains[t.trainNo].element.querySelectorAll('text');
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
         }
+        // [디버그용] 기존 열차의 디버그 정보 갱신
+        updateTrainDebugInfo(activeTrains[t.trainNo].element, t);
         startTrainAnimation(activeTrains[t.trainNo], t);
       } else {
         var g = createTrainIcon(t, color);
         liveTrainsGroup.appendChild(g);
-        activeTrains[t.trainNo] = { element: g, animationId: null };
+        activeTrains[t.trainNo] = { element: g, animationId: null, destination: t.destination || '' };
         startTrainAnimation(activeTrains[t.trainNo], t);
       }
     }
@@ -1878,8 +1979,15 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     for (var i = 0; i < toRemove.length; i++) {
       var id = toRemove[i];
       cancelTrainAnimation(activeTrains[id]);
-      activeTrains[id].element.remove();
-      delete activeTrains[id];
+      playArrivalEffect(activeTrains[id], id);
+    }
+
+    // API에서 더 이상 보고하지 않는 열차는 arrivedTrains에서도 제거
+    // 단, 아직 도착 애니메이션이 진행 중인(activeTrains에 남아있는) 열차는 유지
+    var trainNoSet = {};
+    for (var i = 0; i < trains.length; i++) trainNoSet[trains[i].trainNo] = true;
+    for (var id in arrivedTrains) {
+      if (!trainNoSet[id] && !activeTrains[id]) delete arrivedTrains[id];
     }
   };
 
@@ -1888,6 +1996,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       cancelTrainAnimation(activeTrains[id]);
     }
     activeTrains = {};
+    arrivedTrains = {};
     liveTrainsGroup.replaceChildren();
   };
 

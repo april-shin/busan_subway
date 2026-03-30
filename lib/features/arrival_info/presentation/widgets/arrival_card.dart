@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/arrival_info.dart';
@@ -10,6 +12,16 @@ class ArrivalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isExpress = arrival.trainType == '급행';
+
+    // receivedAt 기준 경과 시간을 빼서 실시간 카운트다운
+    final int? liveSeconds;
+    if (arrival.arrivalSeconds != null) {
+      final elapsed =
+          DateTime.now().difference(arrival.receivedAt).inSeconds;
+      liveSeconds = max(0, arrival.arrivalSeconds! - elapsed);
+    } else {
+      liveSeconds = null;
+    }
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -64,8 +76,11 @@ class ArrivalCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (arrival.arrivalSeconds != null)
-              _CountdownBadge(seconds: arrival.arrivalSeconds!),
+            if (liveSeconds != null)
+              _CountdownBadge(
+                seconds: liveSeconds,
+                isEstimated: arrival.isEstimated,
+              ),
           ],
         ),
       ),
@@ -75,38 +90,67 @@ class ArrivalCard extends StatelessWidget {
 
 class _CountdownBadge extends StatelessWidget {
   final int seconds;
+  final bool isEstimated;
 
-  const _CountdownBadge({required this.seconds});
+  const _CountdownBadge({
+    required this.seconds,
+    this.isEstimated = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
-    final isImminent = seconds <= 60;
+    final isImminent = !isEstimated && seconds <= 60;
+
+    final Color backgroundColor;
+    final Color textColor;
+    final Color subTextColor;
+
+    if (isEstimated) {
+      backgroundColor = Colors.orange[50]!;
+      textColor = Colors.orange[800]!;
+      subTextColor = Colors.orange[400]!;
+    } else if (isImminent) {
+      backgroundColor = Colors.red[50]!;
+      textColor = Colors.red;
+      subTextColor = Colors.red[300]!;
+    } else {
+      backgroundColor = Colors.blue[50]!;
+      textColor = Colors.blue;
+      subTextColor = Colors.blue[300]!;
+    }
+
+    final String mainText;
+    if (isEstimated) {
+      mainText = '약 ${minutes > 0 ? '$minutes분' : '$remainingSeconds초'}';
+    } else {
+      mainText = minutes > 0 ? '$minutes분' : '$remainingSeconds초';
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isImminent ? Colors.red[50] : Colors.blue[50],
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            minutes > 0 ? '$minutes분' : '$remainingSeconds초',
+            mainText,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: isEstimated ? 16 : 18,
               fontWeight: FontWeight.bold,
-              color: isImminent ? Colors.red : Colors.blue,
+              color: textColor,
             ),
           ),
-          if (minutes > 0)
+          if (!isEstimated && minutes > 0)
             Text(
               '$remainingSeconds초',
               style: TextStyle(
                 fontSize: 11,
-                color: isImminent ? Colors.red[300] : Colors.blue[300],
+                color: subTextColor,
               ),
             ),
         ],

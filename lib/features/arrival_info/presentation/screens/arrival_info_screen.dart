@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/utils/enrich_arrival_info.dart';
+import '../../../../domain/entities/arrival_info.dart';
+import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../providers/arrival_providers.dart';
 import '../widgets/arrival_card.dart';
 
@@ -20,12 +23,17 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   Timer? _refreshTimer;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _startAutoRefresh();
+    _countdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() {}),
+    );
   }
 
   void _startAutoRefresh() {
@@ -41,6 +49,7 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _refreshTimer?.cancel();
     _tabController.dispose();
     super.dispose();
@@ -49,6 +58,8 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
   @override
   Widget build(BuildContext context) {
     final arrivalAsync = ref.watch(arrivalInfoProvider(widget.stationName));
+    final stationsAsync = ref.watch(allStationsProvider);
+    final connectionsAsync = ref.watch(allConnectionsProvider);
 
     // 2호선 전용역이면 내선/외선, 그 외 상행/하행
     final isLine2Only = arrivalAsync.valueOrNull?.isNotEmpty == true &&
@@ -74,7 +85,19 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
         ],
       ),
       body: arrivalAsync.when(
-        data: (arrivals) {
+        data: (rawArrivals) {
+          // arrivalSeconds가 null인 항목에 추정값 채우기
+          final stations = stationsAsync.valueOrNull;
+          final connections = connectionsAsync.valueOrNull;
+          final arrivals = (stations != null && connections != null)
+              ? enrichArrivalInfoList(
+                  arrivals: rawArrivals,
+                  targetStationName: widget.stationName,
+                  stations: stations,
+                  connections: connections,
+                )
+              : rawArrivals;
+
           final upbound = arrivals
               .where((a) =>
                   a.direction == '상행' ||
@@ -142,7 +165,7 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
   }
 
   Widget _buildArrivalList(
-    List<dynamic> arrivals,
+    List<ArrivalInfo> arrivals,
     String direction,
   ) {
     if (arrivals.isEmpty) {

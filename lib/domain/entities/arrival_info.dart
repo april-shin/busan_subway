@@ -19,6 +19,7 @@ class ArrivalInfo with _$ArrivalInfo {
     @Default('') String trainNo,
     @Default('') String positionStatus,
     int? arrivalCode,
+    @Default(false) bool isEstimated,
   }) = _ArrivalInfo;
 
   factory ArrivalInfo.fromJson(Map<String, dynamic> json) =>

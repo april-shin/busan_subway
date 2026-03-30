@@ -71,5 +71,30 @@ void main() {
 
       expect(entity.arrivalSeconds, isNull);
     });
+
+    test('barvlDt "0" + arvlCd "1"(도착) → arrivalSeconds 0', () {
+      const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '1');
+      expect(dto.toEntity().arrivalSeconds, 0);
+    });
+
+    test('barvlDt "0" + arvlCd "0"(진입) → arrivalSeconds 0', () {
+      const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '0');
+      expect(dto.toEntity().arrivalSeconds, 0);
+    });
+
+    test('barvlDt "0" + arvlCd "99" → arrivalSeconds null (데이터 없음)', () {
+      const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '99');
+      expect(dto.toEntity().arrivalSeconds, isNull);
+    });
+
+    test('barvlDt "0" + arvlCd "5"(전역도착) → arrivalSeconds null', () {
+      const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '5');
+      expect(dto.toEntity().arrivalSeconds, isNull);
+    });
+
+    test('barvlDt "0" + arvlCd null → arrivalSeconds null', () {
+      const dto = ArrivalInfoDto(barvlDt: '0');
+      expect(dto.toEntity().arrivalSeconds, isNull);
+    });
   });
 }

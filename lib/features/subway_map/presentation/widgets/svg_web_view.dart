@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -177,6 +178,20 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
           final mode = data['mode'];
           if (mode is! String) return;
           widget.onRouteToolbarSelect?.call(mode);
+        case 'trainArrived':
+          final destination = data['destination'];
+          if (destination is String && destination.isNotEmpty && mounted) {
+            HapticFeedback.mediumImpact();
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.clearSnackBars();
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text('$destination행 열차가 도착했습니다'),
+                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         case 'dismiss':
           ref.read(tappedStationProvider.notifier).state = null;
       }

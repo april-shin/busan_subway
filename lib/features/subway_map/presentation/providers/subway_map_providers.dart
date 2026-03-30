@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../data/local/local_data_source.dart';
 import '../../../../data/repositories/station_repository_impl.dart';
+import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../../domain/repositories/station_repository.dart';
 
@@ -23,6 +24,11 @@ StationRepository stationRepository(Ref ref) {
 @riverpod
 Future<List<Station>> allStations(Ref ref) {
   return ref.watch(stationRepositoryProvider).getAllStations();
+}
+
+@riverpod
+Future<List<Connection>> allConnections(Ref ref) {
+  return ref.watch(stationRepositoryProvider).getAllConnections();
 }
 
 class SelectedStationsNotifier extends StateNotifier<SelectedStations> {
