@@ -101,8 +101,9 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   final departureStationName = departureStation.name;
 
   // 15초마다 자동 새로고침
+  // arrivalInfoProvider를 watch하고 있으므로 invalidate만 하면 자동 재계산됨
   final timer = Timer(const Duration(seconds: 15), () {
-    ref.invalidateSelf();
+    ref.invalidate(arrivalInfoProvider(departureStationName));
   });
   ref.onDispose(timer.cancel);
 
@@ -179,7 +180,8 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     // 도착 예상 초: API 값이 있으면 사용, 없으면 구간 소요시간 합산으로 추정
     final int arrivalSecs;
     if (arrival.arrivalSeconds != null) {
-      arrivalSecs = arrival.arrivalSeconds!;
+      final elapsed = DateTime.now().difference(arrival.receivedAt).inSeconds;
+      arrivalSecs = arrival.arrivalSeconds! - elapsed;
     } else {
       final durations = pathResult.durations;
       if (durations.isEmpty) {

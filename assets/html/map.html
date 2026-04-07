@@ -877,6 +877,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var lineColors = {};
   var lineNames = {};
   var stationLineMap = {};
+  var stationMap = {};       // stationId → station 객체
+  var waypointIndex = {};    // "fromId_toId" → [{x,y}, ...] (중간점 포함 좌표 배열)
 
   var rafPending = false;
   function scheduleTransform() {
@@ -1180,6 +1182,12 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     lineColors = JSON.parse(colorsJson);
     lineNames = JSON.parse(namesJson);
 
+    // stationMap 구축 (모듈 스코프)
+    stationMap = {};
+    for (var i = 0; i < stations.length; i++) {
+      stationMap[stations[i].id] = stations[i];
+    }
+
     // 역명 → 소속 노선 lineId 집합 캐시 (환승역 text/circle 매칭용)
     stationLineMap = {};
     for (var i = 0; i < stations.length; i++) {
@@ -1187,6 +1195,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       if (!stationLineMap[sn]) stationLineMap[sn] = {};
       stationLineMap[sn][stations[i].lineId] = true;
     }
+
+    // SVG path에서 waypoint 인덱스 구축
+    buildWaypointIndex();
   };
 
   // 경로 하이라이트
@@ -1204,12 +1215,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     routeLines.replaceChildren();
     routeMarkers.replaceChildren();
 
-    // 스테이션 맵 구축
-    var stationMap = {};
-    for (var i = 0; i < stations.length; i++) {
-      stationMap[stations[i].id] = stations[i];
-    }
-
     // 경로 구간 그리기
     for (var i = 0; i < connections.length; i++) {
       var conn = connections[i];
@@ -1222,15 +1227,39 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       if (!routeSet[from.id] || !routeSet[to.id]) continue;
 
       var color = lineColors[conn.lineId] || '#999';
-      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', from.svgX);
-      line.setAttribute('y1', from.svgY);
-      line.setAttribute('x2', to.svgX);
-      line.setAttribute('y2', to.svgY);
-      line.setAttribute('stroke', color);
-      line.setAttribute('stroke-width', '5');
-      line.setAttribute('stroke-linecap', 'round');
-      routeLines.appendChild(line);
+
+      // waypointIndex에서 중간점 조회
+      var key = conn.fromStationId + '_' + conn.toStationId;
+      var revKey = conn.toStationId + '_' + conn.fromStationId;
+      var wp = waypointIndex[key] || waypointIndex[revKey];
+
+      if (wp && wp.length > 2) {
+        // 중간점이 있으면 polyline으로 렌더링
+        var pts = '';
+        for (var wi = 0; wi < wp.length; wi++) {
+          if (wi > 0) pts += ' ';
+          pts += wp[wi].x + ',' + wp[wi].y;
+        }
+        var polyline = document.createElementNS(SVG_NS, 'polyline');
+        polyline.setAttribute('points', pts);
+        polyline.setAttribute('stroke', color);
+        polyline.setAttribute('stroke-width', '5');
+        polyline.setAttribute('stroke-linecap', 'round');
+        polyline.setAttribute('stroke-linejoin', 'round');
+        polyline.setAttribute('fill', 'none');
+        routeLines.appendChild(polyline);
+      } else {
+        // 중간점 없으면 기존 직선 폴백
+        var line = document.createElementNS(SVG_NS, 'line');
+        line.setAttribute('x1', from.svgX);
+        line.setAttribute('y1', from.svgY);
+        line.setAttribute('x2', to.svgX);
+        line.setAttribute('y2', to.svgY);
+        line.setAttribute('stroke', color);
+        line.setAttribute('stroke-width', '5');
+        line.setAttribute('stroke-linecap', 'round');
+        routeLines.appendChild(line);
+      }
     }
 
     // 경로 위 역 마커
@@ -1459,6 +1488,92 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     '우이신설': ['W'],
     'GTX-A': ['1-GA']
   };
+
+  // ============================================================
+  // SVG path 파싱 및 waypoint 인덱스 구축
+  // ============================================================
+
+  // SVG path d 속성에서 좌표 배열 추출 (M/L 명령어만 사용하는 SVG)
+  function parseSvgPath(d) {
+    var coords = [];
+    var re = /([ML])\s*([\d.]+)\s+([\d.]+)/g;
+    var m;
+    while ((m = re.exec(d)) !== null) {
+      coords.push({ x: parseFloat(m[2]), y: parseFloat(m[3]) });
+    }
+    return coords;
+  }
+
+  // 좌표 배열에서 (x,y)에 가장 가까운 인덱스 찾기 (tolerance 이내)
+  function findNearestIdx(path, x, y, tolerance) {
+    var bestIdx = -1;
+    var bestDist = tolerance * tolerance;
+    for (var i = 0; i < path.length; i++) {
+      var dx = path[i].x - x;
+      var dy = path[i].y - y;
+      var d2 = dx * dx + dy * dy;
+      if (d2 < bestDist) {
+        bestDist = d2;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }
+
+  // 모든 connection의 waypoints를 사전 계산하여 waypointIndex에 저장
+  function buildWaypointIndex() {
+    waypointIndex = {};
+    var TOLERANCE = 20;
+
+    // data-line 코드별 SVG path 좌표 캐시
+    var pathsByDl = {};
+    var svgPaths = document.querySelectorAll('path[data-line]');
+    for (var i = 0; i < svgPaths.length; i++) {
+      var dl = svgPaths[i].getAttribute('data-line');
+      var d = svgPaths[i].getAttribute('d');
+      if (!d) continue;
+      var coords = parseSvgPath(d);
+      if (coords.length < 2) continue;
+      if (!pathsByDl[dl]) pathsByDl[dl] = [];
+      pathsByDl[dl].push(coords);
+    }
+
+    for (var ci = 0; ci < connections.length; ci++) {
+      var conn = connections[ci];
+      if (conn.isTransfer) continue;
+
+      var from = stationMap[conn.fromStationId];
+      var to = stationMap[conn.toStationId];
+      if (!from || !to) continue;
+
+      var dlCodes = lineIdToDataLine[conn.lineId];
+      if (!dlCodes) continue;
+
+      var found = false;
+      for (var di = 0; di < dlCodes.length && !found; di++) {
+        var paths = pathsByDl[dlCodes[di]];
+        if (!paths) continue;
+        for (var pi = 0; pi < paths.length && !found; pi++) {
+          var path = paths[pi];
+          var fi = findNearestIdx(path, from.svgX, from.svgY, TOLERANCE);
+          var ti = findNearestIdx(path, to.svgX, to.svgY, TOLERANCE);
+          if (fi < 0 || ti < 0 || fi === ti) continue;
+
+          var lo = Math.min(fi, ti);
+          var hi = Math.max(fi, ti);
+          var segment = path.slice(lo, hi + 1);
+          if (fi > ti) segment.reverse();
+
+          // 중간점이 있는 경우만 저장 (2개 = 직선이므로 불필요)
+          if (segment.length > 2) {
+            var key = conn.fromStationId + '_' + conn.toStationId;
+            waypointIndex[key] = segment;
+          }
+          found = true;
+        }
+      }
+    }
+  }
 
   // 특정 노선만 강조, 나머지 흐림 처리
   window.highlightLines = function(lineIdsJson) {
@@ -1712,6 +1827,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       t.setAttribute('font-size', '6');
       t.setAttribute('fill', '#0f0');
       t.setAttribute('font-family', 'monospace');
+      if (lines[i].indexOf('초: ') === 0) t.setAttribute('class', 'debug-seconds');
       t.textContent = lines[i];
       dg.appendChild(t);
     }
@@ -1739,6 +1855,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
     var animPath = path;
     var durationMs = Math.max(trainData.arrivalSeconds, 1) * 1000;
+    // 도착 임박 열차는 최소 3초 활주 (1초 반복으로 떨리는 현상 방지)
+    if (trainData.arrivalSeconds <= 2 && (trainData.initialProgress || 0) >= 0.7) {
+      durationMs = 3000;
+    }
     var segDurations = trainData.segmentDurations || [];
     var initProgress = trainData.initialProgress || 0;
     var sliceOffset = 0; // 이어서 진행 시 잘린 세그먼트 수
@@ -1831,6 +1951,16 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
 
     if (totalDist === 0) return;
+
+    // 잔여 거리가 5px 이하면 즉시 도착 처리 (이어서 진행 시 안전망)
+    if (totalDist <= 5) {
+      var last = animPath[animPath.length - 1];
+      trainState.element.setAttribute('transform',
+        'translate(' + last.x + ',' + last.y + ')');
+      playArrivalEffect(trainState, trainData.trainNo);
+      return;
+    }
+
     if (useTimes && totalTime === 0) useTimes = false;
 
     var startTime = performance.now();
@@ -1953,19 +2083,40 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       var color = lineColors[t.lineId] || '#999';
 
       if (activeTrains[t.trainNo]) {
-        cancelTrainAnimation(activeTrains[t.trainNo]);
-        activeTrains[t.trainNo].destination = t.destination || '';
-        var texts = activeTrains[t.trainNo].element.querySelectorAll('text');
+        var existing = activeTrains[t.trainNo];
+        // 도착 임박 열차는 기존 애니메이션 유지 (15초 갱신에서 끊김 방지)
+        // 단, 이미 도착역에 있는 열차(pathToTarget 1점)는 즉시 도착 처리
+        if (t.arrivalSeconds <= 2 && (t.initialProgress || 0) >= 0.7 && existing.animationId
+            && t.pathToTarget && t.pathToTarget.length >= 2) {
+          existing.destination = t.destination || '';
+          existing.lastArrivalSeconds = t.arrivalSeconds;
+          existing.lastUpdateTime = Date.now();
+          var texts = existing.element.querySelectorAll('text');
+          if (texts.length > 0) {
+            texts[0].textContent = t.destination || '';
+          }
+          updateTrainDebugInfo(existing.element, t);
+          continue;
+        }
+        cancelTrainAnimation(existing);
+        existing.destination = t.destination || '';
+        existing.lastArrivalSeconds = t.arrivalSeconds;
+        existing.lastUpdateTime = Date.now();
+        var texts = existing.element.querySelectorAll('text');
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
         }
         // [디버그용] 기존 열차의 디버그 정보 갱신
-        updateTrainDebugInfo(activeTrains[t.trainNo].element, t);
-        startTrainAnimation(activeTrains[t.trainNo], t);
+        updateTrainDebugInfo(existing.element, t);
+        startTrainAnimation(existing, t);
       } else {
         var g = createTrainIcon(t, color);
         liveTrainsGroup.appendChild(g);
-        activeTrains[t.trainNo] = { element: g, animationId: null, destination: t.destination || '' };
+        activeTrains[t.trainNo] = {
+          element: g, animationId: null, destination: t.destination || '',
+          lastArrivalSeconds: t.arrivalSeconds,
+          lastUpdateTime: Date.now()
+        };
         startTrainAnimation(activeTrains[t.trainNo], t);
       }
     }
@@ -1999,6 +2150,19 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     arrivedTrains = {};
     liveTrainsGroup.replaceChildren();
   };
+
+  // 1초마다 디버그 남은시간 카운트다운
+  setInterval(function() {
+    var now = Date.now();
+    for (var id in activeTrains) {
+      var train = activeTrains[id];
+      if (train.lastArrivalSeconds == null || train.lastUpdateTime == null) continue;
+      var elapsed = Math.floor((now - train.lastUpdateTime) / 1000);
+      var remaining = Math.max(0, train.lastArrivalSeconds - elapsed);
+      var secEl = train.element.querySelector('.debug-seconds');
+      if (secEl) secEl.textContent = '초: ' + remaining;
+    }
+  }, 1000);
 
   // ============================================================
   // 경로 선택 툴바

@@ -39,6 +39,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
   RouteResult? _leastTransferRoute;
   String _activeRouteMode = 'fastest';
   int _computeRevision = 0;
+  List<LiveTrain> _liveTrains = const [];
 
   @override
   void initState() {
@@ -53,9 +54,18 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _onSelectedStationsChanged(next);
     });
 
-    // 실시간 열차 데이터 watch
-    final liveTrainsAsync = ref.watch(liveTrainsProvider);
-    final liveTrains = liveTrainsAsync.valueOrNull ?? [];
+    // 실시간 열차 데이터: AsyncLoading 중 리빌드를 방지하여 맵 깜빡임 제거
+    ref.listen(liveTrainsProvider, (prev, next) {
+      final trains = next.valueOrNull;
+      if (trains != null && !identical(trains, _liveTrains)) {
+        setState(() => _liveTrains = trains);
+      }
+    });
+    // 초기 데이터 동기화 (화면 복귀 시 이미 캐시된 데이터 반영)
+    final cachedTrains = ref.read(liveTrainsProvider).valueOrNull;
+    if (cachedTrains != null) {
+      _liveTrains = cachedTrains;
+    }
 
     return SvgWebView(
       stations: widget.stations,
@@ -68,7 +78,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
           _fastestRoute != null &&
           _leastTransferRoute != _fastestRoute,
       onRouteToolbarSelect: _handleRouteToolbarSelect,
-      liveTrains: liveTrains,
+      liveTrains: _liveTrains,
     );
   }
 
@@ -80,12 +90,14 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       ref.read(activeRouteFilterProvider.notifier).state = null;
       if (_highlightedLineIds.isNotEmpty ||
           _routeStationIds.isNotEmpty ||
-          _toolbarTarget != null) {
+          _toolbarTarget != null ||
+          _liveTrains.isNotEmpty) {
         setState(() {
           _highlightedLineIds = const {};
           _routeStationIds = const {};
           _panTarget = null;
           _toolbarTarget = null;
+          _liveTrains = const [];
         });
       }
       return;

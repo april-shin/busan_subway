@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/utils/parse_arrival_message.dart';
 import '../../../domain/entities/arrival_info.dart';
 
 part 'arrival_info_dto.freezed.dart';
@@ -83,7 +84,8 @@ class ArrivalInfoDto with _$ArrivalInfoDto {
       arrivalMessage: arvlMsg2 ?? '',
       destination: bstatnNm ?? '',
       trainType: btrainSttus ?? '일반',
-      arrivalSeconds: _parseArrivalSeconds(barvlDt, arvlCd),
+      arrivalSeconds: _parseArrivalSeconds(barvlDt, arvlCd)
+          ?? parseTimeFromMessage(arvlMsg2 ?? ''),
       receivedAt: recptnDt != null
           ? DateTime.tryParse(recptnDt!) ?? DateTime.now()
           : DateTime.now(),

@@ -31,7 +31,7 @@ void main() {
     ),
   ];
 
-  group('estimateArrivalSeconds', () {
+  group('estimateArrivalSeconds - 3순위: 경로 기반', () {
     test('정상 경로: 역A → 역C 전체 소요시간 합산', () {
       final result = estimateArrivalSeconds(
         currentStationName: '역A',
@@ -98,21 +98,7 @@ void main() {
       expect(result, 0);
     });
 
-    test('빈 역명이면 null 반환', () {
-      final result = estimateArrivalSeconds(
-        currentStationName: '',
-        targetStationName: '역C',
-        lineId: '2',
-        positionStatus: '',
-        arrivalCode: null,
-        stations: stations,
-        connections: connections,
-      );
-
-      expect(result, isNull);
-    });
-
-    test('경로를 찾을 수 없으면 null 반환', () {
+    test('경로를 찾을 수 없으면 null 반환 (arrivalMessage도 없음)', () {
       final result = estimateArrivalSeconds(
         currentStationName: '존재하지않는역',
         targetStationName: '역C',
@@ -126,7 +112,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('다른 노선이면 null 반환', () {
+    test('다른 노선이면 null 반환 (arrivalMessage도 없음)', () {
       final result = estimateArrivalSeconds(
         currentStationName: '역A',
         targetStationName: '역C',
@@ -138,6 +124,130 @@ void main() {
       );
 
       expect(result, isNull);
+    });
+  });
+
+  group('estimateArrivalSeconds - 4순위: 역 수 × 평균 구간 소요시간', () {
+    test('currentStationName 빈 + "2번째 전역 출발" → 역 수 기반 추정', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '',
+        targetStationName: '역C',
+        lineId: '2',
+        positionStatus: '',
+        arrivalCode: null,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '2번째 전역 출발',
+      );
+
+      // 평균 구간: (120 + 90) / 2 = 105
+      // 출발 → progress 0.15
+      // 첫 세그먼트: 105 * (1.0 - 0.15) = 89 (반올림)
+      // 둘째 세그먼트: 105
+      // 합계: 89 + 105 = 194
+      expect(result, isNotNull);
+      // 평균 = 105, progress 0.15
+      final avgDuration = 105;
+      final firstAdj = (avgDuration * (1.0 - 0.15)).round(); // 89
+      final expected = firstAdj + avgDuration * (2 - 1); // 89 + 105 = 194
+      expect(result, expected);
+    });
+
+    test('"전역 도착" → 1개 역 전, 도착 상태', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '',
+        targetStationName: '역C',
+        lineId: '2',
+        positionStatus: '',
+        arrivalCode: null,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '전역 도착',
+      );
+
+      // 평균: 105, count: 1, 도착 → progress 0.0
+      // 105 * 1.0 = 105
+      expect(result, 105);
+    });
+
+    test('"전역 진입" → 1개 역 전, 진입 상태(progress 0.85)', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '',
+        targetStationName: '역C',
+        lineId: '2',
+        positionStatus: '',
+        arrivalCode: null,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '전역 진입',
+      );
+
+      // 평균: 105, count: 1, 진입 → progress 0.85
+      // 105 * (1.0 - 0.85) = 15.75 → 16
+      expect(result, (105 * 0.15).round());
+    });
+
+    test('3순위 실패 + arrivalMessage 없음 → null', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '',
+        targetStationName: '역C',
+        lineId: '2',
+        positionStatus: '',
+        arrivalCode: null,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '',
+      );
+
+      expect(result, isNull);
+    });
+
+    test('3순위 실패 + 파싱 불가 arrivalMessage → null', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '',
+        targetStationName: '역C',
+        lineId: '2',
+        positionStatus: '',
+        arrivalCode: null,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '곧 도착',
+      );
+
+      expect(result, isNull);
+    });
+
+    test('3순위 성공 시 4순위 미사용', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '역A',
+        targetStationName: '역C',
+        lineId: '2',
+        positionStatus: '도착',
+        arrivalCode: 1,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '전역 출발',
+      );
+
+      // 3순위로 210이 나와야 하고, 4순위의 역 수 기반이 아님
+      expect(result, 210);
+    });
+
+    test('해당 노선 연결이 없으면 기본값(120) 사용', () {
+      final result = estimateArrivalSeconds(
+        currentStationName: '',
+        targetStationName: '역C',
+        lineId: '99',
+        positionStatus: '',
+        arrivalCode: null,
+        stations: stations,
+        connections: connections,
+        arrivalMessage: '전역 출발',
+      );
+
+      // 노선 99 연결 없음 → 기본값 120, count 1, 출발 → progress 0.15
+      // 120 * (1.0 - 0.15) = 102
+      expect(result, (120 * 0.85).round());
     });
   });
 }

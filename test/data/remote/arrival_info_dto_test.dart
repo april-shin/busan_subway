@@ -82,8 +82,50 @@ void main() {
       expect(dto.toEntity().arrivalSeconds, 0);
     });
 
-    test('barvlDt "0" + arvlCd "99" → arrivalSeconds null (데이터 없음)', () {
+    test('barvlDt "0" + arvlCd "99" + arvlMsg2 없음 → arrivalSeconds null', () {
       const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '99');
+      expect(dto.toEntity().arrivalSeconds, isNull);
+    });
+
+    test('barvlDt "0" + arvlCd "99" + arvlMsg2 "3분 30초" → 210 (2순위 폴백)', () {
+      const dto = ArrivalInfoDto(
+        barvlDt: '0',
+        arvlCd: '99',
+        arvlMsg2: '3분 30초',
+      );
+      expect(dto.toEntity().arrivalSeconds, 210);
+    });
+
+    test('barvlDt "0" + arvlCd "99" + arvlMsg2 "2분" → 120 (2순위 폴백)', () {
+      const dto = ArrivalInfoDto(
+        barvlDt: '0',
+        arvlCd: '99',
+        arvlMsg2: '2분',
+      );
+      expect(dto.toEntity().arrivalSeconds, 120);
+    });
+
+    test('barvlDt 정상값이면 arvlMsg2 무시', () {
+      const dto = ArrivalInfoDto(
+        barvlDt: '60',
+        arvlCd: '99',
+        arvlMsg2: '3분 30초',
+      );
+      // 1순위 barvlDt=60이 우선
+      expect(dto.toEntity().arrivalSeconds, 60);
+    });
+
+    test('barvlDt null + arvlMsg2 "1분 후" → 60 (2순위 폴백)', () {
+      const dto = ArrivalInfoDto(
+        arvlMsg2: '1분 후',
+      );
+      expect(dto.toEntity().arrivalSeconds, 60);
+    });
+
+    test('barvlDt null + arvlMsg2 "전역 출발" → null (시간 아님)', () {
+      const dto = ArrivalInfoDto(
+        arvlMsg2: '전역 출발',
+      );
       expect(dto.toEntity().arrivalSeconds, isNull);
     });
 
