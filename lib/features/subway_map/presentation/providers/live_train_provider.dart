@@ -81,6 +81,25 @@ class LiveTrain {
       Object.hash(trainNo, lineId, arrivalSeconds, currentStation);
 }
 
+/// 추정값 캐시 엔트리: 초단위 도착시간 없는 열차의 최초 추정값과 시점을 보존
+class _EstimateEntry {
+  final int estimate;
+  final DateTime estimatedAt;
+  final String currentStation;
+  final String positionStatus;
+
+  const _EstimateEntry({
+    required this.estimate,
+    required this.estimatedAt,
+    required this.currentStation,
+    required this.positionStatus,
+  });
+}
+
+/// 추정값 캐시: 역 정보 변경 시에만 재추정하여 카운트다운 리셋 방지
+final _estimateCacheProvider =
+    StateProvider<Map<String, _EstimateEntry>>((ref) => {});
+
 /// 네트워크 오류 시 마지막 성공 데이터를 유지하기 위한 캐시
 final _lastSuccessfulTrainsProvider =
     StateProvider<List<LiveTrain>>((ref) => []);
@@ -130,6 +149,10 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     stationsByName.putIfAbsent(s.name, () => []).add(s);
   }
 
+  final estimateCache = Map<String, _EstimateEntry>.from(
+    ref.read(_estimateCacheProvider),
+  );
+
   final result = <LiveTrain>[];
 
   for (final arrival in arrivals) {
@@ -178,17 +201,39 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     );
 
     // 도착 예상 초: API 값이 있으면 사용, 없으면 구간 소요시간 합산으로 추정
+    final cacheKey = '${arrival.trainNo}_$lineId';
     final int arrivalSecs;
     if (arrival.arrivalSeconds != null) {
+      // API 제공값 → 캐시 불필요
+      estimateCache.remove(cacheKey);
       final elapsed = DateTime.now().difference(arrival.receivedAt).inSeconds;
       arrivalSecs = arrival.arrivalSeconds! - elapsed;
     } else {
-      final durations = pathResult.durations;
-      if (durations.isEmpty) {
-        arrivalSecs = 0;
+      final cached = estimateCache[cacheKey];
+      if (cached != null &&
+          cached.currentStation == currentName &&
+          cached.positionStatus == arrival.positionStatus) {
+        // 역 정보 동일 → 최초 추정값에서 경과시간만 차감
+        final elapsed =
+            DateTime.now().difference(cached.estimatedAt).inSeconds;
+        arrivalSecs = cached.estimate - elapsed;
       } else {
-        final firstAdj = (durations.first * (1.0 - initialProgress)).round();
-        arrivalSecs = firstAdj + durations.skip(1).fold(0, (a, b) => a + b);
+        // 새 열차 또는 역 변경 → 새로 추정
+        final durations = pathResult.durations;
+        if (durations.isEmpty) {
+          arrivalSecs = 0;
+        } else {
+          final firstAdj =
+              (durations.first * (1.0 - initialProgress)).round();
+          arrivalSecs =
+              firstAdj + durations.skip(1).fold(0, (a, b) => a + b);
+        }
+        estimateCache[cacheKey] = _EstimateEntry(
+          estimate: arrivalSecs,
+          estimatedAt: DateTime.now(),
+          currentStation: currentName,
+          positionStatus: arrival.positionStatus,
+        );
       }
     }
 
@@ -209,6 +254,11 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       initialProgress: initialProgress,
     ));
   }
+
+  // 사라진 열차의 캐시 제거
+  final activeKeys = result.map((t) => '${t.trainNo}_${t.lineId}').toSet();
+  estimateCache.removeWhere((k, _) => !activeKeys.contains(k));
+  ref.read(_estimateCacheProvider.notifier).state = estimateCache;
 
   // 같은 역에 여러 열차가 있는 경우 Y축 오프셋 적용
   final adjusted = _applyOverlapOffset(result);

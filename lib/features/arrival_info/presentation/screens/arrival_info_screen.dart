@@ -24,6 +24,7 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
   late final TabController _tabController;
   Timer? _refreshTimer;
   Timer? _countdownTimer;
+  List<ArrivalInfo> _previousEnriched = [];
 
   @override
   void initState() {
@@ -95,8 +96,10 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen>
                   targetStationName: widget.stationName,
                   stations: stations,
                   connections: connections,
+                  previousArrivals: _previousEnriched,
                 )
               : rawArrivals;
+          _previousEnriched = arrivals;
 
           final upbound = arrivals
               .where((a) =>

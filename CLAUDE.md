@@ -168,3 +168,76 @@ Expanded → WebViewWidget (전체 화면)
 ## 미사용 의존성
 
 `hive_flutter`는 pubspec.yaml에 등록되어 있으나 현재 코드에서 사용되지 않음.
+
+## 하네스: 서울 지하철 앱 개발
+
+**목표:** 7인 전문가 에이전트 팀으로 앱 개발 작업(기능 구현, 버그 수정, UI/지도 개선, 알고리즘 최적화)을 체계적으로 수행
+
+**에이전트 팀:**
+| 에이전트 | 역할 |
+|---------|------|
+| flutter-architect | Flutter 아키텍처/상태관리/라우팅 전문가 |
+| map-math-engineer | 지도 UI/수학/좌표변환/애니메이션 전문가 |
+| graph-algorithm-engineer | 그래프 알고리즘/최단경로/방향결정 전문가 |
+| realtime-data-engineer | 실시간 API/캐싱/열차추적 전문가 |
+| flutter-qa-engineer | 테스트/경계면검증/커버리지 전문가 |
+| subway-code-reviewer | 코드 품질/아키텍처준수/보안/성능 리뷰 전문가 |
+| subway-requirements-reviewer | 요구사항 충족도/누락/오버엔지니어링 검증 전문가 |
+
+**스킬:**
+| 스킬 | 용도 | 사용 에이전트 |
+|------|------|-------------|
+| flutter-architecture | Clean Architecture + Riverpod 패턴 가이드 | flutter-architect |
+| subway-map-math | SVG 좌표/줌팬/보간/애니메이션 수학 가이드 | map-math-engineer |
+| graph-pathfinding | Dijkstra/BFS/방향결정 알고리즘 가이드 | graph-algorithm-engineer |
+| realtime-tracking | API 통합/캐싱/열차추적 가이드 | realtime-data-engineer |
+| subway-testing | 테스트 전략/경계면 검증 가이드 | flutter-qa-engineer |
+| subway-code-review | 프로젝트 특화 코드 리뷰 체크리스트 | subway-code-reviewer |
+| subway-requirements-review | 요구사항 충족도 검증 프레임워크 | subway-requirements-reviewer |
+| subway-app-orchestrator | 전체 팀 조율 오케스트레이터 | 메인 세션 |
+
+**실행 규칙:**
+- 앱 개발 작업(기능 구현, 버그 수정, UI 개선, 알고리즘 최적화 등) 요청 시 `subway-app-orchestrator` 스킬을 통해 에이전트 팀으로 처리하라
+- 단순 질문, 설정 변경, 1~2줄 수정은 에이전트 팀 없이 직접 처리해도 무방
+- 모든 에이전트는 `model: "opus"` 사용
+- 코드 변경 후 반드시 subway-code-reviewer + subway-requirements-reviewer를 병렬 실행
+- 중간 산출물: `_workspace/` 디렉토리
+
+**디렉토리 구조:**
+```
+.claude/
+├── agents/
+│   ├── flutter-architect.md
+│   ├── map-math-engineer.md
+│   ├── graph-algorithm-engineer.md
+│   ├── realtime-data-engineer.md
+│   ├── flutter-qa-engineer.md
+│   ├── subway-code-reviewer.md
+│   └── subway-requirements-reviewer.md
+├── skills/
+│   ├── flutter-architecture/
+│   │   └── SKILL.md
+│   ├── subway-map-math/
+│   │   └── SKILL.md
+│   ├── graph-pathfinding/
+│   │   └── SKILL.md
+│   ├── realtime-tracking/
+│   │   └── SKILL.md
+│   ├── subway-testing/
+│   │   └── SKILL.md
+│   ├── subway-code-review/
+│   │   └── SKILL.md
+│   ├── subway-requirements-review/
+│   │   └── SKILL.md
+│   └── subway-app-orchestrator/
+│       └── SKILL.md
+└── docs/
+    ├── lines-reference.md
+    ├── svg-pipeline.md
+    └── timetable.md
+```
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|------|----------|------|------|
+| 2026-04-07 | 초기 구성: 7인 전문가 팀 하네스 | 전체 | 앱 개발 전문가 팀 구성 요청 |

@@ -28,7 +28,7 @@ const _batchSize = 5;
 const _timeout = Duration(seconds: 15);
 
 void main() {
-  late Dio dio;
+  Dio? dio;
   late String apiKey;
   late List<String> uniqueStationNames;
 
@@ -71,7 +71,7 @@ void main() {
   });
 
   tearDownAll(() {
-    dio.close();
+    dio?.close();
   });
 
   test(
@@ -96,7 +96,7 @@ void main() {
               'http://swopenapi.seoul.go.kr/api/subway/$apiKey/json/realtimeStationArrival/0/20/$stationName';
 
           try {
-            final response = await dio.get<String>(url);
+            final response = await dio!.get<String>(url);
             final data =
                 json.decode(response.data!) as Map<String, dynamic>;
 

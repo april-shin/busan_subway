@@ -256,6 +256,207 @@ void main() {
       expect(result[0].arrivalSeconds!, closeTo(80, 2));
     });
 
+    test('previousArrivals: 동일 역 정보면 이전 추정값을 재사용한다', () {
+      final estimatedAt = DateTime.now().subtract(const Duration(seconds: 5));
+      final newReceivedAt = DateTime.now();
+
+      // 이전 enriched 결과 (추정값 90초, 5초 전에 추정됨)
+      final previousArrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: 90,
+          receivedAt: estimatedAt,
+          currentStationName: '역삼',
+          positionStatus: '도착',
+          arrivalCode: 1,
+          trainNo: 'T001',
+          isEstimated: true,
+        ),
+      ];
+
+      // 새 API 응답 (같은 열차, 같은 역, recptnDt만 갱신됨)
+      final arrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: null,
+          receivedAt: newReceivedAt,
+          currentStationName: '역삼',
+          positionStatus: '도착',
+          arrivalCode: 1,
+          trainNo: 'T001',
+        ),
+      ];
+
+      final result = enrichArrivalInfoList(
+        arrivals: arrivals,
+        targetStationName: '선릉',
+        stations: stations,
+        connections: connections,
+        previousArrivals: previousArrivals,
+      );
+
+      expect(result[0].arrivalSeconds, 90);
+      expect(result[0].isEstimated, true);
+      // receivedAt이 이전 추정 시점을 유지해야 카운트다운이 이어짐
+      expect(result[0].receivedAt, estimatedAt);
+    });
+
+    test('previousArrivals: 역 위치 변경 시 재추정한다', () {
+      final estimatedAt = DateTime.now().subtract(const Duration(seconds: 30));
+      final newReceivedAt = DateTime.now();
+
+      final previousArrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '강남 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: 210,
+          receivedAt: estimatedAt,
+          currentStationName: '강남',
+          positionStatus: '도착',
+          arrivalCode: 1,
+          trainNo: 'T001',
+          isEstimated: true,
+        ),
+      ];
+
+      // 같은 열차이지만 역이 바뀜 (강남 → 역삼)
+      final arrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: null,
+          receivedAt: newReceivedAt,
+          currentStationName: '역삼',
+          positionStatus: '도착',
+          arrivalCode: 1,
+          trainNo: 'T001',
+        ),
+      ];
+
+      final result = enrichArrivalInfoList(
+        arrivals: arrivals,
+        targetStationName: '선릉',
+        stations: stations,
+        connections: connections,
+        previousArrivals: previousArrivals,
+      );
+
+      // 역이 변경되었으므로 새로 추정 (역삼 → 선릉: 90초)
+      expect(result[0].arrivalSeconds, closeTo(90, 2));
+      expect(result[0].isEstimated, true);
+      // receivedAt이 현재 시각으로 갱신됨
+      expect(result[0].receivedAt.isAfter(estimatedAt), true);
+    });
+
+    test('previousArrivals: 빈 리스트면 기존 동작과 동일하다', () {
+      final now = DateTime.now();
+      final arrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: null,
+          receivedAt: now,
+          currentStationName: '역삼',
+          positionStatus: '도착',
+          arrivalCode: 1,
+          trainNo: 'T001',
+        ),
+      ];
+
+      final result = enrichArrivalInfoList(
+        arrivals: arrivals,
+        targetStationName: '선릉',
+        stations: stations,
+        connections: connections,
+        previousArrivals: [],
+      );
+
+      expect(result[0].arrivalSeconds, closeTo(90, 2));
+      expect(result[0].isEstimated, true);
+    });
+
+    test('previousArrivals: positionStatus 변경 시 재추정한다', () {
+      final estimatedAt = DateTime.now().subtract(const Duration(seconds: 10));
+
+      final previousArrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: 90,
+          receivedAt: estimatedAt,
+          currentStationName: '역삼',
+          positionStatus: '도착',
+          arrivalCode: 1,
+          trainNo: 'T001',
+          isEstimated: true,
+        ),
+      ];
+
+      // 같은 역이지만 positionStatus 변경 (도착 → 출발)
+      final arrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 출발',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: null,
+          receivedAt: DateTime.now(),
+          currentStationName: '역삼',
+          positionStatus: '출발',
+          arrivalCode: 0,
+          trainNo: 'T001',
+        ),
+      ];
+
+      final result = enrichArrivalInfoList(
+        arrivals: arrivals,
+        targetStationName: '선릉',
+        stations: stations,
+        connections: connections,
+        previousArrivals: previousArrivals,
+      );
+
+      // positionStatus 변경 → 재추정
+      expect(result[0].isEstimated, true);
+      // 출발 상태 → progress가 달라지므로 값이 다름
+      expect(result[0].arrivalSeconds, isNotNull);
+    });
+
     test('arrivalMessage로 4순위 폴백 동작 확인', () {
       final now = DateTime.now();
       final arrivals = [
