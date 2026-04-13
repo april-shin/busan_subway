@@ -169,8 +169,8 @@ void main() {
       );
 
       expect(result.length, 2);
-      // 첫 번째: 강남 → 선릉, 도착(progress 0.0) = 120 + 90 = 210 - 경과(~0)
-      expect(result[0].arrivalSeconds, closeTo(210, 2));
+      // 첫 번째: 강남 → 선릉, 도착(progress 0.0) = 120 + 90 + 정차30 = 240 - 경과(~0)
+      expect(result[0].arrivalSeconds, closeTo(240, 2));
       expect(result[0].isEstimated, true);
       // 두 번째: 기존값 유지
       expect(result[1].arrivalSeconds, 30);

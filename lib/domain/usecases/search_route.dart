@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import '../entities/route_result.dart';
 import '../entities/station.dart';
 import '../repositories/station_repository.dart';
 import '../../graph/graph_builder.dart';
 import '../../graph/shortest_path.dart';
+import '../../core/constants/dwell_time.dart';
 import '../../core/constants/line_colors.dart';
 
 class SearchRoute {
@@ -152,6 +155,11 @@ class SearchRoute {
         }
 
         if (currentStations.isNotEmpty) {
+          // 중간 역 정차시간 추가 (첫 역·마지막 역 제외)
+          final intermediateCount =
+              math.max(0, currentStations.length - 2);
+          currentDurationSeconds +=
+              intermediateCount * dwellTimeSeconds;
           segments.add(_createSegment(
             currentLineId,
             currentStations,
@@ -168,6 +176,10 @@ class SearchRoute {
       }
 
       if (edge.lineId != currentLineId && currentStations.isNotEmpty) {
+        final intermediateCount2 =
+            math.max(0, currentStations.length - 2);
+        currentDurationSeconds +=
+            intermediateCount2 * dwellTimeSeconds;
         segments.add(_createSegment(
           currentLineId,
           currentStations,
@@ -198,6 +210,11 @@ class SearchRoute {
     }
 
     if (currentStations.isNotEmpty) {
+      // 마지막 세그먼트: 중간 역 정차시간 추가 (첫 역·마지막 역 제외)
+      final lastIntermediateCount =
+          math.max(0, currentStations.length - 2);
+      currentDurationSeconds +=
+          lastIntermediateCount * dwellTimeSeconds;
       segments.add(_createSegment(
         currentLineId,
         currentStations,

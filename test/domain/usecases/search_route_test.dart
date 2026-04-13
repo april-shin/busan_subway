@@ -41,7 +41,8 @@ void main() {
       final result = await searchRoute.execute('201', '203');
 
       expect(result, isNotNull);
-      expect(result!.totalTimeSeconds, 180); // 90 + 90
+      // 이동시간 180 + 정차시간 30 (중간역 을지로입구 × 30초)
+      expect(result!.totalTimeSeconds, 210);
       expect(result.segments.length, 1);
       expect(result.segments.first.lineId, '2');
     });
@@ -50,7 +51,8 @@ void main() {
       final result = await searchRoute.execute('201', '317');
 
       expect(result, isNotNull);
-      expect(result!.totalTimeSeconds, 450); // 90 + 90 + 180(환승) + 90(충무로)
+      // 이동시간 450 + 정차시간 30 (중간역 을지로입구 × 30초)
+      expect(result!.totalTimeSeconds, 480);
       expect(result.transferCount, greaterThanOrEqualTo(1));
     });
 
@@ -86,7 +88,8 @@ void main() {
       final result = await searchRoute.executeAll('201', '317');
 
       expect(result.fastest, isNotNull);
-      expect(result.fastest!.totalTimeSeconds, 450);
+      // 이동시간 450 + 정차시간 30
+      expect(result.fastest!.totalTimeSeconds, 480);
       // 이 그래프에서는 경로가 하나뿐이므로 leastTransfer는 null (동일 경로)
       expect(result.leastTransfer, isNull);
     });

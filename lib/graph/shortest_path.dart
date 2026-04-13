@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 
+import '../core/constants/dwell_time.dart';
 import 'models/graph_edge.dart';
 import 'subway_graph.dart';
 
@@ -7,11 +8,13 @@ class PathResult {
   final List<String> nodeIds;
   final List<GraphEdge> edges;
   final int totalTimeSeconds;
+  final int totalDwellTimeSeconds;
 
   const PathResult({
     required this.nodeIds,
     required this.edges,
     required this.totalTimeSeconds,
+    this.totalDwellTimeSeconds = 0,
   });
 }
 
@@ -98,13 +101,31 @@ class ShortestPathFinder {
     edges.reversed;
 
     final reversedEdges = edges.reversed.toList();
-    final actualTime =
+    final reversedPath = path.reversed.toList();
+    final travelTime =
         reversedEdges.fold(0, (sum, edge) => sum + edge.weightSeconds);
 
+    // 중간 노드 정차시간 계산 (출발역·도착역 제외, 환승 인접 노드 제외)
+    final transferAdjacentNodes = <int>{};
+    for (var i = 0; i < reversedEdges.length; i++) {
+      if (reversedEdges[i].isTransfer) {
+        transferAdjacentNodes.add(i); // 환승 직전 노드
+        transferAdjacentNodes.add(i + 1); // 환승 직후 노드
+      }
+    }
+    var dwellCount = 0;
+    for (var i = 1; i < reversedPath.length - 1; i++) {
+      if (!transferAdjacentNodes.contains(i)) {
+        dwellCount++;
+      }
+    }
+    final dwellTime = dwellCount * dwellTimeSeconds;
+
     return PathResult(
-      nodeIds: path.reversed.toList(),
+      nodeIds: reversedPath,
       edges: reversedEdges,
-      totalTimeSeconds: actualTime,
+      totalTimeSeconds: travelTime + dwellTime,
+      totalDwellTimeSeconds: dwellTime,
     );
   }
 

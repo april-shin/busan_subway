@@ -49,7 +49,9 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.nodeIds, ['A_1', 'B_1', 'C_1']);
-      expect(result.totalTimeSeconds, 210); // 90 + 120
+      // 이동시간 210 + 정차시간 30 (중간역 B_1 × 30초)
+      expect(result.totalTimeSeconds, 240);
+      expect(result.totalDwellTimeSeconds, 30);
       expect(result.edges.length, 2);
     });
 
@@ -61,7 +63,9 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.nodeIds, ['A_1', 'B_1', 'B_2', 'D_2', 'E_2']);
-      expect(result.totalTimeSeconds, 450); // 90 + 180 + 90 + 90
+      // 이동시간 450 + 정차시간 30 (중간역 D_2 × 30초, B_1/B_2는 환승 인접)
+      expect(result.totalTimeSeconds, 480);
+      expect(result.totalDwellTimeSeconds, 30);
     });
 
     test('returns null for non-existent node', () {
@@ -99,7 +103,8 @@ void main() {
       final results = finder.findShortestPathBetweenStations('A역', 'E역');
 
       expect(results, isNotEmpty);
-      expect(results.first.totalTimeSeconds, 450);
+      // 이동시간 450 + 정차시간 30
+      expect(results.first.totalTimeSeconds, 480);
     });
 
     test('findShortestPathBetweenStations returns empty for unknown station', () {
@@ -121,8 +126,8 @@ void main() {
       expect(result, isNotNull);
       // 경로는 동일 (다른 경로가 없으므로)
       expect(result!.nodeIds, ['A_1', 'B_1', 'B_2', 'D_2', 'E_2']);
-      // totalTimeSeconds는 실제 시간만 반영 (페널티 미포함)
-      expect(result.totalTimeSeconds, 450);
+      // totalTimeSeconds는 실제 시간만 반영 (페널티 미포함) + 정차시간 30
+      expect(result.totalTimeSeconds, 480);
     });
 
     test('findMinTransferPathBetweenStations prefers fewer transfers', () {
@@ -170,7 +175,8 @@ void main() {
       final best = results.first;
       final transferCount = best.edges.where((e) => e.isTransfer).length;
       expect(transferCount, 0);
-      expect(best.totalTimeSeconds, 180);
+      // 이동시간 180 + 정차시간 60 (중간역 B_1, C_1 × 30초)
+      expect(best.totalTimeSeconds, 240);
     });
 
     test('findMinTransferPathBetweenStations chooses less transfers over faster', () {
@@ -240,7 +246,8 @@ void main() {
       final result = finder.findShortestPath('A', 'B');
 
       expect(result, isNotNull);
-      expect(result!.totalTimeSeconds, 80); // 50 + 30 via C
+      // 이동시간 80 + 정차시간 30 (중간역 C × 30초)
+      expect(result!.totalTimeSeconds, 110);
       expect(result.nodeIds, ['A', 'C', 'B']);
     });
   });

@@ -46,8 +46,9 @@ void main() {
       // 도착(arrivalCode 1) → progress 0.0
       // 첫 세그먼트: 120 * (1.0 - 0.0) = 120
       // 둘째 세그먼트: 90
-      // 합계: 210
-      expect(result, 210);
+      // 정차시간: 중간역 1개(역B) × 30 = 30
+      // 합계: 240
+      expect(result, 240);
     });
 
     test('진행률 보정: 출발 상태에서 첫 세그먼트 15% 감소', () {
@@ -64,8 +65,9 @@ void main() {
       // 출발(arrivalCode 2) → progress 0.15
       // 첫 세그먼트: 120 * (1.0 - 0.15) = 102
       // 둘째 세그먼트: 90
-      // 합계: 192
-      expect(result, 192);
+      // 정차시간: 중간역 1개 × 30 = 30
+      // 합계: 222
+      expect(result, 222);
     });
 
     test('진입 상태: 첫 세그먼트 85% 감소', () {
@@ -144,12 +146,14 @@ void main() {
       // 출발 → progress 0.15
       // 첫 세그먼트: 105 * (1.0 - 0.15) = 89 (반올림)
       // 둘째 세그먼트: 105
-      // 합계: 89 + 105 = 194
+      // 정차시간: 중간역 1개 × 30 = 30
+      // 합계: 89 + 105 + 30 = 224
       expect(result, isNotNull);
-      // 평균 = 105, progress 0.15
       final avgDuration = 105;
       final firstAdj = (avgDuration * (1.0 - 0.15)).round(); // 89
-      final expected = firstAdj + avgDuration * (2 - 1); // 89 + 105 = 194
+      final travelTime = firstAdj + avgDuration * (2 - 1); // 89 + 105 = 194
+      final dwellTime = 1 * 30; // 중간역 1개
+      final expected = travelTime + dwellTime; // 224
       expect(result, expected);
     });
 
@@ -229,8 +233,8 @@ void main() {
         arrivalMessage: '전역 출발',
       );
 
-      // 3순위로 210이 나와야 하고, 4순위의 역 수 기반이 아님
-      expect(result, 210);
+      // 3순위로 240이 나와야 하고 (210 + 정차시간 30), 4순위의 역 수 기반이 아님
+      expect(result, 240);
     });
 
     test('해당 노선 연결이 없으면 기본값(120) 사용', () {

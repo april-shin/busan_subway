@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/constants/dwell_time.dart';
 import '../../../../core/constants/subway_id_mapping.dart';
 import '../../../../core/utils/path_on_line.dart';
 import '../../../../domain/entities/arrival_info.dart';
@@ -225,8 +227,10 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
         } else {
           final firstAdj =
               (durations.first * (1.0 - initialProgress)).round();
-          arrivalSecs =
-              firstAdj + durations.skip(1).fold(0, (a, b) => a + b);
+          final travelSecs =
+              firstAdj + durations.skip(1).fold<int>(0, (a, b) => a + b);
+          final dwellStops = math.max(0, durations.length - 1);
+          arrivalSecs = travelSecs + dwellStops * dwellTimeSeconds;
         }
         estimateCache[cacheKey] = _EstimateEntry(
           estimate: arrivalSecs,
@@ -250,7 +254,7 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       fromSvgX: currentStation.svgX,
       fromSvgY: currentStation.svgY,
       pathToTarget: pathResult.points,
-      segmentDurations: pathResult.durations,
+      segmentDurations: _addDwellToDurations(pathResult.durations),
       initialProgress: initialProgress,
     ));
   }
@@ -267,6 +271,18 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   ref.read(_lastSuccessfulTrainsProvider.notifier).state = adjusted;
 
   return adjusted;
+}
+
+/// 세그먼트 소요시간에 중간역 정차시간을 추가한다.
+/// 마지막 세그먼트를 제외한 각 세그먼트에 도착역 정차시간(dwellTimeSeconds)을 포함.
+List<int> _addDwellToDurations(List<int> durations) {
+  if (durations.length <= 1) return durations;
+  return [
+    for (var i = 0; i < durations.length; i++)
+      i < durations.length - 1
+          ? durations[i] + dwellTimeSeconds
+          : durations[i],
+  ];
 }
 
 /// 같은 현재역에 위치한 열차들에 Y축 오프셋을 적용하여 겹침을 방지한다.

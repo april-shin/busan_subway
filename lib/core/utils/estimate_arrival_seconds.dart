@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import '../../domain/entities/connection.dart';
 import '../../domain/entities/station.dart';
+import '../constants/dwell_time.dart';
 import 'parse_arrival_message.dart';
 import 'path_on_line.dart';
 
@@ -37,7 +40,10 @@ int? estimateArrivalSeconds({
       final progress = calculateInitialProgress(arrivalCode, positionStatus);
       final durations = pathResult.durations;
       final firstAdj = (durations.first * (1.0 - progress)).round();
-      return firstAdj + durations.skip(1).fold(0, (a, b) => a + b);
+      final travelTime =
+          firstAdj + durations.skip(1).fold<int>(0, (a, b) => a + b);
+      final dwellStops = math.max(0, durations.length - 1);
+      return travelTime + dwellStops * dwellTimeSeconds;
     }
   }
 
@@ -50,7 +56,9 @@ int? estimateArrivalSeconds({
       parsed.status.isNotEmpty ? parsed.status : positionStatus,
     );
     final firstAdj = (avgDuration * (1.0 - progress)).round();
-    return firstAdj + avgDuration * (parsed.count - 1);
+    final travelTime4 = firstAdj + avgDuration * (parsed.count - 1);
+    final dwellStops4 = math.max(0, parsed.count - 1);
+    return travelTime4 + dwellStops4 * dwellTimeSeconds;
   }
 
   return null;
