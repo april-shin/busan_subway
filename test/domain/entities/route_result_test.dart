@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:seoul_subway/domain/entities/route_result.dart';
 import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:seoul_subway/domain/entities/transfer_guide.dart';
 
 void main() {
   group('RouteResult', () {
@@ -17,6 +18,31 @@ void main() {
       expect(result.stationCount, 5);
       expect(result.segments, isEmpty);
       expect(result.transferDurations, isEmpty);
+      expect(result.transferGuides, isEmpty);
+    });
+
+    test('transferGuides 기본값은 빈 리스트', () {
+      const result = RouteResult(
+        segments: [],
+        totalTimeSeconds: 0,
+        transferCount: 0,
+        stationCount: 0,
+      );
+
+      expect(result.transferGuides, isEmpty);
+    });
+
+    test('transferGuides 필드를 담은 객체 생성', () {
+      const result = RouteResult(
+        segments: [],
+        totalTimeSeconds: 0,
+        transferCount: 1,
+        stationCount: 0,
+        transferGuides: [TransferGuide(doorSide: DoorSide.left, car: 6, door: 3)],
+      );
+
+      expect(result.transferGuides.length, 1);
+      expect(result.transferGuides.first?.doorSide, DoorSide.left);
     });
 
     test('copyWith creates modified copy', () {
@@ -31,6 +57,29 @@ void main() {
 
       expect(modified.totalTimeSeconds, 600);
       expect(modified.transferCount, 1);
+    });
+
+    test('totalExpressTimeSeconds 기본값은 null', () {
+      const result = RouteResult(
+        segments: [],
+        totalTimeSeconds: 300,
+        transferCount: 0,
+        stationCount: 5,
+      );
+
+      expect(result.totalExpressTimeSeconds, isNull);
+    });
+
+    test('totalExpressTimeSeconds 명시 값', () {
+      const result = RouteResult(
+        segments: [],
+        totalTimeSeconds: 3000,
+        transferCount: 0,
+        stationCount: 5,
+        totalExpressTimeSeconds: 1800,
+      );
+
+      expect(result.totalExpressTimeSeconds, 1800);
     });
   });
 
@@ -62,6 +111,31 @@ void main() {
       expect(segment.lineId, '2');
       expect(segment.stations.length, 2);
       expect(segment.durationSeconds, 90);
+    });
+
+    test('expressDurationSeconds 기본값은 null', () {
+      const segment = RouteSegment(
+        lineId: '2',
+        lineName: '2호선',
+        stations: [],
+        durationSeconds: 90,
+        direction: '을지로입구 방면',
+      );
+
+      expect(segment.expressDurationSeconds, isNull);
+    });
+
+    test('expressDurationSeconds 명시 값', () {
+      const segment = RouteSegment(
+        lineId: '9',
+        lineName: '9호선',
+        stations: [],
+        durationSeconds: 180,
+        direction: '중앙보훈병원 방면',
+        expressDurationSeconds: 90,
+      );
+
+      expect(segment.expressDurationSeconds, 90);
     });
   });
 }

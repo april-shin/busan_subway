@@ -70,7 +70,7 @@ void main() {
       expect(result, 222);
     });
 
-    test('진입 상태: 첫 세그먼트 85% 감소', () {
+    test('진입 상태: currentStation 근사로 첫 세그먼트 전체 시간 반환', () {
       final result = estimateArrivalSeconds(
         currentStationName: '역A',
         targetStationName: '역B',
@@ -81,9 +81,11 @@ void main() {
         connections: connections,
       );
 
-      // 진입(arrivalCode 0) → progress 0.85
-      // 단일 세그먼트: 120 * (1.0 - 0.85) = 18
-      expect(result, 18);
+      // 진입(arrivalCode 0) → progress 0.0 (currentStation 근사)
+      // 단일 세그먼트: 120 * (1.0 - 0.0) = 120
+      // 근거: initialProgress는 currentStation→next 세그먼트 내 진행률이므로
+      //      "진입"(실제로는 이전 세그먼트 끝) 상태를 표현할 수 없어 0.0 근사.
+      expect(result, 120);
     });
 
     test('같은 역이면 0 반환', () {
@@ -174,7 +176,7 @@ void main() {
       expect(result, 105);
     });
 
-    test('"전역 진입" → 1개 역 전, 진입 상태(progress 0.85)', () {
+    test('"전역 진입" → 1개 역 전, 진입 상태(progress 0.0 근사)', () {
       final result = estimateArrivalSeconds(
         currentStationName: '',
         targetStationName: '역C',
@@ -186,9 +188,9 @@ void main() {
         arrivalMessage: '전역 진입',
       );
 
-      // 평균: 105, count: 1, 진입 → progress 0.85
-      // 105 * (1.0 - 0.85) = 15.75 → 16
-      expect(result, (105 * 0.15).round());
+      // 평균: 105, count: 1, 진입 → progress 0.0 (currentStation 근사)
+      // 105 * (1.0 - 0.0) = 105
+      expect(result, 105);
     });
 
     test('3순위 실패 + arrivalMessage 없음 → null', () {

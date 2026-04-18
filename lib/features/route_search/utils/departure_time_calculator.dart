@@ -12,6 +12,11 @@ import 'direction_resolver.dart';
 /// 1순위: 실시간 도착정보가 있으면 이를 사용 (가장 정확, 방향 필터 적용)
 /// 2순위: 시간표(배차간격)에서 다음 출발 시각을 추정 (방향별)
 /// 3순위: 둘 다 없으면 현재 시각을 반환
+///
+/// NOTE(급행/완행): 이 함수는 현재 **완행 기준**으로 가장 빠른 다음 열차를 찾는다.
+/// 사용자가 UI에서 급행 모드를 선택해도 출발 시각 자체는 동일한 값이 쓰인다.
+/// 실시간 API의 급행 여부(trainType) 필터링이나 시간표의 급행 전용 다음 출발
+/// 시각 추정은 후속 작업 범위다.
 DateTime computeDepartureTime({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required RouteResult routeResult,
@@ -55,6 +60,9 @@ DateTime computeDepartureTime({
 /// 출발역의 출발시각을 기준으로, 각 구간의 소요시간과 환승시간을
 /// 순서대로 누적하여 구간별 출발시각 리스트를 반환한다.
 ///
+/// [useExpress]가 true면 세그먼트의 `expressDurationSeconds`를 우선 사용한다
+/// (없으면 `durationSeconds`로 폴백). 기본값은 false (완행).
+///
 /// 환승역에서의 출발시각 결정 우선순위:
 /// 1순위: [transferArrivals]에서 해당 역의 실시간 데이터 (afterTransfer 이후 열차만)
 /// 2순위: 시간표 기반 다음 출발
@@ -65,15 +73,20 @@ List<DateTime> computeSegmentDepartures({
   required Map<String, LineSchedule> schedules,
   Map<String, AsyncValue<List<ArrivalInfo>>> transferArrivals = const {},
   required DateTime now,
+  bool useExpress = false,
 }) {
   final departures = <DateTime>[initialDeparture];
   var currentTime = initialDeparture;
 
   for (var i = 0; i < routeResult.segments.length; i++) {
     final segment = routeResult.segments[i];
+    // 구간 소요시간 (모드별)
+    final durationSeconds = useExpress
+        ? (segment.expressDurationSeconds ?? segment.durationSeconds)
+        : segment.durationSeconds;
     // 구간 종료 시각
     final segmentEnd =
-        currentTime.add(Duration(seconds: segment.durationSeconds));
+        currentTime.add(Duration(seconds: durationSeconds));
 
     if (i < routeResult.segments.length - 1) {
       // 환승 시간 추가

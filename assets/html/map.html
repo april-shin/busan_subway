@@ -117,12 +117,15 @@ html, body {
 }
 #text-layer text {
   font-size: inherit !important;
+  font-weight: 800;
   stroke: white;
   stroke-width: var(--stroke-w, 2px);
   paint-order: stroke;
   stroke-linejoin: round;
 }
 path[data-line] { stroke-width: 5 !important; }
+/* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
+path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   transition: opacity 0.3s;
 }
@@ -141,6 +144,11 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   padding: 4px;
   padding-top: 28px;
   gap: 2px;
+  /* 드래그 핸들: 상단 28px 빈 바(X 버튼 왼쪽 영역)를 잡아 툴바 이동 */
+  cursor: move;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .route-toolbar-btn {
   display: block;
@@ -1776,15 +1784,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // [디버그용] 열차 위치 결정 요소 표시
     g.appendChild(buildDebugGroup(train));
 
-    // initialProgress 반영: 첫 세그먼트 내 보간 위치에 배치
-    var startX = train.fromSvgX;
-    var startY = train.fromSvgY;
+    // 초기 위치는 path[0] 으로 배치. 첫 frame 에서 역산 로직이 실제 위치로 이동시킴.
     var path = train.pathToTarget;
-    if (train.initialProgress > 0 && path && path.length >= 2) {
-      var p = train.initialProgress;
-      startX = path[0].x + (path[1].x - path[0].x) * p;
-      startY = path[0].y + (path[1].y - path[0].y) * p;
-    }
+    var startX = (path && path.length > 0) ? path[0].x : train.fromSvgX;
+    var startY = (path && path.length > 0) ? path[0].y : train.fromSvgY;
 
     g.setAttribute('transform', 'translate(' + startX + ',' + startY + ')');
     return g;
@@ -1842,186 +1845,343 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     element.appendChild(buildDebugGroup(train));
   }
 
-  function startTrainAnimation(trainState, trainData) {
-    var path = trainData.pathToTarget;
-    if (!path || path.length < 2) {
-      if (path && path.length === 1) {
-        trainState.element.setAttribute('transform',
-          'translate(' + path[0].x + ',' + path[0].y + ')');
-        playArrivalEffect(trainState, trainData.trainNo);
+  // ============================================================
+  // SVG 선로 스냅 시스템
+  // ============================================================
+  // 열차 애니메이션은 pathToTarget(역 좌표 배열)을 받아 각 역 쌍을 직선 보간한다.
+  // SVG 선로가 꺾이는 구간(예: 분당선 강남구청↔선정릉)에서는 직선이 선로를 벗어나
+  // 탈선해 보이므로, 페이지 로드 시 각 노선 path의 좌표를 파싱해두고
+  // 열차 경로의 각 역 쌍을 실제 선로 위 좌표 시퀀스로 확장한다.
+  // segmentDurations는 확장된 subseg의 거리 비율로 재분배한다.
+
+  var pathSnapPolylines = {}; // data-line 코드 → [polyline, polyline, ...]
+  var pathSnapReady = false;
+  var SNAP_THRESHOLD_PX = 12; // 역 중심과 선로 간 허용 오차(px)
+
+  function parseSvgPathD(d) {
+    if (!d) return [];
+    // 허용 문자(M, L, 숫자, 지수, 공백, 쉼표, 부호, 소수점) 외가 있으면 스냅 비대상.
+    // H/V/C/S/Q/T/A/Z 등 미지원 명령이나 소문자 상대좌표(m/l 등)가 섞여 있으면
+    // silent-fail 대신 빈 배열을 반환해 직선 fallback을 유도한다.
+    if (/[^MLeE0-9.,\s+\-]/.test(d)) return [];
+    var pts = [];
+    var tokens = d.replace(/,/g, ' ').split(/\s+/);
+    var i = 0;
+    while (i < tokens.length) {
+      var tk = tokens[i];
+      if (tk === 'M' || tk === 'L') {
+        i++;
+        while (i + 1 < tokens.length) {
+          var x = parseFloat(tokens[i]);
+          var y = parseFloat(tokens[i + 1]);
+          if (isNaN(x) || isNaN(y)) break;
+          pts.push({ x: x, y: y });
+          i += 2;
+        }
+      } else {
+        i++;
       }
-      return;
     }
+    return pts;
+  }
 
-    var animPath = path;
-    var durationMs = Math.max(trainData.arrivalSeconds, 1) * 1000;
-    // 도착 임박 열차는 최소 3초 활주 (1초 반복으로 떨리는 현상 방지)
-    if (trainData.arrivalSeconds <= 2 && (trainData.initialProgress || 0) >= 0.7) {
-      durationMs = 3000;
+  function buildPathSnapLookup() {
+    if (pathSnapReady) return;
+    var paths = document.querySelectorAll('path[data-line]');
+    for (var i = 0; i < paths.length; i++) {
+      var dl = paths[i].getAttribute('data-line');
+      if (!dl) continue;
+      // 흰색 이중선 테두리(예: 1-GA-1)는 본체와 동일 좌표이므로 제외.
+      // 대소문자/축약형(#FFF, white)도 방어.
+      var stroke = (paths[i].getAttribute('stroke') || '').toLowerCase();
+      if (stroke === '#ffffff' || stroke === '#fff' || stroke === 'white') continue;
+      var pts = parseSvgPathD(paths[i].getAttribute('d'));
+      if (pts.length < 2) continue;
+      if (!pathSnapPolylines[dl]) pathSnapPolylines[dl] = [];
+      pathSnapPolylines[dl].push(pts);
     }
-    var segDurations = trainData.segmentDurations || [];
-    var initProgress = trainData.initialProgress || 0;
-    var sliceOffset = 0; // 이어서 진행 시 잘린 세그먼트 수
+    pathSnapReady = true;
+  }
 
-    // 기존 열차의 현재 시각적 위치 읽기
-    // 15초마다 API 갱신 시, 같은 역을 보고하면 애니메이션이 처음으로 되돌아가는 문제 방지
-    var transformAttr = trainState.element.getAttribute('transform');
-    if (transformAttr) {
-      var match = transformAttr.match(/translate\(\s*([^,]+)\s*,\s*([^)]+)\s*\)/);
-      if (match) {
-        var curX = parseFloat(match[1]);
-        var curY = parseFloat(match[2]);
-        var dx0 = curX - path[0].x;
-        var dy0 = curY - path[0].y;
-        var distFromStart = Math.sqrt(dx0 * dx0 + dy0 * dy0);
+  function projectOnPolyline(px, py, polyline) {
+    var bestIdx = -1, bestT = 0, bestDist = Infinity;
+    for (var i = 0; i < polyline.length - 1; i++) {
+      var ax = polyline[i].x, ay = polyline[i].y;
+      var bx = polyline[i + 1].x, by = polyline[i + 1].y;
+      var dx = bx - ax, dy = by - ay;
+      var lenSq = dx * dx + dy * dy;
+      var t = lenSq > 0
+        ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq))
+        : 0;
+      var cx = ax + t * dx, cy = ay + t * dy;
+      var d = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+      if (d < bestDist) { bestDist = d; bestIdx = i; bestT = t; }
+    }
+    return { segIdx: bestIdx, t: bestT, dist: bestDist };
+  }
 
-        if (distFromStart > 2) {
-          // 경로에서 현재 위치와 가장 가까운 세그먼트 찾기
-          var bestSeg = 0;
-          var minDist = Infinity;
-          for (var si = 0; si < path.length - 1; si++) {
-            var ax = path[si].x, ay = path[si].y;
-            var bx = path[si + 1].x, by = path[si + 1].y;
-            var sdx = bx - ax, sdy = by - ay;
-            var len2 = sdx * sdx + sdy * sdy;
-            var t = len2 > 0
-              ? Math.max(0, Math.min(1, ((curX - ax) * sdx + (curY - ay) * sdy) / len2))
-              : 0;
-            var px = ax + t * sdx, py = ay + t * sdy;
-            var d = Math.sqrt((curX - px) * (curX - px) + (curY - py) * (curY - py));
-            if (d < minDist) { minDist = d; bestSeg = si; }
-          }
+  // 역 A(ax,ay) → 역 B(bx,by)를 lineId의 SVG 선로 위 좌표 시퀀스로 반환.
+  // 후보 polyline들 중 투영 거리 합이 최소인 것을 선택하고, slice 길이가
+  // 직선 거리의 3배를 넘으면 오매칭으로 간주해 탈락시킨다. 모두 탈락하면 null.
+  function getSnappedSlice(ax, ay, bx, by, lineId) {
+    if (!pathSnapReady) buildPathSnapLookup();
+    var dataLines = lineIdToDataLine[lineId];
+    if (!dataLines) return null;
 
-          // 경로에서 가까운 위치(30px 이내)면 현재 위치에서 이어서 진행
-          if (minDist < 30) {
-            var remaining = path.slice(bestSeg + 1);
-            if (remaining.length > 0) {
-              animPath = [{ x: curX, y: curY }].concat(remaining);
-              sliceOffset = bestSeg; // 잘린 세그먼트 수 기록
-              initProgress = 0; // 이어서 진행 시 initialProgress 무시
-            } else {
-              // 마지막 세그먼트를 지남 → 목적지에 고정
-              var last = path[path.length - 1];
-              trainState.element.setAttribute('transform',
-                'translate(' + last.x + ',' + last.y + ')');
-              return;
+    var straightDist = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    var bestSlice = null;
+    var bestScore = Infinity;
+
+    for (var di = 0; di < dataLines.length; di++) {
+      var polylines = pathSnapPolylines[dataLines[di]];
+      if (!polylines) continue;
+      for (var pi = 0; pi < polylines.length; pi++) {
+        var poly = polylines[pi];
+        var pa = projectOnPolyline(ax, ay, poly);
+        if (pa.dist > SNAP_THRESHOLD_PX) continue;
+        var pb = projectOnPolyline(bx, by, poly);
+        if (pb.dist > SNAP_THRESHOLD_PX) continue;
+
+        var candidate;
+        if (pa.segIdx === pb.segIdx) {
+          candidate = [{ x: ax, y: ay }, { x: bx, y: by }];
+        } else {
+          candidate = [{ x: ax, y: ay }];
+          if (pa.segIdx < pb.segIdx) {
+            for (var j = pa.segIdx + 1; j <= pb.segIdx; j++) {
+              candidate.push({ x: poly[j].x, y: poly[j].y });
+            }
+          } else {
+            for (var j = pa.segIdx; j >= pb.segIdx + 1; j--) {
+              candidate.push({ x: poly[j].x, y: poly[j].y });
             }
           }
+          candidate.push({ x: bx, y: by });
+        }
+
+        // Sanity: slice 총 길이가 직선거리의 3배를 넘으면 분기/지선 오매칭으로 탈락
+        var sliceLen = 0;
+        for (var k = 0; k < candidate.length - 1; k++) {
+          var sdx = candidate[k + 1].x - candidate[k].x;
+          var sdy = candidate[k + 1].y - candidate[k].y;
+          sliceLen += Math.sqrt(sdx * sdx + sdy * sdy);
+        }
+        if (straightDist > 0 && sliceLen > straightDist * 3) continue;
+
+        var score = pa.dist + pb.dist;
+        if (score < bestScore) {
+          bestScore = score;
+          bestSlice = candidate;
         }
       }
     }
+    return bestSlice;
+  }
 
-    // 세그먼트별 시간 가중치 구축
-    var segTimes = [];
-    var hasDurations = segDurations.length === path.length - 1;
+  // pathToTarget을 SVG 선로 좌표 시퀀스로 확장. segmentDurations는 subseg 거리 비율로 분배.
+  function expandPathWithSnap(path, segDurations, lineId) {
+    if (!path || path.length < 2 || !lineId) {
+      return {
+        path: path ? path.slice() : [],
+        durations: segDurations ? segDurations.slice() : []
+      };
+    }
+    var newPath = [{ x: path[0].x, y: path[0].y }];
+    var newDurations = [];
+    for (var i = 0; i < path.length - 1; i++) {
+      var a = path[i], b = path[i + 1];
+      var slice = getSnappedSlice(a.x, a.y, b.x, b.y, lineId);
+      if (!slice) slice = [a, b];
+      var origDur = (segDurations && segDurations[i] != null) ? segDurations[i] : 0;
 
-    if (sliceOffset > 0 && hasDurations) {
-      // 이어서 진행: 첫 세그먼트는 현재→다음역 (잘린 세그먼트 시간 사용)
-      var slicedDurations = segDurations.slice(sliceOffset);
-      // 첫 세그먼트는 부분 구간이므로 원래 시간 그대로 사용 (근사)
-      segTimes = slicedDurations.length > 0 ? slicedDurations : [];
-      // animPath 첫 점은 현재 위치이므로 segTimes 길이가 animPath.length-1과 다를 수 있음
-      // animPath = [curPos, path[bestSeg+1], ...] → segTimes에 첫 세그먼트 추가
-      if (segTimes.length < animPath.length - 1) {
-        segTimes.unshift(segTimes.length > 0 ? segTimes[0] : 120);
+      var subDists = [];
+      var totalDist = 0;
+      for (var j = 0; j < slice.length - 1; j++) {
+        var dx = slice[j + 1].x - slice[j].x;
+        var dy = slice[j + 1].y - slice[j].y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        subDists.push(d);
+        totalDist += d;
       }
-    } else if (hasDurations) {
-      segTimes = segDurations.slice();
-    }
-
-    // segTimes가 유효하지 않으면 SVG 거리 기반 폴백
-    var useTimes = segTimes.length === animPath.length - 1;
-    var totalTime = 0;
-    var segDists = [];
-
-    if (useTimes) {
-      for (var i = 0; i < segTimes.length; i++) {
-        totalTime += segTimes[i];
+      for (var j = 1; j < slice.length; j++) {
+        newPath.push({ x: slice[j].x, y: slice[j].y });
+      }
+      if (totalDist > 0) {
+        for (var j = 0; j < subDists.length; j++) {
+          newDurations.push(origDur * subDists[j] / totalDist);
+        }
+      } else if (slice.length > 1) {
+        var n = slice.length - 1;
+        for (var j = 0; j < n; j++) newDurations.push(origDur / n);
       }
     }
+    return { path: newPath, durations: newDurations };
+  }
 
-    // SVG 거리도 항상 계산 (보간에 필요)
-    var totalDist = 0;
-    for (var i = 1; i < animPath.length; i++) {
-      var dx = animPath[i].x - animPath[i - 1].x;
-      var dy = animPath[i].y - animPath[i - 1].y;
-      var d = Math.sqrt(dx * dx + dy * dy);
-      segDists.push(d);
-      totalDist += d;
+  // 남은시간으로 pathToTarget 내 위치를 뒤에서부터 역산한다.
+  // Dart estimateTrainPosition 과 동일 로직의 JS 포팅.
+  //
+  // 반환 필드:
+  //   outOfPath    : true 면 pathToTarget 시작점 이전 (경로 확장 필요 상태)
+  //   segmentIndex : 세그먼트 인덱스 (pathToTarget[i] → pathToTarget[i+1])
+  //   progress     : 0.0~1.0 세그먼트 내 진행률 (isDwelling=true 면 0)
+  //   isDwelling   : 중간역 정차 중 여부
+  function estimateTrainPosition(remaining, segTravel, dwell) {
+    if (!segTravel || segTravel.length === 0) {
+      return { outOfPath: false, segmentIndex: 0, progress: 0, isDwelling: false };
+    }
+    if (remaining <= 0) {
+      var last = segTravel.length - 1;
+      return { outOfPath: false, segmentIndex: last, progress: 1.0, isDwelling: false };
+    }
+    var t = remaining;
+    for (var i = segTravel.length - 1; i >= 0; i--) {
+      if (t <= segTravel[i]) {
+        return {
+          outOfPath: false,
+          segmentIndex: i,
+          progress: segTravel[i] > 0 ? (segTravel[i] - t) / segTravel[i] : 0,
+          isDwelling: false
+        };
+      }
+      t -= segTravel[i];
+      if (i > 0) {
+        if (t <= dwell) {
+          return { outOfPath: false, segmentIndex: i, progress: 0, isDwelling: true };
+        }
+        t -= dwell;
+      }
+    }
+    return { outOfPath: true, segmentIndex: 0, progress: 0, isDwelling: false, remainingAfterPath: t };
+  }
+
+  // 매 frame 남은시간을 실시간 계산해 위치를 역산하는 애니메이션 루프.
+  // trainData 입력:
+  //   pathToTarget       : [{x,y}, ...] (n+1개 점, Dart 에서 선로 확장된 상태일 수 있음)
+  //   segmentDurations   : [s0, ...] (주행시간만, n개)
+  //   dwellSeconds       : 중간역 정차 시간 상수 (초)
+  //   arrivalSeconds     : receivedAtEpochMs 시점의 남은 시간 (초)
+  //   receivedAtEpochMs  : arrivalSeconds 기준 시각 (ms)
+  function startTrainAnimation(trainState, trainData) {
+    var path = trainData.pathToTarget;
+    var segDurations = trainData.segmentDurations;
+    // Dart 는 이제 항상 dwellSeconds=0 을 전달한다.
+    // (정차 시각화는 "segmentIndex > 0 ⇒ 95% 클램프" 가 대신 수행)
+    // 필드 자체는 estimateTrainPosition 시그니처 유지를 위해 남겨두며, null 폴백은 0.
+    var dwell = (trainData.dwellSeconds != null) ? trainData.dwellSeconds : 0;
+
+    // 엣지: 경로 누락 → 표시 안 함 (현 transform 유지)
+    if (!path || path.length === 0) {
+      return;
     }
 
-    if (totalDist === 0) return;
-
-    // 잔여 거리가 5px 이하면 즉시 도착 처리 (이어서 진행 시 안전망)
-    if (totalDist <= 5) {
-      var last = animPath[animPath.length - 1];
+    // 엣지: 현재역 == 도착역 (1점) → 해당 좌표 고정 + 즉시 도착 이펙트
+    if (path.length === 1) {
       trainState.element.setAttribute('transform',
-        'translate(' + last.x + ',' + last.y + ')');
+        'translate(' + path[0].x + ',' + path[0].y + ')');
       playArrivalEffect(trainState, trainData.trainNo);
       return;
     }
 
-    if (useTimes && totalTime === 0) useTimes = false;
+    // 엣지: segmentDurations 길이 불일치 → 데이터 이상, path[0] 에 고정 (이펙트 없이 return)
+    if (!segDurations || segDurations.length !== path.length - 1) {
+      trainState.element.setAttribute('transform',
+        'translate(' + path[0].x + ',' + path[0].y + ')');
+      return;
+    }
 
-    var startTime = performance.now();
+    var receivedAt = (trainData.receivedAtEpochMs != null)
+      ? trainData.receivedAtEpochMs
+      : Date.now();
+    var baseArrival = trainData.arrivalSeconds || 0;
 
-    function step(now) {
-      var elapsed = now - startTime;
-      var timeProgress = Math.min(elapsed / durationMs, 1.0);
+    // 점프 보간 파라미터.
+    // arvlMsg3 가 다음 역으로 갱신되면 "현재역-다음역 95%"에서 "새 현재역-새 다음역 95%"로
+    // target 이 한 구간 건너뛰어 순간이동한다. 그대로 스냅하지 않고, 매 frame target 으로
+    // 반감기(half-life) 기반 지수감쇠로 수렴하여 자연스럽게 달려서 따라잡게 한다.
+    //
+    // JUMP_THRESHOLD_PX: target 과 current 의 거리가 이 값 초과면 catch-up 모드 진입.
+    // HALF_LIFE_MS: 남은 거리가 절반이 되는 데 걸리는 시간 (frame rate 독립).
+    //   - 3000ms: 3s→50%, 6s→25%, 9s→12.5%, 12s→6.25%, 15s→3.1% (실질 수렴)
+    //   - 이전 LAG_FACTOR=0.98 방식은 60fps 가정이었으나, 120Hz 기기에서 체감 1.5초로
+    //     너무 빠르게 끝났다. deltaMs 기반으로 바꿔 frame rate 와 무관하게 동작한다.
+    var JUMP_THRESHOLD_PX = 20;
+    var HALF_LIFE_MS = 3000;
 
-      var pos = animPath[animPath.length - 1];
+    function step() {
+      var realRemaining = Math.max(0, baseArrival - (Date.now() - receivedAt) / 1000);
+      var res = estimateTrainPosition(realRemaining, segDurations, dwell);
 
-      if (useTimes) {
-        // 시간 가중 보간
-        // initialProgress: 첫 세그먼트 시간의 일정 비율을 이미 진행한 것으로 간주
-        var startTimeOffset = initProgress * segTimes[0];
-        var effectiveTotalTime = totalTime - startTimeOffset;
-        if (effectiveTotalTime <= 0) effectiveTotalTime = totalTime;
+      var target;
+      if (res.outOfPath) {
+        // 경로 시작점보다 뒤 — Dart 에서 경로 확장 상한 30칸으로도 못 담은 상태.
+        // 시작점에 고정하여 곧 arvlMsg3 갱신되기를 대기.
+        target = path[0];
+      } else if (res.segmentIndex > 0) {
+        // arvlMsg3("현재역") 기준 첫 세그먼트 밖으로 역산이 넘어감.
+        // 정적 구간시간 데이터가 API 남은시간 척도와 달라 열차가 앞쪽 세그먼트로
+        // 계산되는 상황(= 신대방 같은 위치로 튀는 증상)을 방지하기 위해,
+        // "다음역"(path[1]) 좌표에 고정한다. 다음역에서 정차하며 대기하는 시각화.
+        // 다음 API 갱신에서 arvlMsg3가 갱신되면 아래 catch-up 로직으로 부드럽게 이동.
+        target = path[1];
+      } else if (res.isDwelling) {
+        // 중간역 정차 중 — 해당 역 좌표 고정
+        target = path[res.segmentIndex];
+      } else {
+        var p0 = path[res.segmentIndex];
+        var p1 = path[res.segmentIndex + 1];
+        target = {
+          x: p0.x + (p1.x - p0.x) * res.progress,
+          y: p0.y + (p1.y - p0.y) * res.progress
+        };
+      }
 
-        var targetTime = startTimeOffset + timeProgress * effectiveTotalTime;
-        var accumulated = 0;
+      // currentPos 초기화: 최초 frame 에는 target 에 바로 배치 (점프 없음).
+      // 이후 refresh 로 target 이 점프하면 catch-up 으로 부드럽게 따라잡는다.
+      if (!trainState.currentPos) {
+        trainState.currentPos = { x: target.x, y: target.y };
+      }
 
-        for (var i = 0; i < segTimes.length; i++) {
-          if (accumulated + segTimes[i] >= targetTime) {
-            var segProgress = segTimes[i] > 0
-              ? (targetTime - accumulated) / segTimes[i]
-              : 0;
-            pos = {
-              x: animPath[i].x + (animPath[i + 1].x - animPath[i].x) * segProgress,
-              y: animPath[i].y + (animPath[i + 1].y - animPath[i].y) * segProgress
-            };
-            break;
-          }
-          accumulated += segTimes[i];
+      // 실제 경과 시간 기반 감쇠 (frame rate 독립).
+      var nowMs = (typeof performance !== 'undefined' && performance.now)
+        ? performance.now() : Date.now();
+      var deltaMs = trainState.lastFrameMs != null
+        ? (nowMs - trainState.lastFrameMs) : 16.67;
+      trainState.lastFrameMs = nowMs;
+
+      var cp = trainState.currentPos;
+      var dx = target.x - cp.x;
+      var dy = target.y - cp.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (trainState.catchingUp || dist > JUMP_THRESHOLD_PX) {
+        // 점프 감지: HALF_LIFE_MS 기반 지수감쇠로 target 수렴.
+        trainState.catchingUp = true;
+        // factor = 0.5^(deltaMs/HALF_LIFE_MS): deltaMs 동안 거리가 이만큼 남음.
+        var factor = Math.pow(0.5, deltaMs / HALF_LIFE_MS);
+        cp.x = target.x + (cp.x - target.x) * factor;
+        cp.y = target.y + (cp.y - target.y) * factor;
+        // target 에 충분히 근접하면 snap + 모드 해제
+        if (Math.abs(target.x - cp.x) < 0.5 && Math.abs(target.y - cp.y) < 0.5) {
+          cp.x = target.x;
+          cp.y = target.y;
+          trainState.catchingUp = false;
         }
       } else {
-        // SVG 거리 기반 폴백 (기존 방식)
-        var targetDist = timeProgress * totalDist;
-        var accumulated = 0;
-
-        for (var i = 0; i < segDists.length; i++) {
-          if (accumulated + segDists[i] >= targetDist) {
-            var segProgress = segDists[i] > 0
-              ? (targetDist - accumulated) / segDists[i]
-              : 0;
-            pos = {
-              x: animPath[i].x + (animPath[i + 1].x - animPath[i].x) * segProgress,
-              y: animPath[i].y + (animPath[i + 1].y - animPath[i].y) * segProgress
-            };
-            break;
-          }
-          accumulated += segDists[i];
-        }
+        // 평상시: target 그대로 표시 (매 frame 역산 결과가 연속이므로 점프 없음)
+        cp.x = target.x;
+        cp.y = target.y;
       }
 
       trainState.element.setAttribute('transform',
-        'translate(' + pos.x + ',' + pos.y + ')');
+        'translate(' + cp.x + ',' + cp.y + ')');
 
-      if (timeProgress < 1.0) {
-        trainState.animationId = requestAnimationFrame(step);
-      } else {
+      // 도착 이펙트는 catch-up 이 끝난 뒤에만 발동(달리다 중간에 사라지는 현상 방지)
+      if (realRemaining <= 0 && !trainState.catchingUp) {
         playArrivalEffect(trainState, trainData.trainNo);
+        return;
       }
+      trainState.animationId = requestAnimationFrame(step);
     }
 
     trainState.animationId = requestAnimationFrame(step);
@@ -2065,6 +2225,13 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     sendToFlutter({ action: 'trainArrived', trainNo: trainNo, destination: trainState.destination || '' });
   }
 
+  // pathToTarget 시작점 좌표를 문자열 키로 압축. arvlMsg3가 바뀌어 첫 역이
+  // 달라졌는지 감지하여 단조 감소 clamp 에서 "같은 열차·같은 경로" 판단에 사용.
+  function pathStartKey(path) {
+    if (!path || path.length === 0) return '';
+    return path[0].x + ',' + path[0].y;
+  }
+
   function cancelTrainAnimation(trainState) {
     if (trainState.animationId) {
       cancelAnimationFrame(trainState.animationId);
@@ -2083,25 +2250,39 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       var color = lineColors[t.lineId] || '#999';
 
       if (activeTrains[t.trainNo]) {
+        // 매 frame 역산 방식에서는 동일 receivedAtEpochMs 기준으로 시간축이 연속되어
+        // refresh 시 위치 점프가 자연히 작다. "도착 임박 유지" 분기 불필요.
         var existing = activeTrains[t.trainNo];
-        // 도착 임박 열차는 기존 애니메이션 유지 (15초 갱신에서 끊김 방지)
-        // 단, 이미 도착역에 있는 열차(pathToTarget 1점)는 즉시 도착 처리
-        if (t.arrivalSeconds <= 2 && (t.initialProgress || 0) >= 0.7 && existing.animationId
-            && t.pathToTarget && t.pathToTarget.length >= 2) {
-          existing.destination = t.destination || '';
-          existing.lastArrivalSeconds = t.arrivalSeconds;
-          existing.lastUpdateTime = Date.now();
-          var texts = existing.element.querySelectorAll('text');
-          if (texts.length > 0) {
-            texts[0].textContent = t.destination || '';
+        var nowMs = Date.now();
+
+        // 단조 감소 clamp:
+        // API 의 arvlMsg2 가 "7분 30초 후" 같이 30초~분 단위로 라운딩되어
+        // 동일 값을 반복 반환하면, 매 refresh 마다 receivedAtEpochMs 가 갱신되며
+        // realRemaining 이 원복되어 열차가 뒤로 점프한다.
+        // 같은 열차(trainNo) + 같은 pathToTarget 시작점이면 "남은시간은 증가 불가"
+        // 를 보장하기 위해 이전 frame 예상 남은시간보다 큰 새 값은 이전 값으로 clamp.
+        var newPathKey = pathStartKey(t.pathToTarget);
+        var samePath = (existing.pathKey != null && existing.pathKey === newPathKey);
+        if (samePath && existing.baseArrival != null && existing.baseReceivedAt != null) {
+          var prevReal = Math.max(0, existing.baseArrival
+              - (nowMs - existing.baseReceivedAt) / 1000);
+          var newElapsed = Math.max(0,
+              (nowMs - (t.receivedAtEpochMs || nowMs)) / 1000);
+          var newReal = Math.max(0, (t.arrivalSeconds || 0) - newElapsed);
+          // 2초 허용 오차(네트워크 지터) 내에서는 새 값 허용
+          if (newReal > prevReal + 2) {
+            t.arrivalSeconds = Math.round(prevReal);
+            t.receivedAtEpochMs = nowMs;
           }
-          updateTrainDebugInfo(existing.element, t);
-          continue;
         }
+
         cancelTrainAnimation(existing);
         existing.destination = t.destination || '';
         existing.lastArrivalSeconds = t.arrivalSeconds;
-        existing.lastUpdateTime = Date.now();
+        existing.lastUpdateTime = nowMs;
+        existing.baseArrival = t.arrivalSeconds;
+        existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
+        existing.pathKey = newPathKey;
         var texts = existing.element.querySelectorAll('text');
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
@@ -2112,10 +2293,14 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       } else {
         var g = createTrainIcon(t, color);
         liveTrainsGroup.appendChild(g);
+        var nowMs2 = Date.now();
         activeTrains[t.trainNo] = {
           element: g, animationId: null, destination: t.destination || '',
           lastArrivalSeconds: t.arrivalSeconds,
-          lastUpdateTime: Date.now()
+          lastUpdateTime: nowMs2,
+          baseArrival: t.arrivalSeconds,
+          baseReceivedAt: t.receivedAtEpochMs || nowMs2,
+          pathKey: pathStartKey(t.pathToTarget)
         };
         startTrainAnimation(activeTrains[t.trainNo], t);
       }
@@ -2170,6 +2355,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
   function updateRouteToolbarPosition() {
     if (!toolbarVisible) return;
+    // toolbarSvgX/Y가 앵커(출발역 또는 사용자가 드래그한 위치의 SVG 좌표)를
+    // 나타내므로 항상 맵 pan/zoom에 맞춰 화면 좌표로 재계산한다.
+    // 결과: 툴바가 맵에 부착된 것처럼 카메라 이동과 함께 따라 움직임.
     var screenX = toolbarSvgX * scale + tx;
     var screenY = toolbarSvgY * scale + ty;
 
@@ -2235,6 +2423,90 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     routeToolbar.style.display = 'none';
     toolbarVisible = false;
   };
+
+  // 경로 결과 툴바 드래그 이동: 상단 빈 바 영역(padding-top:28px)을 잡아서
+  // 끌면 툴바 위치를 옮긴다. 선로/열차를 가릴 때 사용자가 치울 수 있도록 한다.
+  // .route-toolbar-btn(X 포함)은 드래그 시작 대상에서 제외해 클릭 동작 보존.
+  // 드래그 종료 시 툴바의 화면 위치를 SVG 좌표로 역변환해 앵커(toolbarSvgX/Y)로
+  // 저장하므로, 이후 맵 pan/zoom 시 툴바가 맵에 부착된 듯 함께 이동한다.
+  //
+  // 중요: 지도 팬 핸들러가 document의 pointerdown/pointermove에 등록돼 있으므로
+  // 반드시 같은 Pointer Events 계열로 구현하고, 드래그 시작 시 stopPropagation()으로
+  // document 핸들러 전파를 끊어야 툴바 드래그와 지도 팬이 겹치지 않는다.
+  (function initRouteToolbarDrag() {
+    var dragState = null;
+
+    function onDragStart(e) {
+      if (e.target.closest('.route-toolbar-btn')) return; // 버튼 영역 제외
+      if (e.target !== routeToolbar) return; // 상단 빈 바(컨테이너 자체)만 드래그 핸들
+
+      // document의 지도 pan 핸들러로 이벤트 전파 차단
+      e.stopPropagation();
+      e.preventDefault();
+
+      // 맵 pan state를 강제 초기화: 동시에 맵 pan이 진행 중이거나
+      // 이전 터치 잔재가 남아있지 않도록 보장
+      for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
+      isDragging = false;
+
+      var rect = routeToolbar.getBoundingClientRect();
+      dragState = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        toolbarLeft: rect.left,
+        toolbarTop: rect.top
+      };
+    }
+
+    function onDragMove(e) {
+      if (!dragState || e.pointerId !== dragState.pointerId) return;
+      e.stopPropagation();
+      e.preventDefault();
+
+      var dx = e.clientX - dragState.startX;
+      var dy = e.clientY - dragState.startY;
+      var newLeft = dragState.toolbarLeft + dx;
+      var newTop = dragState.toolbarTop + dy;
+
+      // 화면 경계 clamp: 툴바가 화면 밖으로 나가 못 되돌리는 상황 방지
+      var tw = routeToolbar.offsetWidth;
+      var th = routeToolbar.offsetHeight;
+      newLeft = Math.max(8, Math.min(window.innerWidth - tw - 8, newLeft));
+      newTop = Math.max(8, Math.min(window.innerHeight - th - 8, newTop));
+
+      routeToolbar.style.left = newLeft + 'px';
+      routeToolbar.style.top = newTop + 'px';
+    }
+
+    function onDragEnd(e) {
+      if (!dragState) return;
+      if (e && e.pointerId !== dragState.pointerId) return;
+      // 혹시 어디서 capture가 걸려 있다면 해제 (방어)
+      if (routeToolbar.hasPointerCapture &&
+          routeToolbar.hasPointerCapture(dragState.pointerId) &&
+          routeToolbar.releasePointerCapture) {
+        try { routeToolbar.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      }
+      // 드래그로 옮긴 툴바의 화면 위치를 SVG 좌표로 역변환하여 앵커로 저장.
+      // 이후 맵 pan/zoom 시 updateRouteToolbarPosition이 이 앵커 기준으로
+      // 툴바를 재배치하므로 툴바가 맵에 부착된 듯 함께 이동한다.
+      // updateRouteToolbarPosition의 기준: left = screenX, top = screenY - cachedTbH - 18
+      // 따라서 screenX = rect.left, screenY = rect.top + cachedTbH + 18
+      var rect = routeToolbar.getBoundingClientRect();
+      toolbarSvgX = (rect.left - tx) / scale;
+      toolbarSvgY = (rect.top + cachedTbH + 18 - ty) / scale;
+      dragState = null;
+      // 맵 pan state 완전 클리어: 다음 맵 터치가 깨끗하게 pan을 시작하도록 보장
+      for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
+      isDragging = false;
+    }
+
+    routeToolbar.addEventListener('pointerdown', onDragStart);
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('pointerup', onDragEnd);
+    document.addEventListener('pointercancel', onDragEnd);
+  })();
 
   // ============================================================
   // 디버그: 탭 영역 시각화

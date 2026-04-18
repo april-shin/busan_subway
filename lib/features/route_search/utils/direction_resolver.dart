@@ -1,4 +1,9 @@
+import '../../../core/utils/line_direction.dart';
 import '../../../domain/entities/route_result.dart';
+
+// 역 ID 쌍 기반 방향 판정(`isDownBetween`)은 core 레이어로 이동되었다.
+// 본 파일은 RouteSegment 기반 세그먼트 단위 판정과 문자열 파싱만 담당한다.
+export '../../../core/utils/line_direction.dart' show isDownBetween;
 
 /// 방향 판별이 가능한 첫 번째 세그먼트를 반환한다 (역 2개 이상).
 ///
@@ -19,76 +24,24 @@ RouteSegment? findFirstDirectionalSegment(RouteResult routeResult) {
 bool isDownDirection(RouteSegment segment) {
   if (segment.stations.length < 2) return false;
 
-  final firstNum = _parseNumericId(segment.stations.first.id);
-  final lastNum = _parseNumericId(segment.stations.last.id);
-  if (firstNum == null || lastNum == null) return false;
-
+  // 2호선은 순환선이라 첫 두 역 쌍으로 방향을 확정해야 한다.
+  // 그 외 노선은 세그먼트의 첫/끝 역 ID만으로 충분.
   if (segment.lineId == '2') {
-    return _isLine2Down(segment, firstNum);
+    return isDownBetween(
+      segment.stations.first.id,
+      segment.stations[1].id,
+      segment.lineId,
+    );
   }
 
-  if (segment.lineId == '4') {
-    return _isLine4Down(firstNum, lastNum);
-  }
-
-  // 일반 노선: ID 증가 = 하행
-  return lastNum > firstNum;
-}
-
-/// 2호선 순환 방향 결정
-///
-/// 내선(상행): ID 증가 방향 (201→202→...→243→201)
-/// 외선(하행): ID 감소 방향 (243→242→...→201→243)
-/// 순환 경계(201↔243)에서 |step| > 21이면 반전
-bool _isLine2Down(RouteSegment segment, int firstNum) {
-  final secondNum = _parseNumericId(segment.stations[1].id);
-  if (secondNum == null) return false;
-
-  final step = secondNum - firstNum;
-  // step > 0이고 작은 폭: 내선(상행), step < 0이고 작은 폭: 외선(하행)
-  // 순환 경계를 넘으면 반전 (|step| > 21이면 반대 방향)
-  if (step.abs() > 21) {
-    // 순환 경계: step > 21이면 외선, step < -21이면 내선
-    return step > 0;
-  }
-  return step < 0;
-}
-
-/// 4호선 방향 결정.
-///
-/// 진접선(449-452) → 상계(402) 경계에서 ID가 불연속.
-/// 실제 노선 순서: 진접(449)→오남(450)→별내별가람(451)→불암산(452)→상계(402)→...→오이도(448)
-/// 하행 = 남쪽(오이도 방향), 상행 = 북쪽(진접 방향)
-bool _isLine4Down(int firstNum, int lastNum) {
-  final firstIsExtension = firstNum >= 449;
-  final lastIsExtension = lastNum >= 449;
-
-  // 두 역이 모두 본선(402-448)이면 기본 로직 적용
-  if (!firstIsExtension && !lastIsExtension) {
-    return lastNum > firstNum;
-  }
-
-  // 진접선 내부(둘 다 449+): ID 증가 = 하행(남쪽, 오이도 방향)
-  if (firstIsExtension && lastIsExtension) {
-    return lastNum > firstNum;
-  }
-
-  // 진접선 → 본선: 하행 (남쪽으로 이동)
-  if (firstIsExtension && !lastIsExtension) return true;
-
-  // 본선 → 진접선: 상행 (북쪽으로 이동)
-  return false;
+  return isDownBetween(
+    segment.stations.first.id,
+    segment.stations.last.id,
+    segment.lineId,
+  );
 }
 
 /// ArrivalInfo.direction 문자열이 하행/외선인지 판별한다.
 bool isDownDirectionString(String direction) {
   return direction == '하행' || direction == '외선';
-}
-
-/// 역 ID에서 숫자 부분을 추출한다.
-/// 예: "201" → 201, "D01" → 1, "K32" → 32
-int? _parseNumericId(String id) {
-  final match = RegExp(r'(\d+)$').firstMatch(id);
-  if (match == null) return null;
-  return int.tryParse(match.group(1)!);
 }

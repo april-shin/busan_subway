@@ -457,6 +457,42 @@ void main() {
       expect(result[0].arrivalSeconds, isNotNull);
     });
 
+    test('8호선 시나리오: barvlDt=0으로 arrivalSeconds null, 경로 기반 추정', () {
+      // 8호선 잠실(=선릉)→천호 경로를 2호선 역A/역B/역C로 시뮬레이션.
+      // DTO 변경으로 barvlDt="0"+arvlCd="0"(진입) → arrivalSeconds=null이 되고,
+      // enrichment가 경로 기반 추정값으로 채워주는지 검증.
+      final now = DateTime.now();
+      final arrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '역C',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '[2]번째 전역',
+          destination: '종점',
+          trainType: '일반',
+          arrivalSeconds: null, // 8호선 실제 API와 동일한 상태
+          receivedAt: now,
+          currentStationName: '역A',
+          positionStatus: '출발',
+          arrivalCode: 2,
+          trainNo: 'T8001',
+        ),
+      ];
+
+      final result = enrichArrivalInfoList(
+        arrivals: arrivals,
+        targetStationName: '역C',
+        stations: stations,
+        connections: connections,
+      );
+
+      expect(result.length, 1);
+      expect(result[0].arrivalSeconds, isNotNull);
+      expect(result[0].arrivalSeconds!, greaterThan(100));
+      expect(result[0].isEstimated, true);
+    });
+
     test('arrivalMessage로 4순위 폴백 동작 확인', () {
       final now = DateTime.now();
       final arrivals = [

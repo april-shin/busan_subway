@@ -77,9 +77,12 @@ void main() {
       expect(dto.toEntity().arrivalSeconds, 0);
     });
 
-    test('barvlDt "0" + arvlCd "0"(진입) → arrivalSeconds 0', () {
+    test('barvlDt "0" + arvlCd "0"(진입) → arrivalSeconds null (상위 추정으로 위임)', () {
+      // 8호선처럼 barvlDt를 항상 0으로 내려주는 노선에서 진입(0) 상태도 0초로
+      // 고정하면 실제 위치 대비 애니메이션이 즉시 도착으로 붕괴된다. 도착(1)만
+      // 신뢰하고 진입(0)은 null로 떨어뜨려 경로/역 수 기반 추정에 맡긴다.
       const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '0');
-      expect(dto.toEntity().arrivalSeconds, 0);
+      expect(dto.toEntity().arrivalSeconds, isNull);
     });
 
     test('barvlDt "0" + arvlCd "99" + arvlMsg2 없음 → arrivalSeconds null', () {
@@ -137,6 +140,62 @@ void main() {
     test('barvlDt "0" + arvlCd null → arrivalSeconds null', () {
       const dto = ArrivalInfoDto(barvlDt: '0');
       expect(dto.toEntity().arrivalSeconds, isNull);
+    });
+
+    // 8호선 API는 실제로는 수 정거장 떨어진 열차에도 arvlCd=1 + barvlDt=0을 주는
+    // 데이터 품질 이슈가 있다. arvlMsg2가 "[N]번째 전역..." 형태이면 도착이
+    // 아니므로 null로 떨어뜨려 상위 추정 로직에 맡겨야 한다.
+    group('8호선 arvlCd=1 데이터 품질 이슈 대응', () {
+      test('arvlCd=1 + barvlDt=0 + "[5]번째 전역 (남위례)" → null (추정 위임)', () {
+        const dto = ArrivalInfoDto(
+          subwayId: '1008',
+          barvlDt: '0',
+          arvlCd: '1',
+          arvlMsg2: '[5]번째 전역 (남위례)',
+          arvlMsg3: '남위례',
+        );
+        expect(dto.toEntity().arrivalSeconds, isNull);
+      });
+
+      test('arvlCd=1 + barvlDt=0 + "[11]번째 전역 (모란)" → null', () {
+        const dto = ArrivalInfoDto(
+          subwayId: '1008',
+          barvlDt: '0',
+          arvlCd: '1',
+          arvlMsg2: '[11]번째 전역 (모란)',
+        );
+        expect(dto.toEntity().arrivalSeconds, isNull);
+      });
+
+      test('arvlCd=1 + barvlDt=0 + "전역 도착" → null (parseStationCount 매칭)', () {
+        // arvlCd=1(조회역 도착)과 arvlMsg2="전역 도착"(이전역 도착)은 모순.
+        // arvlMsg2를 우선 신뢰해 도착 아님으로 처리.
+        const dto = ArrivalInfoDto(
+          barvlDt: '0',
+          arvlCd: '1',
+          arvlMsg2: '전역 도착',
+        );
+        expect(dto.toEntity().arrivalSeconds, isNull);
+      });
+
+      test('arvlCd=1 + barvlDt=0 + "이번역 도착" → 0 유지 (진짜 도착)', () {
+        // "이번역 도착"은 parseStationCount가 매칭하지 않으므로 기존 동작 유지.
+        const dto = ArrivalInfoDto(
+          barvlDt: '0',
+          arvlCd: '1',
+          arvlMsg2: '이번역 도착',
+        );
+        expect(dto.toEntity().arrivalSeconds, 0);
+      });
+
+      test('arvlCd=1 + barvlDt=0 + arvlMsg2 빈 문자열 → 0 (기존 동작)', () {
+        const dto = ArrivalInfoDto(
+          barvlDt: '0',
+          arvlCd: '1',
+          arvlMsg2: '',
+        );
+        expect(dto.toEntity().arrivalSeconds, 0);
+      });
     });
   });
 }

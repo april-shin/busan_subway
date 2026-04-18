@@ -199,9 +199,16 @@ Expanded → WebViewWidget (전체 화면)
 **실행 규칙:**
 - 앱 개발 작업(기능 구현, 버그 수정, UI 개선, 알고리즘 최적화 등) 요청 시 `subway-app-orchestrator` 스킬을 통해 에이전트 팀으로 처리하라
 - 단순 질문, 설정 변경, 1~2줄 수정은 에이전트 팀 없이 직접 처리해도 무방
-- 모든 에이전트는 `model: "opus"` 사용
+- **모든 에이전트는 Opus 4.7 (1M context) 사용** — `.claude/agents/*.md`의 YAML frontmatter에 `model: opus` 명시
 - 코드 변경 후 반드시 subway-code-reviewer + subway-requirements-reviewer를 병렬 실행
 - 중간 산출물: `_workspace/` 디렉토리
+
+**1M 컨텍스트 활용 원칙 (Opus 4.7):**
+- **모듈 단위 일괄 처리** — 에이전트 1명이 한 feature 폴더 전체(파일·테스트·참조 문서)를 한 번에 읽고 수정. 작게 쪼개 라운드트립을 늘리지 말 것.
+- **참조 문서 동시 로딩** — SKILL.md + references/ + 관련 코드를 한 컨텍스트에 투입해 사전 탐색 부담 감소.
+- **리뷰 단계 풀 컨텍스트** — 코드/요구사항 리뷰는 변경 파일 + 인근 파일 + 테스트 + 원래 요청 전문을 한 번에 받아 맥락 손실 없이 판단.
+- **1M을 꼭 채우지 말 것** — 작업 범위에 비례한 컨텍스트만 투입 (비용·캐시 효율).
+- 상세 전략: `.claude/skills/subway-app-orchestrator/SKILL.md`의 "모델 및 컨텍스트 전략" 섹션.
 
 **디렉토리 구조:**
 ```
@@ -241,3 +248,4 @@ Expanded → WebViewWidget (전체 화면)
 | 날짜 | 변경 내용 | 대상 | 사유 |
 |------|----------|------|------|
 | 2026-04-07 | 초기 구성: 7인 전문가 팀 하네스 | 전체 | 앱 개발 전문가 팀 구성 요청 |
+| 2026-04-17 | Opus 4.7 (1M context) 대응: 전 에이전트 YAML frontmatter 추가(`model: opus`, name, description), 오케스트레이터에 "모델 및 컨텍스트 전략" 섹션 추가, CLAUDE.md에 1M 컨텍스트 활용 원칙 명시 | agents/*, skills/subway-app-orchestrator/SKILL.md, CLAUDE.md | Opus 4.7에 적합하게 하네스 설정 수정 요청 |

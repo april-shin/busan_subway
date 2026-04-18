@@ -798,10 +798,9 @@
     "longitude": 126.6806,
     "svgX": 144.0,
     "svgY": 1152.0,
-    "isTransfer": true,
+    "isTransfer": false,
     "transferLines": [
-      "1",
-      "수인분당"
+      "1"
     ]
   },
   {
@@ -1624,7 +1623,7 @@
     "isTransfer": true,
     "transferLines": [
       "2",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -2375,7 +2374,7 @@
     "isTransfer": true,
     "transferLines": [
       "3",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -2444,7 +2443,7 @@
     "isTransfer": true,
     "transferLines": [
       "3",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -4849,7 +4848,7 @@
     "isTransfer": true,
     "transferLines": [
       "7",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -5890,7 +5889,7 @@
     "isTransfer": true,
     "transferLines": [
       "9",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -6077,7 +6076,7 @@
     "isTransfer": true,
     "transferLines": [
       "3",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -6091,7 +6090,7 @@
     "isTransfer": true,
     "transferLines": [
       "7",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -6105,7 +6104,7 @@
     "isTransfer": true,
     "transferLines": [
       "9",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -6119,7 +6118,7 @@
     "isTransfer": true,
     "transferLines": [
       "2",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -6133,7 +6132,7 @@
     "isTransfer": true,
     "transferLines": [
       "3",
-      "신분당"
+      "SB"
     ]
   },
   {
@@ -6185,7 +6184,7 @@
     "svgY": 1304.0,
     "isTransfer": true,
     "transferLines": [
-      "신분당",
+      "SB",
       "수인분당"
     ]
   },
@@ -6199,7 +6198,7 @@
     "svgY": 1335.2,
     "isTransfer": true,
     "transferLines": [
-      "신분당",
+      "SB",
       "수인분당"
     ]
   },
@@ -7989,7 +7988,7 @@
     "svgY": 1335.2,
     "isTransfer": true,
     "transferLines": [
-      "신분당",
+      "SB",
       "수인분당"
     ]
   },

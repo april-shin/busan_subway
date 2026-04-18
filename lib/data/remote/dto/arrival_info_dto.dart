@@ -36,17 +36,34 @@ String _extractPositionStatus(String? raw) {
 /// barvlDt(도착 예정 초)를 파싱한다.
 ///
 /// API가 도착 시간을 모를 때 "0"을 반환하는 경우가 있다 (특히 신분당선 등).
-/// arvlCd가 1(도착) 또는 0(진입)이면 barvlDt "0"은 실제 의미있는 값이므로 0을 반환하고,
-/// 그 외(arvlCd 99 등)에서 "0"이면 API가 실제 시간을 모르는 것이므로 null을 반환한다.
-int? _parseArrivalSeconds(String? barvlDt, String? arvlCd) {
+/// arvlCd=1(도착) + barvlDt=0은 원칙적으로 실제 0초이지만, 8호선 등 일부 노선은
+/// 실제로는 수 정거장 떨어진 열차에도 arvlCd=1을 주는 데이터 품질 이슈가 있다.
+/// 이 경우 arvlMsg2가 "[N]번째 전역..." 형태이면 도착 상태가 아니므로 null로
+/// 떨어뜨려 상위 추정 로직(estimateArrivalSeconds)에 맡긴다.
+///
+/// 반환값 해석:
+/// - 양수: API가 명시한 실제 잔여 초
+/// - 0: 해당 역에 실제 도착한 상태
+/// - null: 정보 없음 → 상위 추정 로직에서 채워야 함
+int? _parseArrivalSeconds(String? barvlDt, String? arvlCd, String arvlMsg2) {
   if (barvlDt == null) return null;
   final seconds = int.tryParse(barvlDt);
   if (seconds == null) return null;
   if (seconds > 0) return seconds;
 
-  // barvlDt == 0: 도착(1) 또는 진입(0)이면 실제 0초, 그 외는 데이터 없음
+  // barvlDt == 0 인 경우만 처리.
   final code = arvlCd != null ? int.tryParse(arvlCd) : null;
-  const validZeroCodes = {0, 1}; // 진입, 도착
+
+  // arvlCd=1(도착)이어도 메시지가 "[N]번째 전역..." 형태면 실제 도착이 아님
+  // (8호선 API의 광범위 arvlCd=1 버그 대응). 이 경우 null로 넘겨 추정에 위임.
+  if (code == 1 && parseStationCount(arvlMsg2) != null) {
+    return null;
+  }
+
+  // 도착(1)만 실제 0초로 신뢰.
+  // 진입(0)은 짧은 잔여시간이 남아 있을 수 있고, barvlDt=0 오판 위험이 커
+  // null로 떨어뜨려 상위 추정 로직에 맡긴다.
+  const validZeroCodes = {1};
   if (code != null && validZeroCodes.contains(code)) return 0;
   return null;
 }
@@ -84,7 +101,7 @@ class ArrivalInfoDto with _$ArrivalInfoDto {
       arrivalMessage: arvlMsg2 ?? '',
       destination: bstatnNm ?? '',
       trainType: btrainSttus ?? '일반',
-      arrivalSeconds: _parseArrivalSeconds(barvlDt, arvlCd)
+      arrivalSeconds: _parseArrivalSeconds(barvlDt, arvlCd, arvlMsg2 ?? '')
           ?? parseTimeFromMessage(arvlMsg2 ?? ''),
       receivedAt: recptnDt != null
           ? DateTime.tryParse(recptnDt!) ?? DateTime.now()

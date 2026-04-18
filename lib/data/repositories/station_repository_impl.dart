@@ -1,6 +1,7 @@
 import '../../domain/entities/station.dart';
 import '../../domain/entities/line.dart';
 import '../../domain/entities/connection.dart';
+import '../../domain/entities/transfer_guide.dart';
 import '../../domain/repositories/station_repository.dart';
 import '../local/local_data_source.dart';
 
@@ -23,6 +24,10 @@ class StationRepositoryImpl implements StationRepository {
   @override
   Future<Map<String, int>> getTransferTimes() =>
       _localDataSource.loadTransferTimes();
+
+  @override
+  Future<Map<String, TransferGuide>> getTransferGuides() =>
+      _localDataSource.loadTransferGuides();
 
   @override
   Future<List<Station>> searchStations(String query) async {

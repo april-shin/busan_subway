@@ -184,12 +184,15 @@ html, body {
 }
 #text-layer text {
   font-size: inherit !important;
+  font-weight: 800;
   stroke: white;
   stroke-width: var(--stroke-w, 2px);
   paint-order: stroke;
   stroke-linejoin: round;
 }
 path[data-line] { stroke-width: 5 !important; }
+/* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
+path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   transition: opacity 0.3s;
 }
@@ -208,6 +211,11 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   padding: 4px;
   padding-top: 28px;
   gap: 2px;
+  /* 드래그 핸들: 상단 28px 빈 바(X 버튼 왼쪽 영역)를 잡아 툴바 이동 */
+  cursor: move;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .route-toolbar-btn {
   display: block;
@@ -1255,8 +1263,187 @@ $textElements
     element.appendChild(buildDebugGroup(train));
   }
 
+  // ============================================================
+  // SVG 선로 스냅 시스템
+  // ============================================================
+  // 열차 애니메이션은 pathToTarget(역 좌표 배열)을 받아 각 역 쌍을 직선 보간한다.
+  // SVG 선로가 꺾이는 구간(예: 분당선 강남구청↔선정릉)에서는 직선이 선로를 벗어나
+  // 탈선해 보이므로, 페이지 로드 시 각 노선 path의 좌표를 파싱해두고
+  // 열차 경로의 각 역 쌍을 실제 선로 위 좌표 시퀀스로 확장한다.
+  // segmentDurations는 확장된 subseg의 거리 비율로 재분배한다.
+
+  var pathSnapPolylines = {}; // data-line 코드 → [polyline, polyline, ...]
+  var pathSnapReady = false;
+  var SNAP_THRESHOLD_PX = 12; // 역 중심과 선로 간 허용 오차(px)
+
+  function parseSvgPathD(d) {
+    if (!d) return [];
+    // 허용 문자(M, L, 숫자, 지수, 공백, 쉼표, 부호, 소수점) 외가 있으면 스냅 비대상.
+    // H/V/C/S/Q/T/A/Z 등 미지원 명령이나 소문자 상대좌표(m/l 등)가 섞여 있으면
+    // silent-fail 대신 빈 배열을 반환해 직선 fallback을 유도한다.
+    if (/[^MLeE0-9.,\\s+\\-]/.test(d)) return [];
+    var pts = [];
+    var tokens = d.replace(/,/g, ' ').split(/\\s+/);
+    var i = 0;
+    while (i < tokens.length) {
+      var tk = tokens[i];
+      if (tk === 'M' || tk === 'L') {
+        i++;
+        while (i + 1 < tokens.length) {
+          var x = parseFloat(tokens[i]);
+          var y = parseFloat(tokens[i + 1]);
+          if (isNaN(x) || isNaN(y)) break;
+          pts.push({ x: x, y: y });
+          i += 2;
+        }
+      } else {
+        i++;
+      }
+    }
+    return pts;
+  }
+
+  function buildPathSnapLookup() {
+    if (pathSnapReady) return;
+    var paths = document.querySelectorAll('path[data-line]');
+    for (var i = 0; i < paths.length; i++) {
+      var dl = paths[i].getAttribute('data-line');
+      if (!dl) continue;
+      // 흰색 이중선 테두리(예: 1-GA-1)는 본체와 동일 좌표이므로 제외.
+      // 대소문자/축약형(#FFF, white)도 방어.
+      var stroke = (paths[i].getAttribute('stroke') || '').toLowerCase();
+      if (stroke === '#ffffff' || stroke === '#fff' || stroke === 'white') continue;
+      var pts = parseSvgPathD(paths[i].getAttribute('d'));
+      if (pts.length < 2) continue;
+      if (!pathSnapPolylines[dl]) pathSnapPolylines[dl] = [];
+      pathSnapPolylines[dl].push(pts);
+    }
+    pathSnapReady = true;
+  }
+
+  function projectOnPolyline(px, py, polyline) {
+    var bestIdx = -1, bestT = 0, bestDist = Infinity;
+    for (var i = 0; i < polyline.length - 1; i++) {
+      var ax = polyline[i].x, ay = polyline[i].y;
+      var bx = polyline[i + 1].x, by = polyline[i + 1].y;
+      var dx = bx - ax, dy = by - ay;
+      var lenSq = dx * dx + dy * dy;
+      var t = lenSq > 0
+        ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq))
+        : 0;
+      var cx = ax + t * dx, cy = ay + t * dy;
+      var d = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+      if (d < bestDist) { bestDist = d; bestIdx = i; bestT = t; }
+    }
+    return { segIdx: bestIdx, t: bestT, dist: bestDist };
+  }
+
+  // 역 A(ax,ay) → 역 B(bx,by)를 lineId의 SVG 선로 위 좌표 시퀀스로 반환.
+  // 후보 polyline들 중 투영 거리 합이 최소인 것을 선택하고, slice 길이가
+  // 직선 거리의 3배를 넘으면 오매칭으로 간주해 탈락시킨다. 모두 탈락하면 null.
+  function getSnappedSlice(ax, ay, bx, by, lineId) {
+    if (!pathSnapReady) buildPathSnapLookup();
+    var dataLines = lineIdToDataLine[lineId];
+    if (!dataLines) return null;
+
+    var straightDist = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    var bestSlice = null;
+    var bestScore = Infinity;
+
+    for (var di = 0; di < dataLines.length; di++) {
+      var polylines = pathSnapPolylines[dataLines[di]];
+      if (!polylines) continue;
+      for (var pi = 0; pi < polylines.length; pi++) {
+        var poly = polylines[pi];
+        var pa = projectOnPolyline(ax, ay, poly);
+        if (pa.dist > SNAP_THRESHOLD_PX) continue;
+        var pb = projectOnPolyline(bx, by, poly);
+        if (pb.dist > SNAP_THRESHOLD_PX) continue;
+
+        var candidate;
+        if (pa.segIdx === pb.segIdx) {
+          candidate = [{ x: ax, y: ay }, { x: bx, y: by }];
+        } else {
+          candidate = [{ x: ax, y: ay }];
+          if (pa.segIdx < pb.segIdx) {
+            for (var j = pa.segIdx + 1; j <= pb.segIdx; j++) {
+              candidate.push({ x: poly[j].x, y: poly[j].y });
+            }
+          } else {
+            for (var j = pa.segIdx; j >= pb.segIdx + 1; j--) {
+              candidate.push({ x: poly[j].x, y: poly[j].y });
+            }
+          }
+          candidate.push({ x: bx, y: by });
+        }
+
+        // Sanity: slice 총 길이가 직선거리의 3배를 넘으면 분기/지선 오매칭으로 탈락
+        var sliceLen = 0;
+        for (var k = 0; k < candidate.length - 1; k++) {
+          var sdx = candidate[k + 1].x - candidate[k].x;
+          var sdy = candidate[k + 1].y - candidate[k].y;
+          sliceLen += Math.sqrt(sdx * sdx + sdy * sdy);
+        }
+        if (straightDist > 0 && sliceLen > straightDist * 3) continue;
+
+        var score = pa.dist + pb.dist;
+        if (score < bestScore) {
+          bestScore = score;
+          bestSlice = candidate;
+        }
+      }
+    }
+    return bestSlice;
+  }
+
+  // pathToTarget을 SVG 선로 좌표 시퀀스로 확장. segmentDurations는 subseg 거리 비율로 분배.
+  function expandPathWithSnap(path, segDurations, lineId) {
+    if (!path || path.length < 2 || !lineId) {
+      return {
+        path: path ? path.slice() : [],
+        durations: segDurations ? segDurations.slice() : []
+      };
+    }
+    var newPath = [{ x: path[0].x, y: path[0].y }];
+    var newDurations = [];
+    for (var i = 0; i < path.length - 1; i++) {
+      var a = path[i], b = path[i + 1];
+      var slice = getSnappedSlice(a.x, a.y, b.x, b.y, lineId);
+      if (!slice) slice = [a, b];
+      var origDur = (segDurations && segDurations[i] != null) ? segDurations[i] : 0;
+
+      var subDists = [];
+      var totalDist = 0;
+      for (var j = 0; j < slice.length - 1; j++) {
+        var dx = slice[j + 1].x - slice[j].x;
+        var dy = slice[j + 1].y - slice[j].y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        subDists.push(d);
+        totalDist += d;
+      }
+      for (var j = 1; j < slice.length; j++) {
+        newPath.push({ x: slice[j].x, y: slice[j].y });
+      }
+      if (totalDist > 0) {
+        for (var j = 0; j < subDists.length; j++) {
+          newDurations.push(origDur * subDists[j] / totalDist);
+        }
+      } else if (slice.length > 1) {
+        var n = slice.length - 1;
+        for (var j = 0; j < n; j++) newDurations.push(origDur / n);
+      }
+    }
+    return { path: newPath, durations: newDurations };
+  }
+
   function startTrainAnimation(trainState, trainData) {
-    var path = trainData.pathToTarget;
+    // SVG 선로 스냅: pathToTarget을 실제 선로 위 좌표 시퀀스로 확장 (꺾임 구간 탈선 방지)
+    var _snap = expandPathWithSnap(
+      trainData.pathToTarget,
+      trainData.segmentDurations,
+      trainData.lineId
+    );
+    var path = _snap.path;
     if (!path || path.length < 2) {
       if (path && path.length === 1) {
         trainState.element.setAttribute('transform',
@@ -1272,7 +1459,7 @@ $textElements
     if (trainData.arrivalSeconds <= 2 && (trainData.initialProgress || 0) >= 0.7) {
       durationMs = 3000;
     }
-    var segDurations = trainData.segmentDurations || [];
+    var segDurations = _snap.durations;
     var initProgress = trainData.initialProgress || 0;
     var sliceOffset = 0; // 이어서 진행 시 잘린 세그먼트 수
 
@@ -1583,6 +1770,9 @@ $textElements
 
   function updateRouteToolbarPosition() {
     if (!toolbarVisible) return;
+    // toolbarSvgX/Y가 앵커(출발역 또는 사용자가 드래그한 위치의 SVG 좌표)를
+    // 나타내므로 항상 맵 pan/zoom에 맞춰 화면 좌표로 재계산한다.
+    // 결과: 툴바가 맵에 부착된 것처럼 카메라 이동과 함께 따라 움직임.
     var screenX = toolbarSvgX * scale + tx;
     var screenY = toolbarSvgY * scale + ty;
 
@@ -1648,6 +1838,90 @@ $textElements
     routeToolbar.style.display = 'none';
     toolbarVisible = false;
   };
+
+  // 경로 결과 툴바 드래그 이동: 상단 빈 바 영역(padding-top:28px)을 잡아서
+  // 끌면 툴바 위치를 옮긴다. 선로/열차를 가릴 때 사용자가 치울 수 있도록 한다.
+  // .route-toolbar-btn(X 포함)은 드래그 시작 대상에서 제외해 클릭 동작 보존.
+  // 드래그 종료 시 툴바의 화면 위치를 SVG 좌표로 역변환해 앵커(toolbarSvgX/Y)로
+  // 저장하므로, 이후 맵 pan/zoom 시 툴바가 맵에 부착된 듯 함께 이동한다.
+  //
+  // 중요: 지도 팬 핸들러가 document의 pointerdown/pointermove에 등록돼 있으므로
+  // 반드시 같은 Pointer Events 계열로 구현하고, 드래그 시작 시 stopPropagation()으로
+  // document 핸들러 전파를 끊어야 툴바 드래그와 지도 팬이 겹치지 않는다.
+  (function initRouteToolbarDrag() {
+    var dragState = null;
+
+    function onDragStart(e) {
+      if (e.target.closest('.route-toolbar-btn')) return; // 버튼 영역 제외
+      if (e.target !== routeToolbar) return; // 상단 빈 바(컨테이너 자체)만 드래그 핸들
+
+      // document의 지도 pan 핸들러로 이벤트 전파 차단
+      e.stopPropagation();
+      e.preventDefault();
+
+      // 맵 pan state를 강제 초기화: 동시에 맵 pan이 진행 중이거나
+      // 이전 터치 잔재가 남아있지 않도록 보장
+      for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
+      isDragging = false;
+
+      var rect = routeToolbar.getBoundingClientRect();
+      dragState = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        toolbarLeft: rect.left,
+        toolbarTop: rect.top
+      };
+    }
+
+    function onDragMove(e) {
+      if (!dragState || e.pointerId !== dragState.pointerId) return;
+      e.stopPropagation();
+      e.preventDefault();
+
+      var dx = e.clientX - dragState.startX;
+      var dy = e.clientY - dragState.startY;
+      var newLeft = dragState.toolbarLeft + dx;
+      var newTop = dragState.toolbarTop + dy;
+
+      // 화면 경계 clamp: 툴바가 화면 밖으로 나가 못 되돌리는 상황 방지
+      var tw = routeToolbar.offsetWidth;
+      var th = routeToolbar.offsetHeight;
+      newLeft = Math.max(8, Math.min(window.innerWidth - tw - 8, newLeft));
+      newTop = Math.max(8, Math.min(window.innerHeight - th - 8, newTop));
+
+      routeToolbar.style.left = newLeft + 'px';
+      routeToolbar.style.top = newTop + 'px';
+    }
+
+    function onDragEnd(e) {
+      if (!dragState) return;
+      if (e && e.pointerId !== dragState.pointerId) return;
+      // 혹시 어디서 capture가 걸려 있다면 해제 (방어)
+      if (routeToolbar.hasPointerCapture &&
+          routeToolbar.hasPointerCapture(dragState.pointerId) &&
+          routeToolbar.releasePointerCapture) {
+        try { routeToolbar.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      }
+      // 드래그로 옮긴 툴바의 화면 위치를 SVG 좌표로 역변환하여 앵커로 저장.
+      // 이후 맵 pan/zoom 시 updateRouteToolbarPosition이 이 앵커 기준으로
+      // 툴바를 재배치하므로 툴바가 맵에 부착된 듯 함께 이동한다.
+      // updateRouteToolbarPosition의 기준: left = screenX, top = screenY - cachedTbH - 18
+      // 따라서 screenX = rect.left, screenY = rect.top + cachedTbH + 18
+      var rect = routeToolbar.getBoundingClientRect();
+      toolbarSvgX = (rect.left - tx) / scale;
+      toolbarSvgY = (rect.top + cachedTbH + 18 - ty) / scale;
+      dragState = null;
+      // 맵 pan state 완전 클리어: 다음 맵 터치가 깨끗하게 pan을 시작하도록 보장
+      for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
+      isDragging = false;
+    }
+
+    routeToolbar.addEventListener('pointerdown', onDragStart);
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('pointerup', onDragEnd);
+    document.addEventListener('pointercancel', onDragEnd);
+  })();
 
   // ============================================================
   // 디버그: 탭 영역 시각화
