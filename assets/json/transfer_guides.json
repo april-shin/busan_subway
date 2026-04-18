@@ -1,0 +1,2546 @@
+{
+  "가락시장_3_down_8": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "가락시장_3_up_8": {
+    "doorSide": null,
+    "car": 9,
+    "door": 4,
+    "note": null
+  },
+  "가락시장_8_down_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "가락시장_8_up_3": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "가산디지털단지_1_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "가산디지털단지_1_up_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "가산디지털단지_7_down_1": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "가산디지털단지_7_up_1": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "강남_2_down_SB": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "강남_2_up_SB": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "강남_SB_down_2": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "강남_SB_up_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "강남구청_7_down_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "강남구청_7_up_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "강남구청_수인분당_down_7": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "강남구청_수인분당_up_7": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "건대입구_2_down_7": {
+    "doorSide": null,
+    "car": 8,
+    "door": 3,
+    "note": null
+  },
+  "건대입구_2_up_7": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "건대입구_7_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "건대입구_7_up_2": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "검암_공항철도_down_인천2": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "검암_공항철도_up_인천2": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "검암_인천2_down_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "검암_인천2_up_공항철도": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "계양_공항철도_down_인천1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 4,
+    "note": null
+  },
+  "계양_공항철도_up_인천1": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "계양_인천1_down_공항철도": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "계양_인천1_up_공항철도": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "고속터미널_3_down_7": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "고속터미널_3_down_9": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "고속터미널_3_up_7": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "고속터미널_3_up_9": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "고속터미널_7_down_9": {
+    "doorSide": null,
+    "car": 7,
+    "door": 1,
+    "note": null
+  },
+  "고속터미널_7_up_9": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "고속터미널_9_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 4,
+    "note": null
+  },
+  "고속터미널_9_up_7": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "공덕_5_down_경의중앙": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "공덕_5_up_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "공덕_6_down_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "공덕_6_up_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "공덕_경의중앙_down_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "공덕_경의중앙_up_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "공덕_공항철도_down_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 4,
+    "note": null
+  },
+  "공덕_공항철도_up_경의중앙": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "교대_2_down_3": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "교대_2_up_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "교대_3_down_2": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "교대_3_up_2": {
+    "doorSide": null,
+    "car": 7,
+    "door": 4,
+    "note": null
+  },
+  "구리_8_down_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "구리_8_up_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "구리_경의중앙_down_8": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "구리_경의중앙_up_8": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "구성_GTX-A_down_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "구성_GTX-A_up_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "구성_수인분당_down_GTX-A": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "구성_수인분당_up_GTX-A": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "군자_5_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "군자_5_up_7": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "군자_7_down_5": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "군자_7_up_5": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "김포공항_9_down_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "김포공항_9_down_공항철도": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "김포공항_9_up_공항철도": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "김포공항_공항철도_down_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "김포공항_공항철도_up_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "김포공항_공항철도_up_9": {
+    "doorSide": null,
+    "car": 3,
+    "door": 4,
+    "note": null
+  },
+  "까치산_2_down_5": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "까치산_2_up_5": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "까치산_5_down_2": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "까치산_5_up_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "노량진_1_down_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "노량진_1_up_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "노량진_9_down_1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "노량진_9_up_1": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "노원_4_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "노원_4_up_7": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "노원_7_down_4": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "노원_7_up_4": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "논현_7_down_SB": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "논현_7_up_SB": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "논현_SB_down_7": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "논현_SB_up_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "당산_2_down_9": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "당산_2_up_9": {
+    "doorSide": null,
+    "car": 7,
+    "door": 4,
+    "note": null
+  },
+  "당산_9_down_2": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "당산_9_up_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "대곡_3_down_GTX-A": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "대곡_3_up_GTX-A": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "대곡_GTX-A_down_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "대곡_GTX-A_up_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "대곡_경의중앙_up_GTX-A": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "대림_2_down_7": {
+    "doorSide": null,
+    "car": 9,
+    "door": 3,
+    "note": null
+  },
+  "대림_2_up_7": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "대림_7_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "대림_7_up_2": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "대방_1_down_신림": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "대방_1_up_신림": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "대방_신림_down_1": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "대방_신림_up_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "도곡_3_down_수인분당": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "도곡_3_up_수인분당": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "도곡_수인분당_down_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "도곡_수인분당_up_3": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "도봉산_1_down_7": {
+    "doorSide": null,
+    "car": 9,
+    "door": 3,
+    "note": null
+  },
+  "도봉산_1_up_7": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "도봉산_7_down_1": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "도봉산_7_up_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "동대문_1_down_4": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "동대문_1_up_4": {
+    "doorSide": null,
+    "car": 9,
+    "door": 3,
+    "note": null
+  },
+  "동대문_4_down_1": {
+    "doorSide": null,
+    "car": 7,
+    "door": 4,
+    "note": null
+  },
+  "동대문_4_up_1": {
+    "doorSide": null,
+    "car": 3,
+    "door": 4,
+    "note": null
+  },
+  "동대문역사문화공원_2_down_4": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "동대문역사문화공원_2_down_5": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "동대문역사문화공원_2_up_4": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "동대문역사문화공원_2_up_5": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "동대문역사문화공원_4_down_2": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "동대문역사문화공원_4_down_5": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "동대문역사문화공원_4_up_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "동대문역사문화공원_4_up_5": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "동대문역사문화공원_5_down_4": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "동대문역사문화공원_5_up_4": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "동묘앞_1_down_6": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "동묘앞_1_up_6": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "동묘앞_6_down_1": {
+    "doorSide": null,
+    "car": 7,
+    "door": 3,
+    "note": null
+  },
+  "동묘앞_6_up_1": {
+    "doorSide": null,
+    "car": 7,
+    "door": 3,
+    "note": null
+  },
+  "동작_4_down_9": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "동작_4_up_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "동작_9_down_4": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "동작_9_up_4": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "디지털미디어시티_6_down_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "디지털미디어시티_6_down_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "디지털미디어시티_6_up_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "디지털미디어시티_6_up_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "디지털미디어시티_경의중앙_down_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "디지털미디어시티_경의중앙_up_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "디지털미디어시티_공항철도_down_경의중앙": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "디지털미디어시티_공항철도_up_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "마곡나루_9_down_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "마곡나루_9_up_공항철도": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "마곡나루_공항철도_down_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "마곡나루_공항철도_up_9": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "망우_경의중앙_down_경춘": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "망우_경의중앙_up_경춘": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "망우_경춘_down_경의중앙": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "망우_경춘_up_경의중앙": {
+    "doorSide": null,
+    "car": 3,
+    "door": 4,
+    "note": null
+  },
+  "모란_8_down_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "모란_8_up_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "모란_수인분당_down_8": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "모란_수인분당_up_8": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "미금_SB_down_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "미금_SB_up_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "미금_수인분당_down_SB": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "미금_수인분당_up_SB": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "별내_8_down_경춘": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "별내_8_up_경춘": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "별내_경춘_down_8": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "별내_경춘_up_8": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "보라매_7_down_신림": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "보라매_7_up_신림": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "보라매_신림_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "보라매_신림_up_7": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "복정_8_down_수인분당": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "복정_8_up_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "복정_수인분당_down_8": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "복정_수인분당_up_8": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "부평구청_7_down_인천1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "부평구청_7_up_인천1": {
+    "doorSide": null,
+    "car": 7,
+    "door": 3,
+    "note": null
+  },
+  "부평구청_인천1_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "부평구청_인천1_up_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "불광_3_down_6": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "불광_3_up_6": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "불광_6_down_3": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "불광_6_up_3": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "사당_2_down_4": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "사당_2_up_4": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "사당_4_down_2": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "사당_4_up_2": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "삼각지_4_down_6": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "삼각지_4_up_6": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "삼각지_6_down_4": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "삼각지_6_up_4": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "상봉_7_down_경춘": {
+    "doorSide": null,
+    "car": 3,
+    "door": 4,
+    "note": null
+  },
+  "상봉_7_up_경춘": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "상봉_경의중앙_down_경춘": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "상봉_경의중앙_up_경춘": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "상봉_경춘_down_경의중앙": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "상봉_경춘_up_경의중앙": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "샛강_9_down_신림": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "샛강_9_up_신림": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "샛강_신림_down_9": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "샛강_신림_up_9": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "서울역_1_down_4": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": "남쪽 끝"
+  },
+  "서울역_1_down_GTX-A": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "서울역_1_down_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "서울역_1_up_4": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": "남쪽 끝"
+  },
+  "서울역_1_up_GTX-A": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "서울역_1_up_경의중앙": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "서울역_4_down_1": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": "북쪽 끝"
+  },
+  "서울역_4_down_경의중앙": {
+    "doorSide": null,
+    "car": 8,
+    "door": 1,
+    "note": null
+  },
+  "서울역_4_down_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 1,
+    "note": null
+  },
+  "서울역_4_up_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": "북쪽 끝"
+  },
+  "서울역_4_up_경의중앙": {
+    "doorSide": null,
+    "car": 3,
+    "door": 4,
+    "note": null
+  },
+  "서울역_4_up_공항철도": {
+    "doorSide": null,
+    "car": 3,
+    "door": 4,
+    "note": null
+  },
+  "서울역_GTX-A_down_경의중앙": {
+    "doorSide": null,
+    "car": 8,
+    "door": 2,
+    "note": null
+  },
+  "서울역_GTX-A_up_경의중앙": {
+    "doorSide": null,
+    "car": 8,
+    "door": 2,
+    "note": null
+  },
+  "서울역_경의중앙_down_GTX-A": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "서울역_경의중앙_down_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 1,
+    "note": null
+  },
+  "서울역_경의중앙_up_GTX-A": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "서울역_경의중앙_up_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 1,
+    "note": null
+  },
+  "서울역_공항철도_down_경의중앙": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "서울역_공항철도_up_경의중앙": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "석계_1_down_6": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "석계_1_up_6": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "석계_6_down_1": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "석계_6_up_1": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "석촌_8_down_9": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "석촌_8_up_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "석촌_9_down_8": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "석촌_9_up_8": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "선릉_2_down_수인분당": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "선릉_2_up_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "선릉_수인분당_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "선릉_수인분당_up_2": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "선정릉_9_down_수인분당": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "선정릉_9_up_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "선정릉_수인분당_down_9": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "선정릉_수인분당_up_9": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "수서_3_down_GTX-A": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "수서_3_down_수인분당": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "수서_3_up_GTX-A": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "수서_3_up_수인분당": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "수서_GTX-A_down_수인분당": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "수서_GTX-A_up_수인분당": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "수서_수인분당_down_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "수서_수인분당_down_GTX-A": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "수서_수인분당_up_3": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "수서_수인분당_up_GTX-A": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "수원_1_down_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "수원_1_up_수인분당": {
+    "doorSide": null,
+    "car": 8,
+    "door": 2,
+    "note": null
+  },
+  "수원_수인분당_down_1": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "수원_수인분당_up_1": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "시청_1_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "시청_1_up_2": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "시청_2_down_1": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "시청_2_up_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "신길_1_down_5": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "신길_1_up_5": {
+    "doorSide": null,
+    "car": 9,
+    "door": 1,
+    "note": null
+  },
+  "신길_5_down_1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "신길_5_up_1": {
+    "doorSide": null,
+    "car": 7,
+    "door": 3,
+    "note": null
+  },
+  "신논현_9_down_SB": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "신논현_9_up_SB": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "신논현_SB_down_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "신논현_SB_up_9": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "신당_2_down_6": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "신당_2_up_6": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "신당_6_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "신당_6_up_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "신도림_1_down_2": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "신도림_1_up_2": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "신도림_2_down_1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "신도림_2_up_1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "신림_2_down_신림": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "신림_2_up_신림": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "신림_신림_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "신림_신림_up_2": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "신사_3_down_SB": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "신사_3_up_SB": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "신사_SB_down_3": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "신사_SB_up_3": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "신설동_1_down_2": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "신설동_1_up_2": {
+    "doorSide": null,
+    "car": 9,
+    "door": 4,
+    "note": null
+  },
+  "약수_3_down_6": {
+    "doorSide": null,
+    "car": 7,
+    "door": 1,
+    "note": null
+  },
+  "약수_3_up_6": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "약수_6_down_3": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "약수_6_up_3": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "양재_3_down_SB": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "양재_3_up_SB": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "양재_SB_down_3": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "양재_SB_up_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "여의도_5_down_9": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "여의도_5_up_9": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "여의도_9_down_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "여의도_9_up_5": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "연신내_3_down_GTX-A": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "연신내_3_up_GTX-A": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "연신내_6_down_GTX-A": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "연신내_6_up_GTX-A": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "영등포구청_2_down_5": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "영등포구청_2_up_5": {
+    "doorSide": null,
+    "car": 7,
+    "door": 4,
+    "note": null
+  },
+  "영등포구청_5_down_2": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "영등포구청_5_up_2": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "오금_3_down_5": {
+    "doorSide": null,
+    "car": 9,
+    "door": 3,
+    "note": null
+  },
+  "오금_3_up_5": {
+    "doorSide": null,
+    "car": 9,
+    "door": 3,
+    "note": null
+  },
+  "오금_5_down_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "오금_5_up_3": {
+    "doorSide": null,
+    "car": 8,
+    "door": 2,
+    "note": null
+  },
+  "오이도_4_down_수인분당": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "오이도_4_up_수인분당": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "오이도_수인분당_up_4": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "옥수_3_down_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 4,
+    "note": null
+  },
+  "옥수_3_up_경의중앙": {
+    "doorSide": null,
+    "car": 9,
+    "door": 4,
+    "note": null
+  },
+  "옥수_경의중앙_down_3": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "옥수_경의중앙_up_3": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "온수_1_down_7": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "온수_1_up_7": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "온수_7_down_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "온수_7_up_1": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "올림픽공원_5_down_9": {
+    "doorSide": null,
+    "car": 4,
+    "door": 4,
+    "note": null
+  },
+  "올림픽공원_5_up_9": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "올림픽공원_9_down_5": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "올림픽공원_9_up_5": {
+    "doorSide": null,
+    "car": 1,
+    "door": 2,
+    "note": null
+  },
+  "왕십리_2_down_5": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "왕십리_2_down_수인분당": {
+    "doorSide": null,
+    "car": 8,
+    "door": 2,
+    "note": null
+  },
+  "왕십리_2_up_5": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "왕십리_2_up_수인분당": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "왕십리_5_down_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "왕십리_5_up_수인분당": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  },
+  "왕십리_경의중앙_down_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "왕십리_경의중앙_up_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "왕십리_수인분당_down_5": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "왕십리_수인분당_down_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "왕십리_수인분당_up_5": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "왕십리_수인분당_up_경의중앙": {
+    "doorSide": null,
+    "car": 5,
+    "door": 4,
+    "note": null
+  },
+  "용산_1_down_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "용산_1_up_경의중앙": {
+    "doorSide": null,
+    "car": 10,
+    "door": 1,
+    "note": null
+  },
+  "용산_경의중앙_up_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "을지로3가_2_down_3": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "을지로3가_2_up_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "을지로3가_3_down_2": {
+    "doorSide": null,
+    "car": 9,
+    "door": 3,
+    "note": null
+  },
+  "을지로3가_3_up_2": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "을지로4가_2_down_5": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "을지로4가_2_up_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "을지로4가_5_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 4,
+    "note": null
+  },
+  "을지로4가_5_up_2": {
+    "doorSide": null,
+    "car": 8,
+    "door": 1,
+    "note": null
+  },
+  "이촌_4_down_경의중앙": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "이촌_4_up_경의중앙": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "이촌_경의중앙_down_4": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "이촌_경의중앙_up_4": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "인천_1_down_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "인천_1_up_수인분당": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "인천_수인분당_down_1": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "인천_수인분당_up_1": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "잠실_2_down_8": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "잠실_2_up_8": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "잠실_8_down_2": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "잠실_8_up_2": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "정자_SB_down_수인분당": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
+    "note": null
+  },
+  "정자_SB_up_수인분당": {
+    "doorSide": null,
+    "car": 2,
+    "door": 4,
+    "note": null
+  },
+  "정자_수인분당_down_SB": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "정자_수인분당_up_SB": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "종로3가_1_down_3": {
+    "doorSide": null,
+    "car": 6,
+    "door": 2,
+    "note": null
+  },
+  "종로3가_1_down_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "종로3가_1_up_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "종로3가_3_down_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "종로3가_3_down_5": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "종로3가_3_up_1": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "종로3가_3_up_5": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "종로3가_5_down_3": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "종로3가_5_up_3": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "종합운동장_2_down_9": {
+    "doorSide": null,
+    "car": 3,
+    "door": 1,
+    "note": null
+  },
+  "종합운동장_2_up_9": {
+    "doorSide": null,
+    "car": 9,
+    "door": 1,
+    "note": null
+  },
+  "종합운동장_9_down_2": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "종합운동장_9_up_2": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "창동_1_down_4": {
+    "doorSide": null,
+    "car": 10,
+    "door": 3,
+    "note": null
+  },
+  "창동_1_up_4": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "창동_4_down_1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "창동_4_up_1": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "천호_5_down_8": {
+    "doorSide": null,
+    "car": 8,
+    "door": 1,
+    "note": null
+  },
+  "천호_5_up_8": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "천호_8_down_5": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "천호_8_up_5": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "청구_5_down_6": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "청구_5_up_6": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "청구_6_down_5": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "청구_6_up_5": {
+    "doorSide": null,
+    "car": 6,
+    "door": 1,
+    "note": null
+  },
+  "청량리_1_down_수인분당": {
+    "doorSide": null,
+    "car": 10,
+    "door": 4,
+    "note": null
+  },
+  "청량리_1_up_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경의중앙_down_경춘": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "청량리_경의중앙_down_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경의중앙_up_경춘": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경의중앙_up_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경춘_down_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경춘_down_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경춘_up_경의중앙": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_경춘_up_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "청량리_수인분당_down_경춘": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "청량리_수인분당_up_경춘": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "초지_4_down_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "초지_4_up_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "총신대입구(이수)_7_down_4": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "총신대입구(이수)_7_up_4": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "충무로_3_down_4": {
+    "doorSide": null,
+    "car": 5,
+    "door": 2,
+    "note": null
+  },
+  "충무로_3_up_4": {
+    "doorSide": null,
+    "car": 6,
+    "door": 3,
+    "note": null
+  },
+  "충무로_4_down_3": {
+    "doorSide": null,
+    "car": 7,
+    "door": 1,
+    "note": null
+  },
+  "충무로_4_up_3": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "충정로_2_down_5": {
+    "doorSide": null,
+    "car": 4,
+    "door": 2,
+    "note": null
+  },
+  "충정로_2_up_5": {
+    "doorSide": null,
+    "car": 7,
+    "door": 3,
+    "note": null
+  },
+  "충정로_5_down_2": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "충정로_5_up_2": {
+    "doorSide": null,
+    "car": 4,
+    "door": 1,
+    "note": null
+  },
+  "태릉입구_6_down_7": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "태릉입구_6_up_7": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "태릉입구_7_down_6": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "태릉입구_7_up_6": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "한대앞_4_down_수인분당": {
+    "doorSide": null,
+    "car": 5,
+    "door": 1,
+    "note": null
+  },
+  "한대앞_4_up_수인분당": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "합정_2_down_6": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "합정_2_up_6": {
+    "doorSide": null,
+    "car": 9,
+    "door": 2,
+    "note": null
+  },
+  "합정_6_down_2": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "합정_6_up_2": {
+    "doorSide": null,
+    "car": 3,
+    "door": 2,
+    "note": null
+  },
+  "홍대입구_2_down_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 2,
+    "note": null
+  },
+  "홍대입구_2_up_공항철도": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "홍대입구_경의중앙_down_공항철도": {
+    "doorSide": null,
+    "car": 8,
+    "door": 4,
+    "note": null
+  },
+  "홍대입구_경의중앙_up_공항철도": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "홍대입구_공항철도_down_경의중앙": {
+    "doorSide": null,
+    "car": 2,
+    "door": 2,
+    "note": null
+  },
+  "홍대입구_공항철도_up_경의중앙": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "회기_1_down_경춘": {
+    "doorSide": null,
+    "car": 7,
+    "door": 2,
+    "note": null
+  },
+  "회기_1_up_경춘": {
+    "doorSide": null,
+    "car": 4,
+    "door": 3,
+    "note": null
+  },
+  "회기_경의중앙_down_1": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "회기_경의중앙_down_경춘": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "회기_경춘_down_1": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "회기_경춘_down_경의중앙": {
+    "doorSide": null,
+    "car": 3,
+    "door": 3,
+    "note": null
+  },
+  "효창공원앞_6_down_경의중앙": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "효창공원앞_6_up_경의중앙": {
+    "doorSide": null,
+    "car": 6,
+    "door": 4,
+    "note": null
+  },
+  "효창공원앞_경의중앙_down_6": {
+    "doorSide": null,
+    "car": 8,
+    "door": 3,
+    "note": null
+  },
+  "효창공원앞_경의중앙_up_6": {
+    "doorSide": null,
+    "car": 2,
+    "door": 3,
+    "note": null
+  }
+}

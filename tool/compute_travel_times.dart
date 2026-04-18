@@ -1,0 +1,214 @@
+// 캐시된 시간표(`data/timetables/`)에서 인접 역간 실제 평균 소요시간을
+// 계산하여 `assets/json/connections.json`을 갱신한다.
+//
+// 알고리즘:
+//   1. 각 (노선, 방향, 역) 시간표를 로드
+//   2. 같은 trainno(열차번호)가 인접 두 역에서 출발하는 시각 차 = 소요시간
+//   3. 인접 역 쌍별로 다수 열차의 **중앙값**을 사용 (outlier에 강건)
+//   4. 완행/급행 분리: etrnYn=='N' 또는 빈 값 → 완행, 'Y' → 급행
+//   5. connections.json의 travelTimeSeconds(완행) + expressTimeSeconds(급행) 갱신
+//
+// 한계 (급행 데이터 커버리지):
+//   - 이 알고리즘은 "인접 두 역" 쌍에서만 trainno 매칭을 수행한다.
+//   - 9호선 급행처럼 여러 역을 **건너뛰는(skip)** 급행 열차는 인접 쌍의 한쪽에
+//     해당 trainno가 나타나지 않아 대부분 매칭 실패한다.
+//     예) 9호선 급행은 김포공항↔마곡나루 직통(공항시장·신방화 스킵). 따라서
+//         김포공항↔공항시장 같은 인접 쌍에는 급행 trainno가 없음.
+//   - 결과적으로 9호선은 expressTimeSeconds가 거의 수집되지 않는다(1건 수준).
+//     1호선·경춘선·수인분당선은 인접 쌍 매칭이 잘 되어 정상 수집됨.
+//   - 후속 개선 아이디어: graph에 "skip-edge"를 추가해 급행 정차역 시퀀스를
+//     별도로 모델링하거나, 공식 시간표 PDF에서 수동 시딩.
+//
+// 사용법:
+//   dart run tool/compute_travel_times.dart [--line=1] [--dry-run]
+
+// ignore_for_file: avoid_print
+import 'dart:convert';
+import 'dart:io';
+
+void main(List<String> args) async {
+  String? onlyLine;
+  var dryRun = false;
+  for (final a in args) {
+    if (a.startsWith('--line=')) onlyLine = a.substring('--line='.length);
+    if (a == '--dry-run') dryRun = true;
+  }
+
+  // 1. connections 로드
+  final connsRaw = json
+      .decode(File('assets/json/connections.json').readAsStringSync()) as List;
+  final conns = connsRaw.cast<Map<String, dynamic>>();
+
+  // 2. stations 로드 → id↔name 매핑
+  final stationsRaw =
+      json.decode(File('assets/json/stations.json').readAsStringSync()) as List;
+  // (lineId, stationName) → stationId
+  final nameToId = <String, String>{};
+  // stationId → name
+  final idToName = <String, String>{};
+  for (final s in stationsRaw) {
+    final lid = s['lineId'] as String;
+    final name = s['name'] as String;
+    final id = s['id'] as String;
+    nameToId['$lid|$name'] = id;
+    idToName[id] = name;
+  }
+
+  // 3. 인접 역 쌍 (같은 노선) 추출
+  final pairs = <String, List<Map<String, dynamic>>>{};
+  for (final c in conns) {
+    if (c['isTransfer'] == true) continue;
+    final lid = c['lineId'] as String;
+    if (onlyLine != null && lid != onlyLine) continue;
+    pairs.putIfAbsent(lid, () => []).add(c);
+  }
+
+  var updated = 0;
+  var expressUpdated = 0;
+  var skipped = 0;
+  final stats = <String, List<int>>{};
+  final expressStats = <String, List<int>>{};
+
+  for (final lid in pairs.keys) {
+    final lineConns = pairs[lid]!;
+    print('━━━ 노선 $lid: ${lineConns.length} connections ━━━');
+
+    for (final c in lineConns) {
+      final fromId = c['fromStationId'] as String;
+      final toId = c['toStationId'] as String;
+      final fromName = idToName[fromId];
+      final toName = idToName[toId];
+      if (fromName == null || toName == null) {
+        skipped++;
+        continue;
+      }
+
+      // 두 방향 모두 시도. 완행/급행 분리.
+      final localGaps = <int>[];
+      final expressGaps = <int>[];
+      for (final dir in ['상행', '하행']) {
+        final fromFile = File('data/timetables/${lid}_${fromName}_$dir.json');
+        final toFile = File('data/timetables/${lid}_${toName}_$dir.json');
+        if (!fromFile.existsSync() || !toFile.existsSync()) continue;
+
+        final fromList = json.decode(fromFile.readAsStringSync()) as List;
+        final toList = json.decode(toFile.readAsStringSync()) as List;
+        if (fromList.isEmpty || toList.isEmpty) continue;
+
+        // toList를 trainno → time 맵으로
+        final toMap = <String, int>{};
+        for (final i in toList) {
+          final tno = (i as Map)['trainno']?.toString();
+          final t = _parseSec(i['trainDptreTm']?.toString() ?? '');
+          if (tno != null && t != null) toMap[tno] = t;
+        }
+
+        // fromList의 각 열차에 대해 to에서의 시각 차이 계산
+        for (final i in fromList) {
+          final m = i as Map;
+          final tno = m['trainno']?.toString();
+          if (tno == null) continue;
+          final fromTime = _parseSec(m['trainDptreTm']?.toString() ?? '');
+          final toTime = toMap[tno];
+          if (fromTime == null || toTime == null) continue;
+          final gap = toTime - fromTime;
+          // from→to 정방향만 (양수, 합리적 범위)
+          if (gap <= 0 || gap >= 600) continue;
+          final etrn = (m['etrnYn']?.toString() ?? '').trim().toUpperCase();
+          if (etrn == 'Y') {
+            expressGaps.add(gap);
+          } else {
+            // 'N' 또는 빈 값 → 완행
+            localGaps.add(gap);
+          }
+        }
+      }
+
+      if (localGaps.isEmpty && expressGaps.isEmpty) {
+        skipped++;
+        continue;
+      }
+
+      // 완행 갱신
+      if (localGaps.isNotEmpty) {
+        localGaps.sort();
+        final median = localGaps[localGaps.length ~/ 2];
+        stats.putIfAbsent(lid, () => []).add(median);
+
+        final old = c['travelTimeSeconds'] as int;
+        if (median != old) {
+          c['travelTimeSeconds'] = median;
+          updated++;
+        }
+      }
+
+      // 급행 갱신 (있을 때만 필드 설정, 없으면 필드 자체를 삭제하여 null 보장)
+      if (expressGaps.isNotEmpty) {
+        expressGaps.sort();
+        final exMedian = expressGaps[expressGaps.length ~/ 2];
+        expressStats.putIfAbsent(lid, () => []).add(exMedian);
+
+        final old = c['expressTimeSeconds'];
+        if (old != exMedian) {
+          c['expressTimeSeconds'] = exMedian;
+          expressUpdated++;
+        }
+      } else {
+        // 데이터 없음 → 기존 필드 제거 (null 처리)
+        c.remove('expressTimeSeconds');
+      }
+    }
+  }
+
+  // 통계 출력
+  print('\n=== 노선별 완행 통계 ===');
+  for (final lid in stats.keys) {
+    final vals = stats[lid]!..sort();
+    final sum = vals.reduce((a, b) => a + b);
+    print('  $lid: ${vals.length}개 갱신, 평균 ${(sum / vals.length).toStringAsFixed(1)}s, '
+        '중앙값 ${vals[vals.length ~/ 2]}s, 범위 ${vals.first}~${vals.last}s');
+  }
+
+  print('\n=== 노선별 급행 통계 ===');
+  if (expressStats.isEmpty) {
+    print('  (급행 데이터 없음)');
+  } else {
+    for (final lid in expressStats.keys) {
+      final vals = expressStats[lid]!..sort();
+      final sum = vals.reduce((a, b) => a + b);
+      print('  $lid: ${vals.length}개 구간, 평균 ${(sum / vals.length).toStringAsFixed(1)}s, '
+          '중앙값 ${vals[vals.length ~/ 2]}s, 범위 ${vals.first}~${vals.last}s');
+    }
+  }
+  print(
+      '\n전체: 완행 갱신 $updated건, 급행 갱신 $expressUpdated건, 스킵 $skipped건');
+
+  if (dryRun) {
+    print('(dry-run, 파일 변경 없음)');
+    return;
+  }
+
+  // 4. connections.json 저장
+  final encoded = const JsonEncoder.withIndent('  ').convert(connsRaw);
+  File('assets/json/connections.json').writeAsStringSync(encoded);
+  print('✓ connections.json 갱신 완료');
+}
+
+int? _parseSec(String s) {
+  if (s.contains(':')) {
+    final p = s.split(':');
+    if (p.length >= 2) {
+      final h = int.tryParse(p[0]) ?? 0;
+      final m = int.tryParse(p[1]) ?? 0;
+      final sec = p.length >= 3 ? int.tryParse(p[2]) ?? 0 : 0;
+      return h * 3600 + m * 60 + sec;
+    }
+  }
+  if (s.length >= 4) {
+    final h = int.tryParse(s.substring(0, 2)) ?? 0;
+    final m = int.tryParse(s.substring(2, 4)) ?? 0;
+    final sec = s.length >= 6 ? int.tryParse(s.substring(4, 6)) ?? 0 : 0;
+    return h * 3600 + m * 60 + sec;
+  }
+  return null;
+}
