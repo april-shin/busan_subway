@@ -10,18 +10,26 @@ import '../providers/timetable_providers.dart';
 import '../../utils/departure_time_calculator.dart';
 import '../widgets/transfer_row.dart';
 
-/// 열차 모드 — 완행/급행 토글 상태.
-enum TrainMode { local, express }
+/// 결과 화면 탭 구성 — 두 후보 경로의 차이가 무엇이냐에 따라 라벨이 달라진다.
+///
+/// - [transferTradeoff]: 환승 횟수가 다른 두 경로 비교 ("최단시간" / "최소환승")
+/// - [modeTradeoff]: 환승 동일·시간 다름인 두 경로(완행 단독 vs 급행 단독) 비교 ("급행" / "완행")
+/// - [single]: 단일 경로 — 탭 미표시
+enum _TabConfig { transferTradeoff, modeTradeoff, single }
 
 class RouteResultScreen extends ConsumerStatefulWidget {
   final RouteResult fastest;
   final RouteResult? leastTransfer;
+  final RouteResult? fastestExpress;
+  final RouteResult? fastestLocal;
   final String departureStationName;
 
   const RouteResultScreen({
     super.key,
     required this.fastest,
     this.leastTransfer,
+    this.fastestExpress,
+    this.fastestLocal,
     required this.departureStationName,
   });
 
@@ -33,12 +41,36 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
 
-  bool get _hasTwoRoutes => widget.leastTransfer != null;
+  /// 두 후보의 차이를 보고 탭 라벨/구성을 결정한다.
+  ///
+  /// 우선순위:
+  ///   1. 환승 트레이드오프(`leastTransfer != null`) — "최단시간/최소환승" 탭
+  ///   2. 모드 트레이드오프(`fastestExpress`/`fastestLocal` 모두 존재 + 시간 다름) — "급행/완행" 탭
+  ///   3. 그 외 — 단일 탭
+  ///
+  /// `widget` 또는 `oldWidget` 어느 쪽에서도 동일 규칙으로 판정해야 하므로
+  /// 위젯을 인자로 받는 정적-스타일 함수로 단일화한다.
+  static _TabConfig _resolveTabConfig(RouteResultScreen w) {
+    if (w.leastTransfer != null) {
+      return _TabConfig.transferTradeoff;
+    }
+    final express = w.fastestExpress;
+    final local = w.fastestLocal;
+    if (express != null &&
+        local != null &&
+        express.totalTimeSeconds != local.totalTimeSeconds) {
+      return _TabConfig.modeTradeoff;
+    }
+    return _TabConfig.single;
+  }
+
+  _TabConfig get _tabConfig => _resolveTabConfig(widget);
+  bool get _hasTabs => _tabConfig != _TabConfig.single;
 
   @override
   void initState() {
     super.initState();
-    if (_hasTwoRoutes) {
+    if (_hasTabs) {
       _tabController = TabController(length: 2, vsync: this);
     }
   }
@@ -46,11 +78,10 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
   @override
   void didUpdateWidget(covariant RouteResultScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final hadTwo = oldWidget.leastTransfer != null;
-    if (hadTwo != _hasTwoRoutes) {
+    final hadTabs = _resolveTabConfig(oldWidget) != _TabConfig.single;
+    if (hadTabs != _hasTabs) {
       _tabController?.dispose();
-      _tabController =
-          _hasTwoRoutes ? TabController(length: 2, vsync: this) : null;
+      _tabController = _hasTabs ? TabController(length: 2, vsync: this) : null;
     }
   }
 
@@ -62,42 +93,77 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
 
   @override
   Widget build(BuildContext context) {
+    final config = _tabConfig;
+    final tabs = _buildTabs(config);
+    final routes = _buildRoutes(config);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('경로 검색 결과'),
-        bottom: _hasTwoRoutes
-            ? TabBar(
+        bottom: tabs == null
+            ? null
+            : TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간'),
-                  Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승'),
-                ],
-              )
-            : null,
+                tabs: tabs,
+              ),
       ),
-      body: _hasTwoRoutes
-          ? TabBarView(
+      body: routes.length == 1
+          ? _RouteView(
+              routeResult: routes.first,
+              departureStationName: widget.departureStationName,
+            )
+          : TabBarView(
               controller: _tabController,
               children: [
-                _RouteView(
-                  routeResult: widget.fastest,
-                  departureStationName: widget.departureStationName,
-                ),
-                _RouteView(
-                  routeResult: widget.leastTransfer!,
-                  departureStationName: widget.departureStationName,
-                ),
+                for (final r in routes)
+                  _RouteView(
+                    routeResult: r,
+                    departureStationName: widget.departureStationName,
+                  ),
               ],
-            )
-          : _RouteView(
-              routeResult: widget.fastest,
-              departureStationName: widget.departureStationName,
             ),
     );
   }
+
+  /// 탭 라벨 — 단일 탭이면 null.
+  List<Widget>? _buildTabs(_TabConfig config) {
+    switch (config) {
+      case _TabConfig.transferTradeoff:
+        return const [
+          Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간'),
+          Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승'),
+        ];
+      case _TabConfig.modeTradeoff:
+        return const [
+          // 급행이 기본값이므로 왼쪽에 위치한다 (사용자 합의 사항).
+          Tab(icon: Icon(Icons.flash_on, size: 18), text: '급행'),
+          Tab(icon: Icon(Icons.directions_subway, size: 18), text: '완행'),
+        ];
+      case _TabConfig.single:
+        return null;
+    }
+  }
+
+  /// 각 탭에 대응하는 경로 리스트.
+  List<RouteResult> _buildRoutes(_TabConfig config) {
+    switch (config) {
+      case _TabConfig.transferTradeoff:
+        return [widget.fastest, widget.leastTransfer!];
+      case _TabConfig.modeTradeoff:
+        return [widget.fastestExpress!, widget.fastestLocal!];
+      case _TabConfig.single:
+        return [widget.fastest];
+    }
+  }
 }
 
-class _RouteView extends ConsumerStatefulWidget {
+/// 단일 경로 뷰 — 탭이 모드/경로를 이미 결정하므로 내부 토글은 없다.
+///
+/// 급행 모드 사용 여부는 첫 세그먼트 lineId 패턴(`{base}E`)으로 자동 판정한다.
+/// 단, 가상 급행 노선을 거치지 않더라도 세그먼트가 `expressDurationSeconds`를
+/// 가질 수 있으므로(완행 모델에서 운영 구간만 별도 시간 노출), 시간 표시는
+/// 첫 세그먼트의 lineId가 `E`로 끝날 때만 급행 시간을 사용한다.
+class _RouteView extends ConsumerWidget {
   final RouteResult routeResult;
   final String departureStationName;
 
@@ -106,71 +172,49 @@ class _RouteView extends ConsumerStatefulWidget {
     required this.departureStationName,
   });
 
-  @override
-  ConsumerState<_RouteView> createState() => _RouteViewState();
-}
-
-class _RouteViewState extends ConsumerState<_RouteView> {
-  // 초기값은 급행 가용성에 따라 결정된다 (급행 가능한 경로는 급행이 기본).
-  late TrainMode _trainMode;
-
-  bool get _isExpressAvailable =>
-      widget.routeResult.totalExpressTimeSeconds != null;
-
-  @override
-  void initState() {
-    super.initState();
-    _trainMode = _isExpressAvailable ? TrainMode.express : TrainMode.local;
+  bool get _useExpress {
+    if (routeResult.segments.isEmpty) return false;
+    // 첫 세그먼트가 가상 급행 노선(`{base}E`)이면 급행 모드로 동작한다.
+    // 가상 급행 세그먼트의 시간/도착정보는 `expressOnly` 필터로 분리 매칭된다.
+    return isExpressLineId(routeResult.segments.first.lineId);
   }
 
   @override
-  void didUpdateWidget(covariant _RouteView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 탭/경로가 바뀌어 급행 가용성이 변하면 기본값을 재설정한다.
-    final oldHasExpress = oldWidget.routeResult.totalExpressTimeSeconds != null;
-    if (oldHasExpress != _isExpressAvailable) {
-      _trainMode = _isExpressAvailable ? TrainMode.express : TrainMode.local;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final arrivalAsync =
-        ref.watch(arrivalInfoProvider(widget.departureStationName));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final arrivalAsync = ref.watch(arrivalInfoProvider(departureStationName));
     final schedulesAsync = ref.watch(lineSchedulesProvider);
     final isLoading =
         arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
 
     final schedules = schedulesAsync.valueOrNull ?? <String, LineSchedule>{};
-    final firstLineId = widget.routeResult.segments.isNotEmpty
-        ? widget.routeResult.segments.first.lineId
+    final firstLineId = routeResult.segments.isNotEmpty
+        ? routeResult.segments.first.lineId
         : null;
+    // 시간표는 base 노선 ID(`9`)로 인덱싱돼 있으므로 가상 급행(`9E`) → `9` 변환.
+    final firstScheduleLineId =
+        firstLineId == null ? null : baseLineId(firstLineId);
     final firstLineSchedule =
-        firstLineId != null ? schedules[firstLineId] : null;
+        firstScheduleLineId != null ? schedules[firstScheduleLineId] : null;
 
     final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{};
-    for (var i = 0; i < widget.routeResult.segments.length - 1; i++) {
-      final transferName =
-          widget.routeResult.segments[i + 1].stations.first.name;
+    for (var i = 0; i < routeResult.segments.length - 1; i++) {
+      final transferName = routeResult.segments[i + 1].stations.first.name;
       transferArrivals[transferName] =
           ref.watch(arrivalInfoProvider(transferName));
     }
 
-    // 급행이 비활성된 경로에서는 항상 완행을 사용한다.
-    final effectiveMode =
-        _isExpressAvailable ? _trainMode : TrainMode.local;
-    final useExpress = effectiveMode == TrainMode.express;
+    final useExpress = _useExpress;
 
     final now = DateTime.now();
     final departureTime = computeDepartureTime(
       arrivalAsync: arrivalAsync,
-      routeResult: widget.routeResult,
+      routeResult: routeResult,
       now: now,
       lineSchedule: firstLineSchedule,
     );
 
     final segmentDepartures = computeSegmentDepartures(
-      routeResult: widget.routeResult,
+      routeResult: routeResult,
       initialDeparture: departureTime,
       schedules: schedules,
       transferArrivals: transferArrivals,
@@ -181,15 +225,16 @@ class _RouteViewState extends ConsumerState<_RouteView> {
     // 실제 도착시간: 마지막 세그먼트 출발 + 마지막 세그먼트 소요시간(모드별)
     final DateTime arrivalTime;
     final int totalMinutes;
-    if (widget.routeResult.segments.isEmpty) {
+    if (routeResult.segments.isEmpty) {
       arrivalTime = departureTime;
       totalMinutes = 0;
     } else {
-      final lastSegment = widget.routeResult.segments.last;
+      final lastSegment = routeResult.segments.last;
       final lastDuration = useExpress
           ? (lastSegment.expressDurationSeconds ?? lastSegment.durationSeconds)
           : lastSegment.durationSeconds;
-      arrivalTime = segmentDepartures.last.add(Duration(seconds: lastDuration));
+      arrivalTime =
+          segmentDepartures.last.add(Duration(seconds: lastDuration));
       totalMinutes = arrivalTime.difference(departureTime).inMinutes;
     }
 
@@ -200,22 +245,13 @@ class _RouteViewState extends ConsumerState<_RouteView> {
           departureTime: departureTime,
           arrivalTime: arrivalTime,
           isLoading: isLoading,
-          transferCount: widget.routeResult.transferCount,
-          stationCount: widget.routeResult.stationCount,
-          trainMode: effectiveMode,
-          isExpressAvailable: _isExpressAvailable,
-          onTrainModeChanged: (mode) {
-            setState(() {
-              _trainMode = mode;
-            });
-          },
+          transferCount: routeResult.transferCount,
+          stationCount: routeResult.stationCount,
         ),
-        // 탭이 있으면 탭 내부 회색선이 구분선 역할을 하므로 Divider는 생략.
-        // 탭이 없을 때만(급행 비활성 경로) 외부 Divider로 헤더/타임라인을 구분한다.
-        if (!_isExpressAvailable) const Divider(height: 1),
+        const Divider(height: 1),
         Expanded(
           child: _RouteTimeline(
-            routeResult: widget.routeResult,
+            routeResult: routeResult,
             departureTime: departureTime,
             segmentDepartures: segmentDepartures,
             useExpress: useExpress,
@@ -237,9 +273,6 @@ class _RouteSummaryHeader extends StatelessWidget {
   final bool isLoading;
   final int transferCount;
   final int stationCount;
-  final TrainMode trainMode;
-  final bool isExpressAvailable;
-  final ValueChanged<TrainMode> onTrainModeChanged;
 
   const _RouteSummaryHeader({
     required this.totalMinutes,
@@ -248,184 +281,73 @@ class _RouteSummaryHeader extends StatelessWidget {
     required this.isLoading,
     required this.transferCount,
     required this.stationCount,
-    required this.trainMode,
-    required this.isExpressAvailable,
-    required this.onTrainModeChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Column(
         children: [
-          // 시간·칩 영역만 가로/세로 패딩. 탭은 전체 너비로 확장되고
-          // 주황 언더라인이 바로 아래 Divider에 공백 없이 붙도록 한다.
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              isExpressAvailable ? 12 : 16,
-            ),
-            child: Column(
+          if (isLoading)
+            const Text(
+              '실시간 정보 조회중...',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (isLoading)
-                  const Text(
-                    '실시간 정보 조회중...',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  )
-                else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _formatTime(departureTime),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        ' 출발',
-                        style:
-                            TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Icon(Icons.arrow_forward, size: 20),
-                      ),
-                      Text(
-                        _formatTime(arrivalTime),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        ' 도착',
-                        style:
-                            TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
+                Text(
+                  _formatTime(departureTime),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _InfoChip(
-                      icon: Icons.access_time,
-                      text: '소요 $totalMinutes분',
-                    ),
-                    const _ChipDivider(),
-                    _InfoChip(
-                      icon: Icons.swap_horiz,
-                      text: '환승 $transferCount회',
-                    ),
-                    const _ChipDivider(),
-                    _InfoChip(
-                      icon: Icons.train,
-                      text: '$stationCount개역',
-                    ),
-                  ],
+                ),
+                Text(
+                  ' 출발',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(Icons.arrow_forward, size: 20),
+                ),
+                Text(
+                  _formatTime(arrivalTime),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  ' 도착',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
-          ),
-          // 탭은 컨테이너 전체 너비로 확장. 주황 언더라인이 바로 아래
-          // `_RouteView`의 `Divider`에 공백 없이 붙는다.
-          if (isExpressAvailable)
-            _TrainModeToggle(
-              trainMode: trainMode,
-              onChanged: onTrainModeChanged,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 완행/급행 토글 — 탭 스타일.
-///
-/// 호출부(`_RouteSummaryHeader`)가 급행 가용성을 판단하여 렌더 여부를 결정한다.
-/// 이 위젯은 급행이 반드시 가능한 상태에서만 표시된다.
-///
-/// 급행이 기본값이므로 왼쪽에, 완행이 오른쪽에 위치한다.
-class _TrainModeToggle extends StatelessWidget {
-  final TrainMode trainMode;
-  final ValueChanged<TrainMode> onChanged;
-
-  const _TrainModeToggle({
-    required this.trainMode,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            _TrainModeTab(
-              label: '급행',
-              selected: trainMode == TrainMode.express,
-              onTap: () => onChanged(TrainMode.express),
-            ),
-            _TrainModeTab(
-              label: '완행',
-              selected: trainMode == TrainMode.local,
-              onTap: () => onChanged(TrainMode.local),
-            ),
-          ],
-        ),
-        // 주황 언더라인 바로 아래 회색 1px 구분선을 Column으로 직접 쌓아
-        // 공백 없이 딱 붙게 한다. (외부 Divider로 쓰면 Container 경계/테마 색상
-        // 차이로 인해 미세한 시각적 공백이 발생한다)
-        Container(height: 1, color: Colors.grey.shade300),
-      ],
-    );
-  }
-}
-
-/// 단일 탭 버튼. 선택 시 하단에 주황색 언더라인이 표시된다.
-class _TrainModeTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TrainModeTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = Colors.orange.shade700;
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? accent : Colors.transparent,
-                width: 2,
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _InfoChip(
+                icon: Icons.access_time,
+                text: '소요 $totalMinutes분',
               ),
-            ),
+              const _ChipDivider(),
+              _InfoChip(
+                icon: Icons.swap_horiz,
+                text: '환승 $transferCount회',
+              ),
+              const _ChipDivider(),
+              _InfoChip(
+                icon: Icons.train,
+                text: '$stationCount개역',
+              ),
+            ],
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: selected ? accent : Colors.grey[600],
-              fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -523,15 +445,18 @@ class _RouteTimeline extends StatelessWidget {
     bool isLastSegment,
   ) {
     final segment = routeResult.segments[segIndex];
-    final color = lineColors[segment.lineId] ?? Colors.grey;
+    final color = lineColorFor(segment.lineId);
     final stationCount = segment.stations.length;
     final segmentDuration = _segmentDuration(segment);
     final intervalSeconds = stationCount > 1
         ? segmentDuration / (stationCount - 1)
         : 0.0;
-    // 급행 모드 + 이 세그먼트가 급행 운영 구간이면 배지 표시.
-    final showExpressBadge =
-        useExpress && segment.expressDurationSeconds != null;
+    // 배지 표시 조건:
+    //   - 새 모델: 세그먼트가 가상 급행 노선(`{base}E`)인 경우 → 항상 "급행" 배지.
+    //   - 구 모델: useExpress + 세그먼트가 급행 운영 구간(expressDurationSeconds 존재).
+    //     (가상 노선 구분이 없는 노선에서 후속 정리 후 제거 예정.)
+    final showExpressBadge = isExpressLineId(segment.lineId) ||
+        (useExpress && segment.expressDurationSeconds != null);
 
     items.add(_SegmentHeader(
       color: color,
@@ -760,4 +685,3 @@ class _StationRow extends StatelessWidget {
     );
   }
 }
-

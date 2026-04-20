@@ -1,5 +1,6 @@
 import '../../domain/entities/connection.dart';
 import '../../domain/entities/station.dart';
+import '../constants/dwell_time.dart';
 import 'line_direction.dart';
 
 /// 경로 확장 결과: 새 좌표 리스트 + 새 주행시간 리스트.
@@ -14,8 +15,12 @@ const _maxExpandSteps = 30;
 /// 남은시간이 현재 `basePoints` 총시간보다 크면, `findPreviousStationId`로
 /// 이전 역을 앞에 붙여 경로를 늘린다.
 ///
-/// 기준 "총시간" = `durations` 합 (주행만). 중간역 정차시간은 포함하지 않는다
-/// — JS 측 95% 클램프가 정차 시각화를 대신하므로 알고리즘 시간축에서 제외.
+/// 기준 "총시간" = `durations` 합 (주행) + 중간역 수 × `dwellTimeSeconds`.
+/// Dart 측 `arrivalSecs` 가 정차를 포함한 척도이므로 여기서도 같은 척도로 비교해야
+/// 확장 조건이 올바르게 동작한다 (불일치 시 불필요한 확장 발동 → `currentStationIndex`
+/// 오증가 → 3-way 클램프 "현재역 고정" 증상).
+/// 참고: JS 애니메이션 시간축에서는 `dwellSeconds=0` 로 분리 처리하여 정차가
+/// "보간 지연"이 아닌 "95% 클램프" 로 표현되는 것과는 별개의 문제다.
 ///
 /// 안전 장치:
 /// - 방문 역 `Set` 으로 순환선 무한 루프 차단
@@ -40,8 +45,11 @@ ExpandedPath expandPathBackward({
     return (points: basePoints, durations: baseDurations);
   }
 
-  // 현재 총시간: 주행시간 합만 (정차 제외).
-  var accumulatedTotal = baseDurations.fold<int>(0, (a, b) => a + b);
+  // 현재 총시간: 주행합 + 중간역 dwell (Dart 의 arrivalSecs 와 같은 척도)
+  final accumulatedTravel = baseDurations.fold<int>(0, (a, b) => a + b);
+  var intermediateStops = basePoints.length - 2; // 첫/마지막 역 제외
+  var accumulatedTotal =
+      accumulatedTravel + intermediateStops * dwellTimeSeconds;
 
   if (targetRemainingSeconds <= accumulatedTotal) {
     return (points: basePoints, durations: baseDurations);
@@ -88,8 +96,9 @@ ExpandedPath expandPathBackward({
     reversedPrependPoints.add((x: prevStation.svgX, y: prevStation.svgY));
     reversedPrependDurations.add(travelSecs);
 
-    // 증분: 주행시간만 (정차 제외)
-    accumulatedTotal += travelSecs;
+    // 증분: 이전 역 prepend 로 기존 head 가 중간역으로 전환 → 주행 + dwell 추가
+    accumulatedTotal += travelSecs + dwellTimeSeconds;
+    intermediateStops += 1;
 
     visited.add(prevId);
     headId = prevId;

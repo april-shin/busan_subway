@@ -223,6 +223,146 @@ void main() {
       expect(best.totalTimeSeconds, 200);
     });
 
+    test('급행 모델 — 완행 + 모드 전환 + 급행 + 모드 전환 경로 자동 선택', () {
+      // 9호선 시뮬레이션:
+      //  - 완행: A_9 - B_9 - C_9 - D_9 - E_9 (각 60초, 총 240초)
+      //  - 급행: B_9E - E_9E (90초 직통, B/E만 정차)
+      //  - 모드 전환: B_9 ↔ B_9E (50초), E_9 ↔ E_9E (50초)
+      // 출발 A → 도착 E.
+      // 경로 옵션:
+      //   1) 완행 단독: A→B→C→D→E = 240초
+      //   2) 완행+급행: A→B→B_9E→E_9E→E = 60 + 50 + 90 + 50 = 250초 (느림)
+      //   가중치를 조정해서 급행이 빠른 경우를 만든다.
+      // 각 완행 edge를 100초로 변경하면:
+      //   1) 완행 단독: 100*4 = 400초
+      //   2) 완행+급행: 100 + 50 + 90 + 50 = 290초 → 급행 선택
+      final graph = SubwayGraph();
+
+      for (final id in ['A_9', 'B_9', 'C_9', 'D_9', 'E_9']) {
+        graph.addNode(GraphNode(id: id, stationName: id[0], lineId: '9'));
+      }
+      for (final id in ['B_9E', 'E_9E']) {
+        graph.addNode(GraphNode(id: id, stationName: id[0], lineId: '9E'));
+      }
+      // 완행 edge
+      void addLocal(String from, String to) {
+        graph.addBidirectionalEdge(GraphEdge(
+          fromNodeId: from, toNodeId: to, lineId: '9', weightSeconds: 100,
+        ));
+      }
+      addLocal('A_9', 'B_9');
+      addLocal('B_9', 'C_9');
+      addLocal('C_9', 'D_9');
+      addLocal('D_9', 'E_9');
+      // 급행 edge
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'B_9E', toNodeId: 'E_9E', lineId: '9E',
+        weightSeconds: 90,
+      ));
+      // 모드 전환 edge
+      void addMode(String local, String express) {
+        graph.addBidirectionalEdge(GraphEdge(
+          fromNodeId: local, toNodeId: express, lineId: '9M',
+          weightSeconds: 50, isTransfer: true,
+        ));
+      }
+      addMode('B_9', 'B_9E');
+      addMode('E_9', 'E_9E');
+
+      final finder = ShortestPathFinder(graph: graph);
+      final result = finder.findShortestPath('A_9', 'E_9');
+
+      expect(result, isNotNull);
+      // 급행 경로가 선택돼야 함. (정차시간 dwell은 환승 인접 노드 제외)
+      // 경로 노드: A_9 → B_9 → B_9E → E_9E → E_9
+      // 환승 인접 노드: B_9, B_9E (모드 전환1), E_9E, E_9 (모드 전환2)
+      // → 중간 dwell 없음. 총 시간 = 100+50+90+50 = 290초
+      expect(result!.nodeIds, ['A_9', 'B_9', 'B_9E', 'E_9E', 'E_9']);
+      expect(result.totalTimeSeconds, 290);
+    });
+
+    test('findShortestPathBetweenStations: nodeFilter로 급행만 허용 시 급행 노드 사용', () {
+      // 그래프:
+      //   A_9 (완행) ← 급행 미정차
+      //   B_9 / B_9E (급행 정차)
+      //   E_9 / E_9E (급행 정차)
+      // - 시작: A역(완행 노드만 보유) → 도착: E역(완행+급행 보유)
+      // - nodeFilter: id.endsWith('E')
+      //   → 시작 후보 비어있음 → 결과 비어있어야 함.
+      final graph = SubwayGraph();
+      for (final id in ['A_9', 'B_9', 'C_9', 'D_9', 'E_9']) {
+        graph.addNode(GraphNode(id: id, stationName: id[0], lineId: '9'));
+      }
+      for (final id in ['B_9E', 'E_9E']) {
+        graph.addNode(GraphNode(id: id, stationName: id[0], lineId: '9E'));
+      }
+      void addLocal(String from, String to) {
+        graph.addBidirectionalEdge(GraphEdge(
+          fromNodeId: from, toNodeId: to, lineId: '9', weightSeconds: 60,
+        ));
+      }
+      addLocal('A_9', 'B_9');
+      addLocal('B_9', 'C_9');
+      addLocal('C_9', 'D_9');
+      addLocal('D_9', 'E_9');
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'B_9E', toNodeId: 'E_9E', lineId: '9E',
+        weightSeconds: 90,
+      ));
+
+      final finder = ShortestPathFinder(graph: graph);
+
+      // 급행만 허용: A역에 급행 노드가 없으므로 결과 없음
+      final expressOnly = finder.findShortestPathBetweenStations(
+        'A', 'E',
+        nodeFilter: (id) => id.endsWith('E'),
+      );
+      expect(expressOnly, isEmpty);
+
+      // 완행만 허용: 정상 결과
+      final localOnly = finder.findShortestPathBetweenStations(
+        'A', 'E',
+        nodeFilter: (id) => !id.endsWith('E'),
+      );
+      expect(localOnly, isNotEmpty);
+      // A_9 → B_9 → C_9 → D_9 → E_9 (완행 4 edge × 60초 + 중간 dwell 3 × 30초)
+      expect(localOnly.first.totalTimeSeconds, 60 * 4 + 30 * 3);
+
+      // B역(급행 정차) → E역(급행 정차) — 급행만 허용 시 결과 있음
+      final bToEExpress = finder.findShortestPathBetweenStations(
+        'B', 'E',
+        nodeFilter: (id) => id.endsWith('E'),
+      );
+      expect(bToEExpress, isNotEmpty);
+      expect(bToEExpress.first.nodeIds, ['B_9E', 'E_9E']);
+      expect(bToEExpress.first.totalTimeSeconds, 90);
+    });
+
+    test('findMinTransferPathBetweenStations: nodeFilter도 동일하게 적용', () {
+      // 동일 시나리오 — 환승 페널티 적용 변형도 nodeFilter를 존중해야 한다.
+      final graph = SubwayGraph();
+      graph.addNode(GraphNode(id: 'X_1', stationName: 'X', lineId: '1'));
+      graph.addNode(GraphNode(id: 'Y_1', stationName: 'Y', lineId: '1'));
+      graph.addNode(GraphNode(id: 'Y_1E', stationName: 'Y', lineId: '1E'));
+      graph.addNode(GraphNode(id: 'Z_1E', stationName: 'Z', lineId: '1E'));
+
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'X_1', toNodeId: 'Y_1', lineId: '1', weightSeconds: 60,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'Y_1E', toNodeId: 'Z_1E', lineId: '1E', weightSeconds: 50,
+      ));
+
+      final finder = ShortestPathFinder(graph: graph);
+
+      // X역엔 급행 노드가 없으므로 급행만 허용 시 결과 없음
+      final expressOnly = finder.findMinTransferPathBetweenStations(
+        'X', 'Z',
+        nodeFilter: (id) => id.endsWith('E'),
+      );
+      expect(expressOnly, isEmpty);
+    });
+
     test('chooses shorter path when multiple exist', () {
       final graph = SubwayGraph();
 

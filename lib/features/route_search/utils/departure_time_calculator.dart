@@ -9,14 +9,12 @@ import 'direction_resolver.dart';
 
 /// 시간표 기반 + 실시간 보정 방식으로 출발 시각을 계산한다.
 ///
-/// 1순위: 실시간 도착정보가 있으면 이를 사용 (가장 정확, 방향 필터 적용)
+/// 1순위: 실시간 도착정보가 있으면 이를 사용 (가장 정확, 방향+모드 필터)
 /// 2순위: 시간표(배차간격)에서 다음 출발 시각을 추정 (방향별)
 /// 3순위: 둘 다 없으면 현재 시각을 반환
 ///
-/// NOTE(급행/완행): 이 함수는 현재 **완행 기준**으로 가장 빠른 다음 열차를 찾는다.
-/// 사용자가 UI에서 급행 모드를 선택해도 출발 시각 자체는 동일한 값이 쓰인다.
-/// 실시간 API의 급행 여부(trainType) 필터링이나 시간표의 급행 전용 다음 출발
-/// 시각 추정은 후속 작업 범위다.
+/// 첫 세그먼트의 lineId가 `E`로 끝나는 가상 급행 노선이면 실시간 필터에서
+/// `급행` trainType만 매칭한다.
 DateTime computeDepartureTime({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required RouteResult routeResult,
@@ -30,13 +28,16 @@ DateTime computeDepartureTime({
   if (validSeg == null) return now;
 
   final isDown = isDownDirection(validSeg);
+  final isExpressSegment = isExpressLineId(validSeg.lineId);
+  final realtimeLineId = baseLineId(validSeg.lineId);
 
-  // 1순위: 실시간 도착정보로 보정 (방향 필터 적용)
+  // 1순위: 실시간 도착정보로 보정 (방향+모드 필터 적용)
   final realtimeDeparture = _getRealtimeDeparture(
     arrivalAsync: arrivalAsync,
-    lineId: validSeg.lineId,
+    lineId: realtimeLineId,
     isDown: isDown,
     now: now,
+    expressOnly: isExpressSegment,
   );
   if (realtimeDeparture != null) return realtimeDeparture;
 
@@ -53,6 +54,22 @@ DateTime computeDepartureTime({
 
   // 3순위: 현재 시각 반환 (운행 시간 외이거나 데이터 없음)
   return now;
+}
+
+/// `9E`처럼 `E`로 끝나는 가상 급행 노선 ID인지 판정.
+///
+/// 그래프 빌더가 생성하는 가상 급행 노선 ID 컨벤션은 `{base}E` (예: `9E`, `1E`).
+/// 모드 전환 edge는 `{base}M` (예: `9M`)이므로 이 함수에서는 false.
+/// 외부 모듈(라우터, UI, 시간표 조회 등)에서 이 컨벤션을 단일 진실 공급원에서 판정하기 위해 노출한다.
+bool isExpressLineId(String lineId) => lineId.endsWith('E');
+
+/// `9E` → `9`로 변환. 그 외는 그대로.
+/// 실시간 도착정보 API와 시간표 데이터는 base 노선(`9`) 기준으로 응답하므로 매칭 시 변환 필요.
+String baseLineId(String lineId) {
+  if (lineId.endsWith('E')) {
+    return lineId.substring(0, lineId.length - 1);
+  }
+  return lineId;
 }
 
 /// 경로 내 각 구간의 출발시각을 계산한다 (환승역 포함).
@@ -104,22 +121,27 @@ List<DateTime> computeSegmentDepartures({
       final transferStationName = nextSegment.stations.first.name;
 
       // 1순위: 환승역 실시간 도착정보 (afterTransfer 이후 열차만 유효)
+      // 다음 세그먼트가 급행(`{line}E`)이면 급행 trainType만 매칭한다.
       final arrivalAsync = transferArrivals[transferStationName];
+      final nextIsExpress = isExpressLineId(nextSegment.lineId);
+      final nextRealtimeLineId = baseLineId(nextSegment.lineId);
       DateTime? nextDeparture;
       if (arrivalAsync != null) {
         final minSeconds = afterTransfer.difference(now).inSeconds;
         nextDeparture = _getRealtimeDeparture(
           arrivalAsync: arrivalAsync,
-          lineId: nextSegment.lineId,
+          lineId: nextRealtimeLineId,
           isDown: nextIsDown,
           now: now,
           minArrivalSeconds: minSeconds,
+          expressOnly: nextIsExpress,
         );
       }
 
       // 2순위: 시간표 기반 다음 출발 (역별 시간표 포함)
+      // 시간표는 base 노선 ID로 인덱싱돼 있으므로 변환 후 조회.
       if (nextDeparture == null) {
-        final nextSchedule = schedules[nextSegment.lineId];
+        final nextSchedule = schedules[nextRealtimeLineId];
         if (nextSchedule != null) {
           nextDeparture = findNextDeparture(
             schedule: nextSchedule,
@@ -146,21 +168,26 @@ List<DateTime> computeSegmentDepartures({
 /// [minArrivalSeconds]를 지정하면 해당 초 이상인 열차만 대상으로 한다.
 /// 환승역에서는 사용자가 환승역에 도달하는 시점 이후의 열차만 유효하므로
 /// `afterTransfer.difference(now).inSeconds`를 전달한다.
+/// [expressOnly]가 true면 `trainType == '급행'`인 도착 정보만 매칭한다.
+/// false면 급행/완행 구분 없이 가장 빠른 열차를 반환한다.
 DateTime? _getRealtimeDeparture({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required String lineId,
   required bool isDown,
   required DateTime now,
   int minArrivalSeconds = 0,
+  bool expressOnly = false,
 }) {
   return arrivalAsync.whenOrNull(
     data: (arrivals) {
       final matching = arrivals.where((a) {
         final mappedLineId = subwayIdToLineId[a.subwayId] ?? a.subwayId;
-        return mappedLineId == lineId &&
-            isDownDirectionString(a.direction) == isDown &&
-            a.arrivalSeconds != null &&
-            a.arrivalSeconds! > minArrivalSeconds;
+        if (mappedLineId != lineId) return false;
+        if (isDownDirectionString(a.direction) != isDown) return false;
+        if (a.arrivalSeconds == null) return false;
+        if (a.arrivalSeconds! <= minArrivalSeconds) return false;
+        if (expressOnly && a.trainType != '급행') return false;
+        return true;
       }).toList();
 
       if (matching.isEmpty) return null;

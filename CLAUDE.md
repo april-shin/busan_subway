@@ -2,6 +2,40 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⛔ 실시간 열차 애니메이션 4원칙 — 변경 금지 (최상위 정책)
+
+지도 위 실시간 열차 애니메이션은 아래 4가지 원칙으로 고정되었다. **어떠한 일반 수정이나 버그 수정으로도 이 원칙을 깨뜨릴 수 없다.** 새로운 이슈가 보고되더라도 먼저 "현재 원칙 위반이 아닌지" 확인하고, 원칙을 유지하는 범위 안에서 수정해야 한다. 원칙을 바꿔야 한다고 판단되면 **반드시 사용자 승인을 먼저 구한다.**
+
+### 원칙 1 — 단조 감소 카운트다운
+API 재조회 시 디버그 "초" 및 내부 `realRemaining` 은 **절대 증가하지 않는다.**
+- 기본: API 응답의 `recptnDt`(등록일시)와 현재 시각의 차로 실시간 계산. `realRemaining = arrivalSeconds − (now − recptnDt)`
+- 보강: API 가 `arvlMsg2` 라운딩 등으로 동일 값을 반복 반환해도 원복하지 않도록 **JS `showTrains` 에서 단조 감소 clamp** 를 강제한다. 이전 refresh 기반 예상 `realRemaining` 보다 새 값이 크면 이전 값으로 대체.
+- 구현 위치: `tool/build_map_html.dart` 의 `showTrains` (`baseArrival`/`baseReceivedAt` 상태 사용), `lib/features/subway_map/presentation/providers/live_train_provider.dart` 의 `receivedAtEpochMs` 전달.
+
+### 원칙 2 — 매 frame 남은시간 역산으로 위치 결정
+화면상 열차 위치는 **매 frame 뒤에서부터 남은시간을 역산**하여 결정한다. 전방 보간 (path[0]→path[last] 시간 비례) 금지.
+- 알고리즘: `estimateTrainPosition(remaining, segTravel)` — 뒤에서부터 각 세그먼트 주행시간만큼 차감하며 매칭되는 세그먼트의 `progress = (s[i] − t) / s[i]` 를 반환. dwell=0 전제.
+- 예시: path=[A,B,C], s=[60,60], t=120 → A 위치 / t=80 → A-B 의 2/3 지점 (B 쪽).
+- 구현 위치: `tool/build_map_html.dart` 의 `estimateTrainPosition`, `startTrainAnimation.step()`.
+
+### 원칙 3 — 현재역 기준 3-way 클램프
+`arvlMsg3`("현재역") 이 A 인 열차는 **화면상 A↔B(다음역) 한 구간 안에서만** 움직인다. 역산이 B-C 세그먼트를 가리켜도 B(다음역)에 클램프, A 이전 세그먼트를 가리키면 A(현재역)에 클램프.
+- `currentStationIndex` 는 원본 `pathToTarget` 의 "현재역" index. SVG 곡선 스냅(`expandPathWithSnap`)으로 path 가 세분화되면 `stationIndices` 매핑으로 **확장 path 상 역 위치**로 변환해 3-way 분기.
+- 구현 위치: `tool/build_map_html.dart` 의 `expandPathWithSnap.stationIndices` + `startTrainAnimation.step()` 의 3-way 분기.
+
+### 원칙 4 — refresh 시 점프 방지 (catch-up 보간)
+API refresh 로 target 좌표가 갑자기 이동해도 **열차 아이콘은 순간이동 없이** 이전 위치에서 새 target 을 쫓아간다.
+- 방식: 매 frame `currentPos` 를 target 으로 **지수 감쇠**(`factor = 0.5^(deltaMs/HALF_LIFE_MS)`).
+- 기본 파라미터: `HALF_LIFE_MS = 3000`, `JUMP_THRESHOLD_PX = 20`, `deltaMs` 상한 100ms.
+- `startTrainAnimation` 재호출 시 `lastFrameMs = null` 리셋 (첫 frame 에 거대한 deltaMs 로 순간 수렴하는 현상 방지).
+- 도착 이펙트는 `catchingUp` 완료 후에만 발동.
+- 구현 위치: `tool/build_map_html.dart` 의 `startTrainAnimation.step()` 내부 `currentPos`/`catchingUp` 로직.
+
+### 수정 시 절차
+- `tool/build_map_html.dart` 또는 `lib/features/subway_map/presentation/providers/live_train_provider.dart` 편집 시 **해당 파일 상단의 4원칙 보호 주석 반드시 확인**.
+- `assets/html/map.html` 직접 수정 금지 — `tool/build_map_html.dart` 가 유일 소스. 생성은 `dart run tool/build_map_html.dart`.
+- 4원칙 관련 회귀 테스트(`test/core/utils/estimate_train_position_test.dart` 등)가 깨지면 **원칙 위반 가능성을 먼저 의심**한다.
+
 ## 작업 워크플로우 (필수)
 
 코드를 작성하거나 수정할 때 반드시 아래 루프를 따릅니다:
@@ -249,3 +283,4 @@ Expanded → WebViewWidget (전체 화면)
 |------|----------|------|------|
 | 2026-04-07 | 초기 구성: 7인 전문가 팀 하네스 | 전체 | 앱 개발 전문가 팀 구성 요청 |
 | 2026-04-17 | Opus 4.7 (1M context) 대응: 전 에이전트 YAML frontmatter 추가(`model: opus`, name, description), 오케스트레이터에 "모델 및 컨텍스트 전략" 섹션 추가, CLAUDE.md에 1M 컨텍스트 활용 원칙 명시 | agents/*, skills/subway-app-orchestrator/SKILL.md, CLAUDE.md | Opus 4.7에 적합하게 하네스 설정 수정 요청 |
+| 2026-04-19 | 요구사항 리뷰에 "버그 수정 회귀 검증 (6단계)" 추가: 판별 기준·회귀 위험 영역·대조군 시나리오 매트릭스, 출력 형식에 회귀 검증 섹션과 회귀 위험 등급 추가 | agents/subway-requirements-reviewer.md, skills/subway-requirements-review/SKILL.md | 버그 수정 시 기존 기능을 변경하지 않은 채로 버그만 수정했는지 확인 필요 피드백 |

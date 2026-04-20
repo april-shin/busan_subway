@@ -1,3 +1,11 @@
+// ⛔ 실시간 열차 애니메이션 4원칙 — 변경 금지 (CLAUDE.md 최상위 정책)
+//   이 프로바이더는 JS 애니메이션에 전달되는 `LiveTrain` 을 생성한다. 아래 두
+//   필드의 "기준 시각" 계약은 4원칙의 원칙 1 (단조 감소 카운트다운) 구현의 핵심이다.
+//   - `arrivalSeconds`: API 원본 또는 추정값 (척도 정차 포함)
+//   - `receivedAtEpochMs`: 해당 값의 기준 시각 (API 는 recptnDt, 추정은 추정 시각)
+//   JS 가 `realRemaining = arrivalSeconds − (now − receivedAtEpochMs)/1000` 으로
+//   매 frame 실시간 남은시간을 계산한다. Dart 에서 elapsed 를 선차감하면 JS 가
+//   이중 차감하므로 **절대 금지**. 변경 전 CLAUDE.md 4원칙 섹션 확인.
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -50,6 +58,16 @@ class LiveTrain {
   /// 호환성용 필드. 신규 JS 로직은 읽지 않음. 항상 0.0 권장.
   final double initialProgress;
 
+  /// `pathToTarget` 상 arvlMsg3("현재역")의 index. 경로가 `expandPathBackward`로
+  /// 확장된 경우 0이 아닐 수 있다. 예: path=[구반포, 신반포, 고속터미널, 사평,
+  /// 신논현] 에서 arvlMsg3="신반포" 이면 `currentStationIndex = 1`.
+  /// JS 는 이 값을 기준으로 3-way 클램프 분기에 사용한다.
+  final int currentStationIndex;
+
+  /// 열차 종류 (`'급행'`, `'일반'`, `'특급'` 등). 실시간 API의 `btrainSttus`에서 옴.
+  /// JS 측은 `'급행'`이면 마커에 빨간 "급" 딱지를 그린다.
+  final String trainType;
+
   const LiveTrain({
     required this.trainNo,
     required this.lineId,
@@ -67,6 +85,8 @@ class LiveTrain {
     required this.dwellSeconds,
     required this.receivedAtEpochMs,
     this.initialProgress = 0.0,
+    this.currentStationIndex = 0,
+    this.trainType = '일반',
   });
 
   Map<String, dynamic> toJson() => {
@@ -88,6 +108,8 @@ class LiveTrain {
         'dwellSeconds': dwellSeconds,
         'receivedAtEpochMs': receivedAtEpochMs,
         'initialProgress': initialProgress,
+        'currentStationIndex': currentStationIndex,
+        'trainType': trainType,
       };
 
   @override
@@ -247,47 +269,51 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       arrival.positionStatus,
     );
 
-    // 도착 예상 초: API 값이 있으면 사용, 없으면 구간 소요시간 합산으로 추정.
-    // `arrivalSecs` 값 자체는 API/enrich 와 같은 척도(정차시간 포함)를 유지한다.
-    // 화면 애니메이션의 시간축에서만 dwell 을 제외하는 것은 segmentDurations/
-    // dwellSeconds=0 / 95% 클램프 조합으로 수행한다.
+    // 도착 예상 초: API 값이 있으면 원본 그대로, 없으면 구간 합산으로 추정.
+    // 원칙 1: 매 frame 실시간 남은시간 계산은 JS 측에서 `receivedAtEpochMs`
+    // 기준으로 수행한다. 따라서 Dart 는 elapsed 선차감을 하지 않고 값과
+    // 기준 시각(recptnDt 또는 추정 시각) 한 쌍을 그대로 통과시킨다.
     final cacheKey = '${arrival.trainNo}_$lineId';
     final int arrivalSecs;
+    final int receivedAtEpochMs;
     if (arrival.arrivalSeconds != null) {
-      // API 제공값 → 캐시 불필요
+      // API 제공값 → 캐시 불필요. 기준 시각 = arrival.receivedAt (API recptnDt).
       estimateCache.remove(cacheKey);
-      final elapsed = DateTime.now().difference(arrival.receivedAt).inSeconds;
-      arrivalSecs = arrival.arrivalSeconds! - elapsed;
+      arrivalSecs = arrival.arrivalSeconds!;
+      receivedAtEpochMs = arrival.receivedAt.millisecondsSinceEpoch;
     } else {
       final cached = estimateCache[cacheKey];
       if (cached != null &&
           cached.currentStation == currentName &&
           cached.positionStatus == arrival.positionStatus) {
-        // 역 정보 동일 → 최초 추정값에서 경과시간만 차감
-        final elapsed =
-            DateTime.now().difference(cached.estimatedAt).inSeconds;
-        arrivalSecs = cached.estimate - elapsed;
+        // 역 정보 동일 → 최초 추정값 재사용. 기준 시각 = 추정 시점.
+        arrivalSecs = cached.estimate;
+        receivedAtEpochMs = cached.estimatedAt.millisecondsSinceEpoch;
       } else {
         // 새 열차 또는 역 변경 → 새로 추정.
         // durations 는 주행시간만. 중간역(durations.length - 1 개)마다
         // dwellTimeSeconds 를 더해 enrich/API 값과 같은 척도를 유지한다.
         final durations = pathResult.durations;
+        final int newEstimate;
         if (durations.isEmpty) {
-          arrivalSecs = 0;
+          newEstimate = 0;
         } else {
           final firstAdj =
               (durations.first * (1.0 - initialProgress)).round();
           final travelSecs =
               firstAdj + durations.skip(1).fold<int>(0, (a, b) => a + b);
           final dwellStops = math.max(0, durations.length - 1);
-          arrivalSecs = travelSecs + dwellStops * dwellTimeSeconds;
+          newEstimate = travelSecs + dwellStops * dwellTimeSeconds;
         }
+        final now = DateTime.now();
         estimateCache[cacheKey] = _EstimateEntry(
-          estimate: arrivalSecs,
-          estimatedAt: DateTime.now(),
+          estimate: newEstimate,
+          estimatedAt: now,
           currentStation: currentName,
           positionStatus: arrival.positionStatus,
         );
+        arrivalSecs = newEstimate;
+        receivedAtEpochMs = now.millisecondsSinceEpoch;
       }
     }
 
@@ -304,6 +330,9 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       targetRemainingSeconds: arrivalSecs < 0 ? 0 : arrivalSecs,
     );
 
+    // arvlMsg3("현재역") 의 확장된 path 상 새 index = prepend 된 역 수.
+    final currentStationIndex =
+        expanded.points.length - pathResult.points.length;
     final safeArrivalSecs = arrivalSecs < 0 ? 0 : arrivalSecs;
 
     result.add(LiveTrain(
@@ -319,16 +348,18 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       fromSvgX: expanded.points.first.x,
       fromSvgY: expanded.points.first.y,
       pathToTarget: expanded.points,
-      // 주행시간만. 중간역 정차시간은 알고리즘에서 제외하고 95% 클램프로 시각화한다.
       segmentDurations: expanded.durations,
       dwellSeconds: 0,
-      // arrivalSecs 는 위에서 receivedAt 기준 경과시간을 차감한 "지금" 기준 값이다.
-      // JS 측이 `realRemaining = arrivalSeconds - (Date.now() - receivedAtEpochMs)/1000`
-      // 로 추가 경과를 빼므로, 기준 시각을 과거 receivedAt 으로 넘기면 경과가
-      // 이중 차감되어 열차가 앞쪽 세그먼트로 넘어가 버린다. 따라서 "Dart 가 값을
-      // 확정한 순간"인 지금 시각을 기준으로 전달한다.
-      receivedAtEpochMs: DateTime.now().millisecondsSinceEpoch,
+      // 원칙 1: arrivalSeconds 와 쌍으로 "기준 시각" 을 통과시킨다.
+      //   - API 제공 값: arrival.receivedAt (API recptnDt)
+      //   - 캐시 추정 재사용: 최초 추정 시각
+      //   - 새 추정: 지금 시각
+      // JS 는 `realRemaining = arrivalSeconds - (now - receivedAtEpochMs)/1000`
+      // 으로 매 frame 실시간 계산. Dart 는 값만 통과.
+      receivedAtEpochMs: receivedAtEpochMs,
       initialProgress: initialProgress,
+      currentStationIndex: currentStationIndex,
+      trainType: arrival.trainType,
     ));
   }
 
@@ -383,6 +414,8 @@ List<LiveTrain> _applyOverlapOffset(List<LiveTrain> trains) {
           dwellSeconds: t.dwellSeconds,
           receivedAtEpochMs: t.receivedAtEpochMs,
           initialProgress: t.initialProgress,
+          currentStationIndex: t.currentStationIndex,
+          trainType: t.trainType,
         );
       }(),
   ];

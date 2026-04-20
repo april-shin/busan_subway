@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../domain/entities/station.dart';
 import '../../domain/entities/line.dart';
 import '../../domain/entities/connection.dart';
+import '../../domain/entities/express_skip_edge.dart';
 import '../../domain/entities/transfer_guide.dart';
 
 class LocalDataSource {
@@ -13,6 +14,7 @@ class LocalDataSource {
   List<Connection>? _connectionsCache;
   Map<String, int>? _transferTimesCache;
   Map<String, TransferGuide>? _transferGuidesCache;
+  List<ExpressSkipEdge>? _expressSkipEdgesCache;
 
   Future<List<Station>> loadStations() async {
     if (_stationsCache != null) return _stationsCache!;
@@ -88,11 +90,49 @@ class LocalDataSource {
     return _transferGuidesCache!;
   }
 
+  /// 급행 정차역 간 skip edge 목록을 로드한다.
+  ///
+  /// JSON 포맷: `{ lineId: [ {lineId, fromStationId, toStationId, seconds,
+  /// skippedStationIds}, ... ], ... }`
+  ///
+  /// 모든 노선의 edge를 단일 List로 flatten하여 반환한다.
+  /// 파일이 없거나 비어있어도 예외를 던지지 않고 빈 리스트를 반환한다.
+  Future<List<ExpressSkipEdge>> loadExpressSkipEdges() async {
+    if (_expressSkipEdgesCache != null) return _expressSkipEdgesCache!;
+
+    try {
+      final jsonString = await rootBundle
+          .loadString('assets/json/express_skip_edges.json');
+      final Map<String, dynamic> jsonMap =
+          json.decode(jsonString) as Map<String, dynamic>;
+
+      final all = <ExpressSkipEdge>[];
+      for (final entry in jsonMap.entries) {
+        final value = entry.value;
+        if (value is! List) continue;
+        for (final item in value) {
+          if (item is! Map<String, dynamic>) continue;
+          try {
+            all.add(ExpressSkipEdge.fromJson(item));
+          } catch (_) {
+            // 개별 항목 파싱 실패는 무시.
+          }
+        }
+      }
+      _expressSkipEdgesCache = List.unmodifiable(all);
+    } catch (_) {
+      // 파일 자체가 없으면 빈 리스트 반환 (호환성).
+      _expressSkipEdgesCache = const <ExpressSkipEdge>[];
+    }
+    return _expressSkipEdgesCache!;
+  }
+
   void clearCache() {
     _stationsCache = null;
     _linesCache = null;
     _connectionsCache = null;
     _transferTimesCache = null;
     _transferGuidesCache = null;
+    _expressSkipEdgesCache = null;
   }
 }

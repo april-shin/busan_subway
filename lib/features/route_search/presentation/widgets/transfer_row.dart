@@ -110,11 +110,14 @@ class DashedLinePainter extends CustomPainter {
 /// 텍스트 세그먼트 조립.
 ///
 /// 우선순위 순서로 추가하며, 최종적으로 ` · `로 join.
-/// 1. "환승 도보 N분" (항상 포함)
+/// 1. "환승 도보 N분" — 단, N==0 이면 "같은 승강장 환승"
+///    (예: 9호선 완행↔급행 모드 전환은 같은 플랫폼이라 도보 0분)
 /// 2. "빠른 환승 X-Y" 또는 "X번 칸" 또는 "Y번 문" (객차/문 정보)
 /// 3. "내리는문 왼쪽" 또는 "내리는문 오른쪽" (방향 정보)
 List<String> _buildTextSegments(int minutes, TransferGuide? guide) {
-  final segments = <String>['환승 도보 $minutes분'];
+  final firstLabel =
+      minutes == 0 ? '같은 승강장 환승' : '환승 도보 $minutes분';
+  final segments = <String>[firstLabel];
   if (guide == null) return segments;
 
   final carDoor = _carDoorLabel(guide.car, guide.door);

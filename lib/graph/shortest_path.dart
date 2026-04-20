@@ -23,12 +23,22 @@ class ShortestPathFinder {
 
   const ShortestPathFinder({required this.graph});
 
+  /// Dijkstra 단일 출발-도착 최단 경로.
+  ///
+  /// [nodeFilter]가 주어지면 출발/도착/탐색 중간 노드 모두 필터를 통과해야 방문된다.
+  /// 즉 필터 false인 노드는 그래프에서 제외된 것처럼 동작한다.
+  /// 이 옵션은 "급행 단독(`_E` 노드만)" 또는 "완행 단독(base 노드만)" 경로 비교용이다.
   PathResult? findShortestPath(
     String fromNodeId,
     String toNodeId, {
     int transferPenalty = 0,
+    bool Function(String nodeId)? nodeFilter,
   }) {
     if (!graph.containsNode(fromNodeId) || !graph.containsNode(toNodeId)) {
+      return null;
+    }
+    if (nodeFilter != null &&
+        (!nodeFilter(fromNodeId) || !nodeFilter(toNodeId))) {
       return null;
     }
 
@@ -68,6 +78,7 @@ class ShortestPathFinder {
 
       for (final edge in graph.getNeighbors(current.nodeId)) {
         if (visited.contains(edge.toNodeId)) continue;
+        if (nodeFilter != null && !nodeFilter(edge.toNodeId)) continue;
 
         final penalty = (transferPenalty > 0 && edge.isTransfer)
             ? transferPenalty
@@ -96,9 +107,6 @@ class ShortestPathFinder {
       if (edge != null) edges.add(edge);
       current = previous[current];
     }
-
-    path.reversed;
-    edges.reversed;
 
     final reversedEdges = edges.reversed.toList();
     final reversedPath = path.reversed.toList();
@@ -129,12 +137,27 @@ class ShortestPathFinder {
     );
   }
 
+  /// 두 역 사이의 최단 경로(들)를 반환한다.
+  ///
+  /// [nodeFilter]가 주어지면 시작/도착 후보 노드뿐 아니라 Dijkstra가 방문하는
+  /// **모든 노드**를 필터링한다. 즉 필터 false인 노드는 그래프에서 제외된 것처럼
+  /// 동작한다. "급행 단독(_E 노드만)" 또는 "완행 단독(base 노드만)" 경로 비교용이다.
+  ///
+  /// 예) `nodeFilter: (id) => id.endsWith('E')` — 가상 급행 노선(`{base}E`) 노드만 사용.
+  ///     시작역 또는 도착역에 `_E` 노드가 없으면 결과는 빈 리스트.
   List<PathResult> findShortestPathBetweenStations(
     String fromStationName,
-    String toStationName,
-  ) {
-    final fromNodeIds = graph.getNodeIdsForStation(fromStationName);
-    final toNodeIds = graph.getNodeIdsForStation(toStationName);
+    String toStationName, {
+    bool Function(String nodeId)? nodeFilter,
+  }) {
+    final fromNodeIds = graph
+        .getNodeIdsForStation(fromStationName)
+        .where((id) => nodeFilter == null || nodeFilter(id))
+        .toList();
+    final toNodeIds = graph
+        .getNodeIdsForStation(toStationName)
+        .where((id) => nodeFilter == null || nodeFilter(id))
+        .toList();
 
     if (fromNodeIds.isEmpty || toNodeIds.isEmpty) return [];
 
@@ -142,7 +165,11 @@ class ShortestPathFinder {
 
     for (final fromId in fromNodeIds) {
       for (final toId in toNodeIds) {
-        final result = findShortestPath(fromId, toId);
+        final result = findShortestPath(
+          fromId,
+          toId,
+          nodeFilter: nodeFilter,
+        );
         if (result != null) results.add(result);
       }
     }
@@ -154,12 +181,21 @@ class ShortestPathFinder {
   /// 환승 횟수를 최소화한 경로를 반환한다.
   /// 환승 엣지에 큰 페널티를 부여하여 환승을 피하도록 유도하고,
   /// 동일 환승 횟수 내에서는 시간이 짧은 경로를 선택한다.
+  ///
+  /// [nodeFilter] 동작은 [findShortestPathBetweenStations]와 동일.
   List<PathResult> findMinTransferPathBetweenStations(
     String fromStationName,
-    String toStationName,
-  ) {
-    final fromNodeIds = graph.getNodeIdsForStation(fromStationName);
-    final toNodeIds = graph.getNodeIdsForStation(toStationName);
+    String toStationName, {
+    bool Function(String nodeId)? nodeFilter,
+  }) {
+    final fromNodeIds = graph
+        .getNodeIdsForStation(fromStationName)
+        .where((id) => nodeFilter == null || nodeFilter(id))
+        .toList();
+    final toNodeIds = graph
+        .getNodeIdsForStation(toStationName)
+        .where((id) => nodeFilter == null || nodeFilter(id))
+        .toList();
 
     if (fromNodeIds.isEmpty || toNodeIds.isEmpty) return [];
 
@@ -171,6 +207,7 @@ class ShortestPathFinder {
           fromId,
           toId,
           transferPenalty: _transferPenalty,
+          nodeFilter: nodeFilter,
         );
         if (result != null) results.add(result);
       }

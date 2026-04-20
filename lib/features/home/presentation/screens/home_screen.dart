@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../domain/usecases/search_route.dart';
+import '../../../route_search/presentation/providers/timetable_providers.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../../../subway_map/presentation/screens/subway_map_screen.dart';
 import '../widgets/search_bar_widget.dart';
@@ -14,7 +15,6 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('서울 지하철'),
         actions: [
           Consumer(
             builder: (context, ref, _) {
@@ -65,7 +65,11 @@ class HomeScreen extends StatelessWidget {
     if (!selected.isComplete) return;
 
     final repo = ref.read(stationRepositoryProvider);
-    final useCase = SearchRoute(stationRepository: repo);
+    final timetableSource = ref.read(timetableDataSourceProvider);
+    final useCase = SearchRoute(
+      stationRepository: repo,
+      timetableDataSource: timetableSource,
+    );
 
     showDialog(
       context: context,
@@ -74,7 +78,12 @@ class HomeScreen extends StatelessWidget {
     );
 
     try {
-      final (:fastest, :leastTransfer) = await useCase.executeAll(
+      final (
+        :fastest,
+        :leastTransfer,
+        :fastestExpress,
+        :fastestLocal,
+      ) = await useCase.executeAll(
         selected.departure!.id,
         selected.arrival!.id,
       );
@@ -86,6 +95,8 @@ class HomeScreen extends StatelessWidget {
         context.go('/route-result', extra: (
           fastest: fastest,
           leastTransfer: leastTransfer,
+          fastestExpress: fastestExpress,
+          fastestLocal: fastestLocal,
           departureStationName: selected.departure!.name,
         ));
       } else {

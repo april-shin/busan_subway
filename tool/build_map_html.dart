@@ -8,6 +8,17 @@
 /// - style="background: white;" 제거
 ///
 /// 사용법: dart run tool/build_map_html.dart
+///
+/// ⛔ 실시간 열차 애니메이션 4원칙 — 변경 금지 (CLAUDE.md 최상위 정책)
+///   이 파일의 `estimateTrainPosition`, `startTrainAnimation`, `showTrains`,
+///   `expandPathWithSnap(stationIndices)` 는 4원칙을 구현하는 핵심 코드다.
+///   수정 전 반드시 CLAUDE.md 의 "실시간 열차 애니메이션 4원칙" 섹션을 확인하고,
+///   원칙을 유지한 채 필요한 최소 변경만 가해야 한다. 원칙 자체를 바꾸려면
+///   사용자 승인이 필요하다.
+///   - 원칙 1: recptnDt 기반 realRemaining + 단조 감소 clamp
+///   - 원칙 2: estimateTrainPosition — 뒤에서부터 역산
+///   - 원칙 3: stationIndices 기반 3-way 클램프 (현재역 ↔ 다음역 안에만 머뭄)
+///   - 원칙 4: HALF_LIFE_MS 지수 감쇠 catch-up (refresh 시 점프 방지)
 library;
 
 import 'dart:convert';
@@ -764,21 +775,13 @@ $textElements
   // 툴팁 표시 (DOM API로 XSS 방지)
   window.showTooltip = function(stationJson) {
     var s = JSON.parse(stationJson);
-    var color = lineColors[s.lineId] || '#999';
-    var lineName = lineNames[s.lineId] || s.lineId;
 
     // 기존 내용 제거
     tooltip.textContent = '';
 
-    // 헤더
+    // 헤더: 역명 + X 만 (호선 배지는 모두 하단으로 이동)
     var header = document.createElement('div');
     header.className = 'tooltip-header';
-
-    var badge = document.createElement('span');
-    badge.className = 'line-badge';
-    badge.style.background = color;
-    badge.textContent = lineName;
-    header.appendChild(badge);
 
     var nameEl = document.createElement('span');
     nameEl.className = 'station-name';
@@ -793,23 +796,26 @@ $textElements
 
     tooltip.appendChild(header);
 
-    // 환승 노선 표시
-    if (s.isTransfer && s.transferLines && s.transferLines.length > 1) {
-      var transferDiv = document.createElement('div');
-      transferDiv.className = 'transfer-lines';
+    // 노선 배지: 현재 노선 + 환승 노선 모두 역명 하단에 동일 형식으로 표시
+    var linesDiv = document.createElement('div');
+    linesDiv.className = 'transfer-lines';
+
+    var displayLines = [s.lineId];
+    if (s.transferLines && s.transferLines.length) {
       for (var i = 0; i < s.transferLines.length; i++) {
-        var tl = s.transferLines[i];
-        if (tl === s.lineId) continue;
-        var tc = lineColors[tl] || '#999';
-        var tn = lineNames[tl] || tl;
-        var tb = document.createElement('span');
-        tb.className = 'transfer-badge';
-        tb.style.background = tc;
-        tb.textContent = tn;
-        transferDiv.appendChild(tb);
+        if (s.transferLines[i] !== s.lineId) displayLines.push(s.transferLines[i]);
       }
-      tooltip.appendChild(transferDiv);
     }
+
+    for (var i = 0; i < displayLines.length; i++) {
+      var lid = displayLines[i];
+      var b = document.createElement('span');
+      b.className = 'transfer-badge';
+      b.style.background = lineColors[lid] || '#999';
+      b.textContent = lineNames[lid] || lid;
+      linesDiv.appendChild(b);
+    }
+    tooltip.appendChild(linesDiv);
 
     // 액션 버튼
     var actions = document.createElement('div');
@@ -1194,6 +1200,29 @@ $textElements
     label.textContent = train.destination || '';
     g.appendChild(label);
 
+    // 급행 딱지: trainType이 '급행'이면 열차 아이콘 우측에 빨간 "급" 배지
+    if (train.trainType === '급행') {
+      var badgeBg = document.createElementNS(SVG_NS, 'rect');
+      badgeBg.setAttribute('x', '18');
+      badgeBg.setAttribute('y', '-6');
+      badgeBg.setAttribute('width', '12');
+      badgeBg.setAttribute('height', '12');
+      badgeBg.setAttribute('rx', '2');
+      badgeBg.setAttribute('fill', '#E53935');
+      g.appendChild(badgeBg);
+
+      var badgeText = document.createElementNS(SVG_NS, 'text');
+      badgeText.setAttribute('x', '24');
+      badgeText.setAttribute('y', '3');
+      badgeText.setAttribute('text-anchor', 'middle');
+      badgeText.setAttribute('font-size', '8.5');
+      badgeText.setAttribute('font-weight', 'bold');
+      badgeText.setAttribute('fill', '#fff');
+      badgeText.setAttribute('font-family', 'sans-serif');
+      badgeText.textContent = '급';
+      g.appendChild(badgeText);
+    }
+
     // [디버그용] 열차 위치 결정 요소 표시
     g.appendChild(buildDebugGroup(train));
 
@@ -1397,15 +1426,23 @@ $textElements
   }
 
   // pathToTarget을 SVG 선로 좌표 시퀀스로 확장. segmentDurations는 subseg 거리 비율로 분배.
+  // `stationIndices`: 원본 path 의 각 역이 newPath 에서 어느 index 에 있는지 매핑.
+  // 예: 원본 [A,B,C] 가 확장 후 [A,c1,c2,B,c3,C] 면 stationIndices=[0,3,5].
+  // 3-way 클램프가 "원래 역" 기준으로 범위 판정할 수 있도록 추가.
   function expandPathWithSnap(path, segDurations, lineId) {
     if (!path || path.length < 2 || !lineId) {
+      var stIdx = [];
+      var len = path ? path.length : 0;
+      for (var k = 0; k < len; k++) stIdx.push(k);
       return {
         path: path ? path.slice() : [],
-        durations: segDurations ? segDurations.slice() : []
+        durations: segDurations ? segDurations.slice() : [],
+        stationIndices: stIdx
       };
     }
     var newPath = [{ x: path[0].x, y: path[0].y }];
     var newDurations = [];
+    var stationIndices = [0];
     for (var i = 0; i < path.length - 1; i++) {
       var a = path[i], b = path[i + 1];
       var slice = getSnappedSlice(a.x, a.y, b.x, b.y, lineId);
@@ -1432,8 +1469,38 @@ $textElements
         var n = slice.length - 1;
         for (var j = 0; j < n; j++) newDurations.push(origDur / n);
       }
+      // slice 끝 = 원본 path[i+1] 의 확장 path 상 위치
+      stationIndices.push(newPath.length - 1);
     }
-    return { path: newPath, durations: newDurations };
+    return { path: newPath, durations: newDurations, stationIndices: stationIndices };
+  }
+
+  // [원칙 2] 매 frame 남은시간 역산으로 위치 결정. dwell=0 전제.
+  // - remaining 이 세그먼트 i 안에서 남은 시간이면 progress=(s[i]-t)/s[i]
+  // - 모든 세그먼트 다 소진하고 t>0 남으면 outOfPath (경로 시작점보다 더 뒤)
+  function estimateTrainPosition(remaining, segTravel) {
+    if (!segTravel || segTravel.length === 0) {
+      return { outOfPath: false, segmentIndex: 0, progress: 0 };
+    }
+    if (remaining <= 0) {
+      return {
+        outOfPath: false,
+        segmentIndex: segTravel.length - 1,
+        progress: 1
+      };
+    }
+    var t = remaining;
+    for (var i = segTravel.length - 1; i >= 0; i--) {
+      if (t <= segTravel[i]) {
+        return {
+          outOfPath: false,
+          segmentIndex: i,
+          progress: (segTravel[i] - t) / segTravel[i]
+        };
+      }
+      t -= segTravel[i];
+    }
+    return { outOfPath: true, segmentIndex: 0, progress: 0 };
   }
 
   function startTrainAnimation(trainState, trainData) {
@@ -1453,175 +1520,121 @@ $textElements
       return;
     }
 
-    var animPath = path;
-    var durationMs = Math.max(trainData.arrivalSeconds, 1) * 1000;
-    // 도착 임박 열차는 최소 3초 활주 (1초 반복으로 떨리는 현상 방지)
-    if (trainData.arrivalSeconds <= 2 && (trainData.initialProgress || 0) >= 0.7) {
-      durationMs = 3000;
-    }
     var segDurations = _snap.durations;
-    var initProgress = trainData.initialProgress || 0;
-    var sliceOffset = 0; // 이어서 진행 시 잘린 세그먼트 수
-
-    // 기존 열차의 현재 시각적 위치 읽기
-    // 15초마다 API 갱신 시, 같은 역을 보고하면 애니메이션이 처음으로 되돌아가는 문제 방지
-    var transformAttr = trainState.element.getAttribute('transform');
-    if (transformAttr) {
-      var match = transformAttr.match(/translate\\(\\s*([^,]+)\\s*,\\s*([^)]+)\\s*\\)/);
-      if (match) {
-        var curX = parseFloat(match[1]);
-        var curY = parseFloat(match[2]);
-        var dx0 = curX - path[0].x;
-        var dy0 = curY - path[0].y;
-        var distFromStart = Math.sqrt(dx0 * dx0 + dy0 * dy0);
-
-        if (distFromStart > 2) {
-          // 경로에서 현재 위치와 가장 가까운 세그먼트 찾기
-          var bestSeg = 0;
-          var minDist = Infinity;
-          for (var si = 0; si < path.length - 1; si++) {
-            var ax = path[si].x, ay = path[si].y;
-            var bx = path[si + 1].x, by = path[si + 1].y;
-            var sdx = bx - ax, sdy = by - ay;
-            var len2 = sdx * sdx + sdy * sdy;
-            var t = len2 > 0
-              ? Math.max(0, Math.min(1, ((curX - ax) * sdx + (curY - ay) * sdy) / len2))
-              : 0;
-            var px = ax + t * sdx, py = ay + t * sdy;
-            var d = Math.sqrt((curX - px) * (curX - px) + (curY - py) * (curY - py));
-            if (d < minDist) { minDist = d; bestSeg = si; }
-          }
-
-          // 경로에서 가까운 위치(30px 이내)면 현재 위치에서 이어서 진행
-          if (minDist < 30) {
-            var remaining = path.slice(bestSeg + 1);
-            if (remaining.length > 0) {
-              animPath = [{ x: curX, y: curY }].concat(remaining);
-              sliceOffset = bestSeg; // 잘린 세그먼트 수 기록
-              initProgress = 0; // 이어서 진행 시 initialProgress 무시
-            } else {
-              // 마지막 세그먼트를 지남 → 목적지에 고정
-              var last = path[path.length - 1];
-              trainState.element.setAttribute('transform',
-                'translate(' + last.x + ',' + last.y + ')');
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    // 세그먼트별 시간 가중치 구축
-    var segTimes = [];
-    var hasDurations = segDurations.length === path.length - 1;
-
-    if (sliceOffset > 0 && hasDurations) {
-      // 이어서 진행: 첫 세그먼트는 현재→다음역 (잘린 세그먼트 시간 사용)
-      var slicedDurations = segDurations.slice(sliceOffset);
-      // 첫 세그먼트는 부분 구간이므로 원래 시간 그대로 사용 (근사)
-      segTimes = slicedDurations.length > 0 ? slicedDurations : [];
-      // animPath 첫 점은 현재 위치이므로 segTimes 길이가 animPath.length-1과 다를 수 있음
-      // animPath = [curPos, path[bestSeg+1], ...] → segTimes에 첫 세그먼트 추가
-      if (segTimes.length < animPath.length - 1) {
-        segTimes.unshift(segTimes.length > 0 ? segTimes[0] : 120);
-      }
-    } else if (hasDurations) {
-      segTimes = segDurations.slice();
-    }
-
-    // segTimes가 유효하지 않으면 SVG 거리 기반 폴백
-    var useTimes = segTimes.length === animPath.length - 1;
-    var totalTime = 0;
-    var segDists = [];
-
-    if (useTimes) {
-      for (var i = 0; i < segTimes.length; i++) {
-        totalTime += segTimes[i];
-      }
-    }
-
-    // SVG 거리도 항상 계산 (보간에 필요)
-    var totalDist = 0;
-    for (var i = 1; i < animPath.length; i++) {
-      var dx = animPath[i].x - animPath[i - 1].x;
-      var dy = animPath[i].y - animPath[i - 1].y;
-      var d = Math.sqrt(dx * dx + dy * dy);
-      segDists.push(d);
-      totalDist += d;
-    }
-
-    if (totalDist === 0) return;
-
-    // 잔여 거리가 5px 이하면 즉시 도착 처리 (이어서 진행 시 안전망)
-    if (totalDist <= 5) {
-      var last = animPath[animPath.length - 1];
+    if (!segDurations || segDurations.length !== path.length - 1) {
+      // 데이터 불일치 — path[0] 에 고정 (이펙트 없이 return)
       trainState.element.setAttribute('transform',
-        'translate(' + last.x + ',' + last.y + ')');
-      playArrivalEffect(trainState, trainData.trainNo);
+        'translate(' + path[0].x + ',' + path[0].y + ')');
       return;
     }
 
-    if (useTimes && totalTime === 0) useTimes = false;
+    // [원칙 1] recptnDt 기준 매 frame 실시간 남은시간 계산을 위한 베이스.
+    var receivedAt = (trainData.receivedAtEpochMs != null)
+      ? trainData.receivedAtEpochMs : Date.now();
+    var baseArrival = trainData.arrivalSeconds || 0;
 
-    var startTime = performance.now();
+    // [원칙 3] 역 index → 확장 path 상 index 매핑.
+    // `currentStationIndex` 는 원본 pathToTarget 기준 "현재역(arvlMsg3)" 위치.
+    // SVG 곡선 스냅으로 path 가 세분화됐을 수 있으니 stationIndices 를 경유해
+    // 확장 후 newPath 에서의 "현재역"/"다음역" 위치로 변환한다.
+    var stationIndices = _snap.stationIndices || [];
+    var origCurIdx = trainData.currentStationIndex || 0;
+    if (origCurIdx < 0) origCurIdx = 0;
+    if (stationIndices.length > 0 && origCurIdx > stationIndices.length - 2) {
+      origCurIdx = Math.max(0, stationIndices.length - 2);
+    }
+    var curIdx = (stationIndices.length > origCurIdx)
+      ? stationIndices[origCurIdx] : origCurIdx;
+    var nextIdx = (stationIndices.length > origCurIdx + 1)
+      ? stationIndices[origCurIdx + 1] : path.length - 1;
 
-    function step(now) {
-      var elapsed = now - startTime;
-      var timeProgress = Math.min(elapsed / durationMs, 1.0);
+    // [원칙 4] 점프 방지 — target 을 지수 감쇠로 catch-up.
+    // refresh 로 target 이 갑자기 이동해도 currentPos 는 천천히 따라잡는다.
+    // frame rate 에 독립적이도록 실제 경과 ms 기반 반감기(HALF_LIFE_MS)로 수렴.
+    //   3000ms 반감기: 3s→50%, 6s→25%, 9s→12.5%, 12s→6.25% (실질 수렴)
+    //
+    // 임계치(예: 20px) 미만은 즉시 클램프하던 과거 정책은 작은 점프(=시각적 점프)
+    // 를 유발해 원칙 4 위반으로 간주된다. 따라서 **항상** 지수 감쇠를 적용하고,
+    // 충분히 가까워지면(< SNAP_PX) target 으로 스냅한다.
+    var SNAP_PX = 0.5;
+    var HALF_LIFE_MS = 3000;
 
-      var pos = animPath[animPath.length - 1];
+    // refresh 시 매번 step 재시작되므로 lastFrameMs 를 리셋하여 첫 frame 에서
+    // 거대한 deltaMs 로 순간 수렴해버리는 현상을 방지.
+    trainState.lastFrameMs = null;
 
-      if (useTimes) {
-        // 시간 가중 보간
-        // initialProgress: 첫 세그먼트 시간의 일정 비율을 이미 진행한 것으로 간주
-        var startTimeOffset = initProgress * segTimes[0];
-        var effectiveTotalTime = totalTime - startTimeOffset;
-        if (effectiveTotalTime <= 0) effectiveTotalTime = totalTime;
+    function step() {
+      // [원칙 1] realRemaining = arrivalSeconds - (now - recptnDt)
+      var realRemaining = Math.max(0,
+        baseArrival - (Date.now() - receivedAt) / 1000);
 
-        var targetTime = startTimeOffset + timeProgress * effectiveTotalTime;
-        var accumulated = 0;
+      // [원칙 2] 역산
+      var res = estimateTrainPosition(realRemaining, segDurations);
 
-        for (var i = 0; i < segTimes.length; i++) {
-          if (accumulated + segTimes[i] >= targetTime) {
-            var segProgress = segTimes[i] > 0
-              ? (targetTime - accumulated) / segTimes[i]
-              : 0;
-            pos = {
-              x: animPath[i].x + (animPath[i + 1].x - animPath[i].x) * segProgress,
-              y: animPath[i].y + (animPath[i + 1].y - animPath[i].y) * segProgress
-            };
-            break;
-          }
-          accumulated += segTimes[i];
-        }
+      // [원칙 3] 3-way 클램프 (확장 path 상 "역" index 기준).
+      // 현재역-다음역 사이 서브세그먼트(curIdx..nextIdx-1) 에서는 정상 보간,
+      // 그 외 범위 세그먼트는 현재역/다음역 좌표에 고정.
+      var target;
+      if (res.outOfPath) {
+        target = path[curIdx];
+      } else if (res.segmentIndex < curIdx) {
+        target = path[curIdx];
+      } else if (res.segmentIndex >= nextIdx) {
+        target = path[nextIdx];
       } else {
-        // SVG 거리 기반 폴백 (기존 방식)
-        var targetDist = timeProgress * totalDist;
-        var accumulated = 0;
+        var p0 = path[res.segmentIndex];
+        var p1 = path[res.segmentIndex + 1];
+        target = {
+          x: p0.x + (p1.x - p0.x) * res.progress,
+          y: p0.y + (p1.y - p0.y) * res.progress
+        };
+      }
 
-        for (var i = 0; i < segDists.length; i++) {
-          if (accumulated + segDists[i] >= targetDist) {
-            var segProgress = segDists[i] > 0
-              ? (targetDist - accumulated) / segDists[i]
-              : 0;
-            pos = {
-              x: animPath[i].x + (animPath[i + 1].x - animPath[i].x) * segProgress,
-              y: animPath[i].y + (animPath[i + 1].y - animPath[i].y) * segProgress
-            };
-            break;
-          }
-          accumulated += segDists[i];
+      // [원칙 4] currentPos → target 지수 감쇠 보간.
+      // 첫 frame 에는 target 으로 즉시 초기화(점프 없음).
+      if (!trainState.currentPos) {
+        trainState.currentPos = { x: target.x, y: target.y };
+      }
+      var nowPerf = (typeof performance !== 'undefined' && performance.now)
+        ? performance.now() : Date.now();
+      var deltaMs = (trainState.lastFrameMs != null)
+        ? Math.min(nowPerf - trainState.lastFrameMs, 100) : 16.67;
+      trainState.lastFrameMs = nowPerf;
+
+      var cp = trainState.currentPos;
+      var dx = target.x - cp.x;
+      var dy = target.y - cp.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+
+      // 항상 지수 감쇠 적용 — 작은 차이도 즉시 클램프하지 않아 점프를 차단.
+      if (dist < SNAP_PX) {
+        cp.x = target.x;
+        cp.y = target.y;
+        trainState.catchingUp = false;
+      } else {
+        // dist 가 SNAP_PX 이상이면 catch-up 진행 중으로 표시 (도착 가드용).
+        trainState.catchingUp = true;
+        var factor = Math.pow(0.5, deltaMs / HALF_LIFE_MS);
+        cp.x = target.x + (cp.x - target.x) * factor;
+        cp.y = target.y + (cp.y - target.y) * factor;
+        if (Math.abs(target.x - cp.x) < SNAP_PX &&
+            Math.abs(target.y - cp.y) < SNAP_PX) {
+          cp.x = target.x;
+          cp.y = target.y;
+          trainState.catchingUp = false;
         }
       }
+      var pos = cp;
 
       trainState.element.setAttribute('transform',
         'translate(' + pos.x + ',' + pos.y + ')');
 
-      if (timeProgress < 1.0) {
-        trainState.animationId = requestAnimationFrame(step);
-      } else {
+      // 도착 이펙트는 catch-up 이 끝난 뒤에 발동 (달리다 중간에 사라지는 현상 방지)
+      if (realRemaining <= 0 && !trainState.catchingUp) {
         playArrivalEffect(trainState, trainData.trainNo);
+        return;
       }
+      trainState.animationId = requestAnimationFrame(step);
     }
 
     trainState.animationId = requestAnimationFrame(step);
@@ -1684,13 +1697,34 @@ $textElements
 
       if (activeTrains[t.trainNo]) {
         var existing = activeTrains[t.trainNo];
+        var nowMs = Date.now();
+
+        // [원칙 1 보강] 단조 감소 강제 clamp.
+        // API 가 arvlMsg2 라운딩 등으로 arrivalSeconds 를 동일 값으로 반복 반환하면
+        // recptnDt 만 갱신되어 realRemaining 이 원복된다. 이전 refresh 기반 예상
+        // realRemaining 보다 새 값이 크면 이전 값으로 clamp.
+        if (existing.baseArrival != null && existing.baseReceivedAt != null) {
+          var prevReal = Math.max(0,
+            existing.baseArrival - (nowMs - existing.baseReceivedAt) / 1000);
+          var newReceivedAt = (t.receivedAtEpochMs != null)
+            ? t.receivedAtEpochMs : nowMs;
+          var newReal = Math.max(0,
+            (t.arrivalSeconds || 0) - (nowMs - newReceivedAt) / 1000);
+          if (newReal > prevReal + 2) { // 2초 오차 허용 (네트워크 지터)
+            t.arrivalSeconds = Math.round(prevReal);
+            t.receivedAtEpochMs = nowMs;
+          }
+        }
+
         // 도착 임박 열차는 기존 애니메이션 유지 (15초 갱신에서 끊김 방지)
         // 단, 이미 도착역에 있는 열차(pathToTarget 1점)는 즉시 도착 처리
         if (t.arrivalSeconds <= 2 && (t.initialProgress || 0) >= 0.7 && existing.animationId
             && t.pathToTarget && t.pathToTarget.length >= 2) {
           existing.destination = t.destination || '';
           existing.lastArrivalSeconds = t.arrivalSeconds;
-          existing.lastUpdateTime = Date.now();
+          existing.lastUpdateTime = nowMs;
+          existing.baseArrival = t.arrivalSeconds;
+          existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
           var texts = existing.element.querySelectorAll('text');
           if (texts.length > 0) {
             texts[0].textContent = t.destination || '';
@@ -1701,7 +1735,9 @@ $textElements
         cancelTrainAnimation(existing);
         existing.destination = t.destination || '';
         existing.lastArrivalSeconds = t.arrivalSeconds;
-        existing.lastUpdateTime = Date.now();
+        existing.lastUpdateTime = nowMs;
+        existing.baseArrival = t.arrivalSeconds;
+        existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
         var texts = existing.element.querySelectorAll('text');
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
@@ -1712,10 +1748,13 @@ $textElements
       } else {
         var g = createTrainIcon(t, color);
         liveTrainsGroup.appendChild(g);
+        var nowMs2 = Date.now();
         activeTrains[t.trainNo] = {
           element: g, animationId: null, destination: t.destination || '',
           lastArrivalSeconds: t.arrivalSeconds,
-          lastUpdateTime: Date.now()
+          lastUpdateTime: nowMs2,
+          baseArrival: t.arrivalSeconds,
+          baseReceivedAt: t.receivedAtEpochMs || nowMs2
         };
         startTrainAnimation(activeTrains[t.trainNo], t);
       }

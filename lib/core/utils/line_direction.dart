@@ -12,6 +12,11 @@ import '../../domain/entities/connection.dart';
 /// - 일반 노선: ID 증가 = 하행
 /// - 2호선 순환: 인접 역 ID 쌍 기준 + 순환 경계(201↔243) 반전
 /// - 4호선: 진접선(449-452) 특수 처리
+/// - 9호선/공항철도: 서울 API 라벨 기준 규칙 반전
+///
+/// 가상 급행 노선 ID(`{base}E`, 예: `9E`)는 base 노선과 동일한 방향 규칙을 적용한다.
+/// 이 정규화가 누락되면 9호선 갈아타기 경로(`9E → 9M → 9`)에서 첫 세그먼트가
+/// 일반 규칙으로 평가되어 방향이 반대로 잡히는 회귀가 발생한다.
 ///
 /// 숫자 ID 추출 실패 시 false 반환 (안전한 기본값).
 bool isDownBetween(String fromId, String toId, String lineId) {
@@ -19,12 +24,34 @@ bool isDownBetween(String fromId, String toId, String lineId) {
   final toNum = _parseNumericId(toId);
   if (fromNum == null || toNum == null) return false;
 
-  if (lineId == '2') {
+  // 가상 급행 노선 정규화: `9E` → `9`, `1E` → `1`, `경춘E` → `경춘` 등.
+  // 모드 전환 가상 노선(`{base}M`)은 환승 edge라 isDownBetween로 들어올 일이 없지만
+  // 들어와도 base로 정규화되면 일반 분기를 탄다.
+  final baseId = lineId.endsWith('E')
+      ? lineId.substring(0, lineId.length - 1)
+      : lineId;
+
+  if (baseId == '2') {
     return _isLine2DownBetween(fromNum, toNum);
   }
 
-  if (lineId == '4') {
+  if (baseId == '4') {
     return _isLine4Down(fromNum, toNum);
+  }
+
+  if (baseId == '9') {
+    // 9호선은 서울 API 라벨이 일반 규칙과 반대:
+    //   하행 = 김포공항/개화 方面 (ID 감소)
+    //   상행 = 중앙보훈병원 方面 (ID 증가)
+    // `realtimeStationArrival` 의 updnLine 과 일치시키기 위해 규칙을 뒤집는다.
+    return toNum < fromNum;
+  }
+
+  if (baseId == '공항철도') {
+    // 공항철도도 서울 API 라벨이 일반 규칙과 반대:
+    //   하행 = 서울역 方面 (A01, ID 감소)
+    //   상행 = 인천공항2터미널 方面 (A14, ID 증가)
+    return toNum < fromNum;
   }
 
   // 일반 노선: ID 증가 = 하행

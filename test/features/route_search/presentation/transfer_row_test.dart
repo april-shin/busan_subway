@@ -104,6 +104,35 @@ void main() {
       expect(find.textContaining('내리는문'), findsNothing);
     });
 
+    testWidgets('transferMinutes==0 이면 "같은 승강장 환승" 으로 표시 (9호선 모드 전환 등)',
+        (tester) async {
+      await tester.pumpWidget(
+        wrap(const TransferRow(transferMinutes: 0, guide: null)),
+      );
+
+      expect(find.textContaining('같은 승강장 환승'), findsOneWidget);
+      expect(find.textContaining('환승 도보'), findsNothing,
+          reason: '0분일 때는 "환승 도보 0분" 대신 "같은 승강장 환승" 노출');
+    });
+
+    testWidgets('transferMinutes==0 + guide 있으면 "같은 승강장 환승 · 빠른 환승 X-Y" 렌더',
+        (tester) async {
+      const guide = TransferGuide(
+        doorSide: DoorSide.right,
+        car: 4,
+        door: 2,
+      );
+
+      await tester.pumpWidget(
+        wrap(const TransferRow(transferMinutes: 0, guide: guide)),
+      );
+
+      expect(
+        find.textContaining('같은 승강장 환승 · 빠른 환승 4-2 · 내리는문 오른쪽'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('note가 있으면 본문 뒤에 회색 보조 텍스트로 렌더', (tester) async {
       const guide = TransferGuide(
         doorSide: DoorSide.right,

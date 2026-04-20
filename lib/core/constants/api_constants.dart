@@ -9,8 +9,9 @@ class ApiConstants {
 
   // 캐시 TTL 은 refreshInterval 이하로 유지해야 한다.
   // 초과하면 refresh 때 캐시 응답만 재사용되어 실제 API 호출이 일어나지 않는다.
-  static const Duration cacheTtl = Duration(seconds: 10);
-  static const Duration refreshInterval = Duration(seconds: 10);
+  // 서울 열린데이터 일일 호출 한도(1,000건/일) 절약을 위해 15초 주기로 운영한다.
+  static const Duration cacheTtl = Duration(seconds: 15);
+  static const Duration refreshInterval = Duration(seconds: 15);
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 10);
 }

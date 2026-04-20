@@ -168,4 +168,87 @@ void main() {
       expect(r2.progress, 0.0);
     });
   });
+
+  // ⛔ 4원칙 회귀 방지 — 변경 금지 (CLAUDE.md 최상위 정책)
+  //
+  // 원칙 2 (매 frame 역산) 의 기본 계약이 깨지면 이 그룹이 실패한다.
+  // 본 테스트는 dwell=0 전제(JS 애니메이션 시간축)에서 역산 결과를 고정한다.
+  // 실패 시 먼저 "원칙 위반이 아닌지" 확인하고, CLAUDE.md 4원칙 섹션 검토.
+  group('[원칙 2 회귀 방지] dwell=0 역산 시나리오 고정', () {
+    test('A-B-C, s=[60,60], dwell=0, t=120 → A 위치 (segIdx=0, progress=0)', () {
+      final r = estimateTrainPosition(
+        remainingSeconds: 120,
+        segmentTravelTimes: [60, 60],
+        dwellSeconds: 0,
+      );
+      expect(r.outOfPath, isFalse);
+      expect(r.segmentIndex, 0);
+      expect(r.progress, closeTo(0.0, 1e-9));
+      expect(r.isDwelling, isFalse);
+    });
+
+    test('A-B-C, s=[60,60], dwell=0, t=80 → A-B 의 2/3 지점 (B 쪽)', () {
+      // 80 > 60(seg1) → t=20. seg0: 20 ≤ 60 → progress=(60-20)/60 = 2/3.
+      final r = estimateTrainPosition(
+        remainingSeconds: 80,
+        segmentTravelTimes: [60, 60],
+        dwellSeconds: 0,
+      );
+      expect(r.outOfPath, isFalse);
+      expect(r.segmentIndex, 0);
+      expect(r.progress, closeTo(2.0 / 3.0, 1e-9));
+      expect(r.isDwelling, isFalse);
+    });
+
+    test('고속-사평-신논현 실측, s=[135,130], dwell=0, t=131 → 사평 직전', () {
+      // 131 > 130(seg1, 사평→신논현) → t=1. seg0(고속→사평): 1 ≤ 135.
+      // progress=(135-1)/135 ≈ 0.993 (사평 직전).
+      final r = estimateTrainPosition(
+        remainingSeconds: 131,
+        segmentTravelTimes: [135, 130],
+        dwellSeconds: 0,
+      );
+      expect(r.outOfPath, isFalse);
+      expect(r.segmentIndex, 0);
+      expect(r.progress, closeTo(134.0 / 135.0, 1e-9));
+      expect(r.isDwelling, isFalse);
+    });
+
+    test('s=[135,130], dwell=0, t=265 (총합과 동일) → A 위치', () {
+      final r = estimateTrainPosition(
+        remainingSeconds: 265,
+        segmentTravelTimes: [135, 130],
+        dwellSeconds: 0,
+      );
+      expect(r.outOfPath, isFalse);
+      expect(r.segmentIndex, 0);
+      expect(r.progress, closeTo(0.0, 1e-9));
+    });
+
+    test('s=[135,130], dwell=0, t=266 (총합 초과) → outOfPath', () {
+      // 총 주행시간(265) 보다 남은시간이 크면 outOfPath 반환.
+      // (JS 측에서는 원칙 3 에 따라 path[curIdx] 에 클램프)
+      final r = estimateTrainPosition(
+        remainingSeconds: 266,
+        segmentTravelTimes: [135, 130],
+        dwellSeconds: 0,
+      );
+      expect(r.outOfPath, isTrue);
+    });
+
+    test('현재역 다음 세그먼트 이후 매칭 시 3-way 클램프 전제', () {
+      // path=[고속, 사평, 신논현], s=[135, 130], t=60 (사평-신논현 진행 중)
+      // 역산: t=60 ≤ 130 → segIdx=1, progress=(130-60)/130 ≈ 0.538
+      // JS 측 3-way 클램프: curIdx=0 이면 segmentIndex(1) ≥ nextIdx(1) →
+      // path[nextIdx=사평]에 고정 (원칙 3). 여기서는 역산 기대값만 검증.
+      final r = estimateTrainPosition(
+        remainingSeconds: 60,
+        segmentTravelTimes: [135, 130],
+        dwellSeconds: 0,
+      );
+      expect(r.outOfPath, isFalse);
+      expect(r.segmentIndex, 1);
+      expect(r.progress, closeTo(70.0 / 130.0, 1e-9));
+    });
+  });
 }

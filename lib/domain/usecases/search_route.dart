@@ -1,32 +1,48 @@
 import 'dart:math' as math;
 
+import 'package:collection/collection.dart';
+
 import '../entities/route_result.dart';
 import '../entities/station.dart';
 import '../entities/transfer_guide.dart';
 import '../repositories/station_repository.dart';
+import '../../data/local/timetable_data_source.dart';
 import '../../graph/graph_builder.dart';
 import '../../graph/shortest_path.dart';
 import '../../core/constants/dwell_time.dart';
 import '../../core/constants/line_colors.dart';
+import '../../core/utils/headway_estimator.dart';
 import '../../core/utils/line_direction.dart';
 import '../../core/utils/transfer_guide_key.dart';
 
 class SearchRoute {
   final StationRepository _stationRepository;
 
-  SearchRoute({required StationRepository stationRepository})
-      : _stationRepository = stationRepository;
+  /// 노선별 평균 배차간격을 계산하기 위한 시간표 데이터소스(옵셔널).
+  ///
+  /// null이면 환승 대기시간/모드 전환 가중치는 기본값(180초/90초)으로 폴백한다.
+  final TimetableDataSource? _timetableDataSource;
+
+  SearchRoute({
+    required StationRepository stationRepository,
+    TimetableDataSource? timetableDataSource,
+  })  : _stationRepository = stationRepository,
+        _timetableDataSource = timetableDataSource;
 
   Future<RouteResult?> execute(String fromStationId, String toStationId) async {
     final stations = await _stationRepository.getAllStations();
     final connections = await _stationRepository.getAllConnections();
     final transferTimes = await _stationRepository.getTransferTimes();
     final transferGuides = await _stationRepository.getTransferGuides();
+    final expressSkipEdges = await _stationRepository.getExpressSkipEdges();
+    final headwaySeconds = await _loadHeadwayMap();
 
     final graph = GraphBuilder().build(
       stations: stations,
       connections: connections,
       transferTimes: transferTimes,
+      expressSkipEdges: expressSkipEdges,
+      headwaySeconds: headwaySeconds,
     );
 
     final stationMap = {for (final s in stations) s.id: s};
@@ -46,9 +62,24 @@ class SearchRoute {
     return _buildRouteResult(results.first, stationMap, transferGuides);
   }
 
-  /// 최단시간 경로와 최소환승 경로를 동시에 반환한다.
-  /// 두 경로가 동일하면 leastTransfer는 null.
-  Future<({RouteResult? fastest, RouteResult? leastTransfer})> executeAll(
+  /// 4가지 경로 후보를 동시에 반환한다.
+  ///
+  /// - [fastest]: 전체 그래프 기준 최단시간 (완행/급행 자유 선택, 자동 환승 포함)
+  /// - [leastTransfer]: 환승 페널티가 큰 Dijkstra 결과. fastest와 같으면 null.
+  /// - [fastestExpress]: 시작/도착 후보를 가상 급행 노선(`{base}E`) 노드로 한정.
+  ///   해당 역 모두에 급행 정차할 때만 결과가 있음. 둘 중 하나라도 급행 미정차면 null.
+  /// - [fastestLocal]: 시작/도착 후보를 base(완행) 노드로 한정. 항상 가능.
+  ///
+  /// `fastestExpress` / `fastestLocal`은 UI에서 "급행/완행 모드 트레이드오프"를
+  /// 비교 가능한지 판정하는 데 사용된다. 예) 신논현→마곡나루는 둘 다 환승 0회지만
+  /// 시간이 다르므로 두 경로를 탭으로 비교한다.
+  Future<
+      ({
+        RouteResult? fastest,
+        RouteResult? leastTransfer,
+        RouteResult? fastestExpress,
+        RouteResult? fastestLocal,
+      })> executeAll(
     String fromStationId,
     String toStationId,
   ) async {
@@ -56,11 +87,15 @@ class SearchRoute {
     final connections = await _stationRepository.getAllConnections();
     final transferTimes = await _stationRepository.getTransferTimes();
     final transferGuides = await _stationRepository.getTransferGuides();
+    final expressSkipEdges = await _stationRepository.getExpressSkipEdges();
+    final headwaySeconds = await _loadHeadwayMap();
 
     final graph = GraphBuilder().build(
       stations: stations,
       connections: connections,
       transferTimes: transferTimes,
+      expressSkipEdges: expressSkipEdges,
+      headwaySeconds: headwaySeconds,
     );
 
     final stationMap = {for (final s in stations) s.id: s};
@@ -68,38 +103,156 @@ class SearchRoute {
     final fromStation = stationMap[fromStationId];
     final toStation = stationMap[toStationId];
     if (fromStation == null || toStation == null) {
-      return (fastest: null, leastTransfer: null);
+      return (
+        fastest: null,
+        leastTransfer: null,
+        fastestExpress: null,
+        fastestLocal: null,
+      );
     }
 
     final finder = ShortestPathFinder(graph: graph);
 
-    final fastestResults = finder.findShortestPathBetweenStations(
-      fromStation.name,
-      toStation.name,
-    );
-    final minTransferResults = finder.findMinTransferPathBetweenStations(
-      fromStation.name,
-      toStation.name,
-    );
+    // 동명 역(예: 5호선/경의중앙선 "양평") 구분을 위해 이름 기반 대신
+    // 사용자가 선택한 Station의 stationId + lineId 조합으로 정확한 노드 ID를 사용.
+    // 시작 노선에서 출발해 필요 시 환승 엣지로 다른 노선 전환한다(환승 케이스 OK).
+    final fromNodeId = '${fromStation.id}_${fromStation.lineId}';
+    final toNodeId = '${toStation.id}_${toStation.lineId}';
 
-    final fastest = fastestResults.isEmpty
+    final fastestPath = finder.findShortestPath(fromNodeId, toNodeId);
+    // 환승 페널티가 큰 Dijkstra로 최소환승 경로 산출 (shortest_path.dart의
+    // _transferPenalty=100000 과 동일 수치를 사용).
+    final minTransferPath = finder.findShortestPath(
+      fromNodeId,
+      toNodeId,
+      transferPenalty: 100000,
+    );
+    final fastest = fastestPath == null
         ? null
-        : _buildRouteResult(fastestResults.first, stationMap, transferGuides);
-    final leastTransfer = minTransferResults.isEmpty
+        : _buildRouteResult(fastestPath, stationMap, transferGuides);
+    final leastTransfer = minTransferPath == null
         ? null
-        : _buildRouteResult(
-            minTransferResults.first, stationMap, transferGuides);
+        : _buildRouteResult(minTransferPath, stationMap, transferGuides);
 
-    // 두 경로가 동일하면 leastTransfer를 null로 반환
-    final isSame = fastest != null &&
-        leastTransfer != null &&
-        fastest.totalTimeSeconds == leastTransfer.totalTimeSeconds &&
-        fastest.transferCount == leastTransfer.transferCount;
+    // 급행 지원 노선 lineId 집합 (expressSkipEdges 기반)
+    final expressLines = <String>{
+      for (final e in expressSkipEdges) e.lineId,
+    };
+
+    // `fastestExpress` — "급행을 1번이라도 거치는 최소시간 경로".
+    //
+    // 1) 같은 노선 + 급행 지원 노선이면: 노선의 base/E/M 노드만 허용해
+    //    동일 노선 내 완행→급행 환승 케이스도 포함한다. 결과에 `_E` 노선
+    //    edge 가 1개 이상 포함되어야 "급행" 으로 인정. 미포함이면 완행과
+    //    동일하므로 null.
+    // 2) 그 외(다른 노선 간 조회 등): 기존 정책 유지 — 출발/도착 둘 다
+    //    급행 정차역(`_E` 노드 보유)일 때만 검색.
+    RouteResult? fastestExpress;
+    if (fromStation.lineId == toStation.lineId &&
+        expressLines.contains(fromStation.lineId)) {
+      final lineId = fromStation.lineId;
+      final results = finder.findShortestPathBetweenStations(
+        fromStation.name,
+        toStation.name,
+        // 해당 노선의 base/E/M 노드만 허용 (다른 노선 환승 배제).
+        nodeFilter: (id) =>
+            id.endsWith('_$lineId') ||
+            id.endsWith('_${lineId}E') ||
+            id.endsWith('_${lineId}M'),
+      );
+      // 정확 일치(`{lineId}E`)로 검사하여 lineId 자체가 'E' 로 끝나는
+      // 가상 코드(향후 추가 가능성) 의 오탐을 방지.
+      final expressLineId = '${lineId}E';
+      final candidate = results.firstWhereOrNull(
+        (r) => r.edges.any((e) => e.lineId == expressLineId),
+      );
+      if (candidate != null) {
+        fastestExpress =
+            _buildRouteResult(candidate, stationMap, transferGuides);
+      }
+    } else {
+      // 시작/도착 모두 급행 정차역(가상 `_E` 노드 보유)일 때만 비어있지 않다.
+      final expressOnlyResults = finder.findShortestPathBetweenStations(
+        fromStation.name,
+        toStation.name,
+        nodeFilter: (id) => id.endsWith('E'),
+      );
+      if (expressOnlyResults.isNotEmpty) {
+        fastestExpress = _buildRouteResult(
+            expressOnlyResults.first, stationMap, transferGuides);
+      }
+    }
+
+    // `fastestLocal` 은 "출발역과 도착역이 같은 급행 지원 노선에 속할 때,
+    // 그 노선의 완행(최소환승) 경로"로 정의한다. 다른 노선 환승 포함 금지.
+    // 알고리즘 목적: 최소환승 (`findMinTransferPathBetweenStations`).
+    // 조건 미충족 시 `fastestLocal = null`.
+    RouteResult? fastestLocal;
+    if (fromStation.lineId == toStation.lineId &&
+        expressLines.contains(fromStation.lineId)) {
+      final localLineId = fromStation.lineId;
+      final localOnlyResults = finder.findMinTransferPathBetweenStations(
+        fromStation.name,
+        toStation.name,
+        // 같은 노선의 base 노드만 허용: `{stationId}_{localLineId}` 형태.
+        // 급행 가상 노선(`{localLineId}E`) 과 타 노선 모두 배제.
+        nodeFilter: (id) => id.endsWith('_$localLineId'),
+      );
+      fastestLocal = localOnlyResults.isEmpty
+          ? null
+          : _buildRouteResult(
+              localOnlyResults.first, stationMap, transferGuides);
+    }
+
+    // fastest / leastTransfer 결과를 사용자 관점에서 정상화한다.
+    //
+    // 정의상 fastest는 "시간이 더 짧은 쪽", leastTransfer는 "시간은 더 길지만
+    // 환승이 더 적은 쪽"이어야 한다. 그러나 `findShortestPathBetweenStations`은
+    // 환승 페널티를 비용에 포함하므로, 같은 노선 내 급행/완행 혼합처럼 환승이
+    // 1개 더 들어가면서도 시간이 짧은 경로가 fastest로 잡히고, 환승이 0인
+    // 단일 노선 경로가 leastTransfer로 잡히면 사용자 관점에선
+    // "최단시간이 최소환승보다 오래 걸린다"는 모순이 화면에 노출된다.
+    //
+    // 그래서 두 결과를 비교해 다음을 보장한다:
+    //   1) 시간 정상화: leastTransfer 가 더 빠르면 swap.
+    //   2) dominate 컷: 정상화 후 fastest 가 환승까지 같거나 적으면
+    //      leastTransfer 는 의미가 없으므로 null. (이렇게 되면 화면이
+    //      single 또는 modeTradeoff 분기로 자연스럽게 넘어가, 9호선 같은
+    //      급행/완행 케이스에서 "급행/완행" 탭이 뜬다.)
+    RouteResult? finalFastest = fastest;
+    RouteResult? finalLeastTransfer = leastTransfer;
+    if (finalFastest != null && finalLeastTransfer != null) {
+      if (finalLeastTransfer.totalTimeSeconds < finalFastest.totalTimeSeconds) {
+        final tmp = finalFastest;
+        finalFastest = finalLeastTransfer;
+        finalLeastTransfer = tmp;
+      }
+      if (finalFastest.transferCount <= finalLeastTransfer.transferCount) {
+        finalLeastTransfer = null;
+      }
+    }
 
     return (
-      fastest: fastest,
-      leastTransfer: isSame ? null : leastTransfer,
+      fastest: finalFastest,
+      leastTransfer: finalLeastTransfer,
+      fastestExpress: fastestExpress,
+      fastestLocal: fastestLocal,
     );
+  }
+
+  /// 노선별 평균 배차간격(초) 맵을 로드한다.
+  ///
+  /// [_timetableDataSource]가 null이거나 로드에 실패하면 빈 맵을 반환한다.
+  /// (그래프 빌더가 누락된 노선에 대해 기본값으로 폴백한다.)
+  Future<Map<String, int>> _loadHeadwayMap() async {
+    final source = _timetableDataSource;
+    if (source == null) return const <String, int>{};
+    try {
+      final schedules = await source.loadSchedules();
+      return buildHeadwayMap(schedules);
+    } catch (_) {
+      return const <String, int>{};
+    }
   }
 
   RouteResult _buildRouteResult(
@@ -112,10 +265,17 @@ class SearchRoute {
     return RouteResult(
       segments: built.segments,
       totalTimeSeconds: path.totalTimeSeconds,
+      // 모드 전환(완행↔급행)도 사용자 관점에선 다른 열차로 갈아타는 것이므로
+      // 일반 환승과 동일하게 카운트한다.
       transferCount: built.segments.length - 1,
-      stationCount: built.segments
-              .fold(0, (sum, seg) => sum + seg.stations.length) -
-          (built.segments.length - 1),
+      // "N개역" 표시는 거쳐간 정거장 수(hop)이다. 세그먼트별
+      // (stations.length - 1) 의 합 — 환승역 자체는 hop 으로 세지 않는다.
+      // 예) 사당→방배 단일 세그먼트 [사당, 방배] → 1개역.
+      stationCount: built.segments.fold(
+        0,
+        (sum, seg) =>
+            sum + (seg.stations.isEmpty ? 0 : seg.stations.length - 1),
+      ),
       transferDurations: built.transferDurations,
       transferGuides: built.transferGuides,
       totalExpressTimeSeconds: _computeTotalExpress(
@@ -211,16 +371,22 @@ class SearchRoute {
         }
         transferDurations.add(edge.weightSeconds);
 
-        // 환승 가이드 매칭 (이전 세그먼트 방향 + 다음 노선 기준)
+        // 환승 가이드 매칭 (이전 세그먼트 방향 + 다음 노선 기준).
+        // 단, 모드 전환(`{line}M`)은 같은 역의 완행↔급행 전환이라 환승 가이드 의미 없음.
         final nextLineId = (i + 1 < path.edges.length)
             ? path.edges[i + 1].lineId
             : null;
-        transferGuidesList.add(_resolveTransferGuide(
-          completedSegment: completedSegment,
-          stationName: station?.name,
-          nextLineId: nextLineId,
-          guides: transferGuides,
-        ));
+        final isModeSwitch = edge.lineId.endsWith('M');
+        transferGuidesList.add(
+          isModeSwitch
+              ? null
+              : _resolveTransferGuide(
+                  completedSegment: completedSegment,
+                  stationName: station?.name,
+                  nextLineId: nextLineId,
+                  guides: transferGuides,
+                ),
+        );
 
         currentStations = [];
         currentDurationSeconds = 0;

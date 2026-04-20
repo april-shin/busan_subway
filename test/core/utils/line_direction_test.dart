@@ -106,6 +106,67 @@ void main() {
     });
   });
 
+  group('isDownBetween - 9호선 (API 라벨 반전)', () {
+    // 서울 API `updnLine` 정의:
+    //   하행 = 개화/김포공항 방면 (ID 감소)
+    //   상행 = 중앙보훈병원 방면 (ID 증가)
+    test('ID 감소 (926→905, 언주→마곡나루) = 하행(true)', () {
+      expect(isDownBetween('926', '905', '9'), isTrue);
+    });
+
+    test('ID 증가 (905→926, 마곡나루→언주) = 상행(false)', () {
+      expect(isDownBetween('905', '926', '9'), isFalse);
+    });
+
+    test('ID 감소 (938→901, 중앙보훈병원→개화 전체) = 하행(true)', () {
+      expect(isDownBetween('938', '901', '9'), isTrue);
+    });
+
+    test('ID 증가 (901→938, 개화→중앙보훈병원 전체) = 상행(false)', () {
+      expect(isDownBetween('901', '938', '9'), isFalse);
+    });
+
+    test('같은 ID (926→926) = false', () {
+      expect(isDownBetween('926', '926', '9'), isFalse);
+    });
+
+    // 회귀 방지: 가상 급행 노선(`9E`)이 9호선 특수 분기를 타지 않으면
+    // 일반 노선 규칙(ID 증가=하행)으로 평가되어 방향이 반대로 판정된다.
+    // 이로 인해 선정릉(929)→동작(921) 경로 첫 세그먼트(`9E`, 929→920)에서
+    // routeFilter.isDown이 false로 잘못 잡혀 반대 방향(중앙보훈병원행) 열차가 표시되는 회귀 발생.
+    test('가상 급행 노선 9E도 9호선 동일 규칙: ID 감소(929→920) = 하행(true)', () {
+      expect(isDownBetween('929', '920', '9E'), isTrue,
+          reason: '9E는 9호선과 동일하게 ID 감소를 하행으로 판정해야 함');
+    });
+
+    test('가상 급행 노선 9E: ID 증가(920→929) = 상행(false)', () {
+      expect(isDownBetween('920', '929', '9E'), isFalse);
+    });
+
+    test('가상 급행 노선 1E도 1호선 동일 규칙: ID 증가 = 하행(true)', () {
+      // 1호선은 일반 규칙: ID 증가 = 하행
+      expect(isDownBetween('150', '160', '1E'), isTrue);
+      expect(isDownBetween('160', '150', '1E'), isFalse);
+    });
+  });
+
+  group('isDownBetween - 공항철도 (API 라벨 반전)', () {
+    // 서울 API `updnLine` 정의:
+    //   하행 = 서울역 방면 (A01, ID 감소)
+    //   상행 = 인천공항2터미널 방면 (A14, ID 증가)
+    test('ID 증가 (A01→A14, 서울역→인천공항) = 상행(false)', () {
+      expect(isDownBetween('A01', 'A14', '공항철도'), isFalse);
+    });
+
+    test('ID 감소 (A14→A01, 인천공항→서울역) = 하행(true)', () {
+      expect(isDownBetween('A14', 'A01', '공항철도'), isTrue);
+    });
+
+    test('ID 증가 (A03→A06, 홍대입구→김포공항) = 상행(false)', () {
+      expect(isDownBetween('A03', 'A06', '공항철도'), isFalse);
+    });
+  });
+
   group('isDownBetween - 경계 및 방어적 케이스', () {
     test('같은 ID (303→303, 일반 노선): step=0 → 하행 아님 (false)', () {
       // 일반 노선 로직: toNum > fromNum. 같으면 false.

@@ -52,4 +52,30 @@ const Map<String, String> lineNames = {
   '의정부': '의정부경전철',
   '우이신설': '우이신설경전철',
   'GTX-A': 'GTX-A',
+  // 급행 가상 노선 — base 노선과 같은 이름을 쓰고, "급행" 표시는 별도 배지로
+  // 보여준다 (라벨 "1호선" + 빨간 "급행" 배지 = 시각적 일관성 확보).
+  '1E': '1호선',
+  '9E': '9호선',
+  '경춘E': '경춘선',
+  '수인분당E': '수인분당선',
 };
+
+/// `Colors.grey` 대체 — `dart:ui`만 의존하도록 직접 정의한다.
+const Color _fallbackGrey = Color(0xFF9E9E9E);
+
+/// 노선 색상을 안전하게 조회한다.
+///
+/// - [lineId]가 [lineColors]에 등록되어 있으면 해당 색상을 반환한다.
+/// - 등록되지 않았고 `E`로 끝나면(급행 가상 노선) base lineId(`9E` → `9`)로
+///   폴백 조회한다.
+/// - 그래도 없으면 회색([_fallbackGrey])을 반환한다.
+Color lineColorFor(String lineId) {
+  final direct = lineColors[lineId];
+  if (direct != null) return direct;
+  if (lineId.endsWith('E')) {
+    final base = lineId.substring(0, lineId.length - 1);
+    final baseColor = lineColors[base];
+    if (baseColor != null) return baseColor;
+  }
+  return _fallbackGrey;
+}

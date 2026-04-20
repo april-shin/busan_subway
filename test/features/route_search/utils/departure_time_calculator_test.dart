@@ -933,4 +933,38 @@ void main() {
       expect(result[1], DateTime(2026, 2, 23, 9, 24));
     });
   });
+
+  group('isExpressLineId / baseLineId', () {
+    test('가상 급행 노선 ID는 isExpressLineId true', () {
+      expect(isExpressLineId('9E'), isTrue);
+      expect(isExpressLineId('1E'), isTrue);
+      expect(isExpressLineId('경춘E'), isTrue);
+      expect(isExpressLineId('수인분당E'), isTrue);
+    });
+
+    test('base 노선 ID는 isExpressLineId false', () {
+      expect(isExpressLineId('9'), isFalse);
+      expect(isExpressLineId('1'), isFalse);
+      expect(isExpressLineId('경춘'), isFalse);
+      expect(isExpressLineId('GTX-A'), isFalse);
+      // 모드 전환 가상 노선(`{base}M`)도 false
+      expect(isExpressLineId('9M'), isFalse);
+    });
+
+    test('baseLineId — 가상 급행은 마지막 E 제거', () {
+      expect(baseLineId('9E'), '9');
+      expect(baseLineId('1E'), '1');
+      expect(baseLineId('경춘E'), '경춘');
+      expect(baseLineId('수인분당E'), '수인분당');
+    });
+
+    test('baseLineId — 그 외는 그대로', () {
+      expect(baseLineId('9'), '9');
+      expect(baseLineId('GTX-A'), 'GTX-A');
+      expect(baseLineId('경의중앙'), '경의중앙');
+      // E로 끝나지 않는 모드 전환은 그대로
+      expect(baseLineId('9M'), '9M');
+    });
+  });
 }
+

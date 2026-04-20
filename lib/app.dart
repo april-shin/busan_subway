@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
@@ -26,27 +27,21 @@ final GoRouter router = GoRouter(
           path: 'route-result',
           builder: (context, state) {
             final extra = state.extra;
+            // 4종 record: 환승 트레이드오프 + 모드 트레이드오프 판정용.
+            // 모든 호출부(home_screen, subway_map_viewer)가 이 형태로 전달한다.
             if (extra
                 is ({
                   RouteResult fastest,
                   RouteResult? leastTransfer,
+                  RouteResult? fastestExpress,
+                  RouteResult? fastestLocal,
                   String departureStationName,
                 })) {
               return RouteResultScreen(
                 fastest: extra.fastest,
                 leastTransfer: extra.leastTransfer,
-                departureStationName: extra.departureStationName,
-              );
-            }
-            // 하위 호환: 기존 단일 경로 전달 방식 지원
-            if (extra
-                is ({
-                  RouteResult routeResult,
-                  String departureStationName,
-                })) {
-              return RouteResultScreen(
-                fastest: extra.routeResult,
-                leastTransfer: null,
+                fastestExpress: extra.fastestExpress,
+                fastestLocal: extra.fastestLocal,
                 departureStationName: extra.departureStationName,
               );
             }
@@ -77,11 +72,29 @@ class SeoulSubwayApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Android 15(API 35)부터 edge-to-edge가 강제되어 시스템 네비게이션 바가
+    // 앱 콘텐츠 위에 그려지면서 하단이 가려진다. 시스템 nav bar 색을 명시하고
+    // 모든 화면을 SafeArea(top:false)로 감싸 bottom inset만큼 콘텐츠를 올린다.
+    // top은 AppBar/Scaffold가 status bar 영역을 처리하므로 제외.
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
+
     return MaterialApp.router(
       title: '서울 지하철',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        return SafeArea(
+          top: false,
+          child: child,
+        );
+      },
     );
   }
 }
