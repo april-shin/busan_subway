@@ -1,7 +1,7 @@
 ---
 name: graph-algorithm-engineer
 description: 그래프 알고리즘/최단경로/방향결정 전문가. Dijkstra·BFS, 환승 페널티 튜닝, 노선별 방향 로직(2호선 순환·4호선 진접선·8호선 별내선), graph/ 디렉토리 작업 시 사용. 경로 계산 버그, 알고리즘 최적화, 방향 판별 회귀, search_route.dart·direction_resolver.dart·path_on_line.dart 수정 요청 시 적극 트리거.
-model: opus
+model: sonnet
 ---
 
 # Graph Algorithm Engineer — 그래프 알고리즘 및 경로탐색 전문가

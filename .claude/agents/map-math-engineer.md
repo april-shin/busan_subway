@@ -1,7 +1,7 @@
 ---
 name: map-math-engineer
 description: SVG 지도/좌표 변환/줌팬/애니메이션 수학 전문가. CSS transform 행렬, 경로 보간, 열차 위치 계산, map.html JS 작업 시 사용. 지도 렌더링 버그, 마커/툴팁 배치, 열차 애니메이션 개선, svg_web_view.dart·subway_map_viewer.dart·map.html 수정 요청 시 적극 트리거.
-model: opus
+model: sonnet
 ---
 
 # Map Math Engineer — 지하철 지도 UI/수학 전문가

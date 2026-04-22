@@ -233,11 +233,22 @@ Expanded → WebViewWidget (전체 화면)
 **실행 규칙:**
 - 앱 개발 작업(기능 구현, 버그 수정, UI 개선, 알고리즘 최적화 등) 요청 시 `subway-app-orchestrator` 스킬을 통해 에이전트 팀으로 처리하라
 - 단순 질문, 설정 변경, 1~2줄 수정은 에이전트 팀 없이 직접 처리해도 무방
-- **모든 에이전트는 Opus 4.7 (1M context) 사용** — `.claude/agents/*.md`의 YAML frontmatter에 `model: opus` 명시
+- **모델 차등 배치** — 판단 계층(아키텍처·리뷰) 3개는 **opus 4.7**, 구현 계층 4개는 **sonnet 4.5**. 각 에이전트 `.md` frontmatter의 `model:` 값이 소스 오브 트루스. Agent 호출 시 별도 `model` 파라미터를 넘기지 않으면 frontmatter가 적용됨.
 - 코드 변경 후 반드시 subway-code-reviewer + subway-requirements-reviewer를 병렬 실행
 - 중간 산출물: `_workspace/` 디렉토리
 
-**1M 컨텍스트 활용 원칙 (Opus 4.7):**
+**모델 배치표 (토큰 비용 최적화):**
+
+| 계층 | 모델 | 에이전트 |
+|------|------|---------|
+| 판단 (설계·리뷰) | **opus** | flutter-architect, subway-code-reviewer, subway-requirements-reviewer |
+| 구현 (전문 코드/테스트) | **sonnet** | map-math-engineer, graph-algorithm-engineer, realtime-data-engineer, flutter-qa-engineer |
+
+- 도메인 규칙(4원칙, 노선별 방향 로직, API 포맷)은 스킬 문서에 명시되어 sonnet이 가이드를 따라 구현 가능
+- 판단 계층에서 리뷰 누락·아키텍처 오류 발생 시 sonnet으로 내리지 말 것 (품질 방어선)
+- 구현 계층 sonnet이 규칙을 반복 위반하면 해당 에이전트만 opus로 승격
+
+**1M 컨텍스트 활용 원칙:**
 - **모듈 단위 일괄 처리** — 에이전트 1명이 한 feature 폴더 전체(파일·테스트·참조 문서)를 한 번에 읽고 수정. 작게 쪼개 라운드트립을 늘리지 말 것.
 - **참조 문서 동시 로딩** — SKILL.md + references/ + 관련 코드를 한 컨텍스트에 투입해 사전 탐색 부담 감소.
 - **리뷰 단계 풀 컨텍스트** — 코드/요구사항 리뷰는 변경 파일 + 인근 파일 + 테스트 + 원래 요청 전문을 한 번에 받아 맥락 손실 없이 판단.
@@ -284,3 +295,4 @@ Expanded → WebViewWidget (전체 화면)
 | 2026-04-07 | 초기 구성: 7인 전문가 팀 하네스 | 전체 | 앱 개발 전문가 팀 구성 요청 |
 | 2026-04-17 | Opus 4.7 (1M context) 대응: 전 에이전트 YAML frontmatter 추가(`model: opus`, name, description), 오케스트레이터에 "모델 및 컨텍스트 전략" 섹션 추가, CLAUDE.md에 1M 컨텍스트 활용 원칙 명시 | agents/*, skills/subway-app-orchestrator/SKILL.md, CLAUDE.md | Opus 4.7에 적합하게 하네스 설정 수정 요청 |
 | 2026-04-19 | 요구사항 리뷰에 "버그 수정 회귀 검증 (6단계)" 추가: 판별 기준·회귀 위험 영역·대조군 시나리오 매트릭스, 출력 형식에 회귀 검증 섹션과 회귀 위험 등급 추가 | agents/subway-requirements-reviewer.md, skills/subway-requirements-review/SKILL.md | 버그 수정 시 기존 기능을 변경하지 않은 채로 버그만 수정했는지 확인 필요 피드백 |
+| 2026-04-20 | 에이전트별 모델 차등 배치: 판단 계층(flutter-architect, subway-code-reviewer, subway-requirements-reviewer) opus 유지, 구현 계층(map-math-engineer, graph-algorithm-engineer, realtime-data-engineer, flutter-qa-engineer)을 sonnet으로 전환. 오케스트레이터 호출 예시에서 하드코딩된 model 파라미터 제거 (frontmatter 기반). CLAUDE.md에 모델 배치표 추가 | agents/*, skills/subway-app-orchestrator/SKILL.md, CLAUDE.md | 에이전트·스킬별 적절한 모델로 토큰 사용량 최적화 요청 (약 45% 비용 절감 기대) |

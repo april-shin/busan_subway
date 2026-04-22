@@ -296,6 +296,466 @@ void main() {
         expect(result.fastestLocal, isNull,
             reason: '출발·도착이 다른 노선이면 fastestLocal = null');
       });
+
+      test(
+          '인천대입구 → 인하대: 원인재 환승 1회 경로가 선택됨 (환승역 데이터 보강 회귀)',
+          () async {
+        // 원인재는 인천1호선과 수인분당선 환승역이지만, 과거 stations.json 에
+        // 인천1호선 레코드(I22)만 있고 수인분당선 레코드와 환승 플래그가 누락되어
+        // Dijkstra 가 인천1호선 본선을 끝까지 타고 인천역 근처로 돌아가 수인분당선
+        // 으로 갈아타는 비상식적 경로를 선택했다.
+        //
+        // 축약 데이터로 동일 구조(인천1호선 3역 + 수인분당선 3역 + 원인재 환승)
+        // 를 구성하고 fastest 가 원인재 환승 1회 경로를 선택하는지 검증한다.
+        final st = [
+          // 인천1호선 (인천대입구 → 캠퍼스타운 → 원인재)
+          const Station(id: 'I28', name: '인천대입구', lineId: '인천1',
+              latitude: 0, longitude: 0),
+          const Station(id: 'I25', name: '캠퍼스타운', lineId: '인천1',
+              latitude: 0, longitude: 0),
+          const Station(id: 'I22', name: '원인재', lineId: '인천1',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['인천1', '수인분당']),
+          // 수인분당선 (원인재 → 연수 → 인하대) — 실제 순서는 다르지만
+          // 토폴로지만 재현. B61(연수)이 원인재와 인하대 사이 중간역.
+          const Station(id: 'K266', name: '원인재', lineId: '수인분당',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['인천1', '수인분당']),
+          const Station(id: 'B61', name: '연수', lineId: '수인분당',
+              latitude: 0, longitude: 0),
+          const Station(id: 'B54', name: '인하대', lineId: '수인분당',
+              latitude: 0, longitude: 0),
+        ];
+        final conns = [
+          const Connection(fromStationId: 'I28', toStationId: 'I25',
+              lineId: '인천1', travelTimeSeconds: 120),
+          const Connection(fromStationId: 'I25', toStationId: 'I22',
+              lineId: '인천1', travelTimeSeconds: 120),
+          const Connection(fromStationId: 'K266', toStationId: 'B61',
+              lineId: '수인분당', travelTimeSeconds: 240),
+          const Connection(fromStationId: 'B61', toStationId: 'B54',
+              lineId: '수인분당', travelTimeSeconds: 180),
+        ];
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => st);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => conns);
+        when(() => mockRepo.getTransferTimes()).thenAnswer(
+            (_) async => {'원인재_인천1_수인분당': 180});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => <ExpressSkipEdge>[]);
+
+        final result = await searchRoute.executeAll('I28', 'B54');
+
+        expect(result.fastest, isNotNull);
+        expect(result.fastest!.transferCount, 1,
+            reason: '원인재에서 인천1 → 수인분당 환승 1회');
+        expect(result.fastest!.segments.length, 2);
+        expect(result.fastest!.segments[0].lineId, '인천1');
+        expect(result.fastest!.segments[1].lineId, '수인분당');
+        // 경로에 원인재가 환승 경계로 반드시 등장해야 한다.
+        final allStationNames = result.fastest!.segments
+            .expand((s) => s.stations)
+            .map((st) => st.name)
+            .toList();
+        expect(allStationNames.contains('원인재'), isTrue,
+            reason: 'fastest 경로는 원인재를 반드시 경유');
+      });
+
+      test(
+          '환승역 (급행정차) → 비환승 급행정차: 출발역 9M 없음',
+          () async {
+        // 종합운동장(2·9, 급행정차) → 선정릉(9호선 단독, 급행정차).
+        // 출발역이 환승역이어도 선정릉이 9호선 단독이면 시작 모드 전환 없어야.
+        final st = [
+          const Station(id: '930', name: '종합운동장', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '929', name: '선정릉', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '218', name: '종합운동장', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+        ];
+        final cn = [
+          const Connection(fromStationId: '930', toStationId: '929',
+              lineId: '9', travelTimeSeconds: 150),
+        ];
+        final ex = [
+          const ExpressSkipEdge(lineId: '9', fromStationId: '930',
+              toStationId: '929', seconds: 145, skippedStationIds: []),
+        ];
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => st);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => cn);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => <String, int>{});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => ex);
+
+        // Picker 대표가 2호선(218)이어도 선정릉은 9호선 단독(929_9, 929_9E).
+        final result = await searchRoute.executeAll('218', '929');
+
+        expect(result.fastest, isNotNull);
+        expect(result.fastest!.transferCount, 0,
+            reason: '환승역(9호선 공유) → 9호선 단독 역이면 환승 0');
+        // 출발/도착 어느 쪽에서도 `9M` 세그먼트가 나오면 안 됨.
+        expect(
+          result.fastest!.segments.every((s) => s.lineId != '9M'),
+          isTrue,
+          reason: '경로에 모드 전환(`9M`) 세그먼트 없음',
+        );
+      });
+
+      test(
+          '급행 도착역에서 다른 노선으로 환승: 9M+transfer 이중 환승 버그 방지',
+          () async {
+        // 마곡나루(9호선 급행정차) → 판교(신분당선).
+        // 경로: 9호선 급행 → 신논현(9호선 급행정차 + 신분당 환승) → 신분당선 → 판교.
+        //
+        // 과거 버그: `_E` 노드와 다른 노선 base 노드 사이 환승 edge 가 없어서
+        // `925_9E → (9M) → 925_9 → (transfer) → SB_신분당` 이중 환승이 발생.
+        // `_buildSegments` 가 연속 환승을 처리하면서 중간에 빈 "transfer 0분(0개역)"
+        // 세그먼트를 삽입하고 transferCount 가 2 로 카운트된다.
+        //
+        // 수정: `_addTransferEdges` 에서 `_E` variant 도 포함 → `925_9E ↔ SB_신분당`
+        // 직접 환승 edge 가 생기므로 Dijkstra 가 모드 전환 없이 바로 환승.
+        final stations = [
+          const Station(id: '905', name: '마곡나루', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '925', name: '신논현', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['9', '신분당']),
+          const Station(id: 'D07', name: '신논현', lineId: '신분당',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['9', '신분당']),
+          const Station(id: 'D12', name: '판교', lineId: '신분당',
+              latitude: 0, longitude: 0),
+        ];
+        final conns = [
+          const Connection(fromStationId: '905', toStationId: '925',
+              lineId: '9', travelTimeSeconds: 1000),
+          const Connection(fromStationId: 'D07', toStationId: 'D12',
+              lineId: '신분당', travelTimeSeconds: 800),
+        ];
+        final ex = [
+          const ExpressSkipEdge(lineId: '9', fromStationId: '905',
+              toStationId: '925', seconds: 700, skippedStationIds: []),
+        ];
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => stations);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => conns);
+        when(() => mockRepo.getTransferTimes()).thenAnswer(
+            (_) async => {'신논현_9_신분당': 480});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => ex);
+
+        final result = await searchRoute.executeAll('905', 'D12');
+
+        expect(result.fastest, isNotNull);
+        // 핵심: 9호선 급행 → 신논현 → 신분당선 = 환승 1회.
+        expect(result.fastest!.transferCount, 1,
+            reason: '마곡→판교는 신논현 환승 1회만 필요');
+        // 세그먼트는 정확히 2개: 9호선(급행 가능) + 신분당선.
+        expect(result.fastest!.segments.length, 2,
+            reason: '9M+transfer 이중 환승으로 인한 transfer 0분 세그먼트가 삽입되면 안 됨');
+        // 어떤 세그먼트도 lineId='transfer' 이면 안 된다 (환승은 세그먼트 사이 경계).
+        expect(
+          result.fastest!.segments.every((s) => s.lineId != 'transfer'),
+          isTrue,
+          reason: 'transfer 를 lineId 로 가진 세그먼트가 나타나면 안 됨',
+        );
+      });
+
+      test(
+          '비환승 급행정차 → 환승역 (급행정차): 도착역 9M 없음',
+          () async {
+        // 선정릉(9호선 단독) → 종합운동장(2·9호선 환승). 위의 역방향.
+        final st = [
+          const Station(id: '929', name: '선정릉', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '930', name: '종합운동장', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '218', name: '종합운동장', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+        ];
+        final cn = [
+          const Connection(fromStationId: '929', toStationId: '930',
+              lineId: '9', travelTimeSeconds: 150),
+        ];
+        final ex = [
+          const ExpressSkipEdge(lineId: '9', fromStationId: '929',
+              toStationId: '930', seconds: 145, skippedStationIds: []),
+        ];
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => st);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => cn);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => <String, int>{});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => ex);
+
+        // 도착이 2호선(218) 대표여도 9호선 단독 출발과 직결.
+        final result = await searchRoute.executeAll('929', '218');
+
+        expect(result.fastest, isNotNull);
+        expect(result.fastest!.transferCount, 0);
+        expect(
+          result.fastest!.segments.every((s) => s.lineId != '9M'),
+          isTrue,
+        );
+      });
+
+      test(
+          '환승역 ↔ 환승역 (공유 급행 노선): fastest 가 급행 단독 — 출발 모드전환 edge 없음',
+          () async {
+        // 종합운동장(2·9) → 동작(4·9) 공유 9호선은 급행 지원.
+        // 두 역 모두 9호선 급행 정차역이면 fastest 는 급행 단독이어야 한다.
+        // 과거 버그: multi-source 에 가상 급행 노드(`930_9E`)가 빠져 있어
+        // `930_9 → 9M → 930_9E → ... → 920_9E → 9M → 920_9` 형태가 나왔다
+        // → 출발/도착 역에서 "모드 전환"이 발생하는 부자연스러운 경로.
+        // 수정: multi-source/sink 에 `_E` 노드까지 포함.
+        final expressStations = [
+          const Station(id: '930', name: '종합운동장', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '929', name: '선정릉', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '920', name: '동작', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '9']),
+          const Station(id: '218', name: '종합운동장', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '420', name: '동작', lineId: '4',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '9']),
+        ];
+        final expressConnections = [
+          const Connection(fromStationId: '930', toStationId: '929',
+              lineId: '9', travelTimeSeconds: 200),
+          const Connection(fromStationId: '929', toStationId: '920',
+              lineId: '9', travelTimeSeconds: 200),
+        ];
+        // 9호선 급행: 930 → 920 직통(선정릉 스킵).
+        final expressSkip = [
+          const ExpressSkipEdge(
+              lineId: '9', fromStationId: '930', toStationId: '920',
+              seconds: 220, skippedStationIds: ['929']),
+        ];
+
+        when(() => mockRepo.getAllStations())
+            .thenAnswer((_) async => expressStations);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => expressConnections);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => <String, int>{});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => expressSkip);
+
+        final result = await searchRoute.executeAll('218', '420');
+
+        expect(result.fastest, isNotNull);
+        // 환승 없음.
+        expect(result.fastest!.transferCount, 0,
+            reason: '환승역 간 공유 급행 노선 → 급행 단독 환승 0');
+        // 세그먼트는 모두 9호선 급행(`9E`) 하나여야 한다.
+        expect(result.fastest!.segments.length, 1);
+        expect(result.fastest!.segments.first.lineId, '9E',
+            reason: '출발 모드 전환 없이 바로 9E 에서 시작해야 함');
+        // 경로 edge 에 `9M`(모드 전환) 이 절대 포함되지 않아야 한다.
+        final allEdgeLineIds = result.fastest!.segments
+            .expand((s) => [s.lineId])
+            .toSet();
+        expect(allEdgeLineIds.contains('9M'), isFalse,
+            reason: '출발/도착역에서 모드 전환 edge 가 경로에 나타나면 안 됨');
+
+        // `fastestExpress` 도 동일: 출발/도착이 모두 급행정차역이면 `9E` 단독.
+        expect(result.fastestExpress, isNotNull);
+        expect(result.fastestExpress!.transferCount, 0,
+            reason: 'fastestExpress 도 환승 0 이어야 함');
+        expect(result.fastestExpress!.segments.length, 1,
+            reason: 'fastestExpress 는 9E 단일 세그먼트');
+        expect(result.fastestExpress!.segments.first.lineId, '9E');
+      });
+
+      test(
+          '환승역 ↔ 환승역 (공유 노선): fastest 가 multi-source 로 환승 0 경로 채택',
+          () async {
+        // 종합운동장(2·9호선) → 동작(4·9호선).
+        // 두 역 모두 9호선에 속하므로 9호선 단독 경로가 물리적으로 환승 0.
+        // 과거 버그: 사용자가 선택한 대표 Station(218_2)에서 Dijkstra 시작하면
+        // `218_2 → 930_9` 환승 edge 를 거쳐야 9호선 진입 → 가짜 환승 카운트.
+        // 수정 후: multi-source/sink 로 `{218_2, 930_9}` 동시 시작, `{420_4, 920_9}`
+        // 동시 종점. 9호선 930_9 → 920_9 를 환승 0 으로 직접 선택.
+        final mixedStations = [
+          // 9호선 축약
+          const Station(id: '930', name: '종합운동장', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '929', name: '선정릉', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '920', name: '동작', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '9']),
+          // 2호선(종합운동장) 환승 파트너
+          const Station(id: '218', name: '종합운동장', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '219', name: '잠실새내', lineId: '2',
+              latitude: 0, longitude: 0),
+          // 4호선(동작) 환승 파트너
+          const Station(id: '420', name: '동작', lineId: '4',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '9']),
+          const Station(id: '421', name: '이촌', lineId: '4',
+              latitude: 0, longitude: 0),
+        ];
+        final mixedConnections = [
+          const Connection(
+              fromStationId: '930', toStationId: '929',
+              lineId: '9', travelTimeSeconds: 150),
+          const Connection(
+              fromStationId: '929', toStationId: '920',
+              lineId: '9', travelTimeSeconds: 180),
+          // 2호선·4호선도 각자 최소 1개 완행 edge 를 둬서 multi-source/sink
+          // 잘못 선택 시 탐지가 가능하도록 한다.
+          const Connection(
+              fromStationId: '218', toStationId: '219',
+              lineId: '2', travelTimeSeconds: 200),
+          const Connection(
+              fromStationId: '420', toStationId: '421',
+              lineId: '4', travelTimeSeconds: 200),
+        ];
+
+        when(() => mockRepo.getAllStations())
+            .thenAnswer((_) async => mixedStations);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => mixedConnections);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => <String, int>{});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => <ExpressSkipEdge>[]);
+
+        // Picker 대표는 종합운동장 218_2 + 동작 420_4 (다른 노선).
+        final result = await searchRoute.executeAll('218', '420');
+
+        expect(result.fastest, isNotNull);
+        // 실제 물리적으로 9호선 완행 단독이라 환승 0.
+        expect(result.fastest!.transferCount, 0,
+            reason: '환승역 ↔ 환승역 + 공유 노선 → 환승 없이 가야 함');
+        expect(
+          result.fastest!.segments.every((s) => s.lineId == '9'),
+          isTrue,
+          reason: 'fastest 는 9호선 단독 세그먼트여야 함',
+        );
+      });
+
+      test(
+          '환승역 ↔ 환승역 (다른 대표 노선, 공유 급행 지원): transferLines 교집합으로 판정',
+          () async {
+        // 실제 앱 시나리오 재현:
+        //   종합운동장(2/9 환승) 대표 Station = 218_2 (2호선 첫 등장)
+        //   여의도(5/9 환승) 대표 Station = 517_5 (5호선 첫 등장)
+        // 두 Station 의 lineId 는 '2'/'5' 로 다르지만 transferLines 의 교집합 {'9'}
+        // 가 급행 지원 노선이므로 fastestExpress / fastestLocal 모두 9호선 기준으로
+        // 계산되어야 한다.
+        final mixedStations = [
+          // 2호선 (일부만)
+          const Station(id: '218', name: '종합운동장', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '219', name: '삼성', lineId: '2',
+              latitude: 0, longitude: 0),
+          // 5호선 (일부만)
+          const Station(id: '517', name: '여의도', lineId: '5',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['5', '9']),
+          const Station(id: '518', name: '여의나루', lineId: '5',
+              latitude: 0, longitude: 0),
+          // 9호선 (축약 — 종합운동장-선정릉-언주-...-여의도)
+          const Station(id: '930', name: '종합운동장', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '9']),
+          const Station(id: '929', name: '선정릉', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '927', name: '봉은사', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '925', name: '신논현', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '920', name: '고속터미널', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '917', name: '노량진', lineId: '9',
+              latitude: 0, longitude: 0),
+          const Station(id: '915', name: '여의도', lineId: '9',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['5', '9']),
+        ];
+        final mixedConnections = [
+          // 9호선 완행: 역순 ID 감소 방향. 간격 통일 200s.
+          for (final pair in [
+            ['930', '929'], ['929', '927'], ['927', '925'],
+            ['925', '920'], ['920', '917'], ['917', '915'],
+          ])
+            Connection(
+              fromStationId: pair[0],
+              toStationId: pair[1],
+              lineId: '9',
+              travelTimeSeconds: 200,
+            ),
+        ];
+        // 9호선 급행: 중간 역 스킵.
+        final mixedExpress = [
+          const ExpressSkipEdge(
+            lineId: '9', fromStationId: '930', toStationId: '925',
+            seconds: 300, skippedStationIds: ['929', '927']),
+          const ExpressSkipEdge(
+            lineId: '9', fromStationId: '925', toStationId: '920',
+            seconds: 200, skippedStationIds: []),
+          const ExpressSkipEdge(
+            lineId: '9', fromStationId: '920', toStationId: '915',
+            seconds: 250, skippedStationIds: ['917']),
+        ];
+
+        when(() => mockRepo.getAllStations())
+            .thenAnswer((_) async => mixedStations);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => mixedConnections);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => <String, int>{});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => mixedExpress);
+
+        // 종합운동장 대표(2호선 218) → 여의도 대표(5호선 517).
+        final result = await searchRoute.executeAll('218', '517');
+
+        // 핵심 검증: 공유 노선 '9' 기반으로 fastestExpress/fastestLocal 이 나와야 한다.
+        expect(result.fastestExpress, isNotNull,
+            reason: 'transferLines 교집합 {9} 가 급행 지원이므로 fastestExpress 존재해야 함');
+        expect(result.fastestLocal, isNotNull,
+            reason: '공유 급행 지원 노선 9호선 완행 단독 경로 존재해야 함');
+
+        // fastestLocal 은 9호선 완행 전 구간.
+        expect(
+          result.fastestLocal!.segments.every((s) => s.lineId == '9'),
+          isTrue,
+          reason: 'fastestLocal 은 같은 노선(9호선) 내 완행만',
+        );
+        // fastestExpress 는 9E edge 를 반드시 포함.
+        expect(
+          result.fastestExpress!.segments.any((s) => s.lineId.endsWith('E')),
+          isTrue,
+          reason: 'fastestExpress 는 급행(_E) 세그먼트를 포함해야 함',
+        );
+
+        // 급행이 완행보다 더 빠르거나 같음 (일반 시나리오).
+        expect(
+          result.fastestExpress!.totalTimeSeconds,
+          lessThanOrEqualTo(result.fastestLocal!.totalTimeSeconds),
+          reason: '급행 경로가 완행보다 같거나 빨라야 모드 비교 의미 있음',
+        );
+      });
     });
 
     test('환승역이 이전 세그먼트의 마지막 역에 포함된다', () async {

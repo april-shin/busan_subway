@@ -113,18 +113,46 @@ class SearchRoute {
 
     final finder = ShortestPathFinder(graph: graph);
 
-    // 동명 역(예: 5호선/경의중앙선 "양평") 구분을 위해 이름 기반 대신
-    // 사용자가 선택한 Station의 stationId + lineId 조합으로 정확한 노드 ID를 사용.
-    // 시작 노선에서 출발해 필요 시 환승 엣지로 다른 노선 전환한다(환승 케이스 OK).
-    final fromNodeId = '${fromStation.id}_${fromStation.lineId}';
-    final toNodeId = '${toStation.id}_${toStation.lineId}';
+    // 환승역은 같은 물리 역이므로 출발/도착이 환승역이면 소속 모든 노선 노드를
+    // "거리 0" 의 multi-source/sink 로 간주한다. 이렇게 해야 종합운동장(2·9호선)
+    // ↔ 동작(4·9호선) 조회에서 9호선 단독 경로가 환승 0 으로 올바르게 잡힌다.
+    //
+    // 동명이역(예: 5호선 "양평" vs 경의중앙선 "양평")을 피하기 위해 사용자가
+    // 선택한 Station 의 `lineId + transferLines` 에 포함된 노선만 허용한다.
+    //
+    // 가상 급행 노드(`{base}E`)도 함께 포함해야 한다. 그렇지 않으면 출발/도착이
+    // 급행 정차역이어도 `_base → 9M edge → _E` 모드 전환이 첫/마지막 세그먼트에
+    // 삽입되어 "종합운동장에서 환승 시작" 같은 부자연스러운 경로가 나온다.
+    final fromLineIds = <String>{
+      fromStation.lineId,
+      ...fromStation.transferLines,
+    };
+    final toLineIds = <String>{
+      toStation.lineId,
+      ...toStation.transferLines,
+    };
+    final allowedFromNodeSuffixes = <String>{
+      for (final base in fromLineIds) ...['_$base', '_${base}E'],
+    };
+    final allowedToNodeSuffixes = <String>{
+      for (final base in toLineIds) ...['_$base', '_${base}E'],
+    };
+    // graph 에 실제로 존재하는 동명 노드(base + 가상 급행) 를 모두 후보로 편입.
+    final fromNodeIds = graph
+        .getNodeIdsForStation(fromStation.name)
+        .where((id) => allowedFromNodeSuffixes.any(id.endsWith))
+        .toSet();
+    final toNodeIds = graph
+        .getNodeIdsForStation(toStation.name)
+        .where((id) => allowedToNodeSuffixes.any(id.endsWith))
+        .toSet();
 
-    final fastestPath = finder.findShortestPath(fromNodeId, toNodeId);
+    final fastestPath = finder.findShortestPathMulti(fromNodeIds, toNodeIds);
     // 환승 페널티가 큰 Dijkstra로 최소환승 경로 산출 (shortest_path.dart의
     // _transferPenalty=100000 과 동일 수치를 사용).
-    final minTransferPath = finder.findShortestPath(
-      fromNodeId,
-      toNodeId,
+    final minTransferPath = finder.findShortestPathMulti(
+      fromNodeIds,
+      toNodeIds,
       transferPenalty: 100000,
     );
     final fastest = fastestPath == null
@@ -139,69 +167,87 @@ class SearchRoute {
       for (final e in expressSkipEdges) e.lineId,
     };
 
-    // `fastestExpress` — "급행을 1번이라도 거치는 최소시간 경로".
+    // 출발/도착이 공유하는 노선 중 "급행 지원" 노선을 찾는다.
     //
-    // 1) 같은 노선 + 급행 지원 노선이면: 노선의 base/E/M 노드만 허용해
-    //    동일 노선 내 완행→급행 환승 케이스도 포함한다. 결과에 `_E` 노선
-    //    edge 가 1개 이상 포함되어야 "급행" 으로 인정. 미포함이면 완행과
-    //    동일하므로 null.
-    // 2) 그 외(다른 노선 간 조회 등): 기존 정책 유지 — 출발/도착 둘 다
-    //    급행 정차역(`_E` 노드 보유)일 때만 검색.
+    // 환승역(예: 종합운동장 218_2 ↔ 930_9)은 `transferLines`에 소속된 모든 노선을
+    // 포함하고 있다. Station Picker는 환승역을 단일 항목으로 표시하면서 대표
+    // Station 하나만 저장하므로(`lineId` 하나), 단순 `fromStation.lineId ==
+    // toStation.lineId` 비교로는 "종합운동장(2호선 대표) → 여의도(5호선 대표)"
+    // 같은 환승역 간 조회에서 9호선 급행/완행 비교가 실패한다.
+    //
+    // 그래서 `lineId + transferLines` 합집합의 교집합에서 급행 지원 노선을 찾아
+    // 그 노선 기준으로 fastestExpress/fastestLocal 을 계산한다.
+    // 교집합 중 급행 지원이 여러 개면 첫 원소(안정적)를 사용.
+    final fromLines = <String>{
+      fromStation.lineId,
+      ...fromStation.transferLines,
+    };
+    final toLines = <String>{
+      toStation.lineId,
+      ...toStation.transferLines,
+    };
+    final sharedExpressLine = fromLines
+        .intersection(toLines)
+        .firstWhereOrNull(expressLines.contains);
+
+    // `fastestExpress` — 공유 급행 지원 노선 안에서 "급행(`_E`) edge를 1개 이상
+    // 거치는 최소시간 경로". 공유 노선이 없거나 급행 edge 가 포함된 경로가 없으면 null.
+    //
+    // multi-source/sink 로 호출해야 출발/도착이 급행 정차역일 때 `_E` 노드에서
+    // 바로 시작/종료되어 "출발역에서 9M 모드 전환"이라는 부자연스러운 첫 환승이 사라진다.
     RouteResult? fastestExpress;
-    if (fromStation.lineId == toStation.lineId &&
-        expressLines.contains(fromStation.lineId)) {
-      final lineId = fromStation.lineId;
-      final results = finder.findShortestPathBetweenStations(
-        fromStation.name,
-        toStation.name,
-        // 해당 노선의 base/E/M 노드만 허용 (다른 노선 환승 배제).
-        nodeFilter: (id) =>
-            id.endsWith('_$lineId') ||
-            id.endsWith('_${lineId}E') ||
-            id.endsWith('_${lineId}M'),
+    if (sharedExpressLine != null) {
+      final lineId = sharedExpressLine;
+      bool expressNodeFilter(String id) =>
+          id.endsWith('_$lineId') ||
+          id.endsWith('_${lineId}E') ||
+          id.endsWith('_${lineId}M');
+      // 출발/도착 후보를 base + _E 노드로 한정.
+      final expressFromIds = graph
+          .getNodeIdsForStation(fromStation.name)
+          .where((id) =>
+              id.endsWith('_$lineId') || id.endsWith('_${lineId}E'))
+          .toSet();
+      final expressToIds = graph
+          .getNodeIdsForStation(toStation.name)
+          .where((id) =>
+              id.endsWith('_$lineId') || id.endsWith('_${lineId}E'))
+          .toSet();
+      final path = finder.findShortestPathMulti(
+        expressFromIds,
+        expressToIds,
+        nodeFilter: expressNodeFilter,
       );
-      // 정확 일치(`{lineId}E`)로 검사하여 lineId 자체가 'E' 로 끝나는
-      // 가상 코드(향후 추가 가능성) 의 오탐을 방지.
-      final expressLineId = '${lineId}E';
-      final candidate = results.firstWhereOrNull(
-        (r) => r.edges.any((e) => e.lineId == expressLineId),
-      );
-      if (candidate != null) {
-        fastestExpress =
-            _buildRouteResult(candidate, stationMap, transferGuides);
-      }
-    } else {
-      // 시작/도착 모두 급행 정차역(가상 `_E` 노드 보유)일 때만 비어있지 않다.
-      final expressOnlyResults = finder.findShortestPathBetweenStations(
-        fromStation.name,
-        toStation.name,
-        nodeFilter: (id) => id.endsWith('E'),
-      );
-      if (expressOnlyResults.isNotEmpty) {
-        fastestExpress = _buildRouteResult(
-            expressOnlyResults.first, stationMap, transferGuides);
+      // 급행 구간(`{lineId}E` edge)이 1개 이상 포함된 경로만 "급행"으로 인정.
+      if (path != null &&
+          path.edges.any((e) => e.lineId == '${lineId}E')) {
+        fastestExpress = _buildRouteResult(path, stationMap, transferGuides);
       }
     }
 
-    // `fastestLocal` 은 "출발역과 도착역이 같은 급행 지원 노선에 속할 때,
-    // 그 노선의 완행(최소환승) 경로"로 정의한다. 다른 노선 환승 포함 금지.
-    // 알고리즘 목적: 최소환승 (`findMinTransferPathBetweenStations`).
-    // 조건 미충족 시 `fastestLocal = null`.
+    // `fastestLocal` — 공유 급행 지원 노선의 완행(`_{lineId}` 노드만) 단독 경로.
+    // 조건 미충족 시 null.
     RouteResult? fastestLocal;
-    if (fromStation.lineId == toStation.lineId &&
-        expressLines.contains(fromStation.lineId)) {
-      final localLineId = fromStation.lineId;
-      final localOnlyResults = finder.findMinTransferPathBetweenStations(
-        fromStation.name,
-        toStation.name,
-        // 같은 노선의 base 노드만 허용: `{stationId}_{localLineId}` 형태.
-        // 급행 가상 노선(`{localLineId}E`) 과 타 노선 모두 배제.
-        nodeFilter: (id) => id.endsWith('_$localLineId'),
+    if (sharedExpressLine != null) {
+      final localLineId = sharedExpressLine;
+      bool localNodeFilter(String id) => id.endsWith('_$localLineId');
+      final localFromIds = graph
+          .getNodeIdsForStation(fromStation.name)
+          .where(localNodeFilter)
+          .toSet();
+      final localToIds = graph
+          .getNodeIdsForStation(toStation.name)
+          .where(localNodeFilter)
+          .toSet();
+      final path = finder.findShortestPathMulti(
+        localFromIds,
+        localToIds,
+        transferPenalty: 100000,
+        nodeFilter: localNodeFilter,
       );
-      fastestLocal = localOnlyResults.isEmpty
+      fastestLocal = path == null
           ? null
-          : _buildRouteResult(
-              localOnlyResults.first, stationMap, transferGuides);
+          : _buildRouteResult(path, stationMap, transferGuides);
     }
 
     // fastest / leastTransfer 결과를 사용자 관점에서 정상화한다.

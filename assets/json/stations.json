@@ -9121,9 +9121,10 @@
     "longitude": 126.683,
     "svgX": 504.0,
     "svgY": 1344.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "인천1"
+      "인천1",
+      "수인분당"
     ]
   },
   {
@@ -10255,5 +10256,20 @@
     "transferLines": [
       "GTX-A"
     ]
+  },
+  {
+    "id": "K266",
+    "name": "원인재",
+    "lineId": "수인분당",
+    "latitude": 37.408,
+    "longitude": 126.683,
+    "svgX": 504.0,
+    "svgY": 1344.0,
+    "isTransfer": true,
+    "transferLines": [
+      "인천1",
+      "수인분당"
+    ],
+    "labelDirection": 0
   }
 ]

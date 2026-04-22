@@ -9,9 +9,24 @@ description: "서울 지하철 앱의 에이전트 팀을 조율하는 오케스
 
 ## 실행 모드: 에이전트 팀 (감독자 패턴)
 
-## 모델 및 컨텍스트 전략 (Opus 4.7 / 1M context)
+## 모델 및 컨텍스트 전략
 
-모든 에이전트는 **Opus 4.7 (1M context)** 로 실행된다. 1M 컨텍스트를 전제로 한 운용 원칙:
+### 모델 차등 배치 (토큰 비용 최적화)
+
+에이전트 역할 특성에 따라 **Opus 4.7** 과 **Sonnet 4.5** 를 차등 배치한다. 모든 에이전트를 opus로 돌리면 품질은 좋지만 비용이 비효율적이다. "설계·리뷰 = opus, 구현 = sonnet" 원칙으로 약 45% 토큰 절감.
+
+| 계층 | 모델 | 에이전트 | 선정 근거 |
+|------|------|---------|----------|
+| **판단 계층** | **opus** | flutter-architect, subway-code-reviewer, subway-requirements-reviewer | 아키텍처 결정·리뷰 판정은 깊은 추론과 미묘한 부수효과 탐지가 품질을 결정. 여기서 아끼면 하네스 전체 품질이 하락한다. |
+| **구현 계층** | **sonnet** | map-math-engineer, graph-algorithm-engineer, realtime-data-engineer, flutter-qa-engineer | 도메인 규칙(4원칙·노선별 방향·API 포맷)이 이미 스킬 문서에 명시되어 있어, sonnet이 가이드를 읽고 따라 구현하면 충분. 테스트·API 통합은 패턴 반복이 많다. |
+
+**모델 변경 시 판단 기준:**
+- 판단 계층에서 sonnet으로 내리면 → 리뷰 누락이나 아키텍처 설계 오류 발생 시 즉시 opus로 복귀
+- 구현 계층에서 sonnet이 4원칙·알고리즘 규칙을 반복 위반하면 → 해당 에이전트만 opus로 승격
+
+### 1M 컨텍스트 활용 원칙
+
+모든 에이전트는 **1M context** 윈도우로 실행된다 (Opus 4.7, Sonnet 4.5 모두 1M 지원). 운용 원칙:
 
 1. **모듈 단위 일괄 처리** — 에이전트 1명이 한 feature 폴더 전체(여러 파일·테스트·관련 스킬 문서)를 한 번에 읽고 수정. 작은 범위로 쪼개 라운드트립을 늘리지 말 것.
 2. **관련 참조 문서 동시 로딩** — SKILL.md + references/ + 관련 CODEMAP + 실제 코드 파일을 한 컨텍스트에 투입. 에이전트 내부 사전 탐색 부담 감소.
@@ -23,13 +38,13 @@ description: "서울 지하철 앱의 에이전트 팀을 조율하는 오케스
 
 | 팀원 | 서브에이전트 타입 | 역할 | 스킬 | 모델 |
 |------|-----------------|------|------|------|
-| flutter-architect | general-purpose | 아키텍처/상태관리/라우팅 | flutter-architecture | opus |
-| map-math-engineer | general-purpose | 지도 UI/수학/애니메이션 | subway-map-math | opus |
-| graph-algorithm-engineer | general-purpose | 최단경로/그래프/방향결정 | graph-pathfinding | opus |
-| realtime-data-engineer | general-purpose | API/캐싱/열차추적 | realtime-tracking | opus |
-| flutter-qa-engineer | general-purpose | 테스트/경계면검증 | subway-testing | opus |
-| subway-code-reviewer | code-reviewer | 코드 품질/보안/성능 리뷰 | subway-code-review | opus |
-| subway-requirements-reviewer | general-purpose | 요구사항 충족도 검증 | subway-requirements-review | opus |
+| flutter-architect | general-purpose | 아키텍처/상태관리/라우팅 | flutter-architecture | **opus** |
+| map-math-engineer | general-purpose | 지도 UI/수학/애니메이션 | subway-map-math | sonnet |
+| graph-algorithm-engineer | general-purpose | 최단경로/그래프/방향결정 | graph-pathfinding | sonnet |
+| realtime-data-engineer | general-purpose | API/캐싱/열차추적 | realtime-tracking | sonnet |
+| flutter-qa-engineer | general-purpose | 테스트/경계면검증 | subway-testing | sonnet |
+| subway-code-reviewer | code-reviewer | 코드 품질/보안/성능 리뷰 | subway-code-review | **opus** |
+| subway-requirements-reviewer | general-purpose | 요구사항 충족도 검증 | subway-requirements-review | **opus** |
 
 ## 워크플로우
 
@@ -61,7 +76,7 @@ description: "서울 지하철 앱의 에이전트 팀을 조율하는 오케스
 **에이전트 호출 시 필수 사항:**
 - 에이전트 정의 파일(`.claude/agents/{name}.md`)을 프롬프트 첫 줄에 읽도록 지시
 - 해당 스킬(`.claude/skills/{name}/SKILL.md`)을 참조하도록 지시
-- `model: "opus"` 명시
+- 모델은 에이전트 정의 파일의 `model:` frontmatter를 따른다 (상단 "모델 및 컨텍스트 전략" 표 참조). Agent 도구 호출 시 `model` 파라미터를 별도로 넘기지 않으면 frontmatter가 적용된다.
 - 산출물 경로: `_workspace/{phase}_{agent}_{artifact}` 형식
 
 **병렬 실행 가능한 조합:**
@@ -121,11 +136,13 @@ description: "서울 지하철 앱의 에이전트 팀을 조율하는 오케스
 
 ## 에이전트 호출 패턴
 
-### 구현 에이전트 호출
+> `model` 파라미터는 에이전트 정의 frontmatter로 결정된다. 아래 예시는 명시적으로 확인하고 싶을 때만 `model`을 넘기는 형태다. 실제로는 생략 가능.
+
+### 구현 에이전트 호출 (sonnet 기본)
 ```
 Agent(
   subagent_type: "general-purpose",
-  model: "opus",
+  # model: "sonnet",  # 에이전트 frontmatter가 이미 sonnet — 생략 권장
   prompt: """
     먼저 .claude/agents/{name}.md를 읽고 역할을 이해하라.
     .claude/skills/{skill}/SKILL.md를 참조하라.
@@ -137,11 +154,11 @@ Agent(
 )
 ```
 
-### 코드 리뷰 호출
+### 코드 리뷰 호출 (opus 기본)
 ```
 Agent(
   subagent_type: "code-reviewer",
-  model: "opus",
+  # model: "opus",  # subway-code-reviewer.md frontmatter가 opus
   prompt: """
     먼저 .claude/agents/subway-code-reviewer.md를 읽고 역할을 이해하라.
     .claude/skills/subway-code-review/SKILL.md를 참조하라.
@@ -153,11 +170,11 @@ Agent(
 )
 ```
 
-### 요구사항 리뷰 호출
+### 요구사항 리뷰 호출 (opus 기본)
 ```
 Agent(
   subagent_type: "general-purpose",
-  model: "opus",
+  # model: "opus",  # subway-requirements-reviewer.md frontmatter가 opus
   prompt: """
     먼저 .claude/agents/subway-requirements-reviewer.md를 읽고 역할을 이해하라.
     .claude/skills/subway-requirements-review/SKILL.md를 참조하라.

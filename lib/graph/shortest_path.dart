@@ -137,6 +137,132 @@ class ShortestPathFinder {
     );
   }
 
+  /// 복수 출발/도착 노드 Dijkstra (multi-source / multi-sink).
+  ///
+  /// 환승역은 같은 물리적 플랫폼 집합이므로, 출발/도착이 환승역이면
+  /// 해당 역의 모든 노선 노드(`218_2`, `930_9` 등)를 **동시에 거리 0으로 시작**
+  /// 하거나 "먼저 도달한" 도착 후보로 종료해야 한다. 그렇지 않으면 picker 가
+  /// 저장한 대표 노선(`218_2`)에서 시작해 필요 노선(`930_9`)으로 넘어가는
+  /// **가짜 환승**이 경로에 삽입되어 세그먼트/환승 카운트가 오염된다.
+  ///
+  /// 알고리즘:
+  ///   1. [fromNodeIds] 의 모든 노드를 distance=0 으로 초기화하여 큐에 푸시.
+  ///   2. 일반 Dijkstra 진행.
+  ///   3. 큐에서 꺼낸 노드가 [toNodeIds] 에 속하면 그 노드를 종점으로 경로 복원.
+  ///
+  /// 결과 경로는 실제로 선택된 시작점 → 선택된 종점 1쌍의 최단 경로이며
+  /// 환승 세그먼트는 "실제로 플랫폼을 이동한" 환승 edge 만 포함한다.
+  PathResult? findShortestPathMulti(
+    Set<String> fromNodeIds,
+    Set<String> toNodeIds, {
+    int transferPenalty = 0,
+    bool Function(String nodeId)? nodeFilter,
+  }) {
+    final validFromIds = fromNodeIds.where((id) =>
+        graph.containsNode(id) &&
+        (nodeFilter == null || nodeFilter(id))).toSet();
+    final validToIds = toNodeIds.where((id) =>
+        graph.containsNode(id) &&
+        (nodeFilter == null || nodeFilter(id))).toSet();
+    if (validFromIds.isEmpty || validToIds.isEmpty) return null;
+
+    // 출발·도착이 같은 물리역(예: 출발역=도착역)이면 거리 0.
+    final overlap = validFromIds.intersection(validToIds);
+    if (overlap.isNotEmpty) {
+      final id = overlap.first;
+      return PathResult(nodeIds: [id], edges: [], totalTimeSeconds: 0);
+    }
+
+    final distances = <String, int>{};
+    final previous = <String, String?>{};
+    final previousEdge = <String, GraphEdge?>{};
+    final visited = <String>{};
+
+    final queue = PriorityQueue<_QueueEntry>(
+      (a, b) => a.distance.compareTo(b.distance),
+    );
+
+    for (final nodeId in graph.nodes.keys) {
+      distances[nodeId] = _infinity;
+      previous[nodeId] = null;
+      previousEdge[nodeId] = null;
+    }
+
+    // 모든 시작점을 거리 0 으로 동시 시작.
+    for (final fromId in validFromIds) {
+      distances[fromId] = 0;
+      queue.add(_QueueEntry(nodeId: fromId, distance: 0));
+    }
+
+    String? reachedToId;
+    while (queue.isNotEmpty) {
+      final current = queue.removeFirst();
+      if (visited.contains(current.nodeId)) continue;
+      visited.add(current.nodeId);
+
+      // 도착 후보 집합에 포함되면 종료.
+      if (validToIds.contains(current.nodeId)) {
+        reachedToId = current.nodeId;
+        break;
+      }
+
+      for (final edge in graph.getNeighbors(current.nodeId)) {
+        if (visited.contains(edge.toNodeId)) continue;
+        if (nodeFilter != null && !nodeFilter(edge.toNodeId)) continue;
+
+        final penalty = (transferPenalty > 0 && edge.isTransfer)
+            ? transferPenalty
+            : 0;
+        final newDistance =
+            distances[current.nodeId]! + edge.weightSeconds + penalty;
+
+        if (newDistance < distances[edge.toNodeId]!) {
+          distances[edge.toNodeId] = newDistance;
+          previous[edge.toNodeId] = current.nodeId;
+          previousEdge[edge.toNodeId] = edge;
+          queue.add(_QueueEntry(nodeId: edge.toNodeId, distance: newDistance));
+        }
+      }
+    }
+
+    if (reachedToId == null) return null;
+
+    final path = <String>[];
+    final edges = <GraphEdge>[];
+    String? current = reachedToId;
+    while (current != null) {
+      path.add(current);
+      final edge = previousEdge[current];
+      if (edge != null) edges.add(edge);
+      current = previous[current];
+    }
+
+    final reversedEdges = edges.reversed.toList();
+    final reversedPath = path.reversed.toList();
+    final travelTime =
+        reversedEdges.fold(0, (sum, edge) => sum + edge.weightSeconds);
+
+    final transferAdjacentNodes = <int>{};
+    for (var i = 0; i < reversedEdges.length; i++) {
+      if (reversedEdges[i].isTransfer) {
+        transferAdjacentNodes.add(i);
+        transferAdjacentNodes.add(i + 1);
+      }
+    }
+    var dwellCount = 0;
+    for (var i = 1; i < reversedPath.length - 1; i++) {
+      if (!transferAdjacentNodes.contains(i)) dwellCount++;
+    }
+    final dwellTime = dwellCount * dwellTimeSeconds;
+
+    return PathResult(
+      nodeIds: reversedPath,
+      edges: reversedEdges,
+      totalTimeSeconds: travelTime + dwellTime,
+      totalDwellTimeSeconds: dwellTime,
+    );
+  }
+
   /// 두 역 사이의 최단 경로(들)를 반환한다.
   ///
   /// [nodeFilter]가 주어지면 시작/도착 후보 노드뿐 아니라 Dijkstra가 방문하는

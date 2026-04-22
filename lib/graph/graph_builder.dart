@@ -205,6 +205,13 @@ class GraphBuilder {
   ///
   /// 환승 대기 시간(배차간격/2)을 도착 노선별로 반영하기 위해
   /// 양방향 edge를 **개별 addEdge**로 분리한다 (비대칭).
+  ///
+  /// 가상 급행 노드(`{stationId}_{lineId}E`)가 그래프에 있는 변종은 base 노드
+  /// 뿐 아니라 `_E` 노드에서도 다른 노선으로 바로 환승 가능해야 한다. 그렇지
+  /// 않으면 "급행으로 도착 → 모드전환(9M) → 환승(transfer)" 이라는 **이중
+  /// 환승**이 경로에 들어가고, `_buildSegments`가 연속 환승 edge 사이에 빈
+  /// "transfer 0분(0개역)" 세그먼트를 삽입한다. 따라서 각 variant 의 base +
+  /// `_E` 모두를 고려해 환승 edge 를 조합 전수 추가한다.
   void _addTransferEdges(
     SubwayGraph graph,
     List<Station> stations,
@@ -219,6 +226,15 @@ class GraphBuilder {
       }
     }
 
+    List<String> variantNodeIds(Station s) {
+      final base = '${s.id}_${s.lineId}';
+      final express = '${s.id}_${s.lineId}E';
+      final ids = <String>[];
+      if (graph.containsNode(base)) ids.add(base);
+      if (graph.containsNode(express)) ids.add(express);
+      return ids;
+    }
+
     for (final entry in transferStations.entries) {
       final stationName = entry.key;
       final stationVariants = entry.value;
@@ -227,9 +243,6 @@ class GraphBuilder {
         for (var j = i + 1; j < stationVariants.length; j++) {
           final from = stationVariants[i];
           final to = stationVariants[j];
-
-          final fromNodeId = '${from.id}_${from.lineId}';
-          final toNodeId = '${to.id}_${to.lineId}';
 
           final transferKey = '${stationName}_${from.lineId}_${to.lineId}';
           final reverseKey = '${stationName}_${to.lineId}_${from.lineId}';
@@ -249,22 +262,28 @@ class GraphBuilder {
               ? (headwaySeconds[to.lineId] ?? _defaultHeadwaySeconds) ~/ 2
               : 0;
 
-          // from→to: 도착 노선 = to → to의 배차간격/2 추가
-          graph.addEdge(GraphEdge(
-            fromNodeId: fromNodeId,
-            toNodeId: toNodeId,
-            lineId: 'transfer',
-            weightSeconds: transferTime + toWait,
-            isTransfer: true,
-          ));
-          // to→from: 도착 노선 = from → from의 배차간격/2 추가
-          graph.addEdge(GraphEdge(
-            fromNodeId: toNodeId,
-            toNodeId: fromNodeId,
-            lineId: 'transfer',
-            weightSeconds: transferTime + fromWait,
-            isTransfer: true,
-          ));
+          // from variants × to variants 모든 조합에 대해 양방향 edge.
+          // base↔base, base↔E, E↔base, E↔E(양쪽 모두 급행 지원 시) 등을 커버.
+          for (final fromNodeId in variantNodeIds(from)) {
+            for (final toNodeId in variantNodeIds(to)) {
+              // from→to: 도착 노선 = to → to의 배차간격/2 추가
+              graph.addEdge(GraphEdge(
+                fromNodeId: fromNodeId,
+                toNodeId: toNodeId,
+                lineId: 'transfer',
+                weightSeconds: transferTime + toWait,
+                isTransfer: true,
+              ));
+              // to→from: 도착 노선 = from → from의 배차간격/2 추가
+              graph.addEdge(GraphEdge(
+                fromNodeId: toNodeId,
+                toNodeId: fromNodeId,
+                lineId: 'transfer',
+                weightSeconds: transferTime + fromWait,
+                isTransfer: true,
+              ));
+            }
+          }
         }
       }
     }

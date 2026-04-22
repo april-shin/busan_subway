@@ -64,6 +64,36 @@ flutter run --release
 
 > ⚠️ **중요**: iOS 실 디바이스에서는 반드시 `--release` 모드로 실행해야 합니다. Debug 모드는 Dart VM 연결 문제로 백그라운드 복귀 시 크래시가 발생합니다.
 
+#### iPhone 실 디바이스에 Release 빌드 & 설치
+
+유선/무선으로 연결된 iPhone(실 디바이스)에 release 빌드를 설치하는 한 줄 스크립트.
+Xcode 프로젝트에 개발 팀(`DEVELOPMENT_TEAM`)이 설정되어 있으면 자동 코드 서명됩니다.
+
+```bash
+# 1) 연결된 iOS 실 디바이스 ID 확인
+flutter devices | grep -E "ios\s+•" | grep -v simulator
+# 예) 거부기의 iPhone (wireless) (mobile) • 00008140-000425021062201C • ios • iOS 26.3.1
+
+# 2) release 빌드
+flutter build ios --release
+
+# 3) 디바이스에 설치 (DEVICE_ID는 1단계에서 확인한 값)
+DEVICE_ID="00008140-000425021062201C"
+flutter install --release -d "$DEVICE_ID"
+```
+
+한 번에 실행하는 원라이너:
+
+```bash
+# 첫 iOS 실 디바이스에 자동으로 release 빌드+설치
+DEVICE_ID=$(flutter devices --machine 2>/dev/null \
+  | python3 -c "import json,sys; [print(d['id']) for d in json.load(sys.stdin) if d.get('targetPlatform','').startswith('ios') and not d.get('emulator')][:1]") \
+  && flutter build ios --release \
+  && flutter install --release -d "$DEVICE_ID"
+```
+
+> ⚠️ 무선 연결 iPhone은 설치가 수 분 소요될 수 있으며, 화면에 progress bar가 `\r`로 덮여 짧게 표시될 수 있습니다. 종료 코드 0이면 정상 완료입니다.
+
 ### 개발 명령어
 
 ```bash

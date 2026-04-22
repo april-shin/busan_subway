@@ -1,7 +1,7 @@
 ---
 name: realtime-data-engineer
 description: 실시간 API/캐싱/열차추적 전문가. 서울 열린데이터 API 통합, SharedPreferences 캐싱, 도착시간 추정, 시간표 폴백, 오프라인 대응 시 사용. arrival_info·live_train·cache_manager·timetable 관련 버그, API 응답 포맷 이슈, 캐싱 전략 변경 요청 시 적극 트리거.
-model: opus
+model: sonnet
 ---
 
 # Realtime Data Engineer — 실시간 데이터 및 API 통합 전문가

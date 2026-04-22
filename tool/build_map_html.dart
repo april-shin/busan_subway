@@ -1169,6 +1169,34 @@ $textElements
   // 실시간 열차 표시 (애니메이션)
   // ============================================================
 
+  // 행선지 레이블 박스의 최소 너비(px). 열차 아이콘(-18~+18, 36px)과 동일하게
+  // 설정해 짧은 행선(예: "김포공항") 은 기존과 동일 모양으로 보이도록 한다.
+  var TRAIN_LABEL_MIN_WIDTH = 36;
+  // 문자 1개당 예상 렌더 너비(px). font-size=8 에서 한글 1자는 약 8px, 영문/숫자는
+  // 더 좁지만 보수적으로 한글 기준으로 잡아 "응암순환(상선)" 같은 긴 행선도
+  // 잘리지 않도록 보장한다. DOM attach 전이라 getComputedTextLength 를 쓸 수
+  // 없으므로 근사 계산을 사용한다.
+  var TRAIN_LABEL_CHAR_WIDTH = 8;
+  var TRAIN_LABEL_PADDING = 6;
+
+  function computeLabelWidth(text) {
+    var len = (text || '').length;
+    return Math.max(
+      TRAIN_LABEL_MIN_WIDTH,
+      len * TRAIN_LABEL_CHAR_WIDTH + TRAIN_LABEL_PADDING,
+    );
+  }
+
+  // 행선지 변경 시 레이블 박스 너비를 재계산해 잘림을 방지한다.
+  // createTrainIcon 에서 labelBg 가 최초 rect 로 삽입되므로 첫 rect 를 갱신한다.
+  function resizeTrainDestinationLabel(trainGroup, text) {
+    var rect = trainGroup.querySelector('rect');
+    if (!rect) return;
+    var w = computeLabelWidth(text);
+    rect.setAttribute('x', -w / 2);
+    rect.setAttribute('width', w);
+  }
+
   function createTrainIcon(train, color) {
     var g = document.createElementNS(SVG_NS, 'g');
 
@@ -1180,10 +1208,12 @@ $textElements
     img.setAttribute('height', '13');
     g.appendChild(img);
 
+    // 레이블 박스는 행선 텍스트 길이에 맞춰 확장 (최소 36px).
+    var labelWidth = computeLabelWidth(train.destination);
     var labelBg = document.createElementNS(SVG_NS, 'rect');
-    labelBg.setAttribute('x', '-18');
+    labelBg.setAttribute('x', -labelWidth / 2);
     labelBg.setAttribute('y', '-20');
-    labelBg.setAttribute('width', '36');
+    labelBg.setAttribute('width', labelWidth);
     labelBg.setAttribute('height', '11');
     labelBg.setAttribute('rx', '3');
     labelBg.setAttribute('fill', color);
@@ -1729,6 +1759,8 @@ $textElements
           if (texts.length > 0) {
             texts[0].textContent = t.destination || '';
           }
+          // 행선이 길어지면 레이블 박스도 재계산(짧아질 때도 재축소).
+          resizeTrainDestinationLabel(existing.element, t.destination);
           updateTrainDebugInfo(existing.element, t);
           continue;
         }
@@ -1742,6 +1774,7 @@ $textElements
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
         }
+        resizeTrainDestinationLabel(existing.element, t.destination);
         // [디버그용] 기존 열차의 디버그 정보 갱신
         updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);

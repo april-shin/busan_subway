@@ -742,7 +742,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 <text x="2280.0" y="556.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="K" data-station="신원">신원</text>
 <text x="2232.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="국수">국수</text>
 <text x="2192.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="아신">아신</text>
-<text x="2144.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="오빈">오빈</text><text x="2112.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="양평">양평</text>
+<text x="2144.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="오빈">오빈</text>
+<text x="2112.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="양평">양평</text>
 <text x="2072.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="원덕">원덕</text>
 <text x="2032.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="용문">용문</text>
 <text x="1992.0" y="566.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="지평">지평</text>
@@ -1114,24 +1115,11 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // SVG 렌더링 후 텍스트 타겟 구축
   buildTextTargets();
 
-  // 동명 역(예: "양평" = 5호선/경의중앙선)을 구분하기 위해 좌표 근접도로 선택한다.
-  // px/py가 주어지면 이름 일치 역 중 그 좌표에 가장 가까운 역을 반환하고,
-  // 없으면(기존 호환) 첫 매치를 반환한다.
-  function findStationByName(name, px, py) {
-    var best = null;
-    var bestDistSq = Infinity;
+  function findStationByName(name) {
     for (var i = 0; i < stations.length; i++) {
-      if (stations[i].name !== name) continue;
-      if (px == null || py == null) return stations[i];
-      var dx = stations[i].svgX - px;
-      var dy = stations[i].svgY - py;
-      var d = dx * dx + dy * dy;
-      if (d < bestDistSq) {
-        bestDistSq = d;
-        best = stations[i];
-      }
+      if (stations[i].name === name) return stations[i];
     }
-    return best;
+    return null;
   }
 
   tapLayer.addEventListener('pointerup', function(e) {
@@ -1148,8 +1136,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     for (var i = 0; i < svgTextTargets.length; i++) {
       var t = svgTextTargets[i];
       if (Math.abs(svgX - t.cx) <= t.halfW && Math.abs(svgY - t.cy) <= t.halfH) {
-        // 탭 위치(svgX, svgY)에 가까운 동명 역을 선택 — 5호선/경의중앙선 양평 구분
-        nearest = findStationByName(t.name, svgX, svgY);
+        nearest = findStationByName(t.name);
         if (nearest) break;
       }
     }
@@ -1759,6 +1746,34 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // 실시간 열차 표시 (애니메이션)
   // ============================================================
 
+  // 행선지 레이블 박스의 최소 너비(px). 열차 아이콘(-18~+18, 36px)과 동일하게
+  // 설정해 짧은 행선(예: "김포공항") 은 기존과 동일 모양으로 보이도록 한다.
+  var TRAIN_LABEL_MIN_WIDTH = 36;
+  // 문자 1개당 예상 렌더 너비(px). font-size=8 에서 한글 1자는 약 8px, 영문/숫자는
+  // 더 좁지만 보수적으로 한글 기준으로 잡아 "응암순환(상선)" 같은 긴 행선도
+  // 잘리지 않도록 보장한다. DOM attach 전이라 getComputedTextLength 를 쓸 수
+  // 없으므로 근사 계산을 사용한다.
+  var TRAIN_LABEL_CHAR_WIDTH = 8;
+  var TRAIN_LABEL_PADDING = 6;
+
+  function computeLabelWidth(text) {
+    var len = (text || '').length;
+    return Math.max(
+      TRAIN_LABEL_MIN_WIDTH,
+      len * TRAIN_LABEL_CHAR_WIDTH + TRAIN_LABEL_PADDING,
+    );
+  }
+
+  // 행선지 변경 시 레이블 박스 너비를 재계산해 잘림을 방지한다.
+  // createTrainIcon 에서 labelBg 가 최초 rect 로 삽입되므로 첫 rect 를 갱신한다.
+  function resizeTrainDestinationLabel(trainGroup, text) {
+    var rect = trainGroup.querySelector('rect');
+    if (!rect) return;
+    var w = computeLabelWidth(text);
+    rect.setAttribute('x', -w / 2);
+    rect.setAttribute('width', w);
+  }
+
   function createTrainIcon(train, color) {
     var g = document.createElementNS(SVG_NS, 'g');
 
@@ -1770,10 +1785,12 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     img.setAttribute('height', '13');
     g.appendChild(img);
 
+    // 레이블 박스는 행선 텍스트 길이에 맞춰 확장 (최소 36px).
+    var labelWidth = computeLabelWidth(train.destination);
     var labelBg = document.createElementNS(SVG_NS, 'rect');
-    labelBg.setAttribute('x', '-18');
+    labelBg.setAttribute('x', -labelWidth / 2);
     labelBg.setAttribute('y', '-20');
-    labelBg.setAttribute('width', '36');
+    labelBg.setAttribute('width', labelWidth);
     labelBg.setAttribute('height', '11');
     labelBg.setAttribute('rx', '3');
     labelBg.setAttribute('fill', color);
@@ -2319,6 +2336,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           if (texts.length > 0) {
             texts[0].textContent = t.destination || '';
           }
+          // 행선이 길어지면 레이블 박스도 재계산(짧아질 때도 재축소).
+          resizeTrainDestinationLabel(existing.element, t.destination);
           updateTrainDebugInfo(existing.element, t);
           continue;
         }
@@ -2332,6 +2351,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
         }
+        resizeTrainDestinationLabel(existing.element, t.destination);
         // [디버그용] 기존 열차의 디버그 정보 갱신
         updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);

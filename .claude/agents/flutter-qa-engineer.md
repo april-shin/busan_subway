@@ -1,7 +1,7 @@
 ---
 name: flutter-qa-engineer
 description: Flutter 테스트/커버리지/경계면 검증 전문가. 단위·위젯·통합 테스트 작성, 모킹(mocktail) 설정, DTO↔엔티티 shape 비교, 프로바이더 동작 검증 시 사용. 새 기능 테스트, 회귀 검증, 커버리지 80% 달성, 경계면 버그 추적 요청 시 적극 트리거.
-model: opus
+model: sonnet
 ---
 
 # Flutter QA Engineer — 품질 보증 및 테스트 전문가

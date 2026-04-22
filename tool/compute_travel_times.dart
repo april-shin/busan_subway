@@ -3,10 +3,17 @@
 //
 // 알고리즘:
 //   1. 각 (노선, 방향, 역) 시간표를 로드
-//   2. 같은 trainno(열차번호)가 인접 두 역에서 출발하는 시각 차 = 소요시간
+//   2. 같은 trainno(열차번호)가 인접 두 역에서 출발하는 시각 차의 **절댓값** = 소요시간
+//      (connections.json은 `from→to` 한쪽 방향만 기록하지만 인접 역간 이동시간은
+//      방향 대칭이므로 상/하행 timetable 둘 다 양방향으로 gap 수집)
 //   3. 인접 역 쌍별로 다수 열차의 **중앙값**을 사용 (outlier에 강건)
 //   4. 완행/급행 분리: etrnYn=='N' 또는 빈 값 → 완행, 'Y' → 급행
 //   5. connections.json의 travelTimeSeconds(완행) + expressTimeSeconds(급행) 갱신
+//
+// 양방향 수집이 중요한 이유:
+//   - 9호선 흑석→동작 상행만 수집하면 급행 대피 대기시간이 포함된 290s가 잡히지만,
+//     하행(동작→흑석) 155s가 누락되어 비대칭 outlier로 굳어진다.
+//   - `.abs()`로 양방향을 합치면 249건 중앙값이 인근 구간(125s)과 정합한다.
 //
 // 한계 (급행 데이터 커버리지):
 //   - 이 알고리즘은 "인접 두 역" 쌍에서만 trainno 매칭을 수행한다.
@@ -111,8 +118,11 @@ void main(List<String> args) async {
           final fromTime = _parseSec(m['trainDptreTm']?.toString() ?? '');
           final toTime = toMap[tno];
           if (fromTime == null || toTime == null) continue;
-          final gap = toTime - fromTime;
-          // from→to 정방향만 (양수, 합리적 범위)
+          // 인접 두 역 간 이동시간은 방향 대칭으로 가정하고 절댓값 수집.
+          // connections.json 은 `from→to` 한쪽만 저장하므로 상/하행 timetable 중
+          // `to→from` 순서의 열차(음수 gap)도 유효한 데이터로 포함해야 한다.
+          final gap = (toTime - fromTime).abs();
+          // 0 이하는 동일 시각(이상) 또는 파싱 오류로 간주. 600s 이상은 종착/회차 케이스.
           if (gap <= 0 || gap >= 600) continue;
           final etrn = (m['etrnYn']?.toString() ?? '').trim().toUpperCase();
           if (etrn == 'Y') {

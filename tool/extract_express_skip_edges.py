@@ -23,9 +23,14 @@ CACHE_DIR = ROOT / 'data' / 'timetables'
 CONN_JSON = ROOT / 'assets' / 'json' / 'connections.json'
 STATIONS_JSON = ROOT / 'assets' / 'json' / 'stations.json'
 OUTPUT_JSON = ROOT / 'assets' / 'json' / 'express_skip_edges.json'
+MANUAL_JSON = ROOT / 'tool' / 'manual_express_stops.json'
 
 # 급행 운영 노선
 LINES = ['1', '9', '경춘', '수인분당']
+
+# 수동 매핑에서 skip edge 의 seconds 를 완행 시간 합에 곱할 비율.
+# 1호선 경인선/경부선 급행은 통상 완행 대비 65~75% 시간으로 운행.
+MANUAL_EXPRESS_RATIO = 0.7
 
 
 def parse_sec(s):
@@ -68,8 +73,19 @@ def gather_express_stops(line):
                 if not tno or t is None:
                     continue
                 ts[(tno, d)].append((stn_nm, t))
+    # 같은 trainno+dir 내에서 `(역명, 시각)` 중복 제거.
+    # data.go.kr API 응답에서 1호선 같은 노선은 동일 레코드가 5~6번
+    # 반복 나타나 시퀀스 길이가 부풀려지는 이슈가 확인됨 (예: K1906 312역 = 실제
+    # 52역의 6배). 정렬 후 consecutive dedupe 로 실제 정차 순서만 남긴다.
     for key in ts:
         ts[key].sort(key=lambda x: x[1])
+        deduped = []
+        prev = None
+        for item in ts[key]:
+            if item != prev:
+                deduped.append(item)
+            prev = item
+        ts[key] = deduped
     return ts
 
 
@@ -86,6 +102,88 @@ def build_line_graph(line, conns, stations):
         adj[c['fromStationId']].append(c['toStationId'])
         adj[c['toStationId']].append(c['fromStationId'])
     return adj, name_to_id
+
+
+def _travel_time_lookup(line, conns):
+    """(from, to) 또는 (to, from) 쌍의 완행 travelTimeSeconds 를 반환하는 dict."""
+    m = {}
+    for c in conns:
+        if c['lineId'] != line or c.get('isTransfer'):
+            continue
+        t = c.get('travelTimeSeconds', 0)
+        m[(c['fromStationId'], c['toStationId'])] = t
+        m[(c['toStationId'], c['fromStationId'])] = t
+    return m
+
+
+def _bfs_full_path(start, end, adj):
+    """start→end 최단 경로의 역 ID 리스트(양 끝 포함)."""
+    if start == end:
+        return [start]
+    q = deque([(start, [start])])
+    visited = {start}
+    while q:
+        cur, path = q.popleft()
+        for nb in adj.get(cur, []):
+            if nb in visited:
+                continue
+            visited.add(nb)
+            np_ = path + [nb]
+            if nb == end:
+                return np_
+            q.append((nb, np_))
+    return None
+
+
+def _apply_manual(*, line, adj, conns, name_to_id, existing_keys, line_edges):
+    """`manual_express_stops.json` 의 해당 노선 항목을 skip edge 로 변환해 병합.
+
+    Returns: 추가된 edge 수.
+    """
+    if not MANUAL_JSON.exists():
+        return 0
+    try:
+        data = json.loads(MANUAL_JSON.read_text(encoding='utf-8'))
+    except json.JSONDecodeError:
+        return 0
+    manual_for_line = data.get(line, [])
+    if not manual_for_line:
+        return 0
+
+    tt_lookup = _travel_time_lookup(line, conns)
+    added = 0
+    for route in manual_for_line:
+        stops = route.get('stops') or []
+        for i in range(len(stops) - 1):
+            a = name_to_id.get(stops[i])
+            b = name_to_id.get(stops[i + 1])
+            if not a or not b:
+                continue
+            if (a, b) in existing_keys or (b, a) in existing_keys:
+                continue
+            full_path = _bfs_full_path(a, b, adj)
+            if not full_path or len(full_path) < 2:
+                continue
+            # 완행 travelTime 합계 산출
+            local_sum = 0
+            for k in range(len(full_path) - 1):
+                local_sum += tt_lookup.get(
+                    (full_path[k], full_path[k + 1]), 0,
+                )
+            if local_sum <= 0:
+                continue
+            seconds = max(60, int(round(local_sum * MANUAL_EXPRESS_RATIO)))
+            skipped = full_path[1:-1]
+            line_edges.append({
+                'lineId': line,
+                'fromStationId': a,
+                'toStationId': b,
+                'seconds': seconds,
+                'skippedStationIds': skipped,
+            })
+            existing_keys.add((a, b))
+            added += 1
+    return added
 
 
 def bfs_station_ids(start, end, adj):
@@ -122,17 +220,26 @@ def main():
             result[line] = []
             continue
 
-        # 인접 정차역 쌍 시간 차 수집 + trainno 회송/비정상 시퀀스 필터링
+        # 인접 정차역 쌍 시간 차 수집.
+        #
+        # 과거: 같은 역명이 두 번 나타나면 시퀀스 전체 제외 → 1호선처럼 지선
+        # 복합 노선(경원/경부/경인/병점-서동탄 등 모두 lineId='1')에서 대부분의
+        # trainno 가 같은 역을 재방문해 277/284 시퀀스가 버려지는 과잉 필터.
+        #
+        # 개선: **첫 번째 중복 등장 이전까지만** 시퀀스를 잘라서 정방향 부분만
+        # 사용한다. 이후 회송/반환 부분은 버림. 정방향 급행 정차 순서는 보존.
         pair_times = defaultdict(list)  # (fromStn, toStn) -> [seconds]
         for (_tno, _dir), seq in stops.items():
-            # 시퀀스 검증: 같은 역명이 두 번 이상 나타나면 회송/혼선 패턴
-            # → 해당 trainno의 정차 시퀀스 전체를 신뢰할 수 없어 제외
-            names = [name for name, _t in seq]
-            if len(set(names)) != len(names):
-                continue
-            for i in range(len(seq) - 1):
-                f_stn, f_t = seq[i]
-                t_stn, t_t = seq[i + 1]
+            seen = set()
+            trimmed = []
+            for name, t in seq:
+                if name in seen:
+                    break
+                seen.add(name)
+                trimmed.append((name, t))
+            for i in range(len(trimmed) - 1):
+                f_stn, f_t = trimmed[i]
+                t_stn, t_t = trimmed[i + 1]
                 if f_stn == t_stn:
                     continue
                 gap = t_t - f_t
@@ -183,6 +290,23 @@ def main():
                 'skippedStationIds': skipped_ids,
             })
 
+        # === 수동 매핑 skip edges 병합 ===
+        #
+        # data.go.kr API 가 1호선 처럼 etrnYn 만으로 정차역을 구분 못 하는 경우
+        # `tool/manual_express_stops.json` 의 정차역 순서를 그대로 사용해 skip edge
+        # 를 강제 생성한다. seconds 는 연결된 완행 경로의 travelTimeSeconds 합에
+        # MANUAL_EXPRESS_RATIO 를 곱한 값.
+        manual_added = _apply_manual(
+            line=line,
+            adj=adj,
+            conns=conns,
+            name_to_id=name_to_id,
+            existing_keys={
+                (e['fromStationId'], e['toStationId']) for e in line_edges
+            },
+            line_edges=line_edges,
+        )
+
         # 정렬: fromStationId → toStationId (재실행 시 diff 안정화)
         line_edges.sort(
             key=lambda e: (e['fromStationId'], e['toStationId']),
@@ -191,7 +315,7 @@ def main():
         total_edges += len(line_edges)
         print(f'  {len(line_edges)}개 skip edge 생성 '
               f'(빈도부족 {skipped_low_freq}, 비현실 {skipped_unrealistic}, '
-              f'경로없음 {skipped_no_path})')
+              f'경로없음 {skipped_no_path}, 수동 +{manual_added})')
 
     OUTPUT_JSON.write_text(
         json.dumps(result, ensure_ascii=False, indent=2),
