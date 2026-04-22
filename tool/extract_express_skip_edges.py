@@ -25,8 +25,17 @@ STATIONS_JSON = ROOT / 'assets' / 'json' / 'stations.json'
 OUTPUT_JSON = ROOT / 'assets' / 'json' / 'express_skip_edges.json'
 MANUAL_JSON = ROOT / 'tool' / 'manual_express_stops.json'
 
-# 급행 운영 노선
-LINES = ['1', '9', '경춘', '수인분당']
+# 급행 운영 노선 — 자동 수집(시간표 API 기반) 대상.
+#
+# 1호선은 data.go.kr timetable API 가 `etrnYn='Y'` 열차에 대해 **모든 완행역에
+# trainDptreTm 을 기록**하기 때문에 대방·신길·구일·개봉 등 통과역까지 자동
+# 수집되어 사실상 완행과 같은 그래프가 된다(사용자 관찰: "급행 13역 / 완행
+# 17역"). 따라서 1호선은 자동 수집에서 제외하고 `manual_express_stops.json`
+# 기반 수동 매핑으로만 처리한다.
+LINES = ['9', '경춘', '수인분당']
+
+# 수동 매핑도 대상 노선 목록 — 여기엔 1호선 포함.
+MANUAL_LINES = ['1', '9', '경춘', '수인분당']
 
 # 수동 매핑에서 skip edge 의 seconds 를 완행 시간 합에 곱할 비율.
 # 1호선 경인선/경부선 급행은 통상 완행 대비 65~75% 시간으로 운행.
@@ -316,6 +325,33 @@ def main():
         print(f'  {len(line_edges)}개 skip edge 생성 '
               f'(빈도부족 {skipped_low_freq}, 비현실 {skipped_unrealistic}, '
               f'경로없음 {skipped_no_path}, 수동 +{manual_added})')
+
+    # === 수동 전용 노선 처리 (자동 수집 LINES 에 없는 MANUAL_LINES 항목) ===
+    #
+    # 1호선 같이 API 정확도가 낮은 노선은 LINES 에서 빼고 MANUAL_LINES 에만 둔다.
+    # 이 노선은 자동 수집 skip edge 가 없고 오로지 manual_express_stops.json 만
+    # 사용된다. 이로써 `_E` 가상 노드는 **실제 급행 정차역에만** 생성되고, 사용자
+    # 관찰("급행 13역")처럼 Dijkstra 가 통과역 `_E` 노드를 거쳐가는 현상이 없다.
+    for line in MANUAL_LINES:
+        if line in result:
+            continue  # 이미 자동 수집에서 처리됨
+        adj, name_to_id = build_line_graph(line, conns, stations)
+        line_edges = []
+        manual_added = _apply_manual(
+            line=line,
+            adj=adj,
+            conns=conns,
+            name_to_id=name_to_id,
+            existing_keys=set(),
+            line_edges=line_edges,
+        )
+        line_edges.sort(
+            key=lambda e: (e['fromStationId'], e['toStationId']),
+        )
+        result[line] = line_edges
+        total_edges += len(line_edges)
+        print(f'[{line}] (수동 전용) {len(line_edges)}개 skip edge 생성 '
+              f'(수동 +{manual_added})')
 
     OUTPUT_JSON.write_text(
         json.dumps(result, ensure_ascii=False, indent=2),

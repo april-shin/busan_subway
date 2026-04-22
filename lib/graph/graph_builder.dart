@@ -184,9 +184,11 @@ class GraphBuilder {
         continue;
       }
 
-      // 9호선은 같은 플랫폼에서 급행↔완행 환승이 가능하여 모드 전환 대기 0초.
-      // (사용자 정책: "9호선 급행 환승시간은 0분")
-      final waitSeconds = key.baseLineId == '9'
+      // 9호선·1호선은 같은 플랫폼에서 급행↔완행 환승이 가능하여 모드 전환 대기 0초.
+      // - 9호선: 정책상 "급행 환승시간 0분" (사용자 합의)
+      // - 1호선 경인선/경부선: 용산·구로·부평·수원 등 주요 급행 정차역은 섬식
+      //   승강장으로 완행과 동일 승강장·방향에 정차하므로 물리적 대기 없음.
+      final waitSeconds = (key.baseLineId == '9' || key.baseLineId == '1')
           ? 0
           : (headwaySeconds[key.baseLineId] ?? _defaultHeadwaySeconds) ~/ 2;
       final modeLineId = '${key.baseLineId}M';

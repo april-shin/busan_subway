@@ -795,6 +795,61 @@ void main() {
         expect(result!.transferGuides, isEmpty);
       });
 
+      test('급행 세그먼트(`1E`) 후 환승 시 base 노선(`1`) 키로 가이드 매칭', () async {
+        // 1호선 급행으로 영등포 도착 → 5호선 환승 시나리오(축약).
+        // transfer_guides.json 에는 "영등포_1_down_5" 만 등록되어도 `1E` 세그먼트 끝에서
+        // 동일 가이드가 조회되어야 한다 (baseLineId 정규화).
+        const guide = TransferGuide(
+            doorSide: DoorSide.right, car: 3, door: 2, note: '급행도 동일');
+        final mixed = [
+          const Station(id: '136', name: '용산', lineId: '1',
+              latitude: 0, longitude: 0),
+          const Station(id: '140', name: '영등포', lineId: '1',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['1', '5']),
+          const Station(id: '529', name: '영등포', lineId: '5',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['1', '5']),
+          const Station(id: '530', name: '신길', lineId: '5',
+              latitude: 0, longitude: 0),
+        ];
+        final conns = [
+          const Connection(fromStationId: '136', toStationId: '140',
+              lineId: '1', travelTimeSeconds: 500),
+          const Connection(fromStationId: '529', toStationId: '530',
+              lineId: '5', travelTimeSeconds: 120),
+        ];
+        // 용산→영등포 급행 skip edge (노량진·대방·신길 역할은 본 테스트에선 생략)
+        final ex = [
+          const ExpressSkipEdge(lineId: '1', fromStationId: '136',
+              toStationId: '140', seconds: 280, skippedStationIds: []),
+        ];
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => mixed);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => conns);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => {'영등포_1_5': 180});
+        when(() => mockRepo.getExpressSkipEdges())
+            .thenAnswer((_) async => ex);
+        // base 노선 키만 등록. `1E` 용 별도 키 없음.
+        // 방향: 136(용산) → 140(영등포) 은 ID 증가 → 일반 노선(1호선)은 down=true.
+        when(() => mockRepo.getTransferGuides())
+            .thenAnswer((_) async => {'영등포_1_down_5': guide});
+
+        // executeAll 의 fastest 는 multi-source/sink 로 136_1E 에서 바로 시작하여
+        // 모드 전환(1M) 세그먼트가 삽입되지 않는다.
+        final result = await searchRoute.executeAll('136', '530');
+
+        expect(result.fastest, isNotNull);
+        // 급행 세그먼트로 영등포 도착 → 5호선 환승 → 5호선 세그먼트.
+        expect(result.fastest!.segments.length, 2);
+        expect(result.fastest!.segments.first.lineId, '1E',
+            reason: '첫 세그먼트가 1E 여야 본 테스트 의도대로 검증');
+        expect(result.fastest!.transferGuides.length, 1);
+        expect(result.fastest!.transferGuides.first, equals(guide),
+            reason: '1E 세그먼트 후 환승 가이드는 base(`1`) 키로 매칭되어야 함');
+      });
+
       test('4-tuple 키가 매칭되면 해당 가이드를 반영한다 (상행 방향)', () async {
         // 201(시청) → 203(을지로3가): 2호선 내선(상행, up) 방향.
         // isDownBetween(202, 203, "2")는 step=1 → step<0 아님 → false (up).

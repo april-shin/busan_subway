@@ -889,6 +889,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var stationMap = {};       // stationId → station 객체
   var waypointIndex = {};    // "fromId_toId" → [{x,y}, ...] (중간점 포함 좌표 배열)
 
+  // 열차 아이콘 옆의 상세 디버그 표시(호선 번호, prog, 초, 구간 등) on/off 토글.
+  // 나중에 동작 확인이 필요할 때 이 값만 true로 바꾸면 모든 debug 표시가 복원된다.
+  var SHOW_TRAIN_DEBUG = false;
+
   var rafPending = false;
   function scheduleTransform() {
     if (rafPending) return;
@@ -1830,8 +1834,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       g.appendChild(badgeText);
     }
 
-    // [디버그용] 열차 위치 결정 요소 표시
-    g.appendChild(buildDebugGroup(train));
+    // [디버그용] 열차 위치 결정 요소 표시 (SHOW_TRAIN_DEBUG=true일 때만)
+    if (SHOW_TRAIN_DEBUG) g.appendChild(buildDebugGroup(train));
 
     // initialProgress 반영: 첫 세그먼트 내 보간 위치에 배치
     var startX = train.fromSvgX;
@@ -2338,7 +2342,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           }
           // 행선이 길어지면 레이블 박스도 재계산(짧아질 때도 재축소).
           resizeTrainDestinationLabel(existing.element, t.destination);
-          updateTrainDebugInfo(existing.element, t);
+          if (SHOW_TRAIN_DEBUG) updateTrainDebugInfo(existing.element, t);
           continue;
         }
         cancelTrainAnimation(existing);
@@ -2352,8 +2356,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           texts[0].textContent = t.destination || '';
         }
         resizeTrainDestinationLabel(existing.element, t.destination);
-        // [디버그용] 기존 열차의 디버그 정보 갱신
-        updateTrainDebugInfo(existing.element, t);
+        // [디버그용] 기존 열차의 디버그 정보 갱신 (SHOW_TRAIN_DEBUG=true일 때만)
+        if (SHOW_TRAIN_DEBUG) updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);
       } else {
         var g = createTrainIcon(t, color);
@@ -2400,18 +2404,20 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     liveTrainsGroup.replaceChildren();
   };
 
-  // 1초마다 디버그 남은시간 카운트다운
-  setInterval(function() {
-    var now = Date.now();
-    for (var id in activeTrains) {
-      var train = activeTrains[id];
-      if (train.lastArrivalSeconds == null || train.lastUpdateTime == null) continue;
-      var elapsed = Math.floor((now - train.lastUpdateTime) / 1000);
-      var remaining = Math.max(0, train.lastArrivalSeconds - elapsed);
-      var secEl = train.element.querySelector('.debug-seconds');
-      if (secEl) secEl.textContent = '초: ' + remaining;
-    }
-  }, 1000);
+  // 1초마다 디버그 남은시간 카운트다운 (SHOW_TRAIN_DEBUG=true일 때만 동작)
+  if (SHOW_TRAIN_DEBUG) {
+    setInterval(function() {
+      var now = Date.now();
+      for (var id in activeTrains) {
+        var train = activeTrains[id];
+        if (train.lastArrivalSeconds == null || train.lastUpdateTime == null) continue;
+        var elapsed = Math.floor((now - train.lastUpdateTime) / 1000);
+        var remaining = Math.max(0, train.lastArrivalSeconds - elapsed);
+        var secEl = train.element.querySelector('.debug-seconds');
+        if (secEl) secEl.textContent = '초: ' + remaining;
+      }
+    }, 1000);
+  }
 
   // ============================================================
   // 경로 선택 툴바

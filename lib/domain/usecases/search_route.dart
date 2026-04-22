@@ -542,14 +542,23 @@ class SearchRoute {
         .id;
     final toId = completedSegment.stations.last.id;
     final isDown = isDownBetween(fromId, toId, prevLineId);
+    // 가상 급행 노선(`{base}E`) 은 실제 환승 가이드 키가 base 노선 ID 로 등록되어
+    // 있다. 급행·완행에서 내려도 하차 문 방향/객차 번호는 동일하므로 `1E → 1`
+    // 처럼 정규화하여 조회.
     final key = buildTransferGuideKey(
       stationName: stationName,
-      arrivalLineId: prevLineId,
+      arrivalLineId: _stripExpressSuffix(prevLineId),
       isDown: isDown,
-      destinationLineId: nextLineId,
+      destinationLineId: _stripExpressSuffix(nextLineId),
     );
     return guides[key];
   }
+
+  /// 가상 급행 노선 ID(`{base}E`)에서 `E` 접미사 제거. 그 외는 그대로.
+  /// `baseLineId` 유틸이 features 레이어에 있어 domain 에서 직접 참조하지 않도록
+  /// private 헬퍼로 복제. 규칙이 단순하여 중복 허용.
+  String _stripExpressSuffix(String lineId) =>
+      lineId.endsWith('E') ? lineId.substring(0, lineId.length - 1) : lineId;
 
   RouteSegment _createSegment(
     String lineId,

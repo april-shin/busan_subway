@@ -1,808 +1,4 @@
 {
-  "1": [
-    {
-      "lineId": "1",
-      "fromStationId": "102",
-      "toStationId": "103",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "125",
-      "toStationId": "126",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "126",
-      "toStationId": "127",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "127",
-      "toStationId": "128",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "128",
-      "toStationId": "129",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "129",
-      "toStationId": "130",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "130",
-      "toStationId": "131",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "131",
-      "toStationId": "132",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "132",
-      "toStationId": "133",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "133",
-      "toStationId": "134",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "134",
-      "toStationId": "135",
-      "seconds": 180,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "134",
-      "toStationId": "136",
-      "seconds": 231,
-      "skippedStationIds": [
-        "135"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "135",
-      "toStationId": "136",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "136",
-      "toStationId": "137",
-      "seconds": 210,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "136",
-      "toStationId": "140",
-      "seconds": 420,
-      "skippedStationIds": [
-        "137",
-        "138",
-        "139"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "137",
-      "toStationId": "138",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "137",
-      "toStationId": "140",
-      "seconds": 273,
-      "skippedStationIds": [
-        "138",
-        "139"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "138",
-      "toStationId": "137",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "138",
-      "toStationId": "139",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "139",
-      "toStationId": "138",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "139",
-      "toStationId": "140",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "140",
-      "toStationId": "139",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "140",
-      "toStationId": "141",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "140",
-      "toStationId": "142",
-      "seconds": 210,
-      "skippedStationIds": [
-        "141"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "141",
-      "toStationId": "140",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "141",
-      "toStationId": "142",
-      "seconds": 180,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "142",
-      "toStationId": "141",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "142",
-      "toStationId": "143",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "142",
-      "toStationId": "149",
-      "seconds": 693,
-      "skippedStationIds": [
-        "143",
-        "144",
-        "145",
-        "146",
-        "147",
-        "148"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "142",
-      "toStationId": "167",
-      "seconds": 390,
-      "skippedStationIds": [
-        "166"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "142",
-      "toStationId": "170",
-      "seconds": 1176,
-      "skippedStationIds": [
-        "166",
-        "167",
-        "168",
-        "169"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "143",
-      "toStationId": "142",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "143",
-      "toStationId": "144",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "144",
-      "toStationId": "143",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "144",
-      "toStationId": "145",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "145",
-      "toStationId": "144",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "145",
-      "toStationId": "146",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "146",
-      "toStationId": "145",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "146",
-      "toStationId": "147",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "147",
-      "toStationId": "146",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "147",
-      "toStationId": "148",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "148",
-      "toStationId": "147",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "148",
-      "toStationId": "149",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "149",
-      "toStationId": "148",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "149",
-      "toStationId": "150",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "149",
-      "toStationId": "151",
-      "seconds": 189,
-      "skippedStationIds": [
-        "150"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "150",
-      "toStationId": "149",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "150",
-      "toStationId": "151",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "151",
-      "toStationId": "150",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "151",
-      "toStationId": "152",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "151",
-      "toStationId": "153",
-      "seconds": 189,
-      "skippedStationIds": [
-        "152"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "152",
-      "toStationId": "151",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "152",
-      "toStationId": "153",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "153",
-      "toStationId": "152",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "153",
-      "toStationId": "154",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "154",
-      "toStationId": "153",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "154",
-      "toStationId": "155",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "155",
-      "toStationId": "154",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "155",
-      "toStationId": "156",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "156",
-      "toStationId": "155",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "156",
-      "toStationId": "157",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "157",
-      "toStationId": "156",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "157",
-      "toStationId": "158",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "157",
-      "toStationId": "159",
-      "seconds": 168,
-      "skippedStationIds": [
-        "158"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "158",
-      "toStationId": "157",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "158",
-      "toStationId": "159",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "159",
-      "toStationId": "158",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "159",
-      "toStationId": "160",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "159",
-      "toStationId": "161",
-      "seconds": 168,
-      "skippedStationIds": [
-        "160"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "160",
-      "toStationId": "159",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "162",
-      "toStationId": "160",
-      "seconds": 90,
-      "skippedStationIds": [
-        "161"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "166",
-      "toStationId": "169",
-      "seconds": 120,
-      "skippedStationIds": [
-        "167",
-        "168"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "167",
-      "toStationId": "166",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "168",
-      "toStationId": "170",
-      "seconds": 150,
-      "skippedStationIds": [
-        "169"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "169",
-      "toStationId": "168",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "170",
-      "toStationId": "171",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "170",
-      "toStationId": "172",
-      "seconds": 378,
-      "skippedStationIds": [
-        "171"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "171",
-      "toStationId": "172",
-      "seconds": 240,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "172",
-      "toStationId": "173",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "172",
-      "toStationId": "174",
-      "seconds": 189,
-      "skippedStationIds": [
-        "173"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "173",
-      "toStationId": "174",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "174",
-      "toStationId": "175",
-      "seconds": 210,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "174",
-      "toStationId": "177",
-      "seconds": 399,
-      "skippedStationIds": [
-        "175",
-        "176"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "175",
-      "toStationId": "176",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "176",
-      "toStationId": "177",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "177",
-      "toStationId": "178",
-      "seconds": 180,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "177",
-      "toStationId": "179",
-      "seconds": 336,
-      "skippedStationIds": [
-        "178"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "178",
-      "toStationId": "179",
-      "seconds": 240,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "179",
-      "toStationId": "181",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "179",
-      "toStationId": "183",
-      "seconds": 441,
-      "skippedStationIds": [
-        "181",
-        "182"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "181",
-      "toStationId": "182",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "183",
-      "toStationId": "188",
-      "seconds": 861,
-      "skippedStationIds": [
-        "184",
-        "185",
-        "186",
-        "187"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "188",
-      "toStationId": "187",
-      "seconds": 210,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "189",
-      "toStationId": "188",
-      "seconds": 420,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "189",
-      "toStationId": "192",
-      "seconds": 588,
-      "skippedStationIds": [
-        "190",
-        "191"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "190",
-      "toStationId": "189",
-      "seconds": 240,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "191",
-      "toStationId": "190",
-      "seconds": 210,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "192",
-      "toStationId": "191",
-      "seconds": 270,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "193",
-      "toStationId": "192",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "194",
-      "toStationId": "193",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "195",
-      "toStationId": "194",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "196",
-      "toStationId": "198",
-      "seconds": 210,
-      "skippedStationIds": [
-        "197"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "197",
-      "toStationId": "196",
-      "seconds": 270,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "198",
-      "toStationId": "195",
-      "seconds": 180,
-      "skippedStationIds": [
-        "197",
-        "196"
-      ]
-    },
-    {
-      "lineId": "1",
-      "fromStationId": "199",
-      "toStationId": "197",
-      "seconds": 300,
-      "skippedStationIds": [
-        "198"
-      ]
-    }
-  ],
   "9": [
     {
       "lineId": "9",
@@ -1601,6 +797,200 @@
       "toStationId": "B61",
       "seconds": 210,
       "skippedStationIds": []
+    }
+  ],
+  "1": [
+    {
+      "lineId": "1",
+      "fromStationId": "136",
+      "toStationId": "137",
+      "seconds": 147,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "137",
+      "toStationId": "140",
+      "seconds": 273,
+      "skippedStationIds": [
+        "138",
+        "139"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "140",
+      "toStationId": "142",
+      "seconds": 210,
+      "skippedStationIds": [
+        "141"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "142",
+      "toStationId": "149",
+      "seconds": 693,
+      "skippedStationIds": [
+        "143",
+        "144",
+        "145",
+        "146",
+        "147",
+        "148"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "142",
+      "toStationId": "170",
+      "seconds": 1176,
+      "skippedStationIds": [
+        "166",
+        "167",
+        "168",
+        "169"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "149",
+      "toStationId": "151",
+      "seconds": 189,
+      "skippedStationIds": [
+        "150"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "151",
+      "toStationId": "153",
+      "seconds": 189,
+      "skippedStationIds": [
+        "152"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "153",
+      "toStationId": "154",
+      "seconds": 126,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "154",
+      "toStationId": "155",
+      "seconds": 105,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "155",
+      "toStationId": "156",
+      "seconds": 105,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "156",
+      "toStationId": "157",
+      "seconds": 105,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "157",
+      "toStationId": "159",
+      "seconds": 168,
+      "skippedStationIds": [
+        "158"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "159",
+      "toStationId": "161",
+      "seconds": 168,
+      "skippedStationIds": [
+        "160"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "170",
+      "toStationId": "172",
+      "seconds": 378,
+      "skippedStationIds": [
+        "171"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "172",
+      "toStationId": "174",
+      "seconds": 189,
+      "skippedStationIds": [
+        "173"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "174",
+      "toStationId": "177",
+      "seconds": 399,
+      "skippedStationIds": [
+        "175",
+        "176"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "177",
+      "toStationId": "179",
+      "seconds": 336,
+      "skippedStationIds": [
+        "178"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "179",
+      "toStationId": "183",
+      "seconds": 441,
+      "skippedStationIds": [
+        "181",
+        "182"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "183",
+      "toStationId": "188",
+      "seconds": 861,
+      "skippedStationIds": [
+        "184",
+        "185",
+        "186",
+        "187"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "188",
+      "toStationId": "189",
+      "seconds": 294,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "189",
+      "toStationId": "192",
+      "seconds": 588,
+      "skippedStationIds": [
+        "190",
+        "191"
+      ]
     }
   ]
 }
