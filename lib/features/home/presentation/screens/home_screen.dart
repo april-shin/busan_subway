@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../domain/usecases/search_route.dart';
+import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../route_search/presentation/providers/timetable_providers.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../../../subway_map/presentation/screens/subway_map_screen.dart';
@@ -55,6 +56,7 @@ class HomeScreen extends StatelessWidget {
           const Expanded(
             child: SubwayMapScreen(),
           ),
+          const HomeBannerAd(),
         ],
       ),
     );
