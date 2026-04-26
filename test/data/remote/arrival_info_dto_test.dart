@@ -197,5 +197,35 @@ void main() {
         expect(dto.toEntity().arrivalSeconds, 0);
       });
     });
+
+    // 신분당선 등 일부 노선은 btrainNo 를 빈 문자열로 보낸다. `??` 만 쓰면
+    // 빈 문자열이 그대로 trainNo 가 되어 단조 감소 clamp 의 매칭 키가 깨지므로,
+    // 빈 문자열도 누락으로 간주해 ordkey 로 폴백해야 한다 (원칙 1 보강).
+    group('trainNo 폴백 (원칙 1 매칭 키 안정화)', () {
+      test('btrainNo 비어있고 ordkey 있으면 ordkey 사용', () {
+        const dto = ArrivalInfoDto(btrainNo: '', ordkey: '01077강남0');
+        expect(dto.toEntity().trainNo, '01077강남0');
+      });
+
+      test('btrainNo null 이고 ordkey 있으면 ordkey 사용', () {
+        const dto = ArrivalInfoDto(ordkey: '01077강남0');
+        expect(dto.toEntity().trainNo, '01077강남0');
+      });
+
+      test('btrainNo 채워져 있으면 btrainNo 우선', () {
+        const dto = ArrivalInfoDto(btrainNo: 'D5001', ordkey: '01077강남0');
+        expect(dto.toEntity().trainNo, 'D5001');
+      });
+
+      test('btrainNo 빈 문자열, ordkey 도 빈 문자열 → 빈 trainNo', () {
+        const dto = ArrivalInfoDto(btrainNo: '', ordkey: '');
+        expect(dto.toEntity().trainNo, '');
+      });
+
+      test('둘 다 null → 빈 trainNo', () {
+        const dto = ArrivalInfoDto();
+        expect(dto.toEntity().trainNo, '');
+      });
+    });
   });
 }

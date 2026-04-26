@@ -107,7 +107,12 @@ class ArrivalInfoDto with _$ArrivalInfoDto {
           ? DateTime.tryParse(recptnDt!) ?? DateTime.now()
           : DateTime.now(),
       currentStationName: _extractStationName(arvlMsg3),
-      trainNo: btrainNo ?? ordkey ?? '',
+      // 빈 문자열도 누락으로 간주해 ordkey 로 폴백한다. 신분당선 등 일부 노선이
+      // btrainNo 를 빈 문자열로 보내는 케이스가 있어, `??` 만으로는 trainNo 가
+      // 흔들려 단조 감소 카운트다운(원칙 1) 의 매칭 키가 깨진다.
+      trainNo: (btrainNo?.isNotEmpty ?? false)
+          ? btrainNo!
+          : (ordkey?.isNotEmpty ?? false ? ordkey! : ''),
       positionStatus: _extractPositionStatus(arvlMsg3),
       arrivalCode: arvlCd != null ? int.tryParse(arvlCd!) : null,
     );

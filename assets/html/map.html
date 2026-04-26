@@ -889,10 +889,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var stationMap = {};       // stationId → station 객체
   var waypointIndex = {};    // "fromId_toId" → [{x,y}, ...] (중간점 포함 좌표 배열)
 
-  // 열차 아이콘 옆의 상세 디버그 표시(호선 번호, prog, 초, 구간 등) on/off 토글.
-  // 나중에 동작 확인이 필요할 때 이 값만 true로 바꾸면 모든 debug 표시가 복원된다.
-  var SHOW_TRAIN_DEBUG = false;
-
   var rafPending = false;
   function scheduleTransform() {
     if (rafPending) return;
@@ -917,6 +913,11 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var liveTrainsGroup = document.getElementById('live-trains');
   var activeTrains = {};
   var arrivedTrains = {};
+  // [원칙 1 보강] 보조키 기반 단조 감소 메모리.
+  // trainNo 가 흔들리는 노선(신분당선 등 btrainNo 미제공) 에서도 단조 감소 clamp 가
+  // 작동하도록 (lineId|direction|destination|currentStation) 슬롯별로 마지막 prev
+  // 정보를 60초 TTL 로 보존한다. activeTrains[trainNo] 매칭 miss 시에만 보조 매칭 사용.
+  var trainSlotMemory = {};
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
 
@@ -1834,8 +1835,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       g.appendChild(badgeText);
     }
 
-    // [디버그용] 열차 위치 결정 요소 표시 (SHOW_TRAIN_DEBUG=true일 때만)
-    if (SHOW_TRAIN_DEBUG) g.appendChild(buildDebugGroup(train));
+    // [디버그용] 열차 위치 결정 요소 표시
+    g.appendChild(buildDebugGroup(train));
 
     // initialProgress 반영: 첫 세그먼트 내 보간 위치에 배치
     var startX = train.fromSvgX;
@@ -2160,15 +2161,23 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       ? stationIndices[origCurIdx + 1] : path.length - 1;
 
     // [원칙 4] 점프 방지 — target 을 지수 감쇠로 catch-up.
-    // refresh 로 target 이 갑자기 이동해도 currentPos 는 천천히 따라잡는다.
-    // frame rate 에 독립적이도록 실제 경과 ms 기반 반감기(HALF_LIFE_MS)로 수렴.
-    //   3000ms 반감기: 3s→50%, 6s→25%, 9s→12.5%, 12s→6.25% (실질 수렴)
+    // refresh 로 target 이 갑자기 이동해도 currentPos 는 부드럽게 따라잡는다.
+    // frame rate 에 독립적이도록 실제 경과 ms 기반 반감기로 수렴.
     //
-    // 임계치(예: 20px) 미만은 즉시 클램프하던 과거 정책은 작은 점프(=시각적 점프)
-    // 를 유발해 원칙 4 위반으로 간주된다. 따라서 **항상** 지수 감쇠를 적용하고,
-    // 충분히 가까워지면(< SNAP_PX) target 으로 스냅한다.
+    // 거리 기반 dynamic 반감기:
+    //   - 작은 흔들림 (dist <= 30px): 3000ms 반감기 — 정상 catch-up.
+    //     API 지터/라운딩 노이즈 흡수, 동일 cycle 내 forward animation.
+    //   - 큰 점프 (dist > 30px): 500ms 반감기 — 빠르게 수렴.
+    //     역 전환·path 축소 등으로 stale currentPos 가 새 target 에서 멀리
+    //     떨어진 상황에서, 시각적으로 ~1.5s 안에 정착해 "탈선" 인상 방지.
+    //   거리가 줄어들면서 자동으로 짧은 반감기 → 긴 반감기로 전환됨.
+    //
+    // 임계치 미만 즉시 클램프 정책은 시각적 점프를 유발하므로 사용 안 함.
+    // 충분히 가까워지면(< SNAP_PX) target 으로 스냅 (마지막 0.5px 잔여 정리).
     var SNAP_PX = 0.5;
-    var HALF_LIFE_MS = 3000;
+    var HALF_LIFE_FAR_MS = 500;   // dist > 30px
+    var HALF_LIFE_NEAR_MS = 3000; // dist <= 30px
+    var FAST_DIST_THRESHOLD = 30;
 
     // refresh 시 매번 step 재시작되므로 lastFrameMs 를 리셋하여 첫 frame 에서
     // 거대한 deltaMs 로 순간 수렴해버리는 현상을 방지.
@@ -2225,7 +2234,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       } else {
         // dist 가 SNAP_PX 이상이면 catch-up 진행 중으로 표시 (도착 가드용).
         trainState.catchingUp = true;
-        var factor = Math.pow(0.5, deltaMs / HALF_LIFE_MS);
+        // [원칙 4 dynamic] 거리 클수록 짧은 반감기로 빨리 수렴.
+        var halfLife = (dist > FAST_DIST_THRESHOLD)
+          ? HALF_LIFE_FAR_MS : HALF_LIFE_NEAR_MS;
+        var factor = Math.pow(0.5, deltaMs / halfLife);
         cp.x = target.x + (cp.x - target.x) * factor;
         cp.y = target.y + (cp.y - target.y) * factor;
         if (Math.abs(target.x - cp.x) < SNAP_PX &&
@@ -2253,6 +2265,13 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
   function playArrivalEffect(trainState, trainNo) {
     arrivedTrains[trainNo] = true;
+    // [원칙 1 보강] 도착한 trainNo 의 슬롯 메모리만 정리.
+    // 같은 슬롯에 매 refresh 다른 trainNo 가 들어오는 노선(신분당선 등)에서
+    // 무조건 slotKey 를 지우면 새 train 의 prev 정보까지 잃어 단조 감소가 깨짐.
+    // 따라서 메모리의 trainNo 가 자기 자신과 일치할 때만 삭제.
+    for (var k in trainSlotMemory) {
+      if (trainSlotMemory[k].trainNo === trainNo) delete trainSlotMemory[k];
+    }
     var el = trainState.element;
     var currentTransform = el.getAttribute('transform') || '';
 
@@ -2296,9 +2315,42 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
   }
 
+  // [원칙 1 보강] 슬롯 보조키: trainNo 가 흔들려도 같은 노선/방향/행선/현재역
+  // 조합이면 단조 감소를 강제하기 위한 식별자.
+  function makeSlotKey(t) {
+    return (t.lineId || '') + '|' + (t.direction || '') + '|' +
+           (t.destination || '') + '|' + (t.currentStation || '');
+  }
+
+  // 슬롯 메모리에 현재 t 의 baseArrival/baseReceivedAt 을 기록한다.
+  // clamp 적용 후 호출해 다음 refresh 의 prev 비교에 쓰인다.
+  function rememberSlot(t, nowMs) {
+    var k = makeSlotKey(t);
+    if (k === '|||') return; // 빈 보조키 방어
+    trainSlotMemory[k] = {
+      trainNo: t.trainNo,
+      baseArrival: (t.arrivalSeconds != null) ? t.arrivalSeconds : 0,
+      baseReceivedAt: t.receivedAtEpochMs || nowMs,
+      lastSeenMs: nowMs
+    };
+  }
+
   window.showTrains = function(trainsJson) {
     var trains = JSON.parse(trainsJson);
     var newTrainIds = {};
+
+    // [원칙 1 보강] 보조키 fallback 충돌 검사용 사전 점유 카운트.
+    // 같은 슬롯에 동시에 존재하는 train(기존 + 신규) 의 총 수를 센다. 점유가 1 일
+    // 때만 trainSlotMemory 의 prev 정보를 신규 train 에 적용 — 동일 슬롯에 기존
+    // train + 신규 train 이 공존하는 비정상 상황(잘못된 prev 인계 위험)에서도
+    // fallback 을 비활성화해 안전 측 동작.
+    var slotOccupancy = {};
+    for (var pi = 0; pi < trains.length; pi++) {
+      var pt = trains[pi];
+      if (arrivedTrains[pt.trainNo]) continue;
+      var pk = makeSlotKey(pt);
+      slotOccupancy[pk] = (slotOccupancy[pk] || 0) + 1;
+    }
 
     for (var i = 0; i < trains.length; i++) {
       var t = trains[i];
@@ -2342,7 +2394,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           }
           // 행선이 길어지면 레이블 박스도 재계산(짧아질 때도 재축소).
           resizeTrainDestinationLabel(existing.element, t.destination);
-          if (SHOW_TRAIN_DEBUG) updateTrainDebugInfo(existing.element, t);
+          updateTrainDebugInfo(existing.element, t);
+          existing.slotKey = makeSlotKey(t);
+          rememberSlot(t, nowMs);
           continue;
         }
         cancelTrainAnimation(existing);
@@ -2351,26 +2405,55 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         existing.lastUpdateTime = nowMs;
         existing.baseArrival = t.arrivalSeconds;
         existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
+        existing.slotKey = makeSlotKey(t);
         var texts = existing.element.querySelectorAll('text');
         if (texts.length > 0) {
           texts[0].textContent = t.destination || '';
         }
         resizeTrainDestinationLabel(existing.element, t.destination);
-        // [디버그용] 기존 열차의 디버그 정보 갱신 (SHOW_TRAIN_DEBUG=true일 때만)
-        if (SHOW_TRAIN_DEBUG) updateTrainDebugInfo(existing.element, t);
+        // [디버그용] 기존 열차의 디버그 정보 갱신
+        updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);
+        rememberSlot(t, nowMs);
       } else {
+        var nowMs2 = Date.now();
+
+        // [원칙 1 보강] 보조키 fallback clamp.
+        // trainNo 가 흔들려 activeTrains miss 가 났더라도, 같은 슬롯
+        // (lineId|direction|destination|currentStation) 의 prev 정보가 60초 이내이고
+        // 신규 train 충돌이 없으면 단조 감소를 강제한다. 신분당선 등 btrainNo
+        // 미제공 노선의 카운트다운 역행을 차단.
+        var slotKey = makeSlotKey(t);
+        var slotMem = trainSlotMemory[slotKey];
+        if (slotMem != null
+            && slotOccupancy[slotKey] === 1
+            && (nowMs2 - slotMem.lastSeenMs) < 60000) {
+          var prevReal = Math.max(0,
+            slotMem.baseArrival - (nowMs2 - slotMem.baseReceivedAt) / 1000);
+          var newReceivedAt2 = (t.receivedAtEpochMs != null)
+            ? t.receivedAtEpochMs : nowMs2;
+          var newReal2 = Math.max(0,
+            (t.arrivalSeconds || 0) - (nowMs2 - newReceivedAt2) / 1000);
+          if (newReal2 > prevReal + 2) {
+            t.arrivalSeconds = Math.round(prevReal);
+            t.receivedAtEpochMs = nowMs2;
+          }
+        }
+
         var g = createTrainIcon(t, color);
         liveTrainsGroup.appendChild(g);
-        var nowMs2 = Date.now();
         activeTrains[t.trainNo] = {
           element: g, animationId: null, destination: t.destination || '',
           lastArrivalSeconds: t.arrivalSeconds,
           lastUpdateTime: nowMs2,
           baseArrival: t.arrivalSeconds,
-          baseReceivedAt: t.receivedAtEpochMs || nowMs2
+          baseReceivedAt: t.receivedAtEpochMs || nowMs2,
+          // [원칙 1 보강] playArrivalEffect 시 이 trainNo 가 차지한 슬롯 메모리를
+          // trainNo 매칭이 흔들려도 정확히 정리하기 위한 보조키 저장.
+          slotKey: slotKey
         };
         startTrainAnimation(activeTrains[t.trainNo], t);
+        rememberSlot(t, nowMs2);
       }
     }
 
@@ -2380,10 +2463,38 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         toRemove.push(id);
       }
     }
+    // [도착/필터변경 분리 가드]
+    // toRemove 는 "API 응답에서 더 이상 보이지 않는 train". 두 가지 원인이 섞여 있다.
+    //   (A) 진짜 도착: API 가 보고 안 함 → 도착 애니메이션 발동 ✓
+    //   (B) routeFilter 변경: 출발/도착역을 새로 선택해 lineId·isDown 이 바뀌어
+    //       liveTrainsProvider 가 다른 노선/방향 train 을 필터링으로 떨어뜨림
+    //       → 이전엔 도착 애니메이션 폭발 ✗
+    // 마지막 lastArrivalSeconds 가 임계값 초과면 (B) 로 간주하고 silent 제거.
+    // 진짜 도착 시 마지막 갱신값은 보통 0~수십 초이며 60 초 임계는 충분히 보수적.
+    var SILENT_REMOVE_THRESHOLD_S = 60;
     for (var i = 0; i < toRemove.length; i++) {
       var id = toRemove[i];
-      cancelTrainAnimation(activeTrains[id]);
-      playArrivalEffect(activeTrains[id], id);
+      var trainState = activeTrains[id];
+      cancelTrainAnimation(trainState);
+      var last = trainState.lastArrivalSeconds;
+      if (last != null && last > SILENT_REMOVE_THRESHOLD_S) {
+        // silent 제거: 도착 펄스 / trainArrived 이벤트 발동 안 함
+        if (trainState.element && trainState.element.parentNode) {
+          trainState.element.parentNode.removeChild(trainState.element);
+        }
+        // [원칙 1 보강] slotKey 직접 삭제 시 같은 슬롯에 이미 새 trainNo 가
+        // 등록되어 있을 수 있으므로(신분당선처럼 매 refresh trainNo 가 흔들림),
+        // 메모리의 trainNo 가 자기 자신일 때만 삭제. 이 가드 누락 시 새 train 의
+        // prev 정보까지 같이 지워져 다음 cycle 의 fallback clamp 가 무력화됨.
+        if (trainState.slotKey
+            && trainSlotMemory[trainState.slotKey]
+            && trainSlotMemory[trainState.slotKey].trainNo === id) {
+          delete trainSlotMemory[trainState.slotKey];
+        }
+        delete activeTrains[id];
+        continue;
+      }
+      playArrivalEffect(trainState, id);
     }
 
     // API에서 더 이상 보고하지 않는 열차는 arrivedTrains에서도 제거
@@ -2393,6 +2504,16 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     for (var id in arrivedTrains) {
       if (!trainNoSet[id] && !activeTrains[id]) delete arrivedTrains[id];
     }
+
+    // [원칙 1 보강] 60초 이상 미관측 슬롯 메모리 sweep.
+    // 도착했거나 운행 종료된 슬롯의 prev 가 잔류해 새 열차 clamp 에 잘못 적용되는
+    // 상황 방지. activeTrains 와 분리되어 있으므로 별도 TTL 로 만료.
+    var sweepNow = Date.now();
+    for (var sk in trainSlotMemory) {
+      if (sweepNow - trainSlotMemory[sk].lastSeenMs > 60000) {
+        delete trainSlotMemory[sk];
+      }
+    }
   };
 
   window.clearTrains = function() {
@@ -2401,23 +2522,22 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
     activeTrains = {};
     arrivedTrains = {};
+    trainSlotMemory = {};
     liveTrainsGroup.replaceChildren();
   };
 
-  // 1초마다 디버그 남은시간 카운트다운 (SHOW_TRAIN_DEBUG=true일 때만 동작)
-  if (SHOW_TRAIN_DEBUG) {
-    setInterval(function() {
-      var now = Date.now();
-      for (var id in activeTrains) {
-        var train = activeTrains[id];
-        if (train.lastArrivalSeconds == null || train.lastUpdateTime == null) continue;
-        var elapsed = Math.floor((now - train.lastUpdateTime) / 1000);
-        var remaining = Math.max(0, train.lastArrivalSeconds - elapsed);
-        var secEl = train.element.querySelector('.debug-seconds');
-        if (secEl) secEl.textContent = '초: ' + remaining;
-      }
-    }, 1000);
-  }
+  // 1초마다 디버그 남은시간 카운트다운
+  setInterval(function() {
+    var now = Date.now();
+    for (var id in activeTrains) {
+      var train = activeTrains[id];
+      if (train.lastArrivalSeconds == null || train.lastUpdateTime == null) continue;
+      var elapsed = Math.floor((now - train.lastUpdateTime) / 1000);
+      var remaining = Math.max(0, train.lastArrivalSeconds - elapsed);
+      var secEl = train.element.querySelector('.debug-seconds');
+      if (secEl) secEl.textContent = '초: ' + remaining;
+    }
+  }, 1000);
 
   // ============================================================
   // 경로 선택 툴바
