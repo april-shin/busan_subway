@@ -25,6 +25,14 @@
 ///       열차가 다음 역으로 진행한 상황까지 catch-up 을 끌고 가면 stale 좌표가
 ///       SVG 선과 분리되어 "탈선처럼 보임" (사용자 보고). showTrains 의 existing-
 ///       train 분기 참조.
+///
+/// ⛔ 동명 역 매칭 — `findStationByName(name, px, py)` 시그니처 변경 금지
+///   5호선 "양평"(svgX=624, svgY=712) 과 경의중앙선 "양평"(svgX=2112, svgY=576)
+///   같이 같은 이름·다른 좌표인 역을 구분하기 위해, 탭한 좌표(px, py)와 가장 가까운
+///   역을 반환해야 한다. 이름만으로 검색하는 옛 시그니처(`findStationByName(name)`)
+///   로 회귀하면 "양평" 클릭 시 항상 stations 배열의 첫 매치(5호선)가 잡혀
+///   경의중앙선 양평을 선택할 수 없게 된다. 호출부 `tapLayer.pointerup` 의
+///   `findStationByName(t.name, svgX, svgY)` 도 함께 유지할 것.
 library;
 
 import 'dart:convert';
@@ -549,11 +557,24 @@ $textElements
   // SVG 렌더링 후 텍스트 타겟 구축
   buildTextTargets();
 
-  function findStationByName(name) {
+  // 동명 역(예: 5호선 "양평" vs 경의중앙선 "양평") 구분을 위해 좌표 근접도로 선택한다.
+  // px/py가 주어지면 이름 일치 역 중 그 좌표에 가장 가까운 역을 반환하고,
+  // 없으면(기존 호환) 첫 매치를 반환한다.
+  function findStationByName(name, px, py) {
+    var best = null;
+    var bestDistSq = Infinity;
     for (var i = 0; i < stations.length; i++) {
-      if (stations[i].name === name) return stations[i];
+      if (stations[i].name !== name) continue;
+      if (px == null || py == null) return stations[i];
+      var dx = stations[i].svgX - px;
+      var dy = stations[i].svgY - py;
+      var d = dx * dx + dy * dy;
+      if (d < bestDistSq) {
+        bestDistSq = d;
+        best = stations[i];
+      }
     }
-    return null;
+    return best;
   }
 
   tapLayer.addEventListener('pointerup', function(e) {
@@ -570,7 +591,8 @@ $textElements
     for (var i = 0; i < svgTextTargets.length; i++) {
       var t = svgTextTargets[i];
       if (Math.abs(svgX - t.cx) <= t.halfW && Math.abs(svgY - t.cy) <= t.halfH) {
-        nearest = findStationByName(t.name);
+        // 탭 위치(svgX, svgY)에 가까운 동명 역을 선택 — 5호선/경의중앙선 양평 구분
+        nearest = findStationByName(t.name, svgX, svgY);
         if (nearest) break;
       }
     }

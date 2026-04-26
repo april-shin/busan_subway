@@ -1120,11 +1120,24 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // SVG 렌더링 후 텍스트 타겟 구축
   buildTextTargets();
 
-  function findStationByName(name) {
+  // 동명 역(예: 5호선 "양평" vs 경의중앙선 "양평") 구분을 위해 좌표 근접도로 선택한다.
+  // px/py가 주어지면 이름 일치 역 중 그 좌표에 가장 가까운 역을 반환하고,
+  // 없으면(기존 호환) 첫 매치를 반환한다.
+  function findStationByName(name, px, py) {
+    var best = null;
+    var bestDistSq = Infinity;
     for (var i = 0; i < stations.length; i++) {
-      if (stations[i].name === name) return stations[i];
+      if (stations[i].name !== name) continue;
+      if (px == null || py == null) return stations[i];
+      var dx = stations[i].svgX - px;
+      var dy = stations[i].svgY - py;
+      var d = dx * dx + dy * dy;
+      if (d < bestDistSq) {
+        bestDistSq = d;
+        best = stations[i];
+      }
     }
-    return null;
+    return best;
   }
 
   tapLayer.addEventListener('pointerup', function(e) {
@@ -1141,7 +1154,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     for (var i = 0; i < svgTextTargets.length; i++) {
       var t = svgTextTargets[i];
       if (Math.abs(svgX - t.cx) <= t.halfW && Math.abs(svgY - t.cy) <= t.halfH) {
-        nearest = findStationByName(t.name);
+        // 탭 위치(svgX, svgY)에 가까운 동명 역을 선택 — 5호선/경의중앙선 양평 구분
+        nearest = findStationByName(t.name, svgX, svgY);
         if (nearest) break;
       }
     }
