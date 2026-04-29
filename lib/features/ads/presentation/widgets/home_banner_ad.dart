@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-/// 홈 화면 하단에 노출되는 AdMob 적응형(앵커드) 배너 광고 위젯.
+/// 화면 하단에 노출되는 AdMob 적응형(앵커드) 배너 광고 위젯.
+/// 홈/경로 결과/도착 정보 화면 하단에 공용으로 사용된다.
 ///
 /// - kDebugMode: Google 공식 테스트 단위 ID 사용
 /// - release  : 발급 후 [_kAndroidReleaseUnitId]/[_kIosReleaseUnitId]에 채워 넣을 것.
@@ -19,8 +20,8 @@ class HomeBannerAd extends StatefulWidget {
 
   static const String _kAndroidReleaseUnitId =
       'ca-app-pub-3206652264632834/5042177959';
-  // TODO: AdMob 콘솔에서 iOS 배너 광고 단위 발급 후 교체.
-  static const String _kIosReleaseUnitId = '';
+  static const String _kIosReleaseUnitId =
+      'ca-app-pub-3206652264632834/1169097697';
 
   @override
   State<HomeBannerAd> createState() => _HomeBannerAdState();

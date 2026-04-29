@@ -5,6 +5,7 @@ import '../../../../core/constants/line_colors.dart';
 import '../../../../domain/entities/arrival_info.dart';
 import '../../../../domain/entities/line_schedule.dart';
 import '../../../../domain/entities/route_result.dart';
+import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../arrival_info/presentation/providers/arrival_providers.dart';
 import '../providers/timetable_providers.dart';
 import '../../utils/departure_time_calculator.dart';
@@ -107,6 +108,7 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
                 tabs: tabs,
               ),
       ),
+      bottomNavigationBar: const HomeBannerAd(),
       body: routes.length == 1
           ? _RouteView(
               routeResult: routes.first,

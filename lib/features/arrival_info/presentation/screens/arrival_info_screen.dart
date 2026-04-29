@@ -8,6 +8,7 @@ import '../../../../core/constants/line_colors.dart';
 import '../../../../core/constants/subway_id_mapping.dart';
 import '../../../../core/utils/enrich_arrival_info.dart';
 import '../../../../domain/entities/arrival_info.dart';
+import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../providers/arrival_providers.dart';
 import '../widgets/arrival_card.dart';
@@ -96,10 +97,12 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
       },
       loading: () => Scaffold(
         appBar: _appBar(showRefresh: true),
+        bottomNavigationBar: const HomeBannerAd(),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, _) => Scaffold(
         appBar: _appBar(showRefresh: true),
+        bottomNavigationBar: const HomeBannerAd(),
         body: _buildError(error),
       ),
     );
@@ -151,6 +154,7 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
             tabs: subwayIds.map(_buildLineTab).toList(),
           ),
         ),
+        bottomNavigationBar: const HomeBannerAd(),
         body: TabBarView(
           children: subwayIds
               .map((id) => _buildSingleLine(groups[id]!, includeAppBar: false))
@@ -207,6 +211,7 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
         length: 2,
         child: Scaffold(
           appBar: _appBar(showRefresh: true, bottom: tabBar),
+          bottomNavigationBar: const HomeBannerAd(),
           body: TabBarView(
             children: [
               _buildArrivalList(upbound, upLabel),
