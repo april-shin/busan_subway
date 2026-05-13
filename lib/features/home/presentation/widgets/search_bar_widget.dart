@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/line_colors.dart';
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/entities/station.dart';
 
 class RouteSearchBar extends StatelessWidget {
@@ -24,7 +25,10 @@ class RouteSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space16,
+        vertical: AppSpacing.space8,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
@@ -48,7 +52,7 @@ class RouteSearchBar extends StatelessWidget {
                   iconColor: Colors.blue,
                   onTap: onDepartureTap,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.space4),
                 _StationField(
                   label: '도착',
                   station: arrival,
@@ -59,7 +63,7 @@ class RouteSearchBar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.space8),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -106,7 +110,10 @@ class _StationField extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space8,
+          vertical: AppSpacing.space6,
+        ),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
@@ -114,7 +121,7 @@ class _StationField extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon, size: 16, color: iconColor),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.space8),
             if (station != null) ...[
               if (color != null)
                 Container(
@@ -125,21 +132,17 @@ class _StationField extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.space4),
               Text(
                 station!.name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(context).textTheme.labelLarge,
               ),
             ] else
               Text(
                 '$label역을 선택하세요',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[500],
-                ),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Colors.grey[500],
+                    ),
               ),
           ],
         ),

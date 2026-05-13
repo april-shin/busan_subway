@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/line_colors.dart';
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 
@@ -59,11 +60,11 @@ class _StationDetailBody extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.space16),
         children: [
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.space16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -71,48 +72,48 @@ class _StationDetailBody extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
+                            horizontal: AppSpacing.space12,
+                            vertical: AppSpacing.space4),
                         decoration: BoxDecoration(
                           color: color,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           lineName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.space12),
                       Text(
                         station.name,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.space12),
                   Text(
                     '역 번호: ${station.id}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
+                        ),
                   ),
                 ],
               ),
             ),
           ),
           if (station.isTransfer && station.transferLines.length > 1) ...[
-            const SizedBox(height: 16),
-            const Text(
+            const SizedBox(height: AppSpacing.space16),
+            Text(
               '환승 노선',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.space8),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.space8,
+              runSpacing: AppSpacing.space8,
               children: station.transferLines.map((lineId) {
                 final transferColor = lineColors[lineId] ?? Colors.grey;
                 final transferName = lineNames[lineId] ?? lineId;
@@ -126,7 +127,7 @@ class _StationDetailBody extends StatelessWidget {
               }).toList(),
             ),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.space24),
           ElevatedButton.icon(
             onPressed: () {
               context.go('/arrivals/${station.name}');
@@ -134,7 +135,9 @@ class _StationDetailBody extends StatelessWidget {
             icon: const Icon(Icons.access_time),
             label: const Text('실시간 도착 정보 보기'),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.space12,
+              ),
             ),
           ),
         ],

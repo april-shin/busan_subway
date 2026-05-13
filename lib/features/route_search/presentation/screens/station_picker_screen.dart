@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/line_colors.dart';
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 
@@ -37,7 +38,7 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.space16),
             child: TextField(
               controller: _controller,
               autofocus: true,
@@ -70,7 +71,10 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
                   return Center(
                     child: Text(
                       '검색 결과가 없습니다',
-                      style: TextStyle(color: Colors.grey[500]),
+                      style:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.grey[500],
+                              ),
                     ),
                   );
                 }
@@ -153,13 +157,13 @@ class _StationTile extends StatelessWidget {
       ),
       title: Text(
         station.name,
-        style: const TextStyle(fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.labelLarge,
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.only(top: AppSpacing.space4),
         child: Wrap(
-          spacing: 6,
-          runSpacing: 4,
+          spacing: AppSpacing.space6,
+          runSpacing: AppSpacing.space4,
           children: [
             for (final id in lineIds) _LineBadge(lineId: id),
           ],
@@ -182,18 +186,20 @@ class _LineBadge extends StatelessWidget {
     final color = lineColorFor(lineId);
     final name = lineNames[lineId] ?? lineId;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space8,
+        vertical: AppSpacing.space2,
+      ),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         name,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }

@@ -153,6 +153,13 @@ final _lastSuccessfulTrainsProvider =
 final _lastEnrichedArrivalsProvider =
     StateProvider<List<ArrivalInfo>>((ref) => []);
 
+/// API 가 보고하는 currentStationName 에서 부역명 괄호를 제거한다.
+/// 예: "오목교(목동운동장앞)" → "오목교", "신정(은행정)" → "신정".
+/// stations.json 내부 이름과 매칭이 가능하도록 정규화. 괄호가 없으면 그대로 반환.
+final _stationAliasPattern = RegExp(r'\s*\([^)]*\)\s*');
+String _stripStationAlias(String name) =>
+    name.replaceAll(_stationAliasPattern, '').trim();
+
 /// 실시간 열차 데이터를 가공하여 반환하는 프로바이더.
 ///
 /// 출발역이 선택되어 있을 때만 활성화되며, `ApiConstants.refreshInterval`
@@ -236,8 +243,13 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
 
-    // 현재 위치 역명이 없으면 건너뜀
-    final currentName = arrival.currentStationName;
+    // 현재 위치 역명이 없으면 건너뜀.
+    // API 가 부역명을 괄호로 붙이는 경우 정규화 (예: "오목교(목동운동장앞)" → "오목교",
+    // "신정(은행정)" → "신정"). 정규화 안 하면 stationsByName lookup 실패해
+    // train 이 해당 역 통과 시 화면에서 사라졌다 다시 나타나는 회귀 발생 (5호선
+    // 신정/오목교 케이스). enrichArrivalInfo 가 이미 currentStationName 정규화를
+    // 수행한다면 여기 strip 은 no-op.
+    final currentName = _stripStationAlias(arrival.currentStationName);
     if (currentName.isEmpty) continue;
 
     // 현재역의 SVG 좌표 조회 (같은 노선의 역 우선). 경로 확장 시작점으로 필요.

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/constants/line_colors.dart';
 import '../../../../core/constants/subway_id_mapping.dart';
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../core/utils/enrich_arrival_info.dart';
 import '../../../../domain/entities/arrival_info.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
@@ -248,23 +249,25 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
   Widget _buildError(Object error) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.wifi_off, size: 48, color: Colors.orange),
-            const SizedBox(height: 16),
-            const Text(
+            const SizedBox(height: AppSpacing.space16),
+            Text(
               '도착 정보를 불러올 수 없습니다',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.space8),
             Text(
               _userFriendlyError(error),
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.space24),
             ElevatedButton.icon(
               onPressed: _refresh,
               icon: const Icon(Icons.refresh),
@@ -298,7 +301,9 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
       return Center(
         child: Text(
           '$direction 방면 도착 정보가 없습니다',
-          style: TextStyle(color: Colors.grey[500]),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[500],
+              ),
         ),
       );
     }

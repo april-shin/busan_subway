@@ -287,15 +287,18 @@ class _RouteSummaryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
     return Container(
       color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Column(
         children: [
           if (isLoading)
-            const Text(
+            Text(
               '실시간 정보 조회중...',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: t.bodyMedium?.copyWith(
+                color: Colors.grey,
+              ),
             )
           else
             Row(
@@ -303,14 +306,13 @@ class _RouteSummaryHeader extends StatelessWidget {
               children: [
                 Text(
                   _formatTime(departureTime),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: t.titleLarge,
                 ),
                 Text(
                   ' 출발',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: t.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
@@ -318,14 +320,13 @@ class _RouteSummaryHeader extends StatelessWidget {
                 ),
                 Text(
                   _formatTime(arrivalTime),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: t.titleLarge,
                 ),
                 Text(
                   ' 도착',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: t.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
                 ),
               ],
             ),
@@ -363,6 +364,7 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -370,7 +372,9 @@ class _InfoChip extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           text,
-          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          style: t.labelMedium?.copyWith(
+            color: Colors.grey[600],
+          ),
         ),
       ],
     );
@@ -382,9 +386,15 @@ class _ChipDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Text('|', style: TextStyle(color: Colors.grey[400])),
+      child: Text(
+        '|',
+        style: t.bodyMedium?.copyWith(
+          color: Colors.grey[400],
+        ),
+      ),
     );
   }
 }
@@ -542,6 +552,7 @@ class _SegmentHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(left: 60, bottom: 4, top: 8),
       child: Row(
@@ -554,10 +565,9 @@ class _SegmentHeader extends StatelessWidget {
             ),
             child: Text(
               lineName,
-              style: const TextStyle(
+              style: t.bodySmall?.copyWith(
                 color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -570,12 +580,11 @@ class _SegmentHeader extends StatelessWidget {
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text(
+              child: Text(
                 '급행',
-                style: TextStyle(
+                style: t.bodySmall?.copyWith(
                   color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -583,12 +592,16 @@ class _SegmentHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             direction,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: t.bodySmall?.copyWith(
+              color: Colors.grey[600],
+            ),
           ),
           const Spacer(),
           Text(
             '$minutes분 (${stationCount > 1 ? stationCount - 1 : 0}개역)',
-            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            style: t.bodySmall?.copyWith(
+              color: Colors.grey[500],
+            ),
           ),
         ],
       ),
@@ -617,6 +630,7 @@ class _StationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
     final isEndpoint = isFirstInSegment || isLastInSegment;
     final dotSize = isEndpoint ? 12.0 : 6.0;
 
@@ -630,8 +644,7 @@ class _StationRow extends StatelessWidget {
             child: isEndpoint
                 ? Text(
                     time,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: t.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: Colors.grey[700],
                     ),
@@ -672,9 +685,7 @@ class _StationRow extends StatelessWidget {
           // 역명
           Text(
             stationName,
-            style: TextStyle(
-              fontSize: isEndpoint ? 14 : 12,
-              fontWeight: isEndpoint ? FontWeight.bold : FontWeight.normal,
+            style: (isEndpoint ? t.titleSmall : t.bodySmall)?.copyWith(
               color: isEndpoint ? Colors.black : Colors.grey[600],
             ),
           ),

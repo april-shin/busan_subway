@@ -1,309 +1,369 @@
-# Phase 03 — 코드 리뷰 (HomeScreen 하단 AdMob 배너)
+# 03 Code Review — UI 일관성 토큰 시스템 도입
 
-리뷰 대상:
-- 신규: `lib/features/ads/presentation/widgets/home_banner_ad.dart`
-- 수정: `pubspec.yaml`, `lib/main.dart`, `lib/features/home/presentation/screens/home_screen.dart`, `android/app/src/main/AndroidManifest.xml`, `ios/Runner/Info.plist`
-- 4원칙 보호 파일 변경 여부 확인 결과: **변경 없음** (`git diff --stat`로 `tool/build_map_html.dart`, `lib/features/subway_map/presentation/providers/live_train_provider.dart`, `assets/html/map.html` 모두 unmodified 확인 완료. 원칙 위반 0건.)
-
----
-
-## 코드 리뷰 결과
-
-### CRITICAL
-
-해당 사항 없음. 앱 크래시·기능 회귀·4원칙 위반은 발견되지 않았다. 미설정 release 단위 ID에 대한 안전 가드(`_resolveAdUnitId() == null` → early return + `SizedBox.shrink()`)가 정확히 작동하므로 release 빌드에서도 크래시 위험은 없다.
+작성: subway-code-reviewer
+대상 단계: Phase 3 (Phase 2 마이그레이션 결과 코드 리뷰)
+의존: `01_architecture.md`, `02a_arch_implementation.md`, `02b_map_implementation.md`, `02c_qa_implementation.md`
 
 ---
 
-### HIGH
+## 종합 판정
 
-#### H-1. `_loadAd()` 진행 중에 위젯이 dispose되면 BannerAd가 해제되지 않을 수 있다 (메모리 누수)
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:84-111`
-- **현상**: `_loadAd()`는 `await AdSize.getAnchoredAdaptiveBannerAdSize(...)` 직후 `if (!mounted) return;`로 보호하지만, **그 직후 `final ad = BannerAd(...)`을 생성하고 `_bannerAd = ad;`로 필드에 대입하기 전에는 `mounted` 체크가 없다.** 더 큰 문제는 `await ad.load();` 호출 도중에 위젯이 dispose되면 `dispose()`가 먼저 실행되어 `_bannerAd`(아직 `null` 또는 이미 대입됨)를 처리하지만, **`ad.load()` 가 진행 중인 BannerAd 객체는 dispose 호출 타이밍에 따라 누락될 수 있다.** 또한 `onAdLoaded` 콜백이 dispose 이후에 호출될 가능성에 대해 `mounted` 가드는 있으나, **이미 dispose된 위젯이 보유했던 ad 인스턴스는 누구도 dispose하지 않고 leak된다.**
-- **재현 시나리오**: 사용자가 홈 → 다른 라우트로 빠르게 이동 → 광고 로드 완료 시점 도달 → onAdLoaded 트리거. mounted=false이므로 setState는 스킵되지만, BannerAd 객체 자체는 native side에 살아 있음.
-- **수정 제안**:
-  ```dart
-  Future<void> _loadAd() async {
-    final adUnitId = _resolveAdUnitId();
-    if (adUnitId == null) return;
+**NEEDS_FIX (HIGH 1건 + MEDIUM 다수)**
 
-    final width = MediaQuery.of(context).size.width.truncate();
-    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
-      Orientation.portrait,
-      width,
-    );
-    if (size == null) return;
-    if (!mounted) return;
+CRITICAL 이슈 없음. 기능적 회귀 위험은 낮으나, **MaterialApp.builder의 textScaler clamp 가 Material localization 컨텍스트 외부에서 동작하지 않을 가능성** 1건과 **마이그레이션 누락 (station_detail / station_picker)** 1건이 존재한다. 후자는 설계 문서에서 "검색 결과 0" 으로 잘못 결론낸 결과이며, 일관성 목표(원래 사용자 요청)를 부분적으로만 달성한 상태다.
 
-    final ad = BannerAd(
-      adUnitId: adUnitId,
-      size: size,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (loadedAd) {
-          // dispose된 위젯이면 BannerAd도 즉시 해제.
-          if (!mounted) {
-            loadedAd.dispose();
-            return;
-          }
-          setState(() {
-            _isLoaded = true;
-            _failed = false;
-          });
-        },
-        onAdFailedToLoad: (failedAd, error) {
-          failedAd.dispose();
-          if (!mounted) return;
-          setState(() {
-            _bannerAd = null;
-            _isLoaded = false;
-            _failed = true;
-          });
+핵심 토큰 설계와 Migration 25곳 자체는 깔끔하게 수행되었다.
+
+---
+
+## CRITICAL
+
+없음.
+
+---
+
+## HIGH
+
+### H1. `lib/app.dart:91-113` — `MaterialApp.builder` 의 `MediaQuery.of(context)` 위치
+
+**문제**: `MaterialApp.router(builder: (context, child) { ... MediaQuery.of(context) ... })` 에서 사용하는 `context` 는 `MaterialApp` 보다 **상위** 의 BuildContext 다. 즉 builder 안의 `MediaQuery.of(context)` 는 `WidgetsApp` 이 주입한 MediaQuery (혹은 시스템 root MediaQuery) 를 가리킨다. 이 자체는 기능상 동작하지만, 다음 두 위험이 있다:
+
+1. **테스트 케이스 불일치**: `test/widget/text_scaler_clamp_test.dart` 의 `buildTestApp` 은 `MaterialApp.home` 안에서 `Builder` 로 `outerCtx` 를 받아 그 위에서 clamp 를 적용한다. 즉 builder 가 `MaterialApp` 내부 컨텍스트를 받는 케이스를 테스트한 셈이라, **실제 `lib/app.dart` 의 builder 케이스(외부 컨텍스트)를 검증하지 못한다**. textScaler clamp 가 실제 앱에서 의도대로 동작하지 않는 회귀가 발생해도 본 테스트는 잡지 못한다.
+2. **builder 컨텍스트의 textScaler 출처**: Flutter SDK 에서 `MaterialApp.builder` 의 context 는 `MediaQuery` (`View` 가 만든 root MediaQuery) 의 자식이므로 `textScaler` 는 정상 read 된다. 따라서 동작 자체는 OK 지만, 검증 부재가 회귀 위험.
+
+**권장 수정**:
+
+(A) **테스트 케이스 일치**: `text_scaler_clamp_test.dart` 의 위젯 통합 테스트를 `MaterialApp.builder` 패턴으로 재작성한다.
+
+```dart
+Widget buildTestApp({required TextScaler inputScaler}) {
+  captured = null;
+  return MediaQuery(
+    data: MediaQueryData(textScaler: inputScaler),
+    child: MaterialApp(
+      builder: (ctx, child) {
+        // lib/app.dart 와 동일 로직.
+        if (child == null) return const SizedBox.shrink();
+        final mq = MediaQuery.of(ctx);
+        final clamped = mq.textScaler.clamp(
+          minScaleFactor: 0.9, maxScaleFactor: 1.15,
+        );
+        return MediaQuery(
+          data: mq.copyWith(textScaler: clamped),
+          child: SafeArea(top: false, child: child),
+        );
+      },
+      home: Builder(
+        builder: (innerCtx) {
+          captured = MediaQuery.of(innerCtx).textScaler;
+          return const SizedBox.shrink();
         },
       ),
-    );
-
-    _bannerAd = ad;
-    await ad.load();
-    // load() 이후 dispose 됐다면 정리.
-    if (!mounted) {
-      ad.dispose();
-      _bannerAd = null;
-    }
-  }
-  ```
-  - 핵심 변경: ① `onAdLoaded`에서 unmount 시 `loadedAd.dispose()` 명시 호출, ② `await ad.load()` 직후 mounted 재검증 + 정리.
-
-#### H-2. `_resolveAdUnitId()`가 build/release 상관없이 데스크탑/웹 등 미지원 플랫폼에서도 호출될 수 있어 `Platform.isAndroid`/`isIOS` 체크는 OK지만, `dart:io`의 `Platform`이 web 빌드에서 컴파일 에러를 낸다.
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:1`
-- **현상**: 이 프로젝트는 현재 모바일 전용이지만, 향후 web 타겟 추가 시 `import 'dart:io' show Platform;`이 컴파일 실패를 유발한다. google_mobile_ads도 web 미지원.
-- **수정 제안**: 현재 시점에서는 우선순위 낮음(LOW로 강등 가능). 다만, 방어적으로 `kIsWeb` 가드를 추가해두는 것이 안전:
-  ```dart
-  import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
-  // ...
-  String? _resolveAdUnitId() {
-    if (kIsWeb) return null;
-    if (kDebugMode) {
-      // ...
-    }
-    // ...
-  }
-  ```
-  - 다만 현재 모바일 전용 프로젝트에서는 문제 없으므로, 이 항목은 web 확장 계획 없으면 생략 가능.
-
-#### H-3. Android `minSdkVersion`이 `flutter.minSdkVersion`(보통 21)일 가능성이 있어, google_mobile_ads 5.x(요구: minSdk 23)와 불일치 시 빌드 실패.
-- **파일**: `android/app/build.gradle.kts:37`
-- **현상**: `minSdk = flutter.minSdkVersion`. Flutter 3.41 기준 기본값이 21~24 사이로 변동. google_mobile_ads 5.3.x는 **minSdk 23 이상** 요구. 21이면 manifest merger 또는 런타임 빌드 실패.
-- **수정 제안**: `02_implementation.md`에서도 "후속 조치"로 언급되었으나, 리뷰 단계에서 명시적으로 점검 권장:
-  ```kotlin
-  defaultConfig {
-      applicationId = "com.april.seoul_subway"
-      minSdk = maxOf(flutter.minSdkVersion, 23)
-      // ...
-  }
-  ```
-  - 또는 단순히 `minSdk = 23`으로 고정. 빌드 시도에서 오류 발생 시 즉시 처리.
-
----
-
-### MEDIUM
-
-#### M-1. `_failed` 상태가 영구적이며 재시도 로직이 없다
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:33, 98-106`
-- **현상**: 네트워크 일시 단절·서버 일시 오류로 광고 로드 실패 시 `_failed = true`로 고정되어, 네트워크 복구 후에도 다시 시도하지 않음. 사용자가 앱을 재시작해야 광고가 보임.
-- **수정 제안**: `connectivity_plus`(이미 `pubspec.yaml`에 있음)와 연계해 네트워크 복구 이벤트에 재시도하거나, 최소한 일정 시간 후 1회 재시도 (`Future.delayed(Duration(seconds: 30), _loadAd)` + 재시도 횟수 제한). 단, 이번 단계에서는 요구사항 범위 외 작업이므로 후속 개선 사항으로 기록만.
-
-#### M-2. 광고가 한 번 로드된 후 위젯이 보일 때 `Expanded(SubwayMapScreen)`이 갑자기 줄어드는 layout shift
-- **파일**: `lib/features/home/presentation/screens/home_screen.dart:56-59`
-- **현상**: 초기 `SizedBox.shrink()` (높이 0) → 광고 로드 완료 시 `Container(height: ad.size.height)` 로 높이가 갑자기 50~60dp 추가됨. `Expanded(SubwayMapScreen)`은 그만큼 줄어들어 지도가 위로 점프하는 시각적 불편.
-- **수정 제안**: 적응형 배너 사이즈는 `getAnchoredAdaptiveBannerAdSize`를 통해 *로드 전에도* 미리 알 수 있다. 사이즈가 결정되는 즉시 (load 전) 빈 컨테이너로 자리 예약:
-  ```dart
-  // _HomeBannerAdState 내부:
-  AdSize? _reservedSize;
-
-  Future<void> _loadAd() async {
-    // ... adUnitId/size 확인 ...
-    if (!mounted) return;
-    setState(() => _reservedSize = size); // 자리 예약
-
-    final ad = BannerAd(...);
-    _bannerAd = ad;
-    await ad.load();
-    // ...
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ad = _bannerAd;
-    if (_failed) return const SizedBox.shrink();
-    if (_reservedSize == null) return const SizedBox.shrink();
-
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      width: _reservedSize!.width.toDouble(),
-      height: _reservedSize!.height.toDouble(),
-      child: (_isLoaded && ad != null) ? AdWidget(ad: ad) : null,
-    );
-  }
-  ```
-  - `02_implementation.md`의 "5. SizedBox.shrink()로 통일된 비노출 정책"에서도 "사용자가 지도가 흔들렸다고 느끼지 않도록 광고 영역이 한 번 자리잡으면 유지됨"이라 했으나, 실제로는 첫 로드 시점에 흔들림이 발생함. 이번 PR 범위에서 처리 가능하면 권장.
-
-#### M-3. 컬러 토큰 `Theme.of(context).colorScheme.surface`가 광고와 의도적으로 구분되지 않는다
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:128`
-- **현상**: 광고 컨테이너 배경이 surface 컬러여서 다크 모드에서 광고와 페이지 배경이 동일해 광고 경계가 불명확. AdMob 정책상 광고는 콘텐츠와 명확히 구분되어야 함 (위반 시 정책 경고 가능).
-- **수정 제안**: 상단 1px divider 추가 또는 배경을 약간 다른 톤(`surfaceContainerHigh`)으로:
-  ```dart
-  return DecoratedBox(
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surface,
-      border: Border(
-        top: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 0.5,
-        ),
-      ),
-    ),
-    child: SizedBox(
-      width: ad.size.width.toDouble(),
-      height: ad.size.height.toDouble(),
-      child: AdWidget(ad: ad),
     ),
   );
-  ```
+}
+```
 
-#### M-4. 위젯 테스트 누락
-- **파일**: `test/features/ads/` 미존재
-- **현상**: HomeBannerAd의 ① release 빈 ID → SizedBox.shrink, ② onAdFailedToLoad → _failed=true → SizedBox.shrink, ③ dispose 시 BannerAd.dispose 호출 등 핵심 분기 검증 테스트 없음.
-- **수정 제안**: BannerAd를 mock하기 어렵지만, `_resolveAdUnitId()`을 별도 함수/static으로 분리하면 unit test 가능. flutter-qa-engineer에게 테스트 작성 의뢰 권장.
-
-#### M-5. `_workspace/02_implementation.md`의 "iOS SKAN 77개" 와 실제 개수 불일치 가능성
-- **파일**: `ios/Runner/Info.plist:73-383`
-- **현상**: 산출물 문서는 "77개" 라 명시. 실제로 plist에서 `<key>SKAdNetworkIdentifier</key>` 카운트 확인 필요. 실제 파일에는 약 78~79개로 보임 (아래 명령 결과로 검증 권장):
-  ```bash
-  grep -c "SKAdNetworkIdentifier" ios/Runner/Info.plist
-  ```
-  - 위 결과를 산출물 문서와 일치시키거나, 문서를 "공식 권장 목록 (n개)" 형식으로 일반화.
-- **영향**: 기능 정상. 문서 일관성 개선 차원.
+(B) (선택) `lib/app.dart` 에서 `MediaQuery.maybeOf(context)` 를 사용해 null 안전화. 현 구현은 root MediaQuery 가 항상 존재한다는 가정이 맞으므로 필수는 아님.
 
 ---
 
-### LOW
+## MEDIUM
 
-#### L-1. `_loadAd()` 함수 내부 흐름이 `if (!mounted) return;` 가드를 한 번만 사용
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:68-112`
-- **현상**: H-1 항목에서 다룬 내용. await 사이에 mounted 체크가 1회만 있어 재진입 시점에 따라 누수 가능. (HIGH로 이미 다뤘으므로 중복 제거)
+### M1. **마이그레이션 누락 — 사용자 일괄 변경 요청 미충족**
 
-#### L-2. `_kAndroidTestUnitId`/`_kIosTestUnitId`/`_kAndroidReleaseUnitId`/`_kIosReleaseUnitId` 가 widget의 static 멤버
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:16-24`
-- **현상**: 파일 상단 top-level `const`로 두면 `HomeBannerAd._kAndroidTestUnitId` 같은 긴 참조가 사라져 가독성 향상. 다만 기존 패턴과 무관한 사소한 개선.
+**파일**:
+- `lib/features/station_detail/presentation/screens/station_detail_screen.dart` (인라인 4건: L81, L90, L100, L110)
+- `lib/features/route_search/presentation/screens/station_picker_screen.dart` (인라인 4건: L73, L156, L192-196)
 
-#### L-3. `pubspec.yaml`의 `# Ads` 섹션이 `dependencies` 끝에 위치하나 `# Utilities` 섹션 바로 아래에 있어 카테고리 그룹핑이 일관적이지 않다
-- **파일**: `pubspec.yaml:46-47`
-- **현상**: 다른 그룹은 한 줄 비우고 분리되어 있는데 Ads는 동일 패턴. 일관성 OK. 사소한 LOW.
+설계 문서 §2 의 "32 vs 25 차이" 단락에서 "home/station_picker/subway_map 추가 검색 결과 search_bar_widget 만 추가 인라인 사용" 이라 단정했고 02a 보고서도 "0건"으로 결론. 그러나 실제 grep 결과:
 
-#### L-4. `home_screen.dart:59` `const HomeBannerAd()` 위에 별도 `Divider()`/`SafeArea` 없음
-- **파일**: `lib/features/home/presentation/screens/home_screen.dart:56-59`
-- **현상**: 요구사항이 "SafeArea는 광고 widget 자체에 두지 말 것"이지만, **Scaffold body Column의 마지막 자식이 SafeArea 처리 없이 노출**되면 일부 기기(노치/홈 인디케이터가 있는 iPhone)에서 광고 하단이 인디케이터 영역과 겹친다. Scaffold가 자체 SafeArea를 적용하나, **bottom inset은 자동 처리되지 않는 경우가 있음** (특히 `extendBody: true`나 keyboard 대응 시).
-- **수정 제안**: 검증 권장. iPhone 14 Pro 등 홈 인디케이터 기기에서 시각적 확인 필요. 만일 겹친다면:
-  ```dart
-  body: SafeArea(
-    bottom: true,
-    top: false,
-    child: Column(...),
-  ),
-  ```
-  또는 광고 위젯이 아닌 Scaffold 단에서 처리. 다만 현재 Scaffold가 별다른 inset 옵션이 없어 기본 SafeArea가 적용되었다고 판단됨. **빌드 후 시각적 회귀 테스트로 검증 필요**.
+```
+station_detail_screen.dart:81:  style: const TextStyle(color: Colors.white, fontWeight: bold)  // 노선 배지
+station_detail_screen.dart:90:  style: const TextStyle(fontSize: 22, fontWeight: bold)         // 역 이름
+station_detail_screen.dart:100: style: TextStyle(color: Colors.grey[600])                      // 역 번호
+station_detail_screen.dart:110: style: TextStyle(fontSize: 16, fontWeight: bold)               // "환승 노선" 헤더
+station_picker_screen.dart:73:  style: TextStyle(color: Colors.grey[500])                      // "검색 결과 없음"
+station_picker_screen.dart:156: style: const TextStyle(fontWeight: w500)                       // 역 이름
+station_picker_screen.dart:192: style: const TextStyle(color: white, fontSize: 11, bold)       // _LineBadge
+```
 
-#### L-5. `home_banner_ad.dart`의 `_loadAttempted` 플래그명이 약간 모호 (`_didLoadAttempt` 또는 `_hasLoadAttempted` 등이 의도가 더 분명)
-- **파일**: `lib/features/ads/presentation/widgets/home_banner_ad.dart:34`
-- 사소한 네이밍 개선.
+요구사항 원문은 **"인라인 TextStyle 32곳 일괄 마이그레이션"** 이며 사용자가 명시적으로 "일괄 변경하자" 라고 확정했다. 본 누락은 사용자 요구를 부분만 만족시킨다.
+
+**권장 수정**: 두 파일에 각각 다음 매핑 적용:
+
+```dart
+// station_detail_screen.dart:81 (노선 배지 텍스트)
+style: Theme.of(context).textTheme.bodySmall?.copyWith(
+  color: Colors.white, fontWeight: FontWeight.w700,
+)
+// station_detail_screen.dart:90 (역 이름 큰 헤더)
+style: Theme.of(context).textTheme.titleLarge  // 22 → titleLarge 22 와 정확히 매칭
+// station_detail_screen.dart:100 (역 번호)
+style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])
+// station_detail_screen.dart:108-111 ("환승 노선" 헤더; const Text 도 풀어야 함)
+Text('환승 노선', style: Theme.of(context).textTheme.titleMedium)
+
+// station_picker_screen.dart:73 (검색 결과 없음)
+style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[500])
+// station_picker_screen.dart:156 (역 이름)
+style: Theme.of(context).textTheme.labelLarge   // search_bar_widget #22 와 동일 매핑
+// station_picker_screen.dart:192 (_LineBadge: 11/white/bold)
+style: Theme.of(context).textTheme.labelSmall?.copyWith(
+  color: Colors.white, fontWeight: FontWeight.w700,
+)
+```
+
+> 분담 계획상 두 파일은 어느 에이전트에게도 명시 할당되지 않았다. 일괄 마이그레이션 후속 작업으로 처리해야 한다.
+
+### M2. `lib/core/theme/tokens/app_radii.dart:16-20` — `BorderRadius` 타입 어노테이션 누락
+
+```dart
+abstract final class AppBorderRadius {
+  static const xs   = BorderRadius.all(Radius.circular(AppRadius.xs));
+  ...
+}
+```
+
+타입 추론으로 `BorderRadius` 가 정해지지만, 토큰 파일은 다른 모듈이 import 하는 공개 API 다. **명시적 타입 어노테이션이 가독성·IDE 자동 완성·실수 방지 측면에서 권장**.
+
+**권장 수정**:
+```dart
+static const BorderRadius xs = BorderRadius.all(Radius.circular(AppRadius.xs));
+static const BorderRadius sm = BorderRadius.all(Radius.circular(AppRadius.sm));
+// ... 동일 패턴
+```
+
+### M3. `lib/features/route_search/presentation/screens/route_result_screen.dart` — `Theme.of(context)` 반복 호출
+
+`build` 한 번에 `Theme.of(context)` 가 12+ 회 호출됨. 각 호출은 InheritedWidget lookup 으로 `O(depth)` 이지만 캐시되므로 실측 비용은 미미. 다만 가독성과 일관성을 위해 build 시작에서 한번 추출하는 것이 패턴상 깔끔하다.
+
+**권장 (선택)**: `_RouteSummaryHeader.build` / `_SegmentHeader.build` / `_StationRow.build` 시작에 `final t = Theme.of(context).textTheme;` 도입 후 `t.bodyMedium` 형태로 사용.
+
+```dart
+@override
+Widget build(BuildContext context) {
+  final t = Theme.of(context).textTheme;
+  return Padding(
+    ...
+    Text(text, style: t.labelMedium?.copyWith(color: Colors.grey[600])),
+  );
+}
+```
+
+이 패턴은 설계 문서 §부록 "After (ternary 분기)" 예시와도 일치한다.
+
+### M4. `arrival_card.dart:55-59` — 배지 fontSize override 의 토큰 일탈
+
+```dart
+Theme.of(context).textTheme.labelSmall?.copyWith(
+  fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700,
+)
+```
+
+토큰 슬롯에 없는 10px 를 override 로 주입. 설계 §2 의 "10px 는 토큰에 없음 → labelSmall 베이스 + fontSize override 허용 (배지는 예외)" 결정 그대로지만, **토큰 시스템의 핵심 가치(일관성)를 약화**. 동일 의도(`route_result_screen.dart:564, 581` 의 급행 배지)에는 12px = `bodySmall` 그대로 사용 중이라 **배지 사이즈가 두 화면에서 각각 10/12 로 다른 것 자체가 일관성 위반**.
+
+**권장 수정 (택1)**:
+- (a) `arrival_card` 의 급행 미니 배지도 `bodySmall` (12px) 로 통일하고 fontSize override 제거. 시각상 12 vs 10 차이는 미세하며 카드 레이아웃에 큰 영향 없음.
+- (b) 토큰에 `badgeMicro` 별칭 (10px w700) 을 추가해 명시적으로 분리.
+
+**우선 권장: (a)** — 추가 토큰 도입보다 일관성 회복이 가치가 높다.
+
+### M5. `app_theme.dart:23-25` — `actionIconTheme` 의 효과 검증 부재
+
+```dart
+actionIconTheme: ActionIconThemeData(
+  backButtonIconBuilder: (context) => const BackButtonIcon(),
+),
+```
+
+`BackButtonIcon` 위젯은 내부적으로 `Theme.of(context).platform` 을 검사한다. 그러나 다음 환경에서 동작이 다를 수 있다:
+- 시뮬레이터/디바이스에서 `Platform.isIOS == true` 면 `Icons.arrow_back_ios_new`, 아니면 `Icons.arrow_back`.
+- `app_theme_test.dart` 의 검증은 단지 "`backButtonIconBuilder != null`" 만 확인. 실제 iOS 에서 Cupertino 화살표가 렌더되는지 위젯 시각 검증 없음.
+
+**권장**: 위젯 테스트 1건 추가 (회귀 방지):
+
+```dart
+testWidgets('iOS 플랫폼에서 BackButton 이 arrow_back_ios_new 로 렌더된다', (tester) async {
+  await tester.pumpWidget(MaterialApp(
+    theme: AppTheme.light,
+    home: Theme(
+      data: AppTheme.light.copyWith(platform: TargetPlatform.iOS),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Test')),
+        body: const SizedBox.shrink(),
+      ),
+    ),
+  ));
+  // BackButton 아이콘 검증은 routes 가 push 되어야 leading 이 자동 생성되므로
+  // 별도 라우터 setup 필요. 현 단계 위험 대비 ROI 가 낮으면 시각 QA 로 대체.
+});
+```
+
+ROI 가 낮다고 판단되면 **시각 QA 체크리스트** 로 대체 — 02a §3 도 "후속 단계에서 화면별 검증 권장" 명시.
 
 ---
 
-## 통과 항목 요약 (체크리스트)
+## LOW
 
-### 4원칙 준수
-- [x] `tool/build_map_html.dart` 변경 없음 (git diff 0 lines)
-- [x] `lib/features/subway_map/presentation/providers/live_train_provider.dart` 변경 없음
-- [x] `assets/html/map.html` 변경 없음
-- [x] 단조 감소 카운트다운 / 매 frame 역산 / 3-way 클램프 / catch-up 보간 모두 영향 없음 (광고 위젯은 지도 렌더링과 독립)
+### L1. `lib/app.dart:97` — `MediaQuery.of(context)` 가 `MediaQuery.textScalerOf(context)` 보다 무거움
+
+`MediaQuery.of` 는 모든 MediaQuery 변경 시 리빌드를 트리거. textScaler 만 필요하면 `MediaQuery.textScalerOf(context)` (Flutter 3.16+) 가 더 좁은 의존성. 다만 builder 자체가 frame 단위 빈번 호출이 아니라 영향 미미.
+
+```dart
+final clamped = MediaQuery.textScalerOf(context).clamp(
+  minScaleFactor: 0.9, maxScaleFactor: 1.15,
+);
+return MediaQuery(
+  data: MediaQuery.of(context).copyWith(textScaler: clamped),
+  child: SafeArea(top: false, child: child),
+);
+```
+
+### L2. `app_typography.dart` — 슬롯 주석의 일부 사이즈 표기 불일치
+
+L75 주석: "bodyLarge: 16px bold — 카운트다운 분 표시 (실측 18 → 16 으로 다운)" — 정확. L52 주석: "titleLarge: 22px bold — 출발/도착 시각 헤더" — 정확. 다만 설계 문서 §1.1 원본의 `letterSpacing: 0.15` (titleMedium) 와 같은 값이 코드와 일치하는지 일괄 점검 권장. **현재 점검 결과 모두 일치.** (점검 완료 — 이슈 없음)
+
+### L3. `app_dimensions.dart:9` 주석 — "비표준이지만 기존 코드에 6 다수"
+
+토큰의 의도가 "**4의 배수 그리드**" 인데 6 만 예외. 기존 코드 스무딩이 끝난 시점에 토큰에서 제거 가능한지 후속 평가 필요. 현 시점 회귀 방지 목적이라면 보존이 맞다.
+
+### L4. `arrival_info_screen.dart:259` — 한국어 가독성 height 활용 미흡
+
+`titleMedium` 은 height 1.50 으로 설정. 단일 라인 `Text('도착 정보를 불러올 수 없습니다')` 라면 시각적 영향 미미하지만, 설계 의도(한국어 가독성 line-height 통일) 는 이미 토큰에 들어가 있어 추가 작업 없음. **현 구현 OK.**
+
+### L5. `route_result_screen.dart:644` — `Colors.grey[700]` 사용 의미 미약
+
+기존 hardcoded color 보존 결정에 따른 자연스러운 코드. ColorScheme 의 `onSurfaceVariant` 로 점진 마이그레이션 가능하지만 본 작업 범위 외.
+
+---
+
+## NIT
+
+### N1. `app_typography_test.dart:170` — 불필요한 string interpolation 중괄호
+
+`flutter analyze` 가 다음 info 를 보고:
+```
+info • Unnecessary braces in a string interpolation • test/core/theme/app_typography_test.dart:170:22
+```
+
+**수정**:
+```dart
+reason: '$style 슬롯에 fontFamily 가 명시되어 있어 한글 fallback 이 차단될 수 있다',
+```
+
+### N2. `app_theme_test.dart` — `theme()` 헬퍼의 매번 `AppTheme.light` 호출
+
+`AppTheme.light` 는 getter 라 매번 새 ThemeData 인스턴스를 만든다. 11 케이스 × ThemeData 생성 비용은 미미하지만 `setUp` 에서 한 번 캐시 가능. 가독성 vs 비용 trade-off 로 유지 OK.
+
+### N3. `app_typography.dart` 의 `appTextTheme` 변수명
+
+`const TextTheme appTextTheme = ...` — Dart 컨벤션상 top-level const 는 `kAppTextTheme` 또는 `appTextTheme` 둘 다 허용. `appTextTheme` (lowerCamelCase) 가 더 일반적이라 OK.
+
+---
+
+## 통과 항목 (칭찬)
+
+### 토큰 설계
+- **`abstract final class` 사용 (Dart 3+) 적절.** `AppSpacing`/`AppPadding`/`AppIconSize`/`AppRadius`/`AppBorderRadius` 모두 인스턴스화 차단. 정적 토큰 컨테이너에 정확한 패턴.
+- **fontFamily 미명시 의도가 코드 코멘트(L5-L7) 에 명확히 기록.** "한글은 시스템 fallback 으로 자연 처리됨" — 재호출 에이전트가 의도를 이해하고 위반하지 않게 한다.
+- **height (line-height) 한국어 가독성 정책이 코드 코멘트로 보호됨.** 본문 계열 1.45 통일 의도가 명시.
+
+### 4원칙 보호
+- **`tool/build_map_html.dart`, `live_train_provider.dart`, `assets/html/map.html` 미수정 확인** (`git diff -- ...` 결과 빈 출력). 4원칙 회귀 영역 완전 보호.
+- **AdMob (`lib/features/ads/`) 미수정 확인.** 직전 작업 보호.
+- **ColorScheme 시드 `0xFF0052A4` 보존 확인** (app_theme.dart L12-14).
+- **`SafeArea(top: false)` 보존** — `MediaQuery` 안쪽으로 위치 이동했지만 동작 동일. `SafeArea` 가 `MediaQuery.of(context).padding` 을 정상 read 하기 위한 결합 순서 (MediaQuery 바깥, SafeArea 안쪽) 가 정확히 적용됨.
+
+### 마이그레이션 정확성
+- **color 보존이 의도대로 되어 있음.** `Colors.grey[600]` 등 모든 의미 색상이 `copyWith(color: ...)` 로 보존 (route_result_screen.dart:298, 313, 326, 374, 392; arrival_info_screen.dart:265, 304; transfer_row.dart:52, 60).
+- **ternary 분기 처리 (#13 `_StationRow`, #17 `_CountdownBadge`) 시맨틱 의미 보존.**
+  - #13: `isEndpoint ? titleSmall : bodySmall` — 종착역 vs 중간역의 시맨틱 분리 정확.
+  - #17: 18→16 통일은 설계 결정 (iOS/Android 일관성 우선) 그대로 적용. `bodyLarge` 단일 슬롯으로 정규화.
+- **`copyWith` 의 `?.` null safety 처리 적절.** Theme의 textTheme 슬롯이 null 일 가능성에 대비한 chain (`?.copyWith(...)`).
+- **`const Text(...)` → `Text(...)` 교체 (arrival_info_screen.dart:257-260)** — Theme.of(context) 사용으로 const 불가능. 정확한 처리.
+
+### 보호 영역 손상 여부
+- ColorScheme/AppBarTheme/CardTheme/InputDecorationTheme 모두 보존 (app_theme.dart:12-46).
+- `SystemChrome.setSystemUIOverlayStyle(...)` 보존 (app.dart:79-84).
+- `child == null` 체크 보존 (app.dart:92).
+
+### textScaler clamp 기본 동작
+- `app.dart:98-101` — `clamp(minScaleFactor: 0.9, maxScaleFactor: 1.15)` 정확.
+- 단위 테스트 (`text_scaler_clamp_test.dart`) 의 8 단위 케이스 (0.5/1.0/2.0/1.1/0.9/1.15/0.85/1.3) 가 경계와 내부 모두 커버. 회귀를 잡을 수 있는 핵심 케이스 포함.
+
+### 회귀 위험 영역
+- **18→16 카운트다운 다운사이즈**: iOS Roboto 메트릭 적용 + 16px bodyLarge bold 로 가독성 충분. 시각 회귀 위험 **낮음**. 단, "분 단위 카운트다운" 의 강조 임팩트가 약간 줄어드는 부작용은 있을 수 있어 시각 QA 권장.
+- **24→22 titleLarge**: 한국어 가독성과 iOS/Android 폭 일관성 측면에서 **22px 가 더 안정적**. 의미상 적절한 다운사이즈. M3 표준 22px와도 매칭.
+- **BackButton.adaptive 옵션 A**: `actionIconTheme.backButtonIconBuilder` 등록만으로 동작하는지는 SDK 버전 의존. **실 디바이스에서 시각 검증 필수.**
+
+### 테스트 커버리지
+- `app_typography_test.dart` 37 케이스 — 13 슬롯 존재 + fontSize/Weight 명세 + height ≥ 1.33 + fontFamily null. **회귀를 잡을 수 있는 핵심을 빠짐없이 커버.**
+- `app_theme_test.dart` 11 케이스 — Material 3, ColorScheme 시드 hue, AppBarTheme, actionIconTheme, CardTheme 모두 검증.
+- `text_scaler_clamp_test.dart` 11 케이스 — 단위 8 + 위젯 3.
+- **오버엔지니어링 없음.** 02c 보고서가 "ArrivalCard 픽스처 비용이 크다" 며 위젯 시각 검증을 의도적으로 스킵한 결정도 합리적.
+- **4원칙 회귀 테스트 (`estimate_train_position_test.dart` 19/19) 보존 확인.** 02c 보고서 §3 명시.
+
+---
+
+## 리뷰 체크리스트 결과
 
 ### 아키텍처
-- [x] `features/ads/presentation/widgets/` 경로로 features-by-feature 구조 준수
-- [x] domain/, graph/ 레이어에 Flutter 의존성 추가 없음
-- [x] Riverpod 프로바이더 변경 없음 (광고 위젯은 자체 State로 관리, 글로벌 상태 오염 없음)
-- [x] HomeScreen이 여전히 StatelessWidget — 기존 리빌드 최적화 패턴 유지
+- [x] domain/ 레이어에 Flutter 임포트 없음 (변경 없음)
+- [x] graph/ 모듈에 Flutter 의존성 없음 (변경 없음)
+- [x] 리포지토리 인터페이스/구현체 분리 (변경 없음)
+- [x] 프로바이더 계층 적절 (변경 없음)
 
-### 라이프사이클 관리 (BannerAd)
-- [x] `dispose()`에서 `_bannerAd?.dispose()` 호출
-- [x] `onAdFailedToLoad`에서 `ad.dispose()` 호출
-- [x] `onAdFailedToLoad`에서 `mounted` 체크 후 setState
-- [x] `didChangeDependencies` 1회 가드(`_loadAttempted`)로 중복 로드 방지
-- [⚠️] `await ad.load()` 도중 dispose 시 누수 가능성 — H-1에서 지적
+### 불변성
+- [x] `@freezed` 사용 (변경 영향 없음)
+- [x] `copyWith` 사용 — 모든 마이그레이션이 `textTheme.X?.copyWith(...)` 패턴
+- [x] List/Map unmodifiable (변경 없음)
 
-### 보안
-- [x] AdMob App ID는 placeholder가 아닌 실제 값 (`ca-app-pub-3206652264632834~4236362749`) — release/debug 양쪽 모두 동일 (App ID 정책상 적절)
-- [x] 테스트 단위 ID는 Google 공식 값 사용
-- [x] release 단위 ID 미설정 시 안전 처리 (early return + SizedBox.shrink)
-- [x] `.env` API 키 노출 없음 (광고 모듈은 dotenv 미사용)
-- [x] 사용자 입력/JS 인젝션 risk 없음 (광고 SDK 내부 처리)
-- [x] iOS NSUserTrackingUsageDescription 한국어 (`광고 효과 측정을 위해 사용됩니다.`) 명시 — ATT 정책 준수
-- [x] iOS SKAdNetworkItems 등록 (Google 공식 권장 목록)
+### 상태 관리
+- [x] Consumer watch 범위 (변경 없음)
+- [x] ref.listen vs ref.watch 적절 (변경 없음)
+- [x] StateNotifier 새 객체 생성 (변경 없음)
 
 ### 성능
-- [x] `Consumer` 위젯으로 watch 범위 분리되어 있음 (HomeScreen 기존 패턴 유지)
-- [x] `const HomeBannerAd()` 사용 (불필요한 리빌드 방지)
-- [x] FutureBuilder/StreamBuilder 사용 안 함 (직접 setState로 단순화)
-- [x] 광고 로드 미설정 시 BannerAd 객체 자체 생성 안 함 (메모리 절약)
+- [x] FutureBuilder 캐싱 (변경 없음)
+- [x] `const` 위젯 활용 — `arrival_info_screen.dart:257` 등은 const 제거가 불가피
+- [x] runJavaScript 호출 (변경 없음, 4원칙 보호)
+- [x] 불필요 setState 없음
 
-### 초기화 순서
-- [x] `WidgetsFlutterBinding.ensureInitialized()` → `dotenv.load()` → `MobileAds.instance.initialize()` → `runApp` 순서 정확
-- [x] 두 await가 직렬로 실행되어 race condition 없음
-- [x] `MobileAds.instance.initialize()` 실패는 SDK 내부에서 처리되며 `runApp`에 전파되지 않음 (검증된 패턴)
-
-### Android 매니페스트
-- [x] `<application>` 태그 안에 `<meta-data>` 위치 (Activity 태그 외부, application 자식)
-- [x] `com.google.android.gms.ads.APPLICATION_ID` 키 정확
-- [x] App ID 형식 `ca-app-pub-XXXXXXX~YYYY` 정확 (틸드 `~` 사용, 단위 ID의 `/`와 구분)
-- [x] `<uses-permission android:name="android.permission.INTERNET"/>` 기존에 등록됨
-
-### iOS Info.plist
-- [x] `GADApplicationIdentifier` 키 정확, App ID 동일
-- [x] `NSUserTrackingUsageDescription` 한국어 등록
-- [x] `SKAdNetworkItems` 배열 형식 정확 (`<dict><key>SKAdNetworkIdentifier</key><string>...</string></dict>` × N)
-- [x] plist root `<dict>` 닫힘 정상 (line 384)
+### 보안
+- [x] API 키 하드코딩 없음
+- [x] 사용자 입력 검증 (변경 없음)
+- [x] 에러 메시지 민감정보 없음
+- [x] JS 인젝션 방지 (변경 없음)
 
 ### 코드 스타일
-- [x] 함수 모두 < 50줄 (`_loadAd` 약 45줄, `build` 약 12줄)
-- [x] 파일 < 800줄 (`home_banner_ad.dart` 134줄)
-- [x] 한국어 주석 적절히 사용
-- [x] 깊은 중첩 없음 (최대 3레벨)
-- [x] `print`/`debugPrint` 미사용
+- [x] 함수 < 50줄 (모든 변경 함수가 50줄 이내)
+- [x] 파일 < 800줄 (route_result_screen.dart 698줄로 800줄 미만)
+- [x] 의미 있는 이름
+- [x] 깊은 중첩 없음
+- [x] print/debugPrint 없음
+
+### 프로젝트 특수
+- [x] 노드 ID 형식 (변경 없음)
+- [x] 환승 시간 키 (변경 없음)
+- [x] build_runner 트리거 — `@freezed`/`@riverpod` 변경 없으므로 불요
+- [x] SVG 파이프라인 — SVG 미수정
+- [x] --release 빌드 — 코드 변경 없음
 
 ---
 
-## 칭찬
+## 정리 및 우선 처리 권고
 
-- **`lib/features/ads/presentation/widgets/home_banner_ad.dart:38-55`** — `_resolveAdUnitId()`의 분기 구조가 매우 명확. kDebugMode + Platform 분기 + release 빈 ID 안전 처리(null 반환)을 한 함수로 깔끔하게 추상화. 추후 release ID 입력만으로 활성화 가능.
-- **`lib/features/ads/presentation/widgets/home_banner_ad.dart:62-66`** — `_loadAttempted` 플래그로 `didChangeDependencies` 다회 호출에 대한 방어. orientation 변경, 테마 변경 등에도 광고는 1회만 로드되어 정확하다.
-- **`lib/features/ads/presentation/widgets/home_banner_ad.dart:99-106`** — `onAdFailedToLoad`에서 ① `ad.dispose()` 우선 호출 → ② `mounted` 체크 → ③ setState 순서가 정확. dispose 호출 누락이나 unmounted setState 호출 모두 회피.
-- **`lib/features/home/presentation/screens/home_screen.dart:59`** — `const HomeBannerAd()`로 기존 Consumer 분리 패턴(`SubwayMapScreen` 리빌드 최적화)을 깨뜨리지 않으며 한 줄 추가만으로 통합. HomeScreen이 여전히 StatelessWidget로 유지되는 점이 우수하다.
-- **`lib/main.dart:8-17`** — main 함수의 초기화 시퀀스가 명확. `dotenv.load()` 와 `MobileAds.initialize()` 가 직렬화되어 race condition 위험 없음. await 순서가 의존성에 부합 (dotenv는 SDK 초기화와 무관하지만 `WidgetsFlutterBinding` 다음 → SDK init 순서가 표준).
-- **`ios/Runner/Info.plist`** — Google 공식 권장 SKAN 식별자를 일괄 등록하여 iOS 14+ 어트리뷰션 누락 방지. plist 구조 위반 없음.
-- **4원칙 보호 파일 무수정** — 광고 기능 추가가 지도 렌더링/실시간 열차 코드에 단 한 줄도 영향 주지 않음. 이는 가장 중요한 회귀 방지 성과이며, 이번 변경의 가장 큰 강점.
+| 우선순위 | 항목 | 조치 |
+|---|---|---|
+| **HIGH** | H1 — text_scaler_clamp_test 의 위젯 통합 테스트가 실제 builder 패턴과 다름 | 테스트 재작성 (MaterialApp.builder 패턴) |
+| **MEDIUM** | M1 — station_detail / station_picker 마이그레이션 누락 | 추가 마이그레이션 8건 |
+| MEDIUM | M2 — AppBorderRadius 타입 어노테이션 명시 | 6줄 추가 |
+| MEDIUM | M3 — Theme.of(context) 반복 호출 정리 | 가독성 개선 (선택) |
+| MEDIUM | M4 — 급행 배지 사이즈 일관화 (10 → 12) | arrival_card.dart 1곳 |
+| MEDIUM | M5 — actionIconTheme 시각 회귀 방지 | 시각 QA 또는 위젯 테스트 |
+| NIT | N1 — string interpolation 중괄호 | 1줄 |
 
 ---
 
-## 권고 우선순위 요약
-
-| # | 등급 | 항목 | 처리 시점 |
-|---|------|------|-----------|
-| 1 | HIGH (H-1) | `_loadAd` await 도중 dispose 누수 방지 (`load()` 후 mounted 재검증, `onAdLoaded` unmount 시 dispose) | **이번 단계 수정 권장** |
-| 2 | HIGH (H-3) | Android `minSdkVersion` 23+ 명시적 설정 (build.gradle.kts) | **이번 단계 수정 권장** (빌드 실패 방지) |
-| 3 | MEDIUM (M-2) | layout shift 완화 (size 미리 예약) | 차기 PR 또는 이번 단계 |
-| 4 | MEDIUM (M-1) | 네트워크 복구 시 재시도 | 별도 이슈 |
-| 5 | MEDIUM (M-3) | 광고 영역 시각적 구분 (border/색조) | UX 검토 후 |
-| 6 | MEDIUM (M-4) | 위젯/단위 테스트 추가 | flutter-qa-engineer 협업 |
-| 7 | LOW | L-1~L-5 | 후속 정리 |
-
-CRITICAL 0건, HIGH 3건(H-2 web 가드는 web 확장 전 보류 가능 → 실질 2건), MEDIUM 5건, LOW 5건. **CRITICAL 부재로 머지 진행은 가능하되, H-1과 H-3는 이번 단계에서 수정 권장.**
+## 끝.
