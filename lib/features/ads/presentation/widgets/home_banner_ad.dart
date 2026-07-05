@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart'
-    show kDebugMode, kIsWeb, defaultTargetPlatform, TargetPlatform;
+    show kDebugMode, kIsWeb, debugPrint, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -30,8 +33,17 @@ class HomeBannerAd extends StatefulWidget {
 class _HomeBannerAdState extends State<HomeBannerAd> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
-  bool _failed = false;
-  bool _loadAttempted = false;
+  bool _loadStarted = false;
+
+  // 로드 실패 시 지수 백오프 재시도.
+  // 새로 만든 광고 단위는 초기 몇 시간 동안 no-fill(code=3)을 반환할 수 있어,
+  // 세션당 1회만 로드하면 그 세션 내내 배너가 뜨지 않는다. 제한된 횟수만큼
+  // 백오프하며 재시도하되, 상한에 도달하면 조용히 멈춰 요청 낭비를 막는다.
+  int _retryCount = 0;
+  Timer? _retryTimer;
+  static const int _kMaxRetries = 5;
+  static const Duration _kBaseRetryDelay = Duration(seconds: 2);
+  static const Duration _kMaxRetryDelay = Duration(minutes: 1);
 
   /// 현재 플랫폼/빌드 모드에 맞는 광고 단위 ID를 반환한다.
   /// release 모드에서 ID 미설정이면 `null`을 반환하여 로드 자체를 건너뛴다.
@@ -66,16 +78,18 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
     super.didChangeDependencies();
     // MediaQuery는 initState 시점에는 안전하지 않을 수 있어
     // didChangeDependencies에서 1회만 로드한다.
-    if (!_loadAttempted) {
-      _loadAttempted = true;
+    if (!_loadStarted) {
+      _loadStarted = true;
       _loadAd();
     }
   }
 
   Future<void> _loadAd() async {
+    if (!mounted) return;
+
     final adUnitId = _resolveAdUnitId();
     if (adUnitId == null) {
-      // release 미설정 또는 미지원 플랫폼: 광고 미노출.
+      // release 미설정 또는 미지원 플랫폼: 광고 미노출(재시도 안 함).
       return;
     }
 
@@ -84,11 +98,13 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
       Orientation.portrait,
       width,
     );
+    if (!mounted) return;
     if (size == null) {
-      // 적응형 사이즈 계산 실패: 광고 미노출.
+      // 적응형 사이즈 계산 실패: 잠시 후 재시도(초기 레이아웃 미확정 등).
+      debugPrint('[HomeBannerAd] 적응형 배너 사이즈 계산 실패 (width=$width)');
+      _scheduleRetry();
       return;
     }
-    if (!mounted) return;
 
     final ad = BannerAd(
       adUnitId: adUnitId,
@@ -101,34 +117,67 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
             loadedAd.dispose();
             return;
           }
+          _retryCount = 0; // 성공 시 백오프 리셋.
+          debugPrint('[HomeBannerAd] 로드 성공');
           setState(() {
             _isLoaded = true;
-            _failed = false;
           });
         },
         onAdFailedToLoad: (failedAd, error) {
           failedAd.dispose();
+          // release 실기기에서도 원인 파악이 가능하도록 에러 코드를 남긴다.
+          // code=3: no-fill(광고 재고 없음/신규 단위), code=1/0: 요청/설정 오류.
+          debugPrint(
+            '[HomeBannerAd] 로드 실패: code=${error.code} '
+            'domain=${error.domain} message=${error.message}',
+          );
           if (!mounted) return;
           setState(() {
             _bannerAd = null;
             _isLoaded = false;
-            _failed = true;
           });
+          _scheduleRetry();
         },
       ),
     );
 
+    // 재시도 등으로 이전 인스턴스가 남아 있으면 먼저 해제(방어적).
+    _bannerAd?.dispose();
     _bannerAd = ad;
     await ad.load();
     // load() 도중 dispose 되었다면 ad를 직접 해제하여 누수 방지.
-    if (!mounted) {
+    // 단, State.dispose()가 같은 인스턴스를 이미 해제했을 수 있으므로
+    // 아직 우리가 들고 있는 인스턴스일 때만 해제해 이중 dispose를 막는다.
+    if (!mounted && identical(_bannerAd, ad)) {
       ad.dispose();
       _bannerAd = null;
     }
   }
 
+  /// 지수 백오프로 [_loadAd] 재시도를 예약한다.
+  /// 지연: 2s, 4s, 8s, 16s, 32s (최대 [_kMaxRetryDelay]). 상한 도달 시 중단.
+  void _scheduleRetry() {
+    if (!mounted) return;
+    if (_retryCount >= _kMaxRetries) {
+      debugPrint('[HomeBannerAd] 최대 재시도($_kMaxRetries회) 도달 — 로드 중단');
+      return;
+    }
+    _retryCount++;
+    final delayMs = math.min(
+      _kBaseRetryDelay.inMilliseconds * (1 << (_retryCount - 1)),
+      _kMaxRetryDelay.inMilliseconds,
+    );
+    final delay = Duration(milliseconds: delayMs);
+    debugPrint('[HomeBannerAd] ${delay.inSeconds}s 후 재시도 '
+        '($_retryCount/$_kMaxRetries)');
+    _retryTimer?.cancel();
+    _retryTimer = Timer(delay, _loadAd);
+  }
+
   @override
   void dispose() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _bannerAd?.dispose();
     _bannerAd = null;
     super.dispose();
@@ -137,7 +186,7 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
   @override
   Widget build(BuildContext context) {
     final ad = _bannerAd;
-    if (!_isLoaded || _failed || ad == null) {
+    if (!_isLoaded || ad == null) {
       return const SizedBox.shrink();
     }
     return Container(
