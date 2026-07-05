@@ -23,6 +23,7 @@ description: "서울 지하철 앱의 에이전트 팀을 조율하는 오케스
 **모델 변경 시 판단 기준:**
 - 판단 계층에서 sonnet으로 내리면 → 리뷰 누락이나 아키텍처 설계 오류 발생 시 즉시 opus로 복귀
 - 구현 계층에서 sonnet이 4원칙·알고리즘 규칙을 반복 위반하면 → 해당 에이전트만 opus로 승격
+- ⛔ 4원칙 **자체를 변경**해야 한다는 판단이 나오면 이는 모델 승격 문제가 아니다 — CLAUDE.md 최상위 정책이므로 구현을 진행하지 말고 반드시 사용자 승인을 먼저 구한다 (map-math-engineer.md/realtime-data-engineer.md의 "⛔ 4원칙" 섹션 참조)
 
 ### 1M 컨텍스트 활용 원칙
 
@@ -149,7 +150,7 @@ Agent(
 
     [구체적 작업 지시]
 
-    프로젝트 루트: /Users/april/Idea/seoul_subway
+    프로젝트 루트: /Users/april/StudioProjects/seoul_subway
   """
 )
 ```
@@ -165,7 +166,7 @@ Agent(
 
     다음 파일들을 리뷰하라: [파일 목록]
 
-    프로젝트 루트: /Users/april/Idea/seoul_subway
+    프로젝트 루트: /Users/april/StudioProjects/seoul_subway
   """
 )
 ```
@@ -182,7 +183,7 @@ Agent(
     원래 요청: [사용자 요청]
     수정된 파일: [파일 목록]
 
-    프로젝트 루트: /Users/april/Idea/seoul_subway
+    프로젝트 루트: /Users/april/StudioProjects/seoul_subway
   """
 )
 ```

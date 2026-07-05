@@ -17,12 +17,24 @@ model: sonnet
 - WebView JavaScript 렌더링 로직 (map.html 내 JS)
 - SVG 데이터 파이프라인 (SVG → JSON → HTML)
 
+## ⛔ 실시간 열차 애니메이션 4원칙 — 최상위 정책 (CLAUDE.md)
+
+`tool/build_map_html.dart` 또는 `live_train_provider.dart`를 건드리기 전에 **반드시 CLAUDE.md의 "⛔ 실시간 열차 애니메이션 4원칙" 섹션을 먼저 읽는다.** 이 4원칙은 어떠한 일반 수정·버그 수정으로도 깨뜨릴 수 없으며, 원칙 자체를 바꿔야 한다고 판단되면 구현을 진행하지 말고 사용자 승인을 먼저 구해야 한다.
+
+1. **단조 감소 카운트다운** — `realRemaining`은 절대 증가하지 않는다. `recptnDt` 기반 실시간 계산 + JS 단조 감소 clamp (`baseArrival`/`baseReceivedAt`).
+2. **매 frame 역산 위치 결정** — 화면 위치는 뒤에서부터 남은시간을 역산(`estimateTrainPosition`)해서 정한다. **`path[0]→path[last]` 시간 비례로 전방 보간하지 않는다.** (아래 "핵심 수학 영역 #2"는 참고용 개념 설명일 뿐, 실제 프레임별 위치 계산에는 사용 금지.)
+3. **현재역 기준 3-way 클램프** — 열차는 화면상 현재역↔다음역 한 구간 안에서만 움직인다 (`stationIndices` 매핑 필요).
+4. **refresh 시 catch-up 보간** — target이 갑자기 이동해도 지수 감쇠(`HALF_LIFE_MS=3000`)로 쫓아가며, 순간이동하지 않는다.
+
+구현 위치: `tool/build_map_html.dart`의 `estimateTrainPosition`/`startTrainAnimation`/`showTrains`/`expandPathWithSnap`, `live_train_provider.dart`의 `receivedAtEpochMs` 전달. 회귀 테스트: `test/core/utils/estimate_train_position_test.dart` — 이 테스트가 깨지면 원칙 위반을 먼저 의심한다.
+
 ## 작업 원칙
 
 1. **수학적 정확성**: 좌표 변환, 보간, 애니메이션은 수학 공식을 명시하고 구현한다.
 2. **성능 우선**: 60fps 렌더링을 목표로 한다. 불필요한 DOM 조작을 피하고 CSS transform을 활용한다.
 3. **좌표계 일관성**: SVG 원본 좌표계(2416×1560)를 기준으로 모든 계산을 수행한다.
 4. **터치 UX**: 줌/팬 제스처는 자연스럽고 반응적이어야 한다. 바운더리 체크 필수.
+5. **4원칙 최우선**: 실시간 열차 애니메이션 작업은 위 4원칙을 다른 모든 작업 원칙보다 우선한다.
 
 ## 프로젝트 컨텍스트
 
@@ -51,14 +63,18 @@ WebViewWidget (Flutter)
   newTranslateY = focalY - (focalY - oldTranslateY) * (newScale / oldScale)
 ```
 
-#### 2. 열차 위치 보간
+#### 2. 열차 위치 보간 (개념 설명 — 실제 구현은 위 4원칙 참조)
 ```
 pathToTarget: [(x₀,y₀), (x₁,y₁), ..., (xₙ,yₙ)]
 segmentDurations: [d₀, d₁, ..., dₙ₋₁]
-initialProgress: p₀ (0.0~1.0, 첫 세그먼트 내 위치)
 
-현재 위치 = lerp(pathToTarget[i], pathToTarget[i+1], progress)
+progress 가 정해지면 좌표는 lerp(pathToTarget[i], pathToTarget[i+1], progress)
   where lerp(a, b, t) = a + (b - a) * t
+
+⚠ 그러나 progress(=segmentIndex, progress) 자체를 매 frame 구할 때는
+  path[0]에서부터 전방으로 시간 비례 계산하면 안 된다 (원칙 2 위반).
+  반드시 estimateTrainPosition(realRemaining, segmentDurations)로
+  "뒤에서부터 역산"해서 구한다.
 ```
 
 #### 3. 오버랩 오프셋
@@ -68,12 +84,12 @@ initialProgress: p₀ (0.0~1.0, 첫 세그먼트 내 위치)
 ```
 
 ### 핵심 파일
-- `assets/html/map.html` (2,292줄) — SVG + JS 렌더러
-- `lib/features/subway_map/widgets/svg_web_view.dart` (431줄) — WebView 브릿지
-- `lib/features/subway_map/widgets/subway_map_viewer.dart` (224줄) — 지도 상태 관리
-- `lib/features/subway_map/providers/live_train_provider.dart` (261줄) — 열차 애니메이션 데이터
-- `lib/core/utils/path_on_line.dart` (137줄) — 단일노선 BFS 경로 + 좌표 추출
-- `tool/build_map_html.dart` — HTML 생성 도구
+- `assets/html/map.html` — SVG + JS 렌더러 (생성 산출물, 직접 수정 금지)
+- `lib/features/subway_map/presentation/widgets/svg_web_view.dart` — WebView 브릿지
+- `lib/features/subway_map/presentation/widgets/subway_map_viewer.dart` — 지도 상태 관리
+- `lib/features/subway_map/presentation/providers/live_train_provider.dart` — 열차 애니메이션 데이터
+- `lib/core/utils/path_on_line.dart` — 단일노선 BFS 경로 + 좌표 추출
+- `tool/build_map_html.dart` — HTML 생성 도구 (map.html의 유일한 소스, 4원칙 구현 위치)
 
 ### SVG 데이터 파이프라인
 ```bash

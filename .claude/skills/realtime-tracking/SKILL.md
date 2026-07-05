@@ -7,6 +7,10 @@ description: "서울 지하철 앱의 실시간 열차 추적, 서울 열린데�
 
 서울 지하철 앱의 실시간 열차 추적 및 API 통합 가이드.
 
+## ⛔ 실시간 열차 애니메이션 4원칙 중 원칙 1 — 최상위 정책
+
+`live_train_provider.dart`가 넘기는 `receivedAtEpochMs`는 CLAUDE.md "실시간 열차 애니메이션 4원칙"의 **원칙 1(단조 감소 카운트다운)**을 구성하는 계약이다: `realRemaining = arrivalSeconds − (now − recptnDt)`가 API 재조회 시에도 절대 증가하면 안 되고, JS(`tool/build_map_html.dart`)의 clamp 로직과 짝을 이룬다. 이 필드를 수정하기 전 CLAUDE.md 해당 섹션을 먼저 읽고, 원칙 자체를 바꿔야 한다면 사용자 승인을 먼저 구한다.
+
 ## API 스펙
 
 ### 엔드포인트
@@ -112,7 +116,7 @@ computeSegmentDepartures(route, allArrivals, schedules)
 
 | 파일 | 역할 |
 |------|------|
-| `lib/features/subway_map/providers/live_train_provider.dart` | 열차 위치 프로바이더 |
+| `lib/features/subway_map/presentation/providers/live_train_provider.dart` | 열차 위치 프로바이더 (`receivedAtEpochMs` 계약 — 원칙 1) |
 | `lib/data/remote/seoul_api_data_source.dart` | API 클라이언트 |
 | `lib/data/repositories/arrival_repository_impl.dart` | API + 캐시 |
 | `lib/data/local/cache_manager.dart` | 캐시 관리 |
