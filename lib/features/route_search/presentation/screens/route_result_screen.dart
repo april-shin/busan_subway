@@ -111,6 +111,7 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
       bottomNavigationBar: const HomeBannerAd(),
       body: routes.length == 1
           ? _RouteView(
+              key: ValueKey(routes.first),
               routeResult: routes.first,
               departureStationName: widget.departureStationName,
             )
@@ -119,6 +120,7 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
               children: [
                 for (final r in routes)
                   _RouteView(
+                    key: ValueKey(r),
                     routeResult: r,
                     departureStationName: widget.departureStationName,
                   ),
@@ -165,11 +167,19 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
 /// 단, 가상 급행 노선을 거치지 않더라도 세그먼트가 `expressDurationSeconds`를
 /// 가질 수 있으므로(완행 모델에서 운영 구간만 별도 시간 노출), 시간 표시는
 /// 첫 세그먼트의 lineId가 `E`로 끝날 때만 급행 시간을 사용한다.
-class _RouteView extends ConsumerWidget {
+///
+/// **도착정보 freeze 정책** — 결과 화면은 "한번 로드되면 더 이상 refresh하지
+/// 않는다". 출발역/환승역별 `arrivalInfoProvider`가 최초 1회 non-loading 값을
+/// 확정하면 그 스냅샷을 State에 고정하고, 이후 지도 화면(`liveTrainsProvider`)
+/// 등에서 동일 station name provider를 invalidate/refetch해도 표시값을 바꾸지
+/// 않는다. 정적 데이터인 `lineSchedulesProvider`(keepAlive)는 재조회되지 않으므로
+/// 예외적으로 `ref.watch`를 그대로 유지한다.
+class _RouteView extends ConsumerStatefulWidget {
   final RouteResult routeResult;
   final String departureStationName;
 
   const _RouteView({
+    super.key,
     required this.routeResult,
     required this.departureStationName,
   });
@@ -182,8 +192,78 @@ class _RouteView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final arrivalAsync = ref.watch(arrivalInfoProvider(departureStationName));
+  ConsumerState<_RouteView> createState() => _RouteViewState();
+}
+
+class _RouteViewState extends ConsumerState<_RouteView> {
+  /// 출발역 도착정보의 고정 스냅샷.
+  ///
+  /// - null: 아직 최초 `ref.read`조차 안 함(build 첫 진입 전).
+  /// - `AsyncLoading`: 로딩 확정 전 — 다음 non-loading 값을 받으면 교체.
+  /// - non-loading(`AsyncData`/`AsyncError`): 확정됨 — 이후 변경 무시.
+  AsyncValue<List<ArrivalInfo>>? _departureArrival;
+
+  /// 환승역별(역 이름 key) 도착정보의 고정 스냅샷. 값의 의미는 위와 동일.
+  final Map<String, AsyncValue<List<ArrivalInfo>>> _transferArrivals = {};
+
+  /// 환승역 이름 목록 — `initState`에서 1회 계산(세그먼트 경계마다 다음 세그먼트
+  /// 첫 역). 기존 `build()` 루프의 로직을 위치만 이동한 것.
+  late final List<String> _transferStationNames;
+
+  @override
+  void initState() {
+    super.initState();
+    final segments = widget.routeResult.segments;
+    _transferStationNames = [
+      for (var i = 0; i < segments.length - 1; i++)
+        segments[i + 1].stations.first.name,
+    ];
+  }
+
+  /// 도착정보 provider를 "최초 1회만 반영" 방식으로 구독한다.
+  ///
+  /// - 아직 확정 전(스냅샷이 null 또는 `isLoading`)이면 `ref.listen`으로 다음
+  ///   변경을 감시하고 현재 값을 스냅샷에 반영한다. non-loading 값이 도착하면
+  ///   1회 `setState`로 rebuild한다.
+  /// - 이미 확정된 뒤에는 `ref.listen`을 재등록하지 않으므로(Riverpod가 이전
+  ///   구독을 자동 해제), 외부 invalidate/refetch가 있어도 콜백이 호출되지 않아
+  ///   표시값이 그대로 유지된다.
+  ///
+  /// [read]는 현재 스냅샷, [write]는 스냅샷 갱신 콜백이다.
+  void _freezeSubscribe(
+    ProviderListenable<AsyncValue<List<ArrivalInfo>>> provider,
+    AsyncValue<List<ArrivalInfo>>? Function() read,
+    void Function(AsyncValue<List<ArrivalInfo>>) write,
+  ) {
+    final current = read();
+    if (current == null || current.isLoading) {
+      ref.listen(provider, (prev, next) {
+        if (!mounted) return;
+        final snapshot = read();
+        // 이미 non-loading으로 확정됐으면 이후 변경을 무시(freeze).
+        if (snapshot != null && !snapshot.isLoading) return;
+        setState(() => write(next));
+      });
+      write(ref.read(provider));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final routeResult = widget.routeResult;
+
+    // 출발역 도착정보 — 최초 1회 확정 후 freeze.
+    final departureProvider =
+        arrivalInfoProvider(widget.departureStationName);
+    _freezeSubscribe(
+      departureProvider,
+      () => _departureArrival,
+      (v) => _departureArrival = v,
+    );
+    final arrivalAsync =
+        _departureArrival ?? const AsyncValue<List<ArrivalInfo>>.loading();
+
+    // 정적 데이터(keepAlive) — 재조회되지 않으므로 그대로 watch.
     final schedulesAsync = ref.watch(lineSchedulesProvider);
     final isLoading =
         arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
@@ -198,14 +278,19 @@ class _RouteView extends ConsumerWidget {
     final firstLineSchedule =
         firstScheduleLineId != null ? schedules[firstScheduleLineId] : null;
 
+    // 환승역별 도착정보 — 각각 최초 1회 확정 후 freeze.
     final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{};
-    for (var i = 0; i < routeResult.segments.length - 1; i++) {
-      final transferName = routeResult.segments[i + 1].stations.first.name;
-      transferArrivals[transferName] =
-          ref.watch(arrivalInfoProvider(transferName));
+    for (final transferName in _transferStationNames) {
+      _freezeSubscribe(
+        arrivalInfoProvider(transferName),
+        () => _transferArrivals[transferName],
+        (v) => _transferArrivals[transferName] = v,
+      );
+      transferArrivals[transferName] = _transferArrivals[transferName] ??
+          const AsyncValue<List<ArrivalInfo>>.loading();
     }
 
-    final useExpress = _useExpress;
+    final useExpress = widget._useExpress;
 
     final now = DateTime.now();
     final departureTime = computeDepartureTime(
@@ -504,9 +589,9 @@ class _RouteTimeline extends StatelessWidget {
     int transferIndex,
     DateTime startTime,
   ) {
-    // SearchRoute가 보장하는 불변식: transferDurations와 transferGuides는
-    // 항상 같은 길이(= transferCount)를 가진다. 디버그 빌드에서 위반을 즉시
-    // 감지하되, 릴리스에서는 안전하게 빈 값으로 폴백한다.
+    // SearchRoute가 보장하는 불변식: transferDurations, transferWalkDurations,
+    // transferGuides는 항상 같은 길이(= transferCount)를 가진다. 디버그 빌드에서
+    // 위반을 즉시 감지하되, 릴리스에서는 안전하게 빈 값으로 폴백한다.
     assert(
       transferIndex < routeResult.transferDurations.length,
       'transferIndex($transferIndex)가 transferDurations 범위를 벗어남. '
@@ -518,16 +603,26 @@ class _RouteTimeline extends StatelessWidget {
       'transferDurations(${routeResult.transferDurations.length}) 길이 불일치. '
       'RouteResult 불변식 위반.',
     );
+    assert(
+      routeResult.transferWalkDurations.length ==
+          routeResult.transferDurations.length,
+      'transferWalkDurations(${routeResult.transferWalkDurations.length})와 '
+      'transferDurations(${routeResult.transferDurations.length}) 길이 불일치. '
+      'RouteResult 불변식 위반.',
+    );
 
-    final transferSeconds =
-        transferIndex < routeResult.transferDurations.length
-            ? routeResult.transferDurations[transferIndex]
+    // "환승 N분" 라벨은 **도보시간만** 표시한다(열차 대기 제외). 총소요시간과
+    // 출발시각 계산은 여전히 transferDurations(도보+대기)를 사용하므로 불변.
+    // transferWalkDurations가 비어 있는 경우(레거시/폴백)엔 0분으로 표시.
+    final transferWalkSeconds =
+        transferIndex < routeResult.transferWalkDurations.length
+            ? routeResult.transferWalkDurations[transferIndex]
             : 0;
     final guide = transferIndex < routeResult.transferGuides.length
         ? routeResult.transferGuides[transferIndex]
         : null;
     items.add(TransferRow(
-      transferMinutes: (transferSeconds / 60).ceil(),
+      transferMinutes: (transferWalkSeconds / 60).ceil(),
       guide: guide,
     ));
   }

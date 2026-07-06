@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:seoul_subway/domain/entities/arrival_info.dart';
 import 'package:seoul_subway/domain/entities/route_result.dart';
 import 'package:seoul_subway/domain/entities/station.dart';
 import 'package:seoul_subway/domain/repositories/arrival_repository.dart';
@@ -225,6 +226,190 @@ void main() {
       // '급행' 라벨이 있다면 탭이 아니라 세그먼트 배지(왼쪽 first 세그먼트가 9E 패턴)
       // → 탭이 없을 때는 라벨 텍스트가 1회만 등장.
       expect(find.text('급행'), findsOneWidget);
+    });
+  });
+
+  group('Case D — 로드 후 freeze (도착정보 refresh 무시)', () {
+    // 화면에 렌더된 모든 "HH:MM" 시각 텍스트를 수집한다.
+    // (요약 헤더의 출발/도착 시각 + 타임라인의 구간별 시각 포함)
+    List<String> visibleTimes(WidgetTester tester) {
+      final re = RegExp(r'^\d{2}:\d{2}$');
+      return tester
+          .widgetList<Text>(find.byType(Text))
+          .map((w) => w.data)
+          .whereType<String>()
+          .where(re.hasMatch)
+          .toList()
+        ..sort();
+    }
+
+    // 9호선(subwayId 1009) 실시간 도착정보. arrivalSeconds를 크게 벌려
+    // freeze가 깨질 경우 출발/도착 HH:MM이 명확히 달라지도록 한다.
+    //
+    // direction은 `buildLocal()`의 세그먼트 방향과 일치해야 실시간 보정이
+    // 적용된다. station1~3(id 901→903) 세그먼트는 `isDownDirection`이 false
+    // (상행)이므로, `_getRealtimeDeparture`의 방향 필터를 통과하도록 '상행'을
+    // 사용한다. (방향이 어긋나면 실시간 값이 필터링돼 `now` 폴백으로만 표시되어
+    // arrivalSeconds 차이가 시각에 반영되지 않아 테스트가 무의미해진다.)
+    ArrivalInfo arrival(int seconds) => ArrivalInfo(
+          subwayId: '1009',
+          stationName: station1.name,
+          trainLineNm: '개화행',
+          direction: '상행',
+          arrivalMessage: '전역 출발',
+          destination: '개화',
+          trainType: '일반',
+          arrivalSeconds: seconds,
+          receivedAt: DateTime.now(),
+        );
+
+    testWidgets(
+        '초기 로드 후 arrivalInfoProvider를 invalidate하고 다른 도착정보를 '
+        '반환해도 표시된 시각이 최초 값에서 변하지 않는다', (tester) async {
+      // 최초: 곧 도착(2분) → 이후 refresh: 훨씬 나중 도착(60분).
+      // freeze가 동작하면 초기 2분 기반 시각이 그대로 유지되어야 한다.
+      when(() => mockRepo.getArrivalInfo(station1.name))
+          .thenAnswer((_) async => [arrival(120)]);
+
+      late ProviderContainer container;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            arrivalRepositoryProvider.overrideWithValue(mockRepo),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              container = ProviderScope.containerOf(context);
+              return MaterialApp(
+                home: RouteResultScreen(
+                  fastest: buildLocal(),
+                  departureStationName: station1.name,
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      // 최초 도착정보 확정까지 대기 (로딩 → 실제 시각 전환).
+      await tester.pumpAndSettle();
+
+      final before = visibleTimes(tester);
+      // 실시간 도착정보가 반영되어 실제 시각이 표시돼야 함 (요구사항 2).
+      expect(before, isNotEmpty,
+          reason: '로드 후 출발/도착 시각이 표시되어야 한다');
+      expect(find.text('실시간 정보 조회중...'), findsNothing);
+
+      // 지도 화면 등 외부에서 발생하는 refresh를 모사:
+      // repository 반환값을 바꾸고 provider를 invalidate한다.
+      when(() => mockRepo.getArrivalInfo(station1.name))
+          .thenAnswer((_) async => [arrival(3600)]);
+      container.invalidate(arrivalInfoProvider(station1.name));
+      await tester.pumpAndSettle();
+
+      // freeze: 최초 확정값이 그대로 유지되어야 한다 (요구사항 1, 핵심 버그 수정).
+      final after = visibleTimes(tester);
+      expect(after, equals(before),
+          reason: 'refresh 후에도 표시 시각이 최초 값과 동일해야 한다');
+    });
+  });
+
+  group('Case E — 환승 라벨은 도보시간만 (회귀 가드)', () {
+    // 2세그먼트 경로(9호선 → 2호선 환승). 동작 4→9 실측을 본떠
+    //   - 도보(transferWalk) = 370초  → ceil(370/60) = 7분
+    //   - 대기 포함(transferDuration) = 370 + 300 = 670초 → ceil = 12분
+    // 환승 라벨은 반드시 "환승 도보 7분"이어야 하며, 대기 합산값(12/11분)이
+    // 라벨로 새어 나오면 안 된다. 반면 총소요시간(소요 N분)에는 대기가 포함된다.
+    const walkSeconds = 370; // 도보만
+    const waitSeconds = 300; // 열차 대기
+    const transferTotalSeconds = walkSeconds + waitSeconds; // 도보+대기
+
+    // 2호선 세그먼트용 역들(환승역 stationB2에서 갈아탄다).
+    const stationB1 = Station(
+      id: '222',
+      name: '사당',
+      lineId: '2',
+      latitude: 37.47,
+      longitude: 126.98,
+    );
+    const stationB2 = Station(
+      id: '223',
+      name: '방배',
+      lineId: '2',
+      latitude: 37.48,
+      longitude: 126.99,
+    );
+
+    RouteResult buildTransferRoute() {
+      return const RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '9',
+            lineName: '9호선',
+            stations: [station1, station2, station3],
+            durationSeconds: 300,
+            direction: '신방화 방면',
+          ),
+          RouteSegment(
+            lineId: '2',
+            lineName: '2호선',
+            stations: [stationB1, stationB2],
+            durationSeconds: 180,
+            direction: '방배 방면',
+          ),
+        ],
+        // 총소요시간·출발계산은 대기 포함(transferDurations) 사용 → 불변.
+        totalTimeSeconds: 300 + transferTotalSeconds + 180,
+        transferCount: 1,
+        stationCount: 3,
+        transferDurations: [transferTotalSeconds], // 도보+대기(라우팅/총시간용)
+        transferWalkDurations: [walkSeconds], // 도보만(라벨 전용)
+        transferGuides: [null],
+      );
+    }
+
+    testWidgets('환승 행은 도보시간(7분)만 표시하고 대기 합산(12/11분)은 표시하지 않는다',
+        (tester) async {
+      await tester.pumpWidget(buildApp(fastest: buildTransferRoute()));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // 라벨은 도보시간만: ceil(370/60) = 7분.
+      expect(find.textContaining('환승 도보 7분'), findsOneWidget,
+          reason: '환승 라벨은 도보시간(370초→7분)만 표시해야 한다');
+
+      // 대기가 합산된 값이 라벨로 노출되면 안 된다.
+      // ceil(670/60)=12, 과거 버그 리포트의 11분도 함께 방어.
+      expect(find.textContaining('환승 도보 12분'), findsNothing,
+          reason: '도보+대기(670초) 합산값이 환승 라벨에 새어나오면 안 된다');
+      expect(find.textContaining('환승 도보 11분'), findsNothing,
+          reason: '버그 리포트의 11분(도보+대기)이 라벨에 나오면 안 된다');
+    });
+
+    testWidgets('총소요시간(소요 N분)에는 환승 대기가 포함되어 도보만 값보다 크다',
+        (tester) async {
+      final route = buildTransferRoute();
+      await tester.pumpWidget(buildApp(fastest: route));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // (1) 데이터 불변식: totalTimeSeconds는 대기 포함(transferDurations=670) 유지.
+      expect(route.totalTimeSeconds, 300 + transferTotalSeconds + 180,
+          reason: 'totalTimeSeconds는 대기 포함으로 불변이어야 한다');
+
+      // (2) 화면 렌더: "소요 N분" 칩의 N을 파싱한다.
+      //   - 대기 포함 이동시간 총초 = 300 + 670 + 180 = 1150초.
+      //   - 실시간 mock이 비어 있어 출발 시각은 스케줄/폴백 기준이며, 총소요시간은
+      //     이동시간(대기 포함)에서 파생되므로 최소 18분(=1150s 내림) 이상이어야 한다.
+      //   - 만약 라벨처럼 대기를 도보(370)로 대체해 총합을 계산했다면
+      //     300+370+180=850초 → 약 14분으로 줄어든다. 18분 미만이면 회귀.
+      final re = RegExp(r'소요 (\d+)분');
+      final chip = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((w) => w.data)
+          .whereType<String>()
+          .firstWhere((s) => re.hasMatch(s));
+      final minutes = int.parse(re.firstMatch(chip)!.group(1)!);
+      expect(minutes, greaterThanOrEqualTo(18),
+          reason: '총소요시간은 환승 대기 포함(≥18분)이어야 한다. '
+              '도보만으로 축소(약 14분)되면 회귀.');
     });
   });
 }

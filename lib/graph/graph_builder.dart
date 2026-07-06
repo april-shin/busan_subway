@@ -199,6 +199,9 @@ class GraphBuilder {
         lineId: modeLineId,
         weightSeconds: waitSeconds,
         isTransfer: true,
+        // 급행↔완행 모드 전환은 같은 승강장이라 도보 이동이 없다. UI 환승
+        // 라벨은 0분(대기만 있고 도보 없음). weightSeconds(대기)는 그대로 유지.
+        transferWalkSeconds: 0,
       ));
     }
   }
@@ -275,6 +278,9 @@ class GraphBuilder {
                 lineId: 'transfer',
                 weightSeconds: transferTime + toWait,
                 isTransfer: true,
+                // 라우팅 비용(weightSeconds)은 도보+대기 그대로 두고, UI 환승
+                // 라벨용 도보시간만 별도 보관. 대기(toWait)는 제외.
+                transferWalkSeconds: transferTime,
               ));
               // to→from: 도착 노선 = from → from의 배차간격/2 추가
               graph.addEdge(GraphEdge(
@@ -283,6 +289,8 @@ class GraphBuilder {
                 lineId: 'transfer',
                 weightSeconds: transferTime + fromWait,
                 isTransfer: true,
+                // 도보시간만 별도 보관(대기 fromWait 제외).
+                transferWalkSeconds: transferTime,
               ));
             }
           }

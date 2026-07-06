@@ -351,6 +351,9 @@ void main() {
           .firstWhere((e) => e.toNodeId == '316_3');
       expect(from2.weightSeconds, 240);
       expect(from2.isTransfer, isTrue);
+      // 라벨용 도보시간은 대기를 제외한 transferTime(60)만 담긴다.
+      expect(from2.transferWalkSeconds, 60,
+          reason: 'transferWalkSeconds는 도보만(대기 제외)이어야 한다');
 
       // 3→2: transfer 60 + 도착=2의 wait 120 = 180
       final from3 = graph
@@ -358,6 +361,67 @@ void main() {
           .firstWhere((e) => e.toNodeId == '203_2');
       expect(from3.weightSeconds, 180);
       expect(from3.isTransfer, isTrue);
+      // 반대 방향도 도보시간은 60(대기 120 제외).
+      expect(from3.transferWalkSeconds, 60,
+          reason: '반대 방향도 도보시간은 대기 제외 transferTime');
+    });
+
+    test('모드 전환 edge의 transferWalkSeconds는 0 (같은 승강장, 도보 없음)', () {
+      // 9호선 모드 전환은 weightSeconds(대기)=0이므로, 대기가 0이 아닌 비-9호선
+      // 노선('A')으로 검증하여 "도보 0 ≠ 대기"를 명확히 한다.
+      final airportStations = const [
+        Station(id: 'A01', name: '서울역A', lineId: 'A', latitude: 0, longitude: 0),
+        Station(id: 'A02', name: '공덕A', lineId: 'A', latitude: 0, longitude: 0),
+        Station(id: 'A03', name: '홍대입구A', lineId: 'A', latitude: 0, longitude: 0),
+      ];
+      final airportConnections = const [
+        Connection(fromStationId: 'A01', toStationId: 'A02', lineId: 'A', travelTimeSeconds: 100),
+        Connection(fromStationId: 'A02', toStationId: 'A03', lineId: 'A', travelTimeSeconds: 100),
+      ];
+      final airportExpress = const [
+        ExpressSkipEdge(
+            lineId: 'A',
+            fromStationId: 'A01',
+            toStationId: 'A03',
+            seconds: 120,
+            skippedStationIds: ['A02']),
+      ];
+
+      final graph = builder.build(
+        stations: airportStations,
+        connections: airportConnections,
+        transferTimes: {},
+        expressSkipEdges: airportExpress,
+        headwaySeconds: const {'A': 240}, // 배차 4분 → 모드 전환 대기 120초
+      );
+
+      final modeEdge = graph
+          .getNeighbors('A01_A')
+          .firstWhere((e) => e.toNodeId == 'A01_AE');
+      expect(modeEdge.lineId, 'AM');
+      // 대기(weightSeconds)는 120초지만, 도보시간은 0(같은 승강장).
+      expect(modeEdge.weightSeconds, 120);
+      expect(modeEdge.transferWalkSeconds, 0,
+          reason: '모드 전환은 같은 승강장이라 도보 0(대기 120과 무관)');
+    });
+
+    test('일반 구간 edge의 transferWalkSeconds는 기본값 0', () {
+      final stations2 = const [
+        Station(id: '201', name: '시청', lineId: '2', latitude: 0, longitude: 0),
+        Station(id: '202', name: '을지로입구', lineId: '2', latitude: 0, longitude: 0),
+      ];
+      final connections2 = const [
+        Connection(fromStationId: '201', toStationId: '202', lineId: '2', travelTimeSeconds: 90),
+      ];
+      final graph = builder.build(
+        stations: stations2,
+        connections: connections2,
+        transferTimes: {},
+      );
+
+      final edge = graph.getNeighbors('201_2').first;
+      expect(edge.isTransfer, isFalse);
+      expect(edge.transferWalkSeconds, 0);
     });
 
     test('headwaySeconds가 비어있으면 환승 weight는 transferTime 그대로 (레거시 호환)', () {

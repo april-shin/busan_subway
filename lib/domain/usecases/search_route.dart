@@ -323,6 +323,7 @@ class SearchRoute {
             sum + (seg.stations.isEmpty ? 0 : seg.stations.length - 1),
       ),
       transferDurations: built.transferDurations,
+      transferWalkDurations: built.transferWalkDurations,
       transferGuides: built.transferGuides,
       totalExpressTimeSeconds: _computeTotalExpress(
         segments: built.segments,
@@ -358,6 +359,7 @@ class SearchRoute {
   ({
     List<RouteSegment> segments,
     List<int> transferDurations,
+    List<int> transferWalkDurations,
     List<TransferGuide?> transferGuides,
   }) _buildSegments(
     PathResult path,
@@ -368,12 +370,16 @@ class SearchRoute {
       return (
         segments: <RouteSegment>[],
         transferDurations: <int>[],
+        transferWalkDurations: <int>[],
         transferGuides: <TransferGuide?>[],
       );
     }
 
     final segments = <RouteSegment>[];
     final transferDurations = <int>[];
+    // 환승 라벨용 도보시간(초). transferDurations(도보+대기)와 항상 나란히
+    // 같은 길이로 채워진다. 라우팅/총시간 계산에는 쓰이지 않는다.
+    final transferWalkDurations = <int>[];
     final transferGuidesList = <TransferGuide?>[];
     var currentLineId = path.edges.first.lineId;
     var currentStations = <Station>[];
@@ -416,6 +422,9 @@ class SearchRoute {
           segments.add(completedSegment);
         }
         transferDurations.add(edge.weightSeconds);
+        // 라벨용 도보시간을 나란히 수집(대기 제외). 불변식: transferDurations,
+        // transferWalkDurations, transferGuidesList 세 리스트는 항상 같은 길이.
+        transferWalkDurations.add(edge.transferWalkSeconds);
 
         // 환승 가이드 매칭 (이전 세그먼트 방향 + 다음 노선 기준).
         // 단, 모드 전환(`{line}M`)은 같은 역의 완행↔급행 전환이라 환승 가이드 의미 없음.
@@ -513,6 +522,7 @@ class SearchRoute {
     return (
       segments: List.unmodifiable(segments),
       transferDurations: List.unmodifiable(transferDurations),
+      transferWalkDurations: List.unmodifiable(transferWalkDurations),
       transferGuides: List.unmodifiable(transferGuidesList),
     );
   }
