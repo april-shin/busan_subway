@@ -77,8 +77,11 @@ flutter analyze
 # SVG에서 역 좌표 추출 (svg_station_coords.json 생성)
 dart run tool/extract_svg_stations.dart
 
-# 역/노선 JSON 에셋 재생성 (svg_station_coords.json 참조)
+# 역/노선 JSON 에셋 재생성 (svg_station_coords.json 참조, transfer_times.json 은 생성하지 않음)
 dart run tool/generate_station_data.dart
+
+# 환승소요시간 재생성 (서울교통공사 공식 데이터셋 + stations.json → transfer_times.json, 유일 소스)
+dart run tool/build_transfer_times.dart
 
 # WebView용 HTML 생성 (seoul_metro_map.svg → map.html)
 dart run tool/build_map_html.dart
