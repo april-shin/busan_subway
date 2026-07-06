@@ -1,7 +1,7 @@
 name: seoul_subway
 description: "서울 지하철 노선도 - 경로 검색 및 실시간 도착 정보"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.11.0
