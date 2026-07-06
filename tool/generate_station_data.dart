@@ -75,7 +75,7 @@ void main() {
     StationData('124', '회기', '1', 37.5895, 127.0579, isTransfer: true, transferLines: ['1', '경의중앙', '경춘']),
     StationData('125', '청량리', '1', 37.5805, 127.0475, isTransfer: true, transferLines: ['1', '경의중앙', '수인분당', '경춘']),
     StationData('126', '제기동', '1', 37.5785, 127.0373),
-    StationData('127', '신설동', '1', 37.5747, 127.0252, isTransfer: true, transferLines: ['1', '2']),
+    StationData('127', '신설동', '1', 37.5747, 127.0252, isTransfer: true, transferLines: ['1', '2', '우이신설']),
     StationData('128', '동묘앞', '1', 37.5715, 127.0167, isTransfer: true, transferLines: ['1', '6']),
     StationData('129', '동대문', '1', 37.5712, 127.0094, isTransfer: true, transferLines: ['1', '4']),
     StationData('130', '종로5가', '1', 37.5707, 127.0019),
@@ -208,6 +208,8 @@ void main() {
     StationData('247', '도림천', '2', 37.5162, 126.8828),
     StationData('248', '양천구청', '2', 37.5184, 126.8664),
     StationData('249', '신정네거리', '2', 37.5198, 126.8552),
+    // 2호선 성수지선 종점 신설동 (용두 다음, 1·우이신설 환승)
+    StationData('250', '신설동', '2', 37.5747, 127.0252, isTransfer: true, transferLines: ['1', '2', '우이신설']),
   ];
   stations.addAll(line2);
 
@@ -275,7 +277,7 @@ void main() {
     StationData('407', '미아', '4', 37.6265, 127.0283),
     StationData('408', '미아사거리', '4', 37.6135, 127.0302),
     StationData('409', '길음', '4', 37.6035, 127.0254),
-    StationData('410', '성신여대입구', '4', 37.5924, 127.0165, isTransfer: true, transferLines: ['4']),
+    StationData('410', '성신여대입구', '4', 37.5924, 127.0165, isTransfer: true, transferLines: ['4', '우이신설']),
     StationData('411', '한성대입구', '4', 37.5876, 127.0062),
     StationData('412', '혜화', '4', 37.5825, 127.0018),
     StationData('413', '동대문', '4', 37.5712, 127.0094, isTransfer: true, transferLines: ['1', '4']),
@@ -321,7 +323,7 @@ void main() {
   final line5 = [
     StationData('501', '방화', '5', 37.5742, 126.8154),
     StationData('502', '개화산', '5', 37.5727, 126.8073),
-    StationData('503', '김포공항', '5', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도']),
+    StationData('503', '김포공항', '5', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도', '김포골드', '서해']),
     StationData('504', '송정', '5', 37.5563, 126.8029),
     StationData('505', '마곡', '5', 37.5625, 126.8247),
     StationData('506', '발산', '5', 37.5593, 126.8381),
@@ -409,7 +411,7 @@ void main() {
     StationData('626', '신당', '6', 37.5660, 127.0177, isTransfer: true, transferLines: ['2', '6']),
     StationData('627', '동묘앞', '6', 37.5715, 127.0167, isTransfer: true, transferLines: ['1', '6']),
     StationData('628', '창신', '6', 37.5791, 127.0165),
-    StationData('629', '보문', '6', 37.5882, 127.0198),
+    StationData('629', '보문', '6', 37.5882, 127.0198, isTransfer: true, transferLines: ['6', '우이신설']),
     StationData('630', '안암', '6', 37.5862, 127.0289),
     StationData('631', '고려대', '6', 37.5905, 127.0340),
     StationData('632', '월곡', '6', 37.6022, 127.0401),
@@ -419,6 +421,8 @@ void main() {
     StationData('636', '태릉입구', '6', 37.6175, 127.0755, isTransfer: true, transferLines: ['6', '7']),
     StationData('637', '화랑대', '6', 37.6202, 127.0838),
     StationData('638', '봉화산', '6', 37.6182, 127.0927),
+    // 6호선 신내 연장 (봉화산→신내, 경춘선 환승)
+    StationData('639', '신내', '6', 37.6126, 127.1042, isTransfer: true, transferLines: ['6', '경춘']),
   ];
   stations.addAll(line6);
 
@@ -514,7 +518,7 @@ void main() {
   // ======= 9호선 =======
   final line9 = [
     StationData('901', '개화', '9', 37.5788, 126.8042),
-    StationData('902', '김포공항', '9', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도']),
+    StationData('902', '김포공항', '9', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도', '김포골드', '서해']),
     StationData('903', '공항시장', '9', 37.5614, 126.8118),
     StationData('904', '신방화', '9', 37.5624, 126.8226),
     StationData('905', '마곡나루', '9', 37.5665, 126.8302, isTransfer: true, transferLines: ['9', '공항철도']),
@@ -645,7 +649,7 @@ void main() {
     StationData('C03', '중랑', '경춘', 37.5972, 127.0684, isTransfer: true, transferLines: ['경의중앙', '경춘']),
     StationData('C04', '상봉', '경춘', 37.5968, 127.0851, isTransfer: true, transferLines: ['7', '경의중앙', '경춘']),
     StationData('C05', '망우', '경춘', 37.5985, 127.0915, isTransfer: true, transferLines: ['경의중앙', '경춘']),
-    StationData('C06', '신내', '경춘', 37.6126, 127.1042),
+    StationData('C06', '신내', '경춘', 37.6126, 127.1042, isTransfer: true, transferLines: ['6', '경춘']),
     StationData('C07', '갈매', '경춘', 37.6344, 127.1179),
     StationData('C08', '별내', '경춘', 37.6448, 127.1275, isTransfer: true, transferLines: ['경춘', '8']),
     StationData('C09', '퇴계원', '경춘', 37.6553, 127.1394),
@@ -684,7 +688,7 @@ void main() {
     StationData('A03', '홍대입구', '공항철도', 37.5572, 126.9259, isTransfer: true, transferLines: ['2', '경의중앙', '공항철도']),
     StationData('A04', '디지털미디어시티', '공항철도', 37.5762, 126.8996, isTransfer: true, transferLines: ['6', '경의중앙', '공항철도']),
     StationData('A05', '마곡나루', '공항철도', 37.5665, 126.8302, isTransfer: true, transferLines: ['9', '공항철도']),
-    StationData('A06', '김포공항', '공항철도', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도']),
+    StationData('A06', '김포공항', '공항철도', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도', '김포골드', '서해']),
     StationData('A07', '계양', '공항철도', 37.5684, 126.7605, isTransfer: true, transferLines: ['공항철도', '인천1']),
     StationData('A08', '검암', '공항철도', 37.5726, 126.7418, isTransfer: true, transferLines: ['공항철도', '인천2']),
     StationData('A09', '청라국제도시', '공항철도', 37.5340, 126.6620),
@@ -874,11 +878,15 @@ void main() {
     StationData('P07', '사우 (김포시청)', '김포골드', 37.6147, 126.6272),
     StationData('P08', '풍무', '김포골드', 37.6040, 126.6425),
     StationData('P09', '고촌', '김포골드', 37.5880, 126.6621),
+    // 김포골드라인 종점 김포공항 (5·9·공항철도·서해 환승)
+    StationData('P10', '김포공항', '김포골드', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도', '김포골드', '서해']),
   ];
   stations.addAll(gimpoGold);
 
   // ======= 서해선 (원종↔원시) =======
   final seohae = [
+    // 서해선(대곡소사선) 김포공항 — 원종 북측 인접 (5·9·공항철도·김포골드 환승)
+    StationData('H12', '김포공항', '서해', 37.5624, 126.8015, isTransfer: true, transferLines: ['5', '9', '공항철도', '김포골드', '서해']),
     StationData('H01', '원종', '서해', 37.5050, 126.7942),
     StationData('H02', '소새울', '서해', 37.4620, 126.7660),
     StationData('H03', '시흥대야', '서해', 37.4415, 126.7480),
@@ -924,6 +932,10 @@ void main() {
     StationData('W08', '솔샘', '우이신설', 37.6180, 127.0195),
     StationData('W09', '북한산보국문', '우이신설', 37.6110, 127.0210),
     StationData('W10', '정릉', '우이신설', 37.6040, 127.0241),
+    // 우이신설 남측 연장 (정릉→성신여대입구→보문→신설동)
+    StationData('W11', '성신여대입구', '우이신설', 37.5924, 127.0165, isTransfer: true, transferLines: ['4', '우이신설']),
+    StationData('W12', '보문', '우이신설', 37.5882, 127.0198, isTransfer: true, transferLines: ['6', '우이신설']),
+    StationData('W13', '신설동', '우이신설', 37.5747, 127.0252, isTransfer: true, transferLines: ['1', '2', '우이신설']),
   ];
   stations.addAll(wooisinseol);
 
@@ -1113,6 +1125,19 @@ void main() {
         'toStationId': '247',
         'lineId': '2',
         'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
+      // 성수 지선 종점: 신정네거리(249)→신설동(250) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '249' &&
+          c['toStationId'] == '250' &&
+          c['lineId'] == '2');
+      // 용두(246)→신설동(250) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '246',
+        'toStationId': '250',
+        'lineId': '2',
+        'travelTimeSeconds': 90,
         'isTransfer': false,
       });
     }

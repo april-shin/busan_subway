@@ -395,7 +395,8 @@
     "isTransfer": true,
     "transferLines": [
       "1",
-      "2"
+      "2",
+      "우이신설"
     ]
   },
   {
@@ -2749,7 +2750,8 @@
     "svgY": 248.0,
     "isTransfer": true,
     "transferLines": [
-      "4"
+      "4",
+      "우이신설"
     ]
   },
   {
@@ -3306,7 +3308,9 @@
     "transferLines": [
       "5",
       "9",
-      "공항철도"
+      "공항철도",
+      "김포골드",
+      "서해"
     ]
   },
   {
@@ -4406,9 +4410,10 @@
     "longitude": 127.0198,
     "svgX": 1432.0,
     "svgY": 356.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "6"
+      "6",
+      "우이신설"
     ]
   },
   {
@@ -5581,7 +5586,9 @@
     "transferLines": [
       "5",
       "9",
-      "공항철도"
+      "공항철도",
+      "김포골드",
+      "서해"
     ]
   },
   {
@@ -7120,8 +7127,9 @@
     "longitude": 127.1042,
     "svgX": 2008.0,
     "svgY": 388.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
+      "6",
       "경춘"
     ]
   },
@@ -7567,7 +7575,9 @@
     "transferLines": [
       "5",
       "9",
-      "공항철도"
+      "공항철도",
+      "김포골드",
+      "서해"
     ]
   },
   {
@@ -10271,5 +10281,111 @@
       "수인분당"
     ],
     "labelDirection": 0
+  },
+  {
+    "id": "250",
+    "name": "신설동",
+    "lineId": "2",
+    "latitude": 37.5747,
+    "longitude": 127.0252,
+    "svgX": 1485.3333333333333,
+    "svgY": 416.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2",
+      "우이신설"
+    ]
+  },
+  {
+    "id": "639",
+    "name": "신내",
+    "lineId": "6",
+    "latitude": 37.6126,
+    "longitude": 127.1042,
+    "svgX": 2008.0,
+    "svgY": 388.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "경춘"
+    ]
+  },
+  {
+    "id": "P10",
+    "name": "김포공항",
+    "lineId": "김포골드",
+    "latitude": 37.5624,
+    "longitude": 126.8015,
+    "svgX": 328.0,
+    "svgY": 544.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9",
+      "공항철도",
+      "김포골드",
+      "서해"
+    ]
+  },
+  {
+    "id": "H12",
+    "name": "김포공항",
+    "lineId": "서해",
+    "latitude": 37.5624,
+    "longitude": 126.8015,
+    "svgX": 328.0,
+    "svgY": 544.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9",
+      "공항철도",
+      "김포골드",
+      "서해"
+    ]
+  },
+  {
+    "id": "W11",
+    "name": "성신여대입구",
+    "lineId": "우이신설",
+    "latitude": 37.5924,
+    "longitude": 127.0165,
+    "svgX": 1380.0,
+    "svgY": 248.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W12",
+    "name": "보문",
+    "lineId": "우이신설",
+    "latitude": 37.5882,
+    "longitude": 127.0198,
+    "svgX": 1432.0,
+    "svgY": 356.0,
+    "isTransfer": true,
+    "transferLines": [
+      "6",
+      "우이신설"
+    ]
+  },
+  {
+    "id": "W13",
+    "name": "신설동",
+    "lineId": "우이신설",
+    "latitude": 37.5747,
+    "longitude": 127.0252,
+    "svgX": 1485.3333333333333,
+    "svgY": 416.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "2",
+      "우이신설"
+    ]
   }
 ]

@@ -5433,5 +5433,54 @@
     "lineId": "수인분당",
     "travelTimeSeconds": 240,
     "expressTimeSeconds": 180
+  },
+  {
+    "fromStationId": "246",
+    "toStationId": "250",
+    "lineId": "2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "638",
+    "toStationId": "639",
+    "lineId": "6",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P09",
+    "toStationId": "P10",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H12",
+    "toStationId": "H01",
+    "lineId": "서해",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W10",
+    "toStationId": "W11",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W11",
+    "toStationId": "W12",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W12",
+    "toStationId": "W13",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
   }
 ]
