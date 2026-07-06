@@ -14,47 +14,68 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // AppBar 없음. Scaffold 배경색(surface)이 상태바 영역을 채우고,
+    // 지도는 SafeArea top 안쪽(상태바 아래)부터 시작한다 — 몰입형 아님.
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          Consumer(
-            builder: (context, ref, _) {
-              final selectedStations = ref.watch(selectedStationsProvider);
-              if (selectedStations.departure == null &&
-                  selectedStations.arrival == null) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  ref.read(selectedStationsProvider.notifier).clear();
-                },
-              );
-            },
-          ),
-        ],
-      ),
       body: Column(
         children: [
-          Consumer(
-            builder: (context, ref, _) {
-              final selectedStations = ref.watch(selectedStationsProvider);
-              return RouteSearchBar(
-                departure: selectedStations.departure,
-                arrival: selectedStations.arrival,
-                onDepartureTap: () => context.go('/pick-station/departure'),
-                onArrivalTap: () => context.go('/pick-station/arrival'),
-                onSwap: () {
-                  ref.read(selectedStationsProvider.notifier).swap();
-                },
-                onSearchRoute: selectedStations.isComplete
-                    ? () => _searchRoute(context, ref)
-                    : null,
-              );
-            },
-          ),
-          const Expanded(
-            child: SubwayMapScreen(),
+          Expanded(
+            child: Stack(
+              children: [
+                // 바닥 레이어: 지도 전체화면. SafeArea top 존중.
+                // selectedStations 와 독립 — Consumer 밖에 두어 출발/도착
+                // 선택 변경 시 리빌드되지 않도록 리빌드 경계를 유지한다.
+                const Positioned.fill(
+                  child: SafeArea(
+                    bottom: false,
+                    child: SubwayMapScreen(),
+                  ),
+                ),
+                // floating 오버레이: 상단에 겹쳐 뜨는 검색바.
+                // 자기 bounds(상단)만 차지하므로 나머지 지도 영역의
+                // 줌/팬/탭 터치는 그대로 지도로 전달된다.
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final selectedStations =
+                            ref.watch(selectedStationsProvider);
+                        return RouteSearchBar(
+                          departure: selectedStations.departure,
+                          arrival: selectedStations.arrival,
+                          onDepartureTap: () =>
+                              context.go('/pick-station/departure'),
+                          onArrivalTap: () =>
+                              context.go('/pick-station/arrival'),
+                          onSwap: () {
+                            ref.read(selectedStationsProvider.notifier).swap();
+                          },
+                          onSearchRoute: selectedStations.isComplete
+                              ? () => _searchRoute(context, ref)
+                              : null,
+                          // 취소(X): 각 입력창 내부 우측에서 해당 역만 취소.
+                          // 선택된 역이 있을 때만 콜백을 전달해 X 를 노출한다.
+                          onClearDeparture: selectedStations.departure != null
+                              ? () => ref
+                                  .read(selectedStationsProvider.notifier)
+                                  .setDeparture(null)
+                              : null,
+                          onClearArrival: selectedStations.arrival != null
+                              ? () => ref
+                                  .read(selectedStationsProvider.notifier)
+                                  .setArrival(null)
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const HomeBannerAd(),
         ],
