@@ -10,6 +10,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/constants/line_colors.dart';
 import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/station.dart';
+import '../../../settings/presentation/providers/home_station_provider.dart';
 import '../providers/live_train_provider.dart';
 import '../providers/subway_map_providers.dart';
 
@@ -101,6 +102,31 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     // 초기 열차 데이터 표시
     if (widget.liveTrains.isNotEmpty) {
       _showTrains(widget.liveTrains);
+    }
+
+    // 홈 역 초기 팬. 사용자가 설정한 역이 있다면 서울역 대신 그 역이
+    // 화면 중앙에 오도록 즉시 이동한다(애니메이션 없음). 설정 없으면
+    // map.html 의 INITIAL_CENTER_X/Y (서울역) 기본값을 그대로 유지.
+    // 활성 경로가 있으면 그쪽 팬을 우선한다 (경로 진입 UX 우선).
+    //
+    // 앱 콜드 스타트 시 map.html 은 static asset 이라 수십 ms 만에 로드되지만
+    // `homeStationProvider` 는 SharedPreferences 초기화(첫 접근 100~300ms)를
+    // 기다려야 값이 나온다. 그래서 `valueOrNull` 로 동기 스냅샷을 찍으면 첫
+    // 실행에서 항상 null → 서울역이 뜨는 회귀가 있었다. `.future` 로 로드
+    // 완료를 기다린 뒤 pan.
+    if (widget.panTarget == null) {
+      _panToHomeStationAsync();
+    }
+  }
+
+  /// 홈 역 로드 후 지도 중앙 이동. 실패/설정 없음은 조용히 넘긴다.
+  Future<void> _panToHomeStationAsync() async {
+    try {
+      final home = await ref.read(homeStationProvider.future);
+      if (!mounted || home == null) return;
+      _panTo(home.svgX, home.svgY, durationMs: 0);
+    } catch (_) {
+      // provider 실패 시 서울역 기본값 유지.
     }
   }
 
