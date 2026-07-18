@@ -8,6 +8,7 @@ import 'features/arrival_info/presentation/screens/arrival_info_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/route_search/presentation/screens/route_result_screen.dart';
 import 'features/route_search/presentation/screens/station_picker_screen.dart';
+import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/station_detail/presentation/screens/station_detail_screen.dart';
 
 final GoRouter router = GoRouter(
@@ -61,6 +62,10 @@ final GoRouter router = GoRouter(
           builder: (context, state) => ArrivalInfoScreen(
             stationName: state.pathParameters['stationName']!,
           ),
+        ),
+        GoRoute(
+          path: 'settings',
+          builder: (context, state) => const SettingsScreen(),
         ),
       ],
     ),

@@ -53,11 +53,18 @@ class RouteSearchBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: AppBorderRadius.lg,
+        // 하단으로 뻗는 부드러운 그림자 + 살짝 넓게 퍼지는 앰비언트 그림자
+        // 이중 레이어로 카드가 지도 위에 확실히 떠 있는 느낌을 강화.
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),

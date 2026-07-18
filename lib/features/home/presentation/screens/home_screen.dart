@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/usecases/search_route.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../route_search/presentation/providers/timetable_providers.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../../../subway_map/presentation/screens/subway_map_screen.dart';
 import '../widgets/search_bar_widget.dart';
+import '../widgets/settings_fab.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,6 +32,13 @@ class HomeScreen extends StatelessWidget {
                     bottom: false,
                     child: SubwayMapScreen(),
                   ),
+                ),
+                // floating 설정 버튼: 좌측 하단.
+                // 자기 크기(48x48)만 차지하므로 지도 줌/팬/탭에 방해되지 않는다.
+                const Positioned(
+                  left: AppSpacing.space16,
+                  bottom: AppSpacing.space16,
+                  child: SettingsFab(),
                 ),
                 // floating 오버레이: 상단에 겹쳐 뜨는 검색바.
                 // 자기 bounds(상단)만 차지하므로 나머지 지도 영역의
