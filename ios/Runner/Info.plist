@@ -68,8 +68,6 @@
 	</array>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3206652264632834~4236362749</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>광고 효과 측정을 위해 사용됩니다.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
