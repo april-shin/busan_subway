@@ -24,7 +24,7 @@
     "fromStationId": "101",
     "toStationId": "102",
     "lineId": "1",
-    "travelTimeSeconds": 540,
+    "travelTimeSeconds": 240,
     "isTransfer": false
   },
   {
@@ -129,15 +129,15 @@
     "lineId": "1",
     "travelTimeSeconds": 120,
     "isTransfer": false,
-    "expressTimeSeconds": 60
+    "expressTimeSeconds": 90
   },
   {
     "fromStationId": "115",
     "toStationId": "116",
     "lineId": "1",
-    "travelTimeSeconds": 210,
+    "travelTimeSeconds": 120,
     "isTransfer": false,
-    "expressTimeSeconds": 120
+    "expressTimeSeconds": 60
   },
   {
     "fromStationId": "116",
@@ -503,9 +503,9 @@
     "fromStationId": "161",
     "toStationId": "162",
     "lineId": "1",
-    "travelTimeSeconds": 60,
+    "travelTimeSeconds": 240,
     "isTransfer": false,
-    "expressTimeSeconds": 60
+    "expressTimeSeconds": 240
   },
   {
     "fromStationId": "166",
@@ -638,9 +638,9 @@
     "fromStationId": "183",
     "toStationId": "184",
     "lineId": "1",
-    "travelTimeSeconds": 300,
+    "travelTimeSeconds": 210,
     "isTransfer": false,
-    "expressTimeSeconds": 330
+    "expressTimeSeconds": 210
   },
   {
     "fromStationId": "184",
@@ -1489,7 +1489,7 @@
     "fromStationId": "406",
     "toStationId": "407",
     "lineId": "4",
-    "travelTimeSeconds": 270,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -1531,7 +1531,7 @@
     "fromStationId": "412",
     "toStationId": "413",
     "lineId": "4",
-    "travelTimeSeconds": 240,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {
@@ -1650,7 +1650,7 @@
     "fromStationId": "429",
     "toStationId": "430",
     "lineId": "4",
-    "travelTimeSeconds": 240,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -2826,14 +2826,14 @@
     "fromStationId": "824",
     "toStationId": "801",
     "lineId": "8",
-    "travelTimeSeconds": 210,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {
     "fromStationId": "801",
     "toStationId": "802",
     "lineId": "8",
-    "travelTimeSeconds": 140,
+    "travelTimeSeconds": 130,
     "isTransfer": false
   },
   {
@@ -2910,7 +2910,7 @@
     "fromStationId": "812",
     "toStationId": "813",
     "lineId": "8",
-    "travelTimeSeconds": 290,
+    "travelTimeSeconds": 130,
     "isTransfer": false
   },
   {
@@ -3177,7 +3177,7 @@
     "fromStationId": "933",
     "toStationId": "934",
     "lineId": "9",
-    "travelTimeSeconds": 225,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -3212,7 +3212,7 @@
     "fromStationId": "D01",
     "toStationId": "D02",
     "lineId": "SB",
-    "travelTimeSeconds": 198,
+    "travelTimeSeconds": 93,
     "isTransfer": false
   },
   {
@@ -3233,7 +3233,7 @@
     "fromStationId": "D04",
     "toStationId": "D05",
     "lineId": "SB",
-    "travelTimeSeconds": 259,
+    "travelTimeSeconds": 139,
     "isTransfer": false
   },
   {
@@ -3310,7 +3310,7 @@
     "fromStationId": "D15",
     "toStationId": "D16",
     "lineId": "SB",
-    "travelTimeSeconds": 150,
+    "travelTimeSeconds": 201,
     "isTransfer": false
   },
   {
@@ -3879,7 +3879,8 @@
     "toStationId": "C24",
     "lineId": "경춘",
     "travelTimeSeconds": 210,
-    "isTransfer": false
+    "isTransfer": false,
+    "expressTimeSeconds": 210
   },
   {
     "fromStationId": "C25",
@@ -4313,15 +4314,15 @@
     "lineId": "수인분당",
     "travelTimeSeconds": 150,
     "isTransfer": false,
-    "expressTimeSeconds": 150
+    "expressTimeSeconds": 120
   },
   {
     "fromStationId": "B37",
     "toStationId": "B38",
     "lineId": "수인분당",
-    "travelTimeSeconds": 540,
+    "travelTimeSeconds": 240,
     "isTransfer": false,
-    "expressTimeSeconds": 510
+    "expressTimeSeconds": 240
   },
   {
     "fromStationId": "B38",
@@ -4491,9 +4492,9 @@
     "fromStationId": "B56",
     "toStationId": "B57",
     "lineId": "수인분당",
-    "travelTimeSeconds": 60,
+    "travelTimeSeconds": 120,
     "isTransfer": false,
-    "expressTimeSeconds": 5
+    "expressTimeSeconds": 60
   },
   {
     "fromStationId": "S01",
@@ -4513,7 +4514,7 @@
     "fromStationId": "S03",
     "toStationId": "S04",
     "lineId": "신림",
-    "travelTimeSeconds": 120,
+    "travelTimeSeconds": 60,
     "isTransfer": false
   },
   {
@@ -4933,7 +4934,7 @@
     "fromStationId": "J10",
     "toStationId": "J11",
     "lineId": "인천2",
-    "travelTimeSeconds": 266,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {
@@ -5432,5 +5433,54 @@
     "lineId": "수인분당",
     "travelTimeSeconds": 240,
     "expressTimeSeconds": 180
+  },
+  {
+    "fromStationId": "246",
+    "toStationId": "250",
+    "lineId": "2",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "638",
+    "toStationId": "639",
+    "lineId": "6",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "P09",
+    "toStationId": "P10",
+    "lineId": "김포골드",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H12",
+    "toStationId": "H01",
+    "lineId": "서해",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W10",
+    "toStationId": "W11",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W11",
+    "toStationId": "W12",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "W12",
+    "toStationId": "W13",
+    "lineId": "우이신설",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
   }
 ]

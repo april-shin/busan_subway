@@ -103,16 +103,25 @@ void main(List<String> args) async {
         if (fromList.isEmpty || toList.isEmpty) continue;
 
         // toList를 trainno → time 맵으로
+        // [데이터 오염 방어] fetch_timetables.dart 의 substring 검색이 "양재" 로
+        // 양재시민의숲까지 끌어와 한 파일에 두 역 데이터가 섞이는 케이스가 있다.
+        // (예: SB_양재_상행.json 에 양재 + 양재시민의숲 326건 → 같은 trainno 의
+        //  양재(06:05:13) / 양재시민의숲(06:02:59) 이 toMap 에서 덮어써져 gap 이
+        //  139s/273s 로 절반씩 오염, median=259s 가 산출됨.)
+        // stnNm 이 정확히 대상 역명과 일치하는 레코드만 채택하여 차단.
         final toMap = <String, int>{};
         for (final i in toList) {
-          final tno = (i as Map)['trainno']?.toString();
-          final t = _parseSec(i['trainDptreTm']?.toString() ?? '');
+          final m = i as Map;
+          if (m['stnNm']?.toString() != toName) continue;
+          final tno = m['trainno']?.toString();
+          final t = _parseSec(m['trainDptreTm']?.toString() ?? '');
           if (tno != null && t != null) toMap[tno] = t;
         }
 
         // fromList의 각 열차에 대해 to에서의 시각 차이 계산
         for (final i in fromList) {
           final m = i as Map;
+          if (m['stnNm']?.toString() != fromName) continue;
           final tno = m['trainno']?.toString();
           if (tno == null) continue;
           final fromTime = _parseSec(m['trainDptreTm']?.toString() ?? '');

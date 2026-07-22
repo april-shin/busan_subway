@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/entities/transfer_guide.dart';
 
 /// 점선 세로선 높이.
@@ -27,7 +28,7 @@ class TransferRow extends StatelessWidget {
     final note = guide?.note;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.space4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -39,28 +40,26 @@ class TransferRow extends StatelessWidget {
               painter: DashedLinePainter(color: Colors.orange.shade700),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.space8),
           Icon(Icons.directions_walk, size: 14, color: Colors.orange[700]),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
                     text: segments.join(' · '),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange[700],
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.orange[700],
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                   if (note != null && note.isNotEmpty) ...[
                     TextSpan(
                       text: '  $note',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
                     ),
                   ],
                 ],

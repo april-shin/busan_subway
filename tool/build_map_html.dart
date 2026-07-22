@@ -215,6 +215,13 @@ html, body {
   paint-order: stroke;
   stroke-linejoin: round;
 }
+#train-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
 path[data-line] { stroke-width: 5 !important; }
 /* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
 path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
@@ -284,7 +291,6 @@ $mapOnlyContent
   <g id="route-lines"></g>
   <g id="route-markers"></g>
   <g id="selection-markers"></g>
-  <g id="live-trains"></g>
 </svg>
 <div id="tap-layer"></div>
 </div>
@@ -292,6 +298,11 @@ $mapOnlyContent
 <svg id="text-layer" xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 2416 1560">
 $textElements
+</svg>
+
+<svg id="train-layer" xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 2416 1560">
+  <g id="live-trains"></g>
 </svg>
 
 <div id="tooltip" class="tooltip"></div>
@@ -357,6 +368,7 @@ $textElements
   var trainSlotMemory = {};
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
+  var trainLayer = document.getElementById('train-layer');
 
   // ============================================================
   // 변환 적용
@@ -369,6 +381,10 @@ $textElements
     var x0 = -tx / scale, y0 = -ty / scale;
     var vbW = vw / scale, vbH = vh / scale;
     textLayer.setAttribute('viewBox', x0 + ' ' + y0 + ' ' + vbW + ' ' + vbH);
+    // 열차 레이어: text-layer와 동일한 viewBox 동기화로 map-container와 같은
+    // 화면 매핑을 만든다 (좌표/크기는 그대로, z-order만 text-layer 위로 분리).
+    // font-size/stroke 보정(아래)은 텍스트 전용이므로 trainLayer에는 적용하지 않는다.
+    trainLayer.setAttribute('viewBox', x0 + ' ' + y0 + ' ' + vbW + ' ' + vbH);
 
     // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로)
     var cs = Math.min(scale, 1);
@@ -1202,32 +1218,154 @@ $textElements
   // 실시간 열차 표시 (애니메이션)
   // ============================================================
 
+  // [디버그용] 열차 아이콘의 녹색 디버그 정보 박스 표시 여부.
+  // false 로 두면 buildDebugGroup/updateTrainDebugInfo 호출과 1초 setInterval
+  // 갱신이 모두 스킵된다. 함수 정의 자체는 남겨두어 필요 시 true 로 복구 가능.
+  var SHOW_TRAIN_DEBUG = false;
+
   // 행선지 레이블 박스의 최소 너비(px). 열차 아이콘(-18~+18, 36px)과 동일하게
   // 설정해 짧은 행선(예: "김포공항") 은 기존과 동일 모양으로 보이도록 한다.
-  var TRAIN_LABEL_MIN_WIDTH = 36;
-  // 문자 1개당 예상 렌더 너비(px). font-size=8 에서 한글 1자는 약 8px, 영문/숫자는
-  // 더 좁지만 보수적으로 한글 기준으로 잡아 "응암순환(상선)" 같은 긴 행선도
-  // 잘리지 않도록 보장한다. DOM attach 전이라 getComputedTextLength 를 쓸 수
-  // 없으므로 근사 계산을 사용한다.
-  var TRAIN_LABEL_CHAR_WIDTH = 8;
-  var TRAIN_LABEL_PADDING = 6;
+  // ============================================================
+  // 도착 말풍선 (2줄: "{행선}행" / "N초 후 도착")
+  // ============================================================
+  // [원칙 1 준수] 카운트다운 줄은 오직 startTrainAnimation.step() 이 계산하는
+  // realRemaining(단조 감소) 만을 입력으로 받는다. 이 파일 어디에도 별도의
+  // 카운트다운 변수를 신설하지 않는다 — 기존 setInterval 의
+  // `lastArrivalSeconds - elapsed` 방식과 절대 혼용하지 않는다.
+  var BUBBLE_KO_CHAR_W = 9;      // 한글/CJK 전각 1자 근사 너비(px, font-size 9 기준)
+  var BUBBLE_NARROW_CHAR_W = 4.5; // 숫자·공백·영문·괄호 등 반각 1자 근사 너비(px)
+  var BUBBLE_PADDING = 8;       // 좌우 여백 합계(최장 문구도 배경 내 수용)
+  var BUBBLE_MIN_WIDTH = 34;
+  var BUBBLE_LINE_H = 14;      // 줄 1개 높이
+  var BUBBLE_HEIGHT = BUBBLE_LINE_H * 2; // 2줄(행선/카운트다운)
+  var BUBBLE_Y = -20 - BUBBLE_HEIGHT;    // 열차 아이콘(image y=-6.5) 위에 배치
+  var BUBBLE_TAIL_H = 5;
 
-  function computeLabelWidth(text) {
-    var len = (text || '').length;
-    return Math.max(
-      TRAIN_LABEL_MIN_WIDTH,
-      len * TRAIN_LABEL_CHAR_WIDTH + TRAIN_LABEL_PADDING,
-    );
+  // realRemaining(초, 단조 감소) → 표시 문구.
+  function formatArrivalBubbleText(remainingSeconds) {
+    var sec = Math.ceil(remainingSeconds);
+    // 10초 미만(9초 이하)은 "곧 도착"으로 표시. 10초부터 "N초 후 도착".
+    if (sec < 10) return '곧 도착';
+    if (sec < 60) return sec + '초 후 도착';
+    var min = Math.floor(sec / 60);
+    var rem = sec % 60;
+    // 정확히 분 단위면 "N분 후 도착"으로 축약(예 120초 → "2분 후 도착").
+    return rem === 0 ? (min + '분 후 도착') : (min + '분 ' + rem + '초 후 도착');
   }
 
-  // 행선지 변경 시 레이블 박스 너비를 재계산해 잘림을 방지한다.
-  // createTrainIcon 에서 labelBg 가 최초 rect 로 삽입되므로 첫 rect 를 갱신한다.
-  function resizeTrainDestinationLabel(trainGroup, text) {
-    var rect = trainGroup.querySelector('rect');
-    if (!rect) return;
-    var w = computeLabelWidth(text);
-    rect.setAttribute('x', -w / 2);
-    rect.setAttribute('width', w);
+  // 행선지 → 1줄("{destination}행"). destination 이 비면 빈 문자열.
+  function formatDestinationLine(destination) {
+    return destination ? (destination + '행') : '';
+  }
+
+  // 문자열의 근사 렌더링 너비를 글자 종류별로 추정한다.
+  // CJK(한글 등, code point > 0x2E80)는 전각 폭, 그 외(숫자·공백·영문·괄호 등)는 반각 폭.
+  function textWidthApprox(s) {
+    s = s || '';
+    var w = 0;
+    for (var i = 0; i < s.length; i++) {
+      w += (s.charCodeAt(i) > 0x2E80) ? BUBBLE_KO_CHAR_W : BUBBLE_NARROW_CHAR_W;
+    }
+    return w;
+  }
+
+  // 두 줄 중 더 긴 줄 기준으로 말풍선 너비를 계산한다.
+  function computeBubbleWidth(line1, line2) {
+    var w = Math.max(textWidthApprox(line1), textWidthApprox(line2));
+    return Math.max(BUBBLE_MIN_WIDTH, w + BUBBLE_PADDING);
+  }
+
+  // 말풍선(둥근 사각형 배경 + 아래쪽 꼬리 + 2줄 텍스트) DOM 을 생성해 g 에
+  // 부착한다. 배경/꼬리는 노선색(color)으로 채색하고 텍스트는 흰색 유지.
+  // 1줄: "{destination}행", 2줄: 카운트다운("N초 후 도착" 등).
+  function createArrivalBubble(g, destination, countdownText, color) {
+    destination = destination || '';
+    countdownText = countdownText || '';
+    var destLine = formatDestinationLine(destination);
+
+    var bubble = document.createElementNS(SVG_NS, 'g');
+    bubble.setAttribute('class', 'train-arrival-bubble');
+
+    var w = computeBubbleWidth(destLine, countdownText);
+    var bg = document.createElementNS(SVG_NS, 'rect');
+    bg.setAttribute('x', String(-w / 2));
+    bg.setAttribute('y', String(BUBBLE_Y));
+    bg.setAttribute('width', String(w));
+    bg.setAttribute('height', String(BUBBLE_HEIGHT));
+    bg.setAttribute('rx', '4');
+    bg.setAttribute('fill', color || '#333');
+    bg.setAttribute('opacity', '0.9');
+    bubble.appendChild(bg);
+
+    // 말풍선 꼬리: 배경 하단 중앙에서 아래로 향하는 작은 삼각형.
+    var tailY0 = BUBBLE_Y + BUBBLE_HEIGHT;
+    var tail = document.createElementNS(SVG_NS, 'polygon');
+    tail.setAttribute('points',
+      (-4) + ',' + tailY0 + ' ' +
+      4 + ',' + tailY0 + ' ' +
+      0 + ',' + (tailY0 + BUBBLE_TAIL_H));
+    tail.setAttribute('fill', color || '#333');
+    tail.setAttribute('opacity', '0.9');
+    bubble.appendChild(tail);
+
+    var destText = document.createElementNS(SVG_NS, 'text');
+    destText.setAttribute('class', 'bubble-dest');
+    destText.setAttribute('x', '0');
+    destText.setAttribute('y', String(BUBBLE_Y + BUBBLE_LINE_H / 2 + 3.2));
+    destText.setAttribute('text-anchor', 'middle');
+    destText.setAttribute('font-size', '9');
+    destText.setAttribute('font-weight', 'bold');
+    destText.setAttribute('fill', '#fff');
+    destText.setAttribute('font-family', 'sans-serif');
+    destText.textContent = destLine;
+    bubble.appendChild(destText);
+
+    var countText = document.createElementNS(SVG_NS, 'text');
+    countText.setAttribute('class', 'bubble-count');
+    countText.setAttribute('x', '0');
+    countText.setAttribute('y', String(BUBBLE_Y + BUBBLE_LINE_H + BUBBLE_LINE_H / 2 + 3.2));
+    countText.setAttribute('text-anchor', 'middle');
+    countText.setAttribute('font-size', '9');
+    countText.setAttribute('font-weight', 'bold');
+    countText.setAttribute('fill', '#fff');
+    countText.setAttribute('font-family', 'sans-serif');
+    countText.textContent = countdownText;
+    bubble.appendChild(countText);
+
+    g.appendChild(bubble);
+    return { group: bubble, bg: bg, destText: destText, countText: countText };
+  }
+
+  // 말풍선 배경 너비를 현재 두 줄 텍스트 기준으로 재계산한다.
+  function resizeArrivalBubble(trainGroup) {
+    var bubble = trainGroup.querySelector('.train-arrival-bubble');
+    if (!bubble) return;
+    var destEl = bubble.querySelector('.bubble-dest');
+    var countEl = bubble.querySelector('.bubble-count');
+    var bg = bubble.querySelector('rect');
+    if (!bg) return;
+    var w = computeBubbleWidth(
+      destEl ? destEl.textContent : '',
+      countEl ? countEl.textContent : ''
+    );
+    bg.setAttribute('x', String(-w / 2));
+    bg.setAttribute('width', String(w));
+  }
+
+  // 카운트다운 줄(.bubble-count)만 갱신한다 (원칙 1: realRemaining 표시 전용).
+  function updateArrivalBubbleText(trainGroup, displayText) {
+    var textEl = trainGroup.querySelector('.train-arrival-bubble .bubble-count');
+    if (!textEl) return;
+    textEl.textContent = displayText;
+    resizeArrivalBubble(trainGroup);
+  }
+
+  // 행선지 줄(.bubble-dest)만 갱신한다 (refresh 시 행선 변경 반영).
+  function updateArrivalBubbleDestination(trainGroup, destination) {
+    var textEl = trainGroup.querySelector('.train-arrival-bubble .bubble-dest');
+    if (!textEl) return;
+    textEl.textContent = formatDestinationLine(destination);
+    resizeArrivalBubble(trainGroup);
   }
 
   function createTrainIcon(train, color) {
@@ -1240,28 +1378,6 @@ $textElements
     img.setAttribute('width', '36');
     img.setAttribute('height', '13');
     g.appendChild(img);
-
-    // 레이블 박스는 행선 텍스트 길이에 맞춰 확장 (최소 36px).
-    var labelWidth = computeLabelWidth(train.destination);
-    var labelBg = document.createElementNS(SVG_NS, 'rect');
-    labelBg.setAttribute('x', -labelWidth / 2);
-    labelBg.setAttribute('y', '-20');
-    labelBg.setAttribute('width', labelWidth);
-    labelBg.setAttribute('height', '11');
-    labelBg.setAttribute('rx', '3');
-    labelBg.setAttribute('fill', color);
-    labelBg.setAttribute('opacity', '0.85');
-    g.appendChild(labelBg);
-
-    var label = document.createElementNS(SVG_NS, 'text');
-    label.setAttribute('x', '0');
-    label.setAttribute('y', '-11.5');
-    label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('font-size', '8');
-    label.setAttribute('fill', '#fff');
-    label.setAttribute('font-family', 'sans-serif');
-    label.textContent = train.destination || '';
-    g.appendChild(label);
 
     // 급행 딱지: trainType이 '급행'이면 열차 아이콘 우측에 빨간 "급" 배지
     if (train.trainType === '급행') {
@@ -1286,8 +1402,16 @@ $textElements
       g.appendChild(badgeText);
     }
 
-    // [디버그용] 열차 위치 결정 요소 표시
-    g.appendChild(buildDebugGroup(train));
+    // [디버그용] 열차 위치 결정 요소 표시 (SHOW_TRAIN_DEBUG=false 면 생성 스킵)
+    if (SHOW_TRAIN_DEBUG) {
+      g.appendChild(buildDebugGroup(train));
+    }
+
+    // 도착 말풍선(2줄: 행선/카운트다운): 초기 표시는 arrivalSeconds 기반
+    // (원칙 1의 realRemaining 과 동일 포맷 함수 사용). step() 이 시작되면
+    // realRemaining 기준으로 카운트다운 줄만 갱신됨. 배경은 노선색(color).
+    var initialBubbleText = formatArrivalBubbleText(train.arrivalSeconds || 0);
+    createArrivalBubble(g, train.destination, initialBubbleText, color);
 
     // initialProgress 반영: 첫 세그먼트 내 보간 위치에 배치
     var startX = train.fromSvgX;
@@ -1349,7 +1473,9 @@ $textElements
   }
 
   // [디버그용] 기존 열차 아이콘의 디버그 정보 텍스트를 갱신한다.
+  // SHOW_TRAIN_DEBUG=false 면 갱신/생성 없이 즉시 반환 (기존 박스도 남기지 않음).
   function updateTrainDebugInfo(element, train) {
+    if (!SHOW_TRAIN_DEBUG) return;
     var old = element.querySelector('.train-debug-info');
     if (old) old.remove();
     element.appendChild(buildDebugGroup(train));
@@ -1576,9 +1702,25 @@ $textElements
     var path = _snap.path;
     if (!path || path.length < 2) {
       if (path && path.length === 1) {
+        // 단일 점 path = "현재역 == 출발역" 케이스 (예: arvlMsg2='진입'/'도착').
+        // 좌표는 출발역에 고정. 도착 이펙트는 arrivalSeconds<=0 일 때만 발동 —
+        // 양수면 아직 도착 전이므로 이펙트 없이 그 자리에 머물러 표시한다
+        // (그대로 사라지면 사용자가 '열차 누락'으로 오인 — 5호선 양평/영등포 등
+        // 짧은 잔여시간 train 이 화면에서 사라지던 회귀를 차단).
         trainState.element.setAttribute('transform',
           'translate(' + path[0].x + ',' + path[0].y + ')');
-        playArrivalEffect(trainState, trainData.trainNo);
+        // rAF 루프(step)를 타지 않는 경로이므로 말풍선을 1회만 표시한다.
+        // arrivalSeconds<=0 이면 formatArrivalBubbleText 가 "곧 도착"을 반환.
+        // 2줄(행선/카운트다운) 모두 세팅 — refresh 로 재호출될 수 있으므로
+        // 행선 줄도 매번 갱신한다.
+        var singlePointSec = Math.ceil(trainData.arrivalSeconds || 0);
+        updateArrivalBubbleDestination(trainState.element, trainData.destination);
+        updateArrivalBubbleText(trainState.element,
+          formatArrivalBubbleText(trainData.arrivalSeconds || 0));
+        trainState.lastShownSec = singlePointSec;
+        if ((trainData.arrivalSeconds || 0) <= 0) {
+          playArrivalEffect(trainState, trainData.trainNo);
+        }
       }
       return;
     }
@@ -1638,6 +1780,16 @@ $textElements
       // [원칙 1] realRemaining = arrivalSeconds - (now - recptnDt)
       var realRemaining = Math.max(0,
         baseArrival - (Date.now() - receivedAt) / 1000);
+
+      // 도착 말풍선: realRemaining(단조 감소, 원칙 1) 을 그대로 정수화해 표시.
+      // 별도 카운트다운 변수를 두지 않고, 정수 초가 바뀔 때만 DOM 을 갱신해
+      // 매 frame(~60fps) textContent 쓰기를 피한다.
+      var shownSec = Math.ceil(realRemaining);
+      if (trainState.lastShownSec !== shownSec) {
+        trainState.lastShownSec = shownSec;
+        updateArrivalBubbleText(trainState.element,
+          formatArrivalBubbleText(realRemaining));
+      }
 
       // [원칙 2] 역산
       var res = estimateTrainPosition(realRemaining, segDurations);
@@ -1839,17 +1991,16 @@ $textElements
           existing.lastUpdateTime = nowMs;
           existing.baseArrival = t.arrivalSeconds;
           existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
-          var texts = existing.element.querySelectorAll('text');
-          if (texts.length > 0) {
-            texts[0].textContent = t.destination || '';
-          }
-          // 행선이 길어지면 레이블 박스도 재계산(짧아질 때도 재축소).
-          resizeTrainDestinationLabel(existing.element, t.destination);
+          // 행선지는 말풍선의 .bubble-dest 줄(class 기반)로 갱신 —
+          // 길이 변화에 맞춰 말풍선 너비도 재계산(짧아질 때도 재축소).
+          updateArrivalBubbleDestination(existing.element, t.destination);
           updateTrainDebugInfo(existing.element, t);
           existing.slotKey = makeSlotKey(t);
           rememberSlot(t, nowMs);
           continue;
         }
+        // [jitter grace] train 이 다시 보고됨 → 누락 카운트 리셋.
+        existing.missedCycles = 0;
         cancelTrainAnimation(existing);
         existing.destination = t.destination || '';
         existing.lastArrivalSeconds = t.arrivalSeconds;
@@ -1857,11 +2008,7 @@ $textElements
         existing.baseArrival = t.arrivalSeconds;
         existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
         existing.slotKey = makeSlotKey(t);
-        var texts = existing.element.querySelectorAll('text');
-        if (texts.length > 0) {
-          texts[0].textContent = t.destination || '';
-        }
-        resizeTrainDestinationLabel(existing.element, t.destination);
+        updateArrivalBubbleDestination(existing.element, t.destination);
         // [디버그용] 기존 열차의 디버그 정보 갱신
         updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);
@@ -1914,20 +2061,45 @@ $textElements
         toRemove.push(id);
       }
     }
-    // [도착/필터변경 분리 가드]
-    // toRemove 는 "API 응답에서 더 이상 보이지 않는 train". 두 가지 원인이 섞여 있다.
+    // [도착/필터변경/jitter 분리 가드]
+    // toRemove 는 "API 응답에서 더 이상 보이지 않는 train". 세 가지 원인.
     //   (A) 진짜 도착: API 가 보고 안 함 → 도착 애니메이션 발동 ✓
-    //   (B) routeFilter 변경: 출발/도착역을 새로 선택해 lineId·isDown 이 바뀌어
-    //       liveTrainsProvider 가 다른 노선/방향 train 을 필터링으로 떨어뜨림
-    //       → 이전엔 도착 애니메이션 폭발 ✗
-    // 마지막 lastArrivalSeconds 가 임계값 초과면 (B) 로 간주하고 silent 제거.
-    // 진짜 도착 시 마지막 갱신값은 보통 0~수십 초이며 60 초 임계는 충분히 보수적.
+    //   (B) routeFilter 변경: 다른 노선/방향 → silent 제거
+    //   (C) API jitter: Seoul 공공 API 가 same-cycle 에 train 을 일관성 없이 누락
+    //       (다음 cycle 에 다시 보고됨). 즉시 제거 시 train 이 화면에서 증발 후
+    //       재등장 → 사용자 인식 "탈선/증발". (5호선 영등포구청 이슈 원인)
+    //
+    // 처리:
+    //   - ETA = lastArrivalSeconds - (now - lastUpdateTime)/1000
+    //   - ETA > GRACE_S (예: 60s): 아직 도착 안 했고 jitter 일 가능성 높음 → 한 cycle
+    //     grace. activeTrains 에 유지하고 다음 cycle 까지 기다림. 연속 누락 카운트 증가.
+    //   - 누락 카운트 >= MAX_MISS (2): 진짜 사라진 것으로 판단해 제거.
+    //   - ETA <= GRACE_S: 도착 임박 또는 도착 → 기존 처리 (도착 이펙트 / silent).
     var SILENT_REMOVE_THRESHOLD_S = 60;
+    var JITTER_GRACE_S = 60;
+    // 8 cycle ≈ 2분 grace. step() 이 자체적으로 ETA<=0 시 도착 처리하므로
+    // 운행 종료 train 도 자연스럽게 정리됨. 짧게 잡으면 jitter 로 사라졌다 재등장
+    // 패턴 발생 (5호선 영등포구청 케이스).
+    var MAX_MISS_CYCLES = 8;
     for (var i = 0; i < toRemove.length; i++) {
       var id = toRemove[i];
       var trainState = activeTrains[id];
-      cancelTrainAnimation(trainState);
       var last = trainState.lastArrivalSeconds;
+      var lastUpdate = trainState.lastUpdateTime;
+      var eta = (last != null && lastUpdate != null)
+        ? Math.max(0, last - (Date.now() - lastUpdate) / 1000)
+        : 0;
+
+      // ETA 양수 + 누락 카운트 한도 미만 → grace (애니메이션 유지, 제거 보류).
+      if (eta > JITTER_GRACE_S) {
+        trainState.missedCycles = (trainState.missedCycles || 0) + 1;
+        if (trainState.missedCycles < MAX_MISS_CYCLES) {
+          // 다음 cycle 까지 활성 유지. cancel/remove 안 함.
+          continue;
+        }
+      }
+
+      cancelTrainAnimation(trainState);
       if (last != null && last > SILENT_REMOVE_THRESHOLD_S) {
         // silent 제거: 도착 펄스 / trainArrived 이벤트 발동 안 함
         if (trainState.element && trainState.element.parentNode) {
@@ -1977,8 +2149,9 @@ $textElements
     liveTrainsGroup.replaceChildren();
   };
 
-  // 1초마다 디버그 남은시간 카운트다운
+  // 1초마다 디버그 남은시간 카운트다운 (SHOW_TRAIN_DEBUG=false 면 즉시 스킵)
   setInterval(function() {
+    if (!SHOW_TRAIN_DEBUG) return;
     var now = Date.now();
     for (var id in activeTrains) {
       var train = activeTrains[id];

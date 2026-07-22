@@ -51,3 +51,7 @@ app.*.map.json
 # Generated files
 *.g.dart
 *.freezed.dart
+
+# 하네스 실행 중간 산출물 (에이전트 팀 작업 로그 — 버전 관리 제외)
+/_workspace/
+/_workspace_prev/

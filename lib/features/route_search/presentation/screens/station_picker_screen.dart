@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/line_colors.dart';
+import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/entities/station.dart';
+import '../../../settings/presentation/providers/home_station_provider.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 
 class StationPickerScreen extends ConsumerStatefulWidget {
@@ -28,16 +30,21 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final stationsAsync = ref.watch(allStationsProvider);
-    final isDeparture = widget.purpose == 'departure';
+    final title = switch (widget.purpose) {
+      'departure' => '출발역 선택',
+      'arrival' => '도착역 선택',
+      'home' => '지도 시작점 선택',
+      _ => '역 선택',
+    };
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isDeparture ? '출발역 선택' : '도착역 선택'),
+        title: Text(title),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.space16),
             child: TextField(
               controller: _controller,
               autofocus: true,
@@ -70,7 +77,10 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
                   return Center(
                     child: Text(
                       '검색 결과가 없습니다',
-                      style: TextStyle(color: Colors.grey[500]),
+                      style:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.grey[500],
+                              ),
                     ),
                   );
                 }
@@ -89,7 +99,7 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
                     final station = unique[index];
                     return _StationTile(
                       station: station,
-                      onTap: () => _selectStation(station, isDeparture),
+                      onTap: () => _selectStation(station),
                     );
                   },
                 );
@@ -114,11 +124,16 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
     return result;
   }
 
-  void _selectStation(Station station, bool isDeparture) {
-    if (isDeparture) {
-      ref.read(selectedStationsProvider.notifier).setDeparture(station);
-    } else {
-      ref.read(selectedStationsProvider.notifier).setArrival(station);
+  void _selectStation(Station station) {
+    switch (widget.purpose) {
+      case 'departure':
+        ref.read(selectedStationsProvider.notifier).setDeparture(station);
+      case 'arrival':
+        ref.read(selectedStationsProvider.notifier).setArrival(station);
+      case 'home':
+        // fire-and-forget: SharedPreferences 저장 후 상태 반영. 실패 시
+        // provider 가 이전 값을 유지하므로 UI 는 안전하게 되돌아간다.
+        ref.read(homeStationIdProvider.notifier).setHomeStation(station.id);
     }
     Navigator.of(context).pop();
   }
@@ -153,13 +168,13 @@ class _StationTile extends StatelessWidget {
       ),
       title: Text(
         station.name,
-        style: const TextStyle(fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.labelLarge,
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.only(top: AppSpacing.space4),
         child: Wrap(
-          spacing: 6,
-          runSpacing: 4,
+          spacing: AppSpacing.space6,
+          runSpacing: AppSpacing.space4,
           children: [
             for (final id in lineIds) _LineBadge(lineId: id),
           ],
@@ -182,18 +197,20 @@ class _LineBadge extends StatelessWidget {
     final color = lineColorFor(lineId);
     final name = lineNames[lineId] ?? lineId;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space8,
+        vertical: AppSpacing.space2,
+      ),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         name,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }

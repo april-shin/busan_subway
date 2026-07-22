@@ -37,28 +37,25 @@ class ArrivalCard extends StatelessWidget {
                     children: [
                       Text(
                         arrival.trainLineNm,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       if (isExpress) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
-                            vertical: 1,
+                            vertical: 2,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
+                          child: Text(
                             '급행',
-                            style: TextStyle(
+                            // bodySmall(12px) — route_result_screen 급행 배지와 통일
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -68,8 +65,7 @@ class ArrivalCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     arrival.arrivalMessage,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: Colors.grey[600],
                     ),
                   ),
@@ -139,17 +135,14 @@ class _CountdownBadge extends StatelessWidget {
         children: [
           Text(
             mainText,
-            style: TextStyle(
-              fontSize: isEstimated ? 16 : 18,
-              fontWeight: FontWeight.bold,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: textColor,
             ),
           ),
           if (!isEstimated && minutes > 0)
             Text(
               '$remainingSeconds초',
-              style: TextStyle(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: subTextColor,
               ),
             ),

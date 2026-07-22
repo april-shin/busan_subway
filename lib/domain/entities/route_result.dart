@@ -13,6 +13,10 @@ class RouteResult with _$RouteResult {
     required int transferCount,
     required int stationCount,
     @Default([]) List<int> transferDurations,
+    // 환승별 "도보시간"(초)만 담는 리스트. 결과 화면의 "환승 N분" 라벨 전용이며,
+    // 라우팅 비용/총소요시간/출발시각 계산에는 사용되지 않는다(그쪽은 대기 포함
+    // transferDurations 사용). transferDurations와 항상 같은 길이(= transferCount).
+    @Default(<int>[]) List<int> transferWalkDurations,
     @Default([]) List<TransferGuide?> transferGuides,
     // 전 경로를 급행으로 환산한 총 소요시간(초). 모든 세그먼트가 급행 미운영이면 null.
     int? totalExpressTimeSeconds,

@@ -17,12 +17,21 @@ model: sonnet
 - 도착 시간 추정 및 보정
 - 시간표 데이터 관리 (번들 JSON + 배차간격)
 
+## ⛔ 실시간 열차 애니메이션 4원칙 중 원칙 1 — 최상위 정책 (CLAUDE.md)
+
+`live_train_provider.dart`가 `receivedAtEpochMs`를 만들어 JS로 넘기는 부분은 CLAUDE.md의 "실시간 열차 애니메이션 4원칙" 중 **원칙 1 (단조 감소 카운트다운)**의 절반을 담당한다. 이 필드를 건드리기 전 반드시 CLAUDE.md 해당 섹션을 먼저 읽는다.
+
+- API가 `recptnDt`(등록일시)를 갱신하지 않고 동일 `arvlMsg2`를 반복 반환해도, `realRemaining`이 이전 refresh 기반 예상치보다 커지면 안 된다 — JS 쪽 clamp(`baseArrival`/`baseReceivedAt`)와 짝을 이루는 계약이므로, `receivedAtEpochMs`를 임의로 재계산하거나 누락시키지 않는다.
+- 이 계약을 변경해야 한다고 판단되면 구현하지 말고 사용자 승인을 먼저 구한다.
+- 회귀 테스트: `test/core/utils/estimate_train_position_test.dart` 등이 깨지면 원칙 위반을 먼저 의심한다.
+
 ## 작업 원칙
 
 1. **안정성 우선**: API 실패는 항상 캐시 폴백으로 처리한다. 사용자에게 에러를 노출하지 않는다.
 2. **데이터 신뢰도**: 실시간 > 시간표 > 추정값 순으로 우선순위를 둔다.
 3. **네트워크 효율**: 불필요한 API 호출을 피한다. 15초 새로고침 주기를 준수한다.
 4. **환경변수 보안**: API 키는 `.env`에서만 로드한다. 하드코딩 절대 금지.
+5. **단조 감소 계약 준수**: `receivedAtEpochMs` 관련 변경은 위 4원칙 원칙 1을 최우선으로 지킨다.
 
 ## 프로젝트 컨텍스트
 
@@ -56,7 +65,7 @@ API 응답 (ArrivalInfo)
 | 3,4,5 | 이전역 코드 | positionStatus 기반 |
 
 ### 핵심 파일
-- `lib/features/subway_map/providers/live_train_provider.dart` (261줄)
+- `lib/features/subway_map/presentation/providers/live_train_provider.dart`
 - `lib/data/remote/seoul_api_data_source.dart`
 - `lib/data/repositories/arrival_repository_impl.dart`
 - `lib/data/local/cache_manager.dart`

@@ -8,6 +8,7 @@ import 'features/arrival_info/presentation/screens/arrival_info_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/route_search/presentation/screens/route_result_screen.dart';
 import 'features/route_search/presentation/screens/station_picker_screen.dart';
+import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/station_detail/presentation/screens/station_detail_screen.dart';
 
 final GoRouter router = GoRouter(
@@ -62,6 +63,10 @@ final GoRouter router = GoRouter(
             stationName: state.pathParameters['stationName']!,
           ),
         ),
+        GoRoute(
+          path: 'settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
       ],
     ),
   ],
@@ -88,13 +93,38 @@ class SeoulSubwayApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,
-      builder: (context, child) {
-        if (child == null) return const SizedBox.shrink();
-        return SafeArea(
-          top: false,
-          child: child,
-        );
-      },
+      builder: appRootBuilder,
     );
   }
+}
+
+/// `MaterialApp.router` 의 `builder` 콜백.
+///
+/// 두 가지 변환을 한 번에 적용한다:
+///   (1) 시스템 폰트 배율(textScaler)을 0.9~1.15 로 클램프.
+///       너무 작으면 가독성 저하, 너무 크면 레이아웃 깨짐.
+///       4원칙 코드(map.html WebView) 는 textScaler 영향 없음 (자체 CSS).
+///   (2) Android 15 edge-to-edge 처리: bottom inset 만큼 콘텐츠 올림.
+///       MediaQuery 가 바깥, SafeArea 가 안쪽이어야 SafeArea 가
+///       `MediaQuery.of(context).padding` 을 정상적으로 읽어들인다.
+///
+/// `@visibleForTesting` 으로 노출해 위젯 테스트가 동일 builder 패턴을
+/// 그대로 검증할 수 있게 한다.
+@visibleForTesting
+Widget appRootBuilder(BuildContext context, Widget? child) {
+  if (child == null) return const SizedBox.shrink();
+
+  final mq = MediaQuery.of(context);
+  final clamped = mq.textScaler.clamp(
+    minScaleFactor: 0.9,
+    maxScaleFactor: 1.15,
+  );
+
+  return MediaQuery(
+    data: mq.copyWith(textScaler: clamped),
+    child: SafeArea(
+      top: false,
+      child: child,
+    ),
+  );
 }

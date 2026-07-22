@@ -7,6 +7,17 @@ description: "서울 지하철 지도의 SVG 렌더링, 좌표 변환, 줌/팬 �
 
 서울 지하철 지도의 수학적 렌더링 가이드. SVG 좌표계, CSS 변환 행렬, 경로 보간, 열차 애니메이션의 수학적 기반.
 
+## ⛔ 실시간 열차 애니메이션 4원칙 — 최상위 정책
+
+`tool/build_map_html.dart`(HTML 생성 유일 소스) 또는 `live_train_provider.dart`를 수정하기 전, **CLAUDE.md의 "실시간 열차 애니메이션 4원칙" 섹션을 먼저 읽는다.** 이 4원칙은 일반 수정·버그 수정으로 깨뜨릴 수 없고, 원칙 자체를 바꾸려면 사용자 승인이 필요하다.
+
+1. **단조 감소 카운트다운**: `realRemaining = arrivalSeconds − (now − recptnDt)`, JS에서 이전 refresh 기반 예상값보다 커지면 clamp.
+2. **매 frame 역산 위치 결정**: `estimateTrainPosition(remaining, segTravel)`이 **뒤에서부터** 세그먼트 주행시간을 차감하며 위치를 찾는다. 아래 "경로 보간" 섹션의 LERP은 좌표 계산용이며, **progress를 구하는 방법이 아니다** — `path[0]`에서 경과시간 비례로 전방 계산하는 방식은 원칙 2 위반이므로 사용 금지.
+3. **현재역 기준 3-way 클램프**: `arvlMsg3`(현재역) 기준 현재역↔다음역 한 구간 밖으로 못 나간다. `expandPathWithSnap`의 `stationIndices` 매핑으로 확장 path 상 위치를 재계산해야 한다.
+4. **refresh 시 catch-up 보간**: target이 이동해도 지수 감쇠(`factor = 0.5^(deltaMs/HALF_LIFE_MS)`, `HALF_LIFE_MS=3000`)로 쫓아간다. 순간이동 금지.
+
+회귀 테스트: `test/core/utils/estimate_train_position_test.dart` 등이 깨지면 원칙 위반을 먼저 의심한다.
+
 ## 좌표계
 
 ### SVG 원본 좌표
@@ -60,39 +71,48 @@ transition: transform {duration}ms ease-in-out
 
 ## 경로 보간 (열차 애니메이션)
 
-### 세그먼트 기반 이동
+### 세그먼트 구조
 ```
 pathToTarget: [(x₀,y₀), (x₁,y₁), ..., (xₙ,yₙ)]  // SVG 좌표 시퀀스
 segmentDurations: [d₀, d₁, ..., dₙ₋₁]              // 각 구간 소요시간(초)
-initialProgress: p₀                                   // 첫 세그먼트 내 위치 (0.0~1.0)
 ```
 
-### 선형 보간 (LERP)
+### 위치 결정 — 뒤에서부터 역산 (원칙 2, `estimateTrainPosition`)
+```javascript
+// remaining: realRemaining (단조 감소, 원칙 1)
+// segTravel: segmentDurations
+// 뒤에서부터 각 세그먼트 시간을 차감하며 매칭되는 세그먼트를 찾는다
+function estimateTrainPosition(remaining, segTravel) {
+  if (remaining <= 0) return { segmentIndex: segTravel.length - 1, progress: 1 };
+  var t = remaining;
+  for (var i = segTravel.length - 1; i >= 0; i--) {
+    if (t <= segTravel[i]) {
+      return { segmentIndex: i, progress: (segTravel[i] - t) / segTravel[i] };
+    }
+    t -= segTravel[i];
+  }
+  return { outOfPath: true }; // 경로 시작점보다 더 이전 — 원칙 3에서 현재역에 클램프
+}
+```
+예시: `path=[A,B,C]`, `segTravel=[60,60]` → `remaining=120`이면 A 위치, `remaining=80`이면 A-B 구간의 2/3 지점(B 쪽).
+
+### 좌표 계산 — 선형 보간 (LERP)
+`segmentIndex`/`progress`가 정해진 **후**에만 좌표 계산에 사용한다:
 ```javascript
 function lerp(a, b, t) {
   return a + (b - a) * t  // t ∈ [0, 1]
 }
 
-// 현재 위치 계산
 currentX = lerp(path[i].x, path[i+1].x, progress)
 currentY = lerp(path[i].y, path[i+1].y, progress)
 ```
+⚠ `path[0]`부터 경과시간에 비례해 전방으로 progress를 누적하는 방식(예: "시간 0→d₀초: progress 0→1.0")은 **원칙 2 위반**이다. progress는 항상 `estimateTrainPosition`의 역산 결과로만 정한다.
 
-### 초기 진행률 (initialProgress)
-| arrivalCode | 의미 | progress |
-|-------------|------|----------|
-| 1 | 도착 | 0.0 |
-| 2 | 출발 | 0.15 |
-| 0 | 진입 | 0.85 |
-| 3,4,5 | 이전역 | positionStatus 기반 |
+### 3-way 클램프 (원칙 3)
+`estimateTrainPosition`의 결과가 `arvlMsg3`(현재역) 이전 세그먼트를 가리키면 현재역에, 다음역 이후를 가리키면 다음역에 클램프한다. 화면상 열차는 항상 현재역↔다음역 한 구간 안에서만 움직인다.
 
-### 애니메이션 타임라인
-```
-시간 0 → d₀초:  세그먼트 0, progress p₀ → 1.0
-시간 d₀ → d₀+d₁: 세그먼트 1, progress 0.0 → 1.0
-...
-시간 Σdᵢ:        최종 도착
-```
+### 도착 판정
+`arrivalCode`/`positionStatus`는 초기 표시값 힌트일 뿐이며, 매 frame 위치는 여전히 `estimateTrainPosition(realRemaining, ...)`로 결정한다. 도착 이펙트는 catch-up 보간(원칙 4) 완료 후에만 발동한다.
 
 ## 오버랩 처리
 

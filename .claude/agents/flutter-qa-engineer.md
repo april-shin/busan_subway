@@ -62,6 +62,7 @@ test/
 - `test/core/utils/path_on_line_test.dart` — BFS 경로
 - `test/features/route_search/utils/direction_resolver_test.dart` — 방향 결정
 - `test/data/repositories/arrival_repository_impl_test.dart` — API + 캐시
+- `test/core/utils/estimate_train_position_test.dart` — ⛔ 실시간 열차 애니메이션 4원칙(CLAUDE.md 최상위 정책) 회귀 테스트. **이 테스트가 깨지면 원칙 위반 가능성을 최우선으로 의심**하고, 요구사항 변경이 아니라 원칙 회귀인지 먼저 확인한다.
 
 ## 입력/출력 프로토콜
 
