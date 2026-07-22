@@ -18,13 +18,20 @@
 ///   - 원칙 1: recptnDt 기반 realRemaining + 단조 감소 clamp
 ///   - 원칙 2: estimateTrainPosition — 뒤에서부터 역산
 ///   - 원칙 3: stationIndices 기반 3-way 클램프 (현재역 ↔ 다음역 안에만 머뭄)
-///   - 원칙 4: HALF_LIFE_MS 지수 감쇠 catch-up (refresh 시 점프 방지).
-///       예외 — 역 전환(stationChanged) 또는 path 시작점 점프(headMoved>8px) 시
-///       `existing.currentPos = null` 로 리셋해 다음 frame 에서 새 target 으로 즉시
-///       초기화. 이건 "API 지터 흡수"라는 원칙 4 의 의도에 반하지 않음 — 실제
-///       열차가 다음 역으로 진행한 상황까지 catch-up 을 끌고 가면 stale 좌표가
-///       SVG 선과 분리되어 "탈선처럼 보임" (사용자 보고). showTrains 의 existing-
-///       train 분기 참조.
+///   - 원칙 4: 열차는 순간이동하지 않는다 — 목표가 바뀌어도 현재 위치에서
+///       매 프레임 부드럽게 다가간다(catch-up). 속도는 거리 기반 반감기:
+///       가까우면(≤30px) 3초로 잔잔하게(지터 흡수), 멀면(>30px) 0.5초로 빨리
+///       따라잡아 선로 이탈처럼 보이는 시간을 최소화. 0.5px 이내면 스냅 종료.
+///       startTrainAnimation.step() 의 HALF_LIFE_NEAR_MS/HALF_LIFE_FAR_MS/
+///       FAST_DIST_THRESHOLD/SNAP_PX 참조.
+///
+/// ⛔ 동명 역 매칭 — `findStationByName(name, px, py)` 시그니처 변경 금지
+///   5호선 "양평"(svgX=624, svgY=712) 과 경의중앙선 "양평"(svgX=2112, svgY=576)
+///   같이 같은 이름·다른 좌표인 역을 구분하기 위해, 탭한 좌표(px, py)와 가장 가까운
+///   역을 반환해야 한다. 이름만으로 검색하는 옛 시그니처(`findStationByName(name)`)
+///   로 회귀하면 "양평" 클릭 시 항상 stations 배열의 첫 매치(5호선)가 잡혀
+///   경의중앙선 양평을 선택할 수 없게 된다. 호출부 `tapLayer.pointerup` 의
+///   `findStationByName(t.name, svgX, svgY)` 도 함께 유지할 것.
 library;
 
 import 'dart:convert';
@@ -424,13 +431,26 @@ $textElements
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  // 한 축의 translation 을 정한다. 이 로직은 지도 pan/zoom 화면 배치 전용이며
+  // 실시간 열차 애니메이션 4원칙(카운트다운/역산/3-way/보간)과 무관하다.
+  // - 콘텐츠(맵)가 뷰포트보다 작으면 (예: iPad 세로에서 줌아웃 시) 가장자리에
+  //   붙여 한쪽에 큰 여백이 생기지 않도록 **중앙 정렬**한다.
+  //   (기존엔 항상 +pad 쪽에 붙어 하단/우측에 거대한 빈 공간이 생겼다.)
+  // - 콘텐츠가 뷰포트보다 크면 기존대로 [viewport - content - pad, pad] 범위로
+  //   클램프해 가장자리 pad 만큼의 오버스크롤 여백만 허용한다.
+  function clampAxis(t, viewport, content, pad) {
+    if (content <= viewport) {
+      return (viewport - content) / 2;
+    }
+    var minT = viewport - content - pad;
+    return Math.min(pad, Math.max(minT, t));
+  }
+
   function clampTranslation() {
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var minTx = vw - CANVAS_W * scale - 70;
-    var minTy = vh - CANVAS_H * scale - 70;
-    tx = Math.min(70, Math.max(minTx, tx));
-    ty = Math.min(70, Math.max(minTy, ty));
+    tx = clampAxis(tx, vw, CANVAS_W * scale, 70);
+    ty = clampAxis(ty, vh, CANVAS_H * scale, 70);
   }
 
   document.addEventListener('pointerdown', function(e) {
@@ -541,35 +561,83 @@ $textElements
   // ============================================================
   // 탭 감지 (텍스트 라벨 + circle 좌표 하이브리드)
   // ============================================================
-  var svgTextTargets = []; // SVG text 요소의 바운딩 박스
+  var svgTextTargets = []; // SVG text 요소의 바운딩 박스 (기준 폰트 12px 시점 측정)
+  var TAP_TEXT_PAD = 6;    // 라벨 주변 터치 슬롭 (textTargetRect 에서 배율 적용)
 
   function buildTextTargets() {
     svgTextTargets = [];
+    // 기준 폰트(12px)로 고정한 뒤 측정한다. 페이지 로드 직후에는 applyTransform
+    // 의 폰트 역보정이 아직 적용되기 전이라 상속 폰트(16px) 기준으로 bbox 가
+    // 33% 크게 측정되고, 이 인플레이션이 줌아웃 확장 배율과 곱해져 탭 박스가
+    // 인접 역 라벨을 침범한다. (이후 setInitialView→applyTransform 이 현재
+    // 줌에 맞는 값으로 다시 설정하므로 임시 고정은 무해.)
+    textLayer.style.fontSize = TEXT_BASE_FONT_SIZE + 'px';
     var texts = textLayer.querySelectorAll('text[data-station]');
     for (var i = 0; i < texts.length; i++) {
       var el = texts[i];
       var name = el.getAttribute('data-station').split('\\n').join('').split('\\r').join('');
       try {
         var bbox = el.getBBox();
+        // 앵커점(x,y 속성)을 함께 저장한다. applyTransform 이 scale<1 에서
+        // 폰트를 1/cs 배로 역보정하면 라벨은 이 앵커점을 고정점으로 확대되므로
+        // (text-anchor start/end 모두), 탭 판정 박스도 같은 고정점 기준으로
+        // 확장해야 화면에 보이는 라벨과 탭 영역이 일치한다.
+        var ax = parseFloat(el.getAttribute('x'));
+        var ay = parseFloat(el.getAttribute('y'));
+        if (isNaN(ax)) ax = bbox.x + bbox.width / 2;
+        if (isNaN(ay)) ay = bbox.y + bbox.height / 2;
         svgTextTargets.push({
           name: name,
-          cx: bbox.x + bbox.width / 2,
-          cy: bbox.y + bbox.height / 2,
-          halfW: bbox.width / 2 + 6,
-          halfH: bbox.height / 2 + 6
+          ax: ax,
+          ay: ay,
+          dx0: bbox.x - ax,
+          dy0: bbox.y - ay,
+          w: bbox.width,
+          h: bbox.height
         });
       } catch(e) {}
     }
   }
 
+  // 현재 줌 배율에서 라벨의 실제 탭 판정 박스를 계산한다.
+  // scale<1 이면 폰트 역보정으로 라벨이 SVG 좌표계 기준 1/cs 배 커져 있으므로,
+  // 저장해 둔 기준 bbox 를 앵커점 고정으로 동일 배율 확장한다. scale>=1 이면
+  // f=1 로 기존 판정과 동일. 슬롭(TAP_TEXT_PAD)도 배율을 곱해 화면 px 기준
+  // 일정한 여유를 유지한다.
+  function textTargetRect(t) {
+    var f = 1 / Math.min(scale, 1);
+    var pad = TAP_TEXT_PAD * f;
+    var x0 = t.ax + t.dx0 * f - pad;
+    var y0 = t.ay + t.dy0 * f - pad;
+    return {
+      x0: x0,
+      y0: y0,
+      x1: x0 + t.w * f + pad * 2,
+      y1: y0 + t.h * f + pad * 2
+    };
+  }
+
   // SVG 렌더링 후 텍스트 타겟 구축
   buildTextTargets();
 
-  function findStationByName(name) {
+  // 동명 역(예: 5호선 "양평" vs 경의중앙선 "양평") 구분을 위해 좌표 근접도로 선택한다.
+  // px/py가 주어지면 이름 일치 역 중 그 좌표에 가장 가까운 역을 반환하고,
+  // 없으면(기존 호환) 첫 매치를 반환한다.
+  function findStationByName(name, px, py) {
+    var best = null;
+    var bestDistSq = Infinity;
     for (var i = 0; i < stations.length; i++) {
-      if (stations[i].name === name) return stations[i];
+      if (stations[i].name !== name) continue;
+      if (px == null || py == null) return stations[i];
+      var dx = stations[i].svgX - px;
+      var dy = stations[i].svgY - py;
+      var d = dx * dx + dy * dy;
+      if (d < bestDistSq) {
+        bestDistSq = d;
+        best = stations[i];
+      }
     }
-    return null;
+    return best;
   }
 
   tapLayer.addEventListener('pointerup', function(e) {
@@ -582,12 +650,25 @@ $textElements
 
     var nearest = null;
 
-    // 1차: SVG 텍스트 라벨 영역 매칭 (사용자가 보는 역명 기준)
+    // 1차: SVG 텍스트 라벨 영역 매칭 (사용자가 보는 역명 기준).
+    // 판정 박스는 현재 줌 배율의 폰트 역보정을 반영해 매번 계산한다.
+    // 줌아웃 시 인접 역명 박스가 겹칠 수 있으므로, 매치된 박스 중
+    // 중심이 탭 지점에서 가장 가까운 라벨을 선택한다 (문서 순서 우선 금지).
+    var bestBoxDistSq = Infinity;
     for (var i = 0; i < svgTextTargets.length; i++) {
       var t = svgTextTargets[i];
-      if (Math.abs(svgX - t.cx) <= t.halfW && Math.abs(svgY - t.cy) <= t.halfH) {
-        nearest = findStationByName(t.name);
-        if (nearest) break;
+      var r = textTargetRect(t);
+      if (svgX >= r.x0 && svgX <= r.x1 && svgY >= r.y0 && svgY <= r.y1) {
+        var mx = (r.x0 + r.x1) / 2 - svgX;
+        var my = (r.y0 + r.y1) / 2 - svgY;
+        var d = mx * mx + my * my;
+        if (d >= bestBoxDistSq) continue;
+        // 탭 위치(svgX, svgY)에 가까운 동명 역을 선택 — 5호선/경의중앙선 양평 구분
+        var cand = findStationByName(t.name, svgX, svgY);
+        if (cand) {
+          bestBoxDistSq = d;
+          nearest = cand;
+        }
       }
     }
 
@@ -1160,11 +1241,9 @@ $textElements
     var targetTx = vw / 2 - svgX * scale;
     var targetTy = vh / 2 - svgY * scale;
 
-    // clamp 적용
-    var minTx = vw - CANVAS_W * scale - 70;
-    var minTy = vh - CANVAS_H * scale - 70;
-    targetTx = Math.min(70, Math.max(minTx, targetTx));
-    targetTy = Math.min(70, Math.max(minTy, targetTy));
+    // clamp 적용 (clampTranslation 과 동일 규칙: 콘텐츠가 뷰포트보다 작으면 중앙 정렬)
+    targetTx = clampAxis(targetTx, vw, CANVAS_W * scale, 70);
+    targetTy = clampAxis(targetTy, vh, CANVAS_H * scale, 70);
 
     var startTx = tx, startTy = ty;
     var startTime = performance.now();
@@ -2156,6 +2235,13 @@ $textElements
     var left = screenX;
     var top = screenY - cachedTbH - 18;
 
+    // 앵커역이 화면 밖(특히 위쪽)으로 벗어나도 툴바가 잘리지 않도록 뷰포트
+    // 안으로 클램프한다. 드래그 클램프와 동일한 8px 가장자리 마진 규칙.
+    var maxLeft = Math.max(8, window.innerWidth - cachedTbW - 8);
+    var maxTop = Math.max(8, window.innerHeight - cachedTbH - 8);
+    left = Math.max(8, Math.min(maxLeft, left));
+    top = Math.max(8, Math.min(maxTop, top));
+
     routeToolbar.style.left = left + 'px';
     routeToolbar.style.top = top + 'px';
   }
@@ -2313,14 +2399,15 @@ $textElements
     var g = document.createElementNS(ns, 'g');
     g.id = 'debug-tap-overlay';
 
-    // 텍스트 바운딩 박스 (1차 탭 영역, 파란색)
+    // 텍스트 바운딩 박스 (1차 탭 영역, 파란색) — 현재 줌 배율 기준
     for (var i = 0; i < svgTextTargets.length; i++) {
       var t = svgTextTargets[i];
+      var r = textTargetRect(t);
       var rect = document.createElementNS(ns, 'rect');
-      rect.setAttribute('x', t.cx - t.halfW);
-      rect.setAttribute('y', t.cy - t.halfH);
-      rect.setAttribute('width', t.halfW * 2);
-      rect.setAttribute('height', t.halfH * 2);
+      rect.setAttribute('x', r.x0);
+      rect.setAttribute('y', r.y0);
+      rect.setAttribute('width', r.x1 - r.x0);
+      rect.setAttribute('height', r.y1 - r.y0);
       rect.setAttribute('fill', 'rgba(0,100,255,0.25)');
       rect.setAttribute('stroke', 'rgba(0,100,255,0.6)');
       rect.setAttribute('stroke-width', '0.5');

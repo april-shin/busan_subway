@@ -24,7 +24,7 @@ model: sonnet
 1. **단조 감소 카운트다운** — `realRemaining`은 절대 증가하지 않는다. `recptnDt` 기반 실시간 계산 + JS 단조 감소 clamp (`baseArrival`/`baseReceivedAt`).
 2. **매 frame 역산 위치 결정** — 화면 위치는 뒤에서부터 남은시간을 역산(`estimateTrainPosition`)해서 정한다. **`path[0]→path[last]` 시간 비례로 전방 보간하지 않는다.** (아래 "핵심 수학 영역 #2"는 참고용 개념 설명일 뿐, 실제 프레임별 위치 계산에는 사용 금지.)
 3. **현재역 기준 3-way 클램프** — 열차는 화면상 현재역↔다음역 한 구간 안에서만 움직인다 (`stationIndices` 매핑 필요).
-4. **refresh 시 catch-up 보간** — target이 갑자기 이동해도 지수 감쇠(`HALF_LIFE_MS=3000`)로 쫓아가며, 순간이동하지 않는다.
+4. **열차는 순간이동하지 않는다 (catch-up)** — target이 갑자기 이동해도 현재 위치에서 매 프레임 부드럽게 다가간다. 거리 기반 반감기: 가까우면(≤30px) 3초(지터 흡수), 멀면(>30px) 0.5초(빠른 따라잡기), 0.5px 이내 스냅 종료 (`HALF_LIFE_NEAR_MS`/`HALF_LIFE_FAR_MS`/`FAST_DIST_THRESHOLD`/`SNAP_PX`).
 
 구현 위치: `tool/build_map_html.dart`의 `estimateTrainPosition`/`startTrainAnimation`/`showTrains`/`expandPathWithSnap`, `live_train_provider.dart`의 `receivedAtEpochMs` 전달. 회귀 테스트: `test/core/utils/estimate_train_position_test.dart` — 이 테스트가 깨지면 원칙 위반을 먼저 의심한다.
 
