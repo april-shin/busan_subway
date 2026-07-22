@@ -23,13 +23,16 @@ API 재조회 시 디버그 "초" 및 내부 `realRemaining` 은 **절대 증가
 - `currentStationIndex` 는 원본 `pathToTarget` 의 "현재역" index. SVG 곡선 스냅(`expandPathWithSnap`)으로 path 가 세분화되면 `stationIndices` 매핑으로 **확장 path 상 역 위치**로 변환해 3-way 분기.
 - 구현 위치: `tool/build_map_html.dart` 의 `expandPathWithSnap.stationIndices` + `startTrainAnimation.step()` 의 3-way 분기.
 
-### 원칙 4 — refresh 시 점프 방지 (catch-up 보간)
-API refresh 로 target 좌표가 갑자기 이동해도 **열차 아이콘은 순간이동 없이** 이전 위치에서 새 target 을 쫓아간다.
-- 방식: 매 frame `currentPos` 를 target 으로 **지수 감쇠**(`factor = 0.5^(deltaMs/HALF_LIFE_MS)`).
-- 기본 파라미터: `HALF_LIFE_MS = 3000`, `JUMP_THRESHOLD_PX = 20`, `deltaMs` 상한 100ms.
-- `startTrainAnimation` 재호출 시 `lastFrameMs = null` 리셋 (첫 frame 에 거대한 deltaMs 로 순간 수렴하는 현상 방지).
-- 도착 이펙트는 `catchingUp` 완료 후에만 발동.
-- 구현 위치: `tool/build_map_html.dart` 의 `startTrainAnimation.step()` 내부 `currentPos`/`catchingUp` 로직.
+### 원칙 4 — 열차는 순간이동하지 않는다 (catch-up)
+API 갱신으로 열차의 목표 위치(target)가 갑자기 바뀌어도, 아이콘은 즉시 이동하지 않고 **현재 위치에서 목표를 향해 매 프레임 부드럽게 다가간다**.
+- 다가가는 속도는 "남은 거리가 절반이 되는 시간(반감기)"으로 조절한다:
+  - 목표가 가까우면(≤30px) 반감기 3초 — API 지터·라운딩 노이즈를 잔잔하게 흡수.
+  - 목표가 멀면(>30px) 반감기 0.5초 — 빨리 따라잡아 선로 이탈처럼 보이는 시간 최소화.
+  - 0.5px 이내로 접근하면 목표에 스냅하고 따라잡기 종료.
+- 프레임 간 경과시간(deltaMs)은 100ms 상한 — 백그라운드 복귀 등으로 프레임이 오래 끊겨도 한 번에 확 움직이지 않는다.
+- `startTrainAnimation` 재호출 시 `lastFrameMs = null` 리셋 (첫 프레임에 거대한 deltaMs 로 순간 수렴하는 현상 방지).
+- 도착 이펙트는 따라잡기(`catchingUp`)가 끝난 뒤에만 발동.
+- 구현 위치: `tool/build_map_html.dart` 의 `startTrainAnimation.step()` (`HALF_LIFE_NEAR_MS`/`HALF_LIFE_FAR_MS`/`FAST_DIST_THRESHOLD`/`SNAP_PX`).
 
 ### 수정 시 절차
 - `tool/build_map_html.dart` 또는 `lib/features/subway_map/presentation/providers/live_train_provider.dart` 편집 시 **해당 파일 상단의 4원칙 보호 주석 반드시 확인**.
@@ -300,3 +303,4 @@ Expanded → WebViewWidget (전체 화면)
 | 2026-04-19 | 요구사항 리뷰에 "버그 수정 회귀 검증 (6단계)" 추가: 판별 기준·회귀 위험 영역·대조군 시나리오 매트릭스, 출력 형식에 회귀 검증 섹션과 회귀 위험 등급 추가 | agents/subway-requirements-reviewer.md, skills/subway-requirements-review/SKILL.md | 버그 수정 시 기존 기능을 변경하지 않은 채로 버그만 수정했는지 확인 필요 피드백 |
 | 2026-04-20 | 에이전트별 모델 차등 배치: 판단 계층(flutter-architect, subway-code-reviewer, subway-requirements-reviewer) opus 유지, 구현 계층(map-math-engineer, graph-algorithm-engineer, realtime-data-engineer, flutter-qa-engineer)을 sonnet으로 전환. 오케스트레이터 호출 예시에서 하드코딩된 model 파라미터 제거 (frontmatter 기반). CLAUDE.md에 모델 배치표 추가 | agents/*, skills/subway-app-orchestrator/SKILL.md, CLAUDE.md | 에이전트·스킬별 적절한 모델로 토큰 사용량 최적화 요청 (약 45% 비용 절감 기대) |
 | 2026-07-05 | 하네스 재점검(운영 감사): (1) map-math-engineer.md·subway-map-math SKILL.md에 4원칙 누락 발견 및 추가 — 특히 subway-map-math의 기존 "경로 보간" 예시가 원칙 2(전방 보간 금지)를 정면 위반하는 내용이라 estimateTrainPosition 역산 방식으로 전면 수정. (2) realtime-data-engineer.md·realtime-tracking SKILL.md에 원칙 1(receivedAtEpochMs 계약) 추가. (3) subway-code-reviewer.md·subway-code-review SKILL.md 체크리스트에 4원칙 위반 최우선 확인 항목 추가. (4) flutter-qa-engineer.md·subway-testing SKILL.md에 estimate_train_position_test.dart를 4원칙 회귀 가드로 명시. (5) map-math-engineer.md/realtime-data-engineer.md/realtime-tracking SKILL.md의 `lib/features/subway_map/{widgets,providers}/...` 경로를 실제 경로 `lib/features/subway_map/presentation/{widgets,providers}/...`로 수정. (6) subway-app-orchestrator SKILL.md의 프로젝트 루트 예시 경로가 구 경로(`/Users/april/Idea/seoul_subway`)로 남아있던 것을 현재 경로로 수정, 모델 승격 기준에 "4원칙 자체 변경은 사용자 승인 사안(모델 승격 아님)" 명시 | agents/map-math-engineer.md, agents/realtime-data-engineer.md, agents/subway-code-reviewer.md, agents/flutter-qa-engineer.md, skills/subway-map-math/SKILL.md, skills/realtime-tracking/SKILL.md, skills/subway-code-review/SKILL.md, skills/subway-testing/SKILL.md, skills/subway-app-orchestrator/SKILL.md | "하네스를 재점검해줘" 요청에 따른 Phase 7-5 운영 감사 — CLAUDE.md 최상위 정책(4원칙)이 정작 이를 구현하는 map/realtime 에이전트·스킬 문서에는 반영되지 않았고, 스킬 예시가 금지된 알고리즘을 가르치고 있었으며, 경로 리팩토링(presentation/ 계층 도입)과 프로젝트 이전(Idea→StudioProjects) 이후 문서가 갱신되지 않은 드리프트 발견 |
+| 2026-07-22 | 원칙 4 문서 현행화(사용자 승인): 코드에 존재하지 않는 `JUMP_THRESHOLD_PX=20` 파라미터와 "stationChanged/headMoved>8px 시 currentPos=null 리셋" 예외 조항을 삭제하고, 실제 구현인 거리 기반 이중 반감기(≤30px→3초, >30px→0.5초, 0.5px 스냅, deltaMs 상한 100ms)로 기술을 교체. 섹션 제목을 "열차는 순간이동하지 않는다"로 평문화 | CLAUDE.md, tool/build_map_html.dart(헤더 주석), agents/map-math-engineer.md, skills/subway-map-math/SKILL.md | build_map_html.dart 전체 리뷰 중 원칙 4 문서-코드 드리프트 발견(HIGH). 코드는 원칙 의도를 충족하므로 문서를 코드에 맞춰 갱신 — 사용자 승인 완료 |

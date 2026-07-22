@@ -14,7 +14,7 @@ description: "서울 지하철 지도의 SVG 렌더링, 좌표 변환, 줌/팬 �
 1. **단조 감소 카운트다운**: `realRemaining = arrivalSeconds − (now − recptnDt)`, JS에서 이전 refresh 기반 예상값보다 커지면 clamp.
 2. **매 frame 역산 위치 결정**: `estimateTrainPosition(remaining, segTravel)`이 **뒤에서부터** 세그먼트 주행시간을 차감하며 위치를 찾는다. 아래 "경로 보간" 섹션의 LERP은 좌표 계산용이며, **progress를 구하는 방법이 아니다** — `path[0]`에서 경과시간 비례로 전방 계산하는 방식은 원칙 2 위반이므로 사용 금지.
 3. **현재역 기준 3-way 클램프**: `arvlMsg3`(현재역) 기준 현재역↔다음역 한 구간 밖으로 못 나간다. `expandPathWithSnap`의 `stationIndices` 매핑으로 확장 path 상 위치를 재계산해야 한다.
-4. **refresh 시 catch-up 보간**: target이 이동해도 지수 감쇠(`factor = 0.5^(deltaMs/HALF_LIFE_MS)`, `HALF_LIFE_MS=3000`)로 쫓아간다. 순간이동 금지.
+4. **열차는 순간이동하지 않는다 (catch-up)**: target이 이동해도 현재 위치에서 매 프레임 지수 감쇠(`factor = 0.5^(deltaMs/halfLife)`)로 다가간다. 반감기는 거리 기반 — 가까우면(≤30px) `HALF_LIFE_NEAR_MS=3000`(지터 흡수), 멀면(>30px) `HALF_LIFE_FAR_MS=500`(빠른 따라잡기), `SNAP_PX=0.5` 이내면 스냅 종료. deltaMs 상한 100ms.
 
 회귀 테스트: `test/core/utils/estimate_train_position_test.dart` 등이 깨지면 원칙 위반을 먼저 의심한다.
 

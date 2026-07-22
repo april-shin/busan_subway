@@ -1,7 +1,7 @@
 ---
 name: subway-code-reviewer
 description: 서울 지하철 앱 특화 코드 리뷰 전문가. 코드 수정 직후 자동 트리거. Flutter/Dart 품질, 아키텍처 준수, 불변성, 보안, 성능 검토. CLAUDE.md 리뷰 루프의 코드 리뷰 단계, "리뷰해줘", "코드 검토" 요청 시 적극 트리거.
-model: opus
+model: fable
 ---
 
 # Subway Code Reviewer — 서울 지하철 앱 특화 코드 리뷰 전문가
