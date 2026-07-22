@@ -432,13 +432,26 @@ $textElements
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  // 한 축의 translation 을 정한다. 이 로직은 지도 pan/zoom 화면 배치 전용이며
+  // 실시간 열차 애니메이션 4원칙(카운트다운/역산/3-way/보간)과 무관하다.
+  // - 콘텐츠(맵)가 뷰포트보다 작으면 (예: iPad 세로에서 줌아웃 시) 가장자리에
+  //   붙여 한쪽에 큰 여백이 생기지 않도록 **중앙 정렬**한다.
+  //   (기존엔 항상 +pad 쪽에 붙어 하단/우측에 거대한 빈 공간이 생겼다.)
+  // - 콘텐츠가 뷰포트보다 크면 기존대로 [viewport - content - pad, pad] 범위로
+  //   클램프해 가장자리 pad 만큼의 오버스크롤 여백만 허용한다.
+  function clampAxis(t, viewport, content, pad) {
+    if (content <= viewport) {
+      return (viewport - content) / 2;
+    }
+    var minT = viewport - content - pad;
+    return Math.min(pad, Math.max(minT, t));
+  }
+
   function clampTranslation() {
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var minTx = vw - CANVAS_W * scale - 70;
-    var minTy = vh - CANVAS_H * scale - 70;
-    tx = Math.min(70, Math.max(minTx, tx));
-    ty = Math.min(70, Math.max(minTy, ty));
+    tx = clampAxis(tx, vw, CANVAS_W * scale, 70);
+    ty = clampAxis(ty, vh, CANVAS_H * scale, 70);
   }
 
   document.addEventListener('pointerdown', function(e) {
@@ -1182,11 +1195,9 @@ $textElements
     var targetTx = vw / 2 - svgX * scale;
     var targetTy = vh / 2 - svgY * scale;
 
-    // clamp 적용
-    var minTx = vw - CANVAS_W * scale - 70;
-    var minTy = vh - CANVAS_H * scale - 70;
-    targetTx = Math.min(70, Math.max(minTx, targetTx));
-    targetTy = Math.min(70, Math.max(minTy, targetTy));
+    // clamp 적용 (clampTranslation 과 동일 규칙: 콘텐츠가 뷰포트보다 작으면 중앙 정렬)
+    targetTx = clampAxis(targetTx, vw, CANVAS_W * scale, 70);
+    targetTy = clampAxis(targetTy, vh, CANVAS_H * scale, 70);
 
     var startTx = tx, startTy = ty;
     var startTime = performance.now();
@@ -2177,6 +2188,13 @@ $textElements
 
     var left = screenX;
     var top = screenY - cachedTbH - 18;
+
+    // 앵커역이 화면 밖(특히 위쪽)으로 벗어나도 툴바가 잘리지 않도록 뷰포트
+    // 안으로 클램프한다. 드래그 클램프와 동일한 8px 가장자리 마진 규칙.
+    var maxLeft = Math.max(8, window.innerWidth - cachedTbW - 8);
+    var maxTop = Math.max(8, window.innerHeight - cachedTbH - 8);
+    left = Math.max(8, Math.min(maxLeft, left));
+    top = Math.max(8, Math.min(maxTop, top));
 
     routeToolbar.style.left = left + 'px';
     routeToolbar.style.top = top + 'px';
