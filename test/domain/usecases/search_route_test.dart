@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:seoul_subway/domain/entities/station.dart';
 import 'package:seoul_subway/domain/entities/connection.dart';
 import 'package:seoul_subway/domain/entities/express_skip_edge.dart';
+import 'package:seoul_subway/domain/entities/route_result.dart';
 import 'package:seoul_subway/domain/entities/transfer_guide.dart';
 import 'package:seoul_subway/domain/repositories/station_repository.dart';
 import 'package:seoul_subway/domain/usecases/search_route.dart';
@@ -295,6 +296,151 @@ void main() {
         // 시작/도착이 다른 노선이라 fastestLocal 은 null.
         expect(result.fastestLocal, isNull,
             reason: '출발·도착이 다른 노선이면 fastestLocal = null');
+      });
+
+      group('교차노선 환승 + 후행 급행 완행 대안 (우회 방지 회귀)', () {
+        // 시나리오: 4호선 기점(S) --환승--> 9호선 환승역(T) --급행--> 9호선 종점(D).
+        //
+        // v1 버그: fastestLocal이 "fastest가 실제로 지나간 노선(4,9)의 완행"이
+        // 아니라, 급행만 피해서 전혀 다른 노선으로 우회하는 경로를 골랐다.
+        // (실제 사례: 총신대입구(4호선)→마곡나루(9호선 급행)의 완행 대안이
+        // "4호선→서울역→공항철도"처럼 엉뚱한 노선으로 우회했다.)
+        //
+        // 우회가 실제로 방지되는지 검증하기 위해 기점/종점 둘 다에 5호선
+        // "미끼" 지름길을 심어둔다. 이 미끼는 9호선 완행 전 구간보다는 빠르지만
+        // 급행보다는 느리게 설계되어, `fastestBaseLines` 제한이 없다면
+        // fastestLocal이 이 미끼(5호선)를 선택하게 된다 — 그래서 이 그룹은
+        // "존재 확인"이 아니라 "우회 여부"를 실제로 잡아낼 수 있다.
+        final crossLineStations = [
+          // 기점: 4호선 대표 + 5호선 미끼 파트너(환승 취급, 같은 이름 "기점").
+          const Station(id: '401', name: '기점', lineId: '4', latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '5']),
+          const Station(id: '501', name: '기점', lineId: '5', latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '5']),
+          // 4호선→9호선 실제 환승역 "환승역".
+          const Station(id: '402', name: '환승역', lineId: '4', latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '9']),
+          const Station(id: '905', name: '환승역', lineId: '9', latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['4', '9']),
+          // 9호선 완행 중간역(급행 통과 — 정차하지 않음).
+          const Station(id: '906', name: '중간1', lineId: '9', latitude: 0, longitude: 0),
+          const Station(id: '907', name: '중간2', lineId: '9', latitude: 0, longitude: 0),
+          // 종점: 9호선 대표 + 5호선 미끼 파트너(환승 취급, 같은 이름 "종점").
+          const Station(id: '908', name: '종점', lineId: '9', latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['5', '9']),
+          const Station(id: '508', name: '종점', lineId: '5', latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['5', '9']),
+        ];
+        final crossLineConnections = [
+          const Connection(fromStationId: '401', toStationId: '402',
+              lineId: '4', travelTimeSeconds: 300),
+          const Connection(fromStationId: '905', toStationId: '906',
+              lineId: '9', travelTimeSeconds: 200),
+          const Connection(fromStationId: '906', toStationId: '907',
+              lineId: '9', travelTimeSeconds: 200),
+          const Connection(fromStationId: '907', toStationId: '908',
+              lineId: '9', travelTimeSeconds: 200),
+          // 미끼: 5호선 직통 지름길. 9호선 완행 전 구간(1000초)보다는 빠르지만
+          // 급행(650초)보다는 느리다 — fastestBaseLines 제한이 없을 때만 선택됨.
+          const Connection(fromStationId: '501', toStationId: '508',
+              lineId: '5', travelTimeSeconds: 800),
+        ];
+        final crossLineExpress = [
+          // 9호선 급행: 환승역(905) → 종점(908) 직통, 중간1·중간2 스킵.
+          const ExpressSkipEdge(lineId: '9', fromStationId: '905',
+              toStationId: '908', seconds: 250,
+              skippedStationIds: ['906', '907']),
+        ];
+
+        Set<String> baseLineSet(RouteResult r) => r.segments
+            .map((s) => s.lineId.endsWith('E')
+                ? s.lineId.substring(0, s.lineId.length - 1)
+                : s.lineId)
+            .toSet();
+
+        void stubCrossLine() {
+          when(() => mockRepo.getAllStations())
+              .thenAnswer((_) async => crossLineStations);
+          when(() => mockRepo.getAllConnections())
+              .thenAnswer((_) async => crossLineConnections);
+          when(() => mockRepo.getTransferTimes())
+              .thenAnswer((_) async => {'환승역_4_9': 100});
+          when(() => mockRepo.getExpressSkipEdges())
+              .thenAnswer((_) async => crossLineExpress);
+        }
+
+        test(
+            '4호선→9호선 환승 후 급행(후행 세그먼트 급행): fastestExpress/fastestLocal 모두 존재 + 급행이 더 빠름',
+            () async {
+          stubCrossLine();
+
+          final result = await searchRoute.executeAll('401', '908');
+
+          expect(result.fastestExpress, isNotNull,
+              reason: '최단시간 경로가 급행(9E) edge 를 포함하므로 fastestExpress 존재해야 함');
+          expect(result.fastestLocal, isNotNull,
+              reason: '완행 대안(4호선+9호선 완행)이 존재해야 함');
+          expect(
+            result.fastestExpress!.totalTimeSeconds,
+            lessThan(result.fastestLocal!.totalTimeSeconds),
+            reason: '급행이 완행보다 빨라야 모드 비교 의미 있음',
+          );
+          // 회귀 pin: 정확한 시간값 — 그래프 토폴로지가 바뀌면 여기서 즉시 드러남.
+          expect(result.fastestExpress!.totalTimeSeconds, 650);
+          expect(result.fastestLocal!.totalTimeSeconds, 1060);
+        });
+
+        test(
+            'fastestLocal은 fastest가 실제로 지나간 base 노선(4,9)만 사용 — 5호선 우회 금지',
+            () async {
+          stubCrossLine();
+
+          final result = await searchRoute.executeAll('401', '908');
+
+          expect(result.fastestExpress, isNotNull);
+          expect(result.fastestLocal, isNotNull);
+
+          final expressBaseLines = baseLineSet(result.fastestExpress!);
+          final localBaseLines = baseLineSet(result.fastestLocal!);
+
+          expect(expressBaseLines, equals({'4', '9'}));
+          // 핵심 회귀 검증: fastestLocal 의 base 노선 집합이 fastestExpress 와
+          // 정확히 같아야 하고, 미끼로 심어둔 5호선으로 우회하면 안 된다.
+          expect(localBaseLines, equals(expressBaseLines),
+              reason:
+                  'fastestLocal 은 fastest 가 지나간 노선만 완행으로 재구성해야 함 (우회 금지)');
+          expect(localBaseLines.contains('5'), isFalse,
+              reason: '5호선 미끼 지름길로 우회하면 안 됨');
+        });
+
+        test(
+            'fastestLocal은 급행이 통과(스킵)한 중간역(중간1, 중간2)에 모두 정차한다',
+            () async {
+          stubCrossLine();
+
+          final result = await searchRoute.executeAll('401', '908');
+
+          expect(result.fastestExpress, isNotNull);
+          expect(result.fastestLocal, isNotNull);
+
+          final expressStationNames = result.fastestExpress!.segments
+              .expand((s) => s.stations)
+              .map((st) => st.name)
+              .toSet();
+          final localStationNames = result.fastestLocal!.segments
+              .expand((s) => s.stations)
+              .map((st) => st.name)
+              .toSet();
+
+          // 급행은 중간1/중간2 를 건너뛴다.
+          expect(expressStationNames.contains('중간1'), isFalse);
+          expect(expressStationNames.contains('중간2'), isFalse);
+          // 완행은 둘 다 정차해야 한다.
+          expect(localStationNames.containsAll(['중간1', '중간2']), isTrue);
+          // 완행 경로의 역 수(hop)가 급행보다 많아야 한다.
+          expect(result.fastestLocal!.stationCount,
+              greaterThan(result.fastestExpress!.stationCount));
+        });
       });
 
       test(
