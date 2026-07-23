@@ -81,29 +81,33 @@ DaySchedule _parseDayScheduleAt(Map<String, dynamic> day, int dirIndex) {
   final f = day['f'] as List;
   final l = day['l'] as List;
   final periods = _parsePeriods(day['p'] as List);
-  final stationDepartures = _parseStationDepartures(day, dirIndex);
+  final stationDepartures = _parseStationDepartures(day, dirIndex, 't');
+  final expressStationDepartures =
+      _parseStationDepartures(day, dirIndex, 'tE');
 
   return DaySchedule(
     firstTrain: f[dirIndex] as String,
     lastTrain: l[dirIndex] as String,
     periods: periods,
     stationDepartures: stationDepartures,
+    expressStationDepartures: expressStationDepartures,
   );
 }
 
 /// 하행 전용 DaySchedule을 파싱한다. 상행과 동일하면 null 반환.
 ///
-/// 단, 't' 키(역별 시간표)가 있으면 상하행 배차간격이 동일하더라도
-/// 역별 시간표가 다를 수 있으므로 non-null을 반환한다.
+/// 단, 't'(완행) 또는 'tE'(급행) 역별 시간표가 있으면 상하행 배차간격이
+/// 동일하더라도 역별 시간표가 다를 수 있으므로 non-null을 반환한다.
 DaySchedule? _parseDayScheduleDown(Map<String, dynamic> day) {
   final f = day['f'] as List;
   final l = day['l'] as List;
   if (f.length < 2) return null;
 
-  final hasStationDepartures = day.containsKey('t');
+  final hasStationDepartures =
+      day.containsKey('t') || day.containsKey('tE');
   final hasDedicatedPeriods = day.containsKey('pD');
 
-  // pD/t가 없고 첫차/막차도 동일하면 상행과 같으므로 null 반환 (폴백)
+  // pD/t/tE가 없고 첫차/막차도 동일하면 상행과 같으므로 null 반환 (폴백)
   if (!hasDedicatedPeriods && !hasStationDepartures &&
       f[0] == f[1] && l[0] == l[1]) {
     return null;
@@ -112,26 +116,29 @@ DaySchedule? _parseDayScheduleDown(Map<String, dynamic> day) {
   // pD(하행 전용 배차간격)가 있으면 사용, 없으면 p(공유) 사용
   final periodsRaw = day['pD'] as List? ?? day['p'] as List;
   final periods = _parsePeriods(periodsRaw);
-  final stationDepartures = _parseStationDepartures(day, 1);
+  final stationDepartures = _parseStationDepartures(day, 1, 't');
+  final expressStationDepartures = _parseStationDepartures(day, 1, 'tE');
 
   return DaySchedule(
     firstTrain: f[1] as String,
     lastTrain: l[1] as String,
     periods: periods,
     stationDepartures: stationDepartures,
+    expressStationDepartures: expressStationDepartures,
   );
 }
 
 /// 역별 출발시각 맵을 파싱한다.
 ///
-/// JSON의 't' 키: `{ stationId: [상행분목록, 하행분목록], ... }`
+/// JSON의 [key] 키(완행 't' 또는 급행 'tE'): `{ stationId: [상행분목록, 하행분목록], ... }`
 /// [dirIndex]에 해당하는 방향의 출발분 목록만 추출한다.
-/// 't' 키가 없거나 빈 맵이면 null을 반환한다.
+/// [key] 키가 없거나 빈 맵이면 null을 반환한다.
 Map<String, List<int>>? _parseStationDepartures(
   Map<String, dynamic> day,
   int dirIndex,
+  String key,
 ) {
-  final tRaw = day['t'] as Map<String, dynamic>?;
+  final tRaw = day[key] as Map<String, dynamic>?;
   if (tRaw == null || tRaw.isEmpty) return null;
 
   final result = <String, List<int>>{};

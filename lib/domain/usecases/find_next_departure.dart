@@ -6,10 +6,15 @@ import '../entities/line_schedule.dart';
 /// [now]: 현재 시각
 /// [isDown]: 하행/외선 여부 (기본값 false = 상행/내선)
 /// [stationId]: 역 ID (역별 시간표가 있는 노선에서 사용)
+/// [express]: 급행 모드 여부 (기본값 false = 완행)
 ///
-/// 역별 시간표([DaySchedule.stationDepartures])가 있고 해당 역 데이터가
-/// 존재하면 이진탐색으로 정확한 다음 출발시각을 반환한다.
-/// 없으면 기존 배차간격 기반 추정으로 폴백한다.
+/// 역별 시간표가 있고 해당 역 데이터가 존재하면 이진탐색으로 정확한 다음
+/// 출발시각을 반환한다. 없으면 기존 배차간격 기반 추정으로 폴백한다.
+///
+/// [express]가 true이면 급행 역별 시간표([DaySchedule.expressStationDepartures])만
+/// 조회한다. 해당 역에 급행 데이터가 없으면(급행 미정차역 등) 완행 시간표로
+/// 섞지 않고 곧바로 배차간격 폴백으로 넘어간다.
+/// [express]가 false이면 완행 시간표([DaySchedule.stationDepartures])를 조회한다.
 ///
 /// 운행 시간 내이면 현재 시각 + 남은 대기시간을 반환하고,
 /// 운행 시간 외이면 null을 반환한다.
@@ -18,19 +23,24 @@ DateTime? findNextDeparture({
   required DateTime now,
   bool isDown = false,
   String? stationId,
+  bool express = false,
 }) {
   final daySchedule = schedule.getSchedule(now, isDown: isDown);
   final currentMinutes = now.hour * 60 + now.minute;
 
-  // 역별 시간표가 있으면 정확한 출발시각 반환
-  if (stationId != null && daySchedule.stationDepartures != null) {
-    final departures = daySchedule.stationDepartures![stationId];
+  // 역별 시간표가 있으면 정확한 출발시각 반환 (모드에 맞는 맵만 조회)
+  final departureMap = express
+      ? daySchedule.expressStationDepartures
+      : daySchedule.stationDepartures;
+  if (stationId != null && departureMap != null) {
+    final departures = departureMap[stationId];
     if (departures != null && departures.isNotEmpty) {
       return _findNextInSortedList(departures, now);
     }
   }
 
   // 폴백: 배차간격 기반 추정
+  // (급행이지만 해당 역 급행 데이터가 없는 경우도 여기로 온다)
   return _findNextByHeadway(daySchedule, now, currentMinutes);
 }
 
@@ -99,18 +109,25 @@ DateTime? _findNextByHeadway(
 ///
 /// 역별 시간표가 있으면 다음 출발까지 정확한 대기시간을 계산한다.
 /// 없으면 배차간격의 절반(평균 대기시간)을 반환한다.
+///
+/// [express]가 true이면 급행 역별 시간표만 조회하며, 해당 역에 급행 데이터가
+/// 없으면 완행과 섞지 않고 배차간격 폴백으로 넘어간다.
 int getExpectedWaitMinutes({
   required LineSchedule schedule,
   required DateTime now,
   bool isDown = false,
   String? stationId,
+  bool express = false,
 }) {
   final daySchedule = schedule.getSchedule(now, isDown: isDown);
   final currentMinutes = now.hour * 60 + now.minute;
 
-  // 역별 시간표가 있으면 정확한 대기시간 계산
-  if (stationId != null && daySchedule.stationDepartures != null) {
-    final departures = daySchedule.stationDepartures![stationId];
+  // 역별 시간표가 있으면 정확한 대기시간 계산 (모드에 맞는 맵만 조회)
+  final departureMap = express
+      ? daySchedule.expressStationDepartures
+      : daySchedule.stationDepartures;
+  if (stationId != null && departureMap != null) {
+    final departures = departureMap[stationId];
     if (departures != null && departures.isNotEmpty) {
       final nextDeparture = _findNextInSortedList(departures, now);
       if (nextDeparture != null) {

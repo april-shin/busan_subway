@@ -6,11 +6,13 @@ import 'package:seoul_subway/domain/entities/line_schedule.dart';
 // 대신 컴팩트 JSON → LineSchedule 변환 로직을 단위 테스트한다.
 
 /// 역별 출발시각 맵을 파싱한다.
+/// [key]: 완행 't' 또는 급행 'tE'.
 Map<String, List<int>>? parseStationDepartures(
   Map<String, dynamic> day,
   int dirIndex,
+  String key,
 ) {
-  final tRaw = day['t'] as Map<String, dynamic>?;
+  final tRaw = day[key] as Map<String, dynamic>?;
   if (tRaw == null || tRaw.isEmpty) return null;
 
   final result = <String, List<int>>{};
@@ -37,12 +39,15 @@ DaySchedule parseDayScheduleAt(Map<String, dynamic> day, int dirIndex) {
       headwayMinutes: arr[2] as int,
     );
   }).toList();
-  final stationDepartures = parseStationDepartures(day, dirIndex);
+  final stationDepartures = parseStationDepartures(day, dirIndex, 't');
+  final expressStationDepartures =
+      parseStationDepartures(day, dirIndex, 'tE');
   return DaySchedule(
     firstTrain: f[dirIndex] as String,
     lastTrain: l[dirIndex] as String,
     periods: periods,
     stationDepartures: stationDepartures,
+    expressStationDepartures: expressStationDepartures,
   );
 }
 
@@ -51,10 +56,11 @@ DaySchedule? parseDayScheduleDown(Map<String, dynamic> day) {
   final l = day['l'] as List;
   if (f.length < 2) return null;
 
-  final hasStationDepartures = day.containsKey('t');
+  final hasStationDepartures =
+      day.containsKey('t') || day.containsKey('tE');
   final hasDedicatedPeriods = day.containsKey('pD');
 
-  // pD/t가 없고 첫차/막차도 동일하면 null (상행과 동일)
+  // pD/t/tE가 없고 첫차/막차도 동일하면 null (상행과 동일)
   if (!hasDedicatedPeriods && !hasStationDepartures &&
       f[0] == f[1] && l[0] == l[1]) {
     return null;
@@ -68,12 +74,14 @@ DaySchedule? parseDayScheduleDown(Map<String, dynamic> day) {
       headwayMinutes: arr[2] as int,
     );
   }).toList();
-  final stationDepartures = parseStationDepartures(day, 1);
+  final stationDepartures = parseStationDepartures(day, 1, 't');
+  final expressStationDepartures = parseStationDepartures(day, 1, 'tE');
   return DaySchedule(
     firstTrain: f[1] as String,
     lastTrain: l[1] as String,
     periods: periods,
     stationDepartures: stationDepartures,
+    expressStationDepartures: expressStationDepartures,
   );
 }
 
@@ -325,6 +333,155 @@ void main() {
 
       final schedule = parseCompactSchedule(json);
       expect(schedule.weekday.stationDepartures, isNull);
+    });
+  });
+
+  group('급행(tE) 파싱', () {
+    test('tE 키가 있으면 급행 역별 시간표를 방향별로 파싱한다', () {
+      final json = {
+        'id': '9',
+        'wd': {
+          'f': ['05:30', '05:40'],
+          'l': ['00:50', '00:51'],
+          'p': [
+            ['05:30', '00:50', 6],
+          ],
+          'tE': {
+            '902': [
+              [330, 340, 352],
+              [335, 345, 355],
+            ],
+            '905': [null, [338, 348, 358]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      // 상행 (dirIndex=0)
+      expect(schedule.weekday.expressStationDepartures, isNotNull);
+      expect(schedule.weekday.expressStationDepartures!['902'], [330, 340, 352]);
+      // 905 상행은 null → 상행 급행 맵에 포함되지 않음 (급행 미정차)
+      expect(schedule.weekday.expressStationDepartures!.containsKey('905'), isFalse);
+
+      // 하행 (dirIndex=1)
+      expect(schedule.weekdayDown, isNotNull);
+      expect(schedule.weekdayDown!.expressStationDepartures, isNotNull);
+      expect(schedule.weekdayDown!.expressStationDepartures!['902'], [335, 345, 355]);
+      expect(schedule.weekdayDown!.expressStationDepartures!['905'], [338, 348, 358]);
+    });
+
+    test('t만 있고 tE가 없으면 expressStationDepartures는 null이다', () {
+      final json = {
+        'id': '2',
+        'wd': {
+          'f': ['05:00', '05:02'],
+          'l': ['00:00', '23:55'],
+          'p': [
+            ['05:00', '00:00', 5],
+          ],
+          't': {
+            'P05': [[335, 345], [328, 338]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      expect(schedule.weekday.stationDepartures, isNotNull);
+      expect(schedule.weekday.expressStationDepartures, isNull);
+      expect(schedule.weekdayDown!.stationDepartures, isNotNull);
+      expect(schedule.weekdayDown!.expressStationDepartures, isNull);
+    });
+
+    test('t와 tE가 모두 있으면 각각 독립적으로 파싱되어 서로 섞이지 않는다', () {
+      final json = {
+        'id': '9',
+        'wd': {
+          'f': ['05:30', '05:40'],
+          'l': ['00:50', '00:51'],
+          'p': [
+            ['05:30', '00:50', 6],
+          ],
+          't': {
+            '902': [[330, 340, 350], [335, 345, 355]],
+          },
+          'tE': {
+            '902': [[331, 341, 351], [336, 346, 356]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      // 완행과 급행이 1분씩만 달라도 각자 독립적으로 유지되어야 함
+      expect(schedule.weekday.stationDepartures!['902'], [330, 340, 350]);
+      expect(schedule.weekday.expressStationDepartures!['902'], [331, 341, 351]);
+      expect(schedule.weekdayDown!.stationDepartures!['902'], [335, 345, 355]);
+      expect(schedule.weekdayDown!.expressStationDepartures!['902'], [336, 346, 356]);
+    });
+
+    test('tE만 있고 t가 없으면 stationDepartures는 null, expressStationDepartures만 존재한다', () {
+      final json = {
+        'id': '9',
+        'wd': {
+          'f': ['05:30', '05:40'],
+          'l': ['00:50', '00:51'],
+          'p': [
+            ['05:30', '00:50', 6],
+          ],
+          'tE': {
+            '902': [[330, 340], [335, 345]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      expect(schedule.weekday.stationDepartures, isNull);
+      expect(schedule.weekday.expressStationDepartures, isNotNull);
+      expect(schedule.weekday.expressStationDepartures!['902'], [330, 340]);
+    });
+
+    test('tE가 빈 맵이면 expressStationDepartures는 null이다', () {
+      final json = {
+        'id': '9',
+        'wd': {
+          'f': ['05:30', '05:40'],
+          'l': ['00:50', '00:51'],
+          'p': [
+            ['05:30', '00:50', 6],
+          ],
+          'tE': <String, dynamic>{},
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+      expect(schedule.weekday.expressStationDepartures, isNull);
+    });
+
+    test('_parseDayScheduleDown: tE만 있고 t가 없어도 상하행 첫차/막차가 같으면 non-null을 반환한다', () {
+      final json = {
+        'id': '9',
+        'wd': {
+          // 상하행 첫차/막차 동일 (pD도 없음) → 원래는 null 폴백 대상이지만
+          // tE가 있으므로 하행 전용 DaySchedule을 생성해야 한다.
+          'f': ['05:30', '05:30'],
+          'l': ['23:30', '23:30'],
+          'p': [
+            ['05:30', '23:30', 6],
+          ],
+          'tE': {
+            '902': [[330, 340], [332, 342]],
+          },
+        },
+      };
+
+      final schedule = parseCompactSchedule(json);
+
+      expect(schedule.weekdayDown, isNotNull);
+      expect(schedule.weekdayDown!.expressStationDepartures, isNotNull);
+      expect(schedule.weekdayDown!.expressStationDepartures!['902'], [332, 342]);
     });
   });
 
