@@ -49,6 +49,11 @@ class LineSchedule with _$LineSchedule {
 /// 키는 stationId, 값은 정렬된 분 단위 정수 배열이다.
 /// 이 값이 있고 해당 역 데이터가 존재하면 배차간격 대신 정확한 시간표를 사용한다.
 /// null이면 기존 배차간격([periods]) 기반 추정으로 폴백한다.
+///
+/// [expressStationDepartures]는 급행(9호선 등) 역별 정확한 출발시각 맵이다.
+/// 구조는 [stationDepartures]와 동일하며, 완행(`t`)과 나란히 저장된다
+/// (JSON의 `tE` 키). 급행 미정차역은 키 자체가 없거나 값이 제외된다.
+/// 급행 모드 조회 시에만 사용하며, 급행 데이터가 없는 노선/역이면 null이다.
 @freezed
 class DaySchedule with _$DaySchedule {
   const DaySchedule._();
@@ -58,6 +63,7 @@ class DaySchedule with _$DaySchedule {
     required String lastTrain,
     required List<TimePeriod> periods,
     Map<String, List<int>>? stationDepartures,
+    Map<String, List<int>>? expressStationDepartures,
   }) = _DaySchedule;
 
   factory DaySchedule.fromJson(Map<String, dynamic> json) =>

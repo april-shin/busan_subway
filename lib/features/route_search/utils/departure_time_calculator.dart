@@ -48,6 +48,7 @@ DateTime computeDepartureTime({
       now: now,
       isDown: isDown,
       stationId: validSeg.stations.first.id,
+      express: isExpressSegment,
     );
     if (timetableDeparture != null) return timetableDeparture;
   }
@@ -148,6 +149,7 @@ List<DateTime> computeSegmentDepartures({
             now: afterTransfer,
             isDown: nextIsDown,
             stationId: nextSegment.stations.first.id,
+            express: nextIsExpress,
           );
         }
       }

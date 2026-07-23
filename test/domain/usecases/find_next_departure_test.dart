@@ -334,6 +334,340 @@ void main() {
     });
   });
 
+  group('findNextDeparture - 급행(express)', () {
+    // 참고: lastTrain을 '00:50'처럼 자정을 넘기는 값으로 두면
+    // DaySchedule.lastTrainMinutes/TimePeriod.endMinutes가 "00:00" 리터럴만
+    // 특별 처리하고 그 외 자정 이후 값은 그대로 반환하는 기존 버그(별도 보고 대상,
+    // 아래 "경계: 자정 전후" 그룹 참고)와 얽혀 배차간격 폴백 자체가 깨진다.
+    // 이 그룹은 express/완행 분기 검증이 목적이므로 자정을 넘기지 않는
+    // lastTrain('23:50')으로 고정해 그 버그와 분리한다.
+    LineSchedule makeScheduleWithExpress() {
+      return LineSchedule(
+        lineId: '9',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:50',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:50', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            // 완행(급행 미정차역 포함) 목록.
+            // 905는 배차간격 폴백 계산 결과(05:42)와 절대 겹치지 않도록
+            // 의도적으로 다른 분(349)을 배치해, 폴백이 아니라 완행표를
+            // 잘못 참조했을 경우 명확히 구분되는 값이 나오게 한다.
+            '902': [330, 340, 350, 360, 370],
+            '905': [331, 341, 349, 359, 369],
+          },
+          expressStationDepartures: const {
+            // 급행 정차역만 존재 (905는 급행 미정차)
+            '902': [335, 355, 375, 395, 415],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+    }
+
+    test('express=true + 급행 데이터가 있는 역은 급행 목록에서 이진탐색한다', () {
+      // 05:40(340분) → 902 급행: [335, 355, 375, ...] → 다음은 355분(05:55)
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithExpress(),
+        now: now,
+        stationId: '902',
+        express: true,
+      );
+
+      expect(result, DateTime(2026, 2, 23, 5, 55));
+    });
+
+    test('express=true + 급행 데이터가 없는 역(급행 미정차역)은 완행과 섞이지 않고 배차간격으로 폴백한다', () {
+      // 905는 expressStationDepartures에 없음.
+      // 완행(stationDepartures) 목록에는 905가 있고 다음 값은 349분(05:49)이지만,
+      // express=true이므로 완행 목록을 참조해서는 안 되고 배차간격(6분) 폴백을 사용해야 한다.
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithExpress(),
+        now: now,
+        stationId: '905',
+        express: true,
+      );
+
+      // 배차간격 폴백: 05:30~23:50, 6분 간격
+      // elapsed = 340-330=10 → intervalsPassed=1 → 다음: 330+2*6=342 == 05:42
+      expect(result, DateTime(2026, 2, 23, 5, 42));
+      // 완행 시간표 값(349=05:49)이 반환되면 안 됨 — 섞이지 않아야 함
+      expect(result, isNot(DateTime(2026, 2, 23, 5, 49)));
+    });
+
+    test('express=true + 완행표에도 없는 미지의 역은 배차간격으로 폴백한다 (교차 오염 없음 재확인)', () {
+      final now = DateTime(2026, 2, 23, 10, 0);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithExpress(),
+        now: now,
+        stationId: '999', // t/tE 어디에도 없는 역
+        express: true,
+      );
+
+      // 배차간격 폴백만 가능 (완행/급행 어느 목록도 조회되지 않음)
+      expect(result, isNotNull);
+    });
+
+    test('express=false이면 완행(stationDepartures) 목록을 조회한다 (기존 동작)', () {
+      // 05:40(340분) → 902 완행: [330, 340, 350, ...] → 다음은 350분(05:50)
+      // (급행 목록이었다면 355분(05:55)이 반환되었을 것 — 서로 다른 값으로 분기 검증)
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = findNextDeparture(
+        schedule: makeScheduleWithExpress(),
+        now: now,
+        stationId: '902',
+        express: false,
+      );
+
+      expect(result, DateTime(2026, 2, 23, 5, 50));
+    });
+
+    test('하위호환: expressStationDepartures가 아예 없는 기존 노선에서 express=false는 정상 동작한다', () {
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P01': [330, 350, 370, 390, 410],
+          },
+          // expressStationDepartures 없음 (기존 노선)
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      // 05:40(340분) → P01 완행: [330, 350, ...] → 다음 350분(05:50)
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = findNextDeparture(
+        schedule: schedule,
+        now: now,
+        stationId: 'P01',
+        express: false,
+      );
+
+      expect(result, DateTime(2026, 2, 23, 5, 50));
+    });
+
+    test('하위호환: expressStationDepartures가 없는 노선에서 express=true여도 배차간격으로 안전하게 폴백한다', () {
+      final schedule = LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:55',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            'P01': [330, 350, 370, 390, 410],
+          },
+          // expressStationDepartures 없음 (기존 노선) — null 참조로 죽지 않아야 함
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      final now = DateTime(2026, 2, 23, 10, 0);
+      final result = findNextDeparture(
+        schedule: schedule,
+        now: now,
+        stationId: 'P01',
+        express: true,
+      );
+
+      // NPE 없이 배차간격 폴백으로 정상 반환되어야 함
+      expect(result, isNotNull);
+    });
+  });
+
+  group('getExpectedWaitMinutes - 급행(express)', () {
+    test('express=true + 급행 데이터가 있는 역은 급행 목록 기준 대기시간을 반환한다', () {
+      final schedule = LineSchedule(
+        lineId: '9',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:50',
+          periods: const [
+            TimePeriod(start: '05:30', end: '00:50', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            '902': [330, 340, 350],
+          },
+          expressStationDepartures: const {
+            '902': [330, 360, 390],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      // 05:40(340분) → 급행: 다음은 360분(06:00) → 대기 20분
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = getExpectedWaitMinutes(
+        schedule: schedule,
+        now: now,
+        stationId: '902',
+        express: true,
+      );
+
+      expect(result, 20);
+    });
+
+    test('express=true + 급행 미정차역은 완행과 섞이지 않고 배차간격 절반을 반환한다', () {
+      final schedule = LineSchedule(
+        lineId: '9',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:50',
+          periods: const [
+            TimePeriod(start: '05:30', end: '00:50', headwayMinutes: 6),
+          ],
+          stationDepartures: const {
+            '905': [330, 340, 350], // 완행에만 존재
+          },
+          // 905는 expressStationDepartures에 없음
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      final now = DateTime(2026, 2, 23, 5, 40);
+      final result = getExpectedWaitMinutes(
+        schedule: schedule,
+        now: now,
+        stationId: '905',
+        express: true,
+      );
+
+      // 완행표 기반 결과(다음 350분 → 대기 10분)가 아니라
+      // 배차간격 절반(6/2=3분) 폴백이어야 한다.
+      expect(result, 3);
+    });
+  });
+
+  group('경계: 자정 전후(1440분+) 출발분 처리 문서화', () {
+    // ⚠️ 4원칙(실시간 열차 애니메이션)과 무관한 시간표 로직 경계 테스트.
+    //
+    // 9호선처럼 막차가 자정을 넘기는 노선은 t/tE 배열에 1440 이상의 값
+    // (예: 1489 = 24:49 = 다음날 00:49)을 저장해 정렬 순서를 유지한다.
+    LineSchedule makeLateNightSchedule() {
+      return LineSchedule(
+        lineId: '9',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:50',
+          periods: const [
+            TimePeriod(start: '05:30', end: '00:50', headwayMinutes: 6),
+          ],
+          expressStationDepartures: const {
+            '902': [330, 340, 1408, 1420, 1450, 1489],
+          },
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+    }
+
+    test('23:50(1430분) 조회 시 1440분을 넘는 다음 출발(00:10)은 다음날 날짜로 정상 롤오버된다', () {
+      // 1430분 기준 다음 값은 1450 → _minutesToDateTime(1450)은
+      // DateTime(...,24,10)이 되고, Dart DateTime 생성자가 자동으로
+      // 다음 날 00:10으로 정규화한다. 이 롤오버 자체는 올바르게 동작한다.
+      final now = DateTime(2026, 2, 23, 23, 50); // 월요일 23:50
+      final result = findNextDeparture(
+        schedule: makeLateNightSchedule(),
+        now: now,
+        stationId: '902',
+        express: true,
+      );
+
+      expect(result, DateTime(2026, 2, 24, 0, 10));
+    });
+
+    test('알려진 제약: 자정 직후(00:10, 첫차 전) 조회는 심야 급행(1450분대)이 아니라 당일 첫차(05:30)를 반환한다', () {
+      // now.hour*60+now.minute 계산은 "현재 시각"을 항상 0~1439 범위로 취급한다.
+      // 00:10 시점은 실제로는 "어제 스케줄의 심야 연장 구간"(리스트 뒷부분의
+      // 1440+ 값들)에 해당할 수 있지만, findNextDeparture/getSchedule은
+      // now.weekday로 선택한 "오늘" 하루치 DaySchedule 하나만 보고,
+      // currentMinutes(=10)를 그 배열의 앞부분(첫차 이전)과 비교한다.
+      // 결과적으로 배열 뒤쪽의 1440+ 심야 값(1450=00:10, 1489=00:49)은
+      // 절대 매칭되지 않고 언제나 당일 첫차 시각으로 귀결된다.
+      //
+      // 이 동작은 9호선 급행(tE) 도입으로 생긴 회귀가 아니라, 자정~첫차 사이
+      // 시각을 다루는 기존 스케줄 모델(단일 DaySchedule, 자정 롤오버 없는
+      // currentMinutes 계산) 자체의 구조적 한계다. 4원칙과 무관.
+      // → 현재 동작을 고정(pin)하는 회귀 테스트로만 남겨두고, 실제 수정 여부는
+      //   realtime-data-engineer/graph-algorithm-engineer 판단에 맡긴다.
+      final now = DateTime(2026, 2, 23, 0, 10); // 월요일 00:10
+      final result = findNextDeparture(
+        schedule: makeLateNightSchedule(),
+        now: now,
+        stationId: '902',
+        express: true,
+      );
+
+      expect(result, DateTime(2026, 2, 23, 5, 30));
+    });
+
+    test(
+      '버그 후보(문서화용, 미실행): 자정 직후 조회는 원래 가장 가까운 심야 열차(00:10)를 반환해야 한다',
+      () {
+        // 위 테스트가 고정한 현재 동작과 달리, "정답"이라면 이 값을 반환해야
+        // 한다는 기대를 남겨둔다. 4원칙과 무관하므로 이 테스트 자체의 활성화
+        // 여부(스펙 변경)는 반드시 별도 승인 후 결정한다 — 여기서는 skip으로
+        // 문서화만 하고 스위트 통과 상태에는 영향을 주지 않는다.
+        final now = DateTime(2026, 2, 23, 0, 10);
+        final result = findNextDeparture(
+          schedule: makeLateNightSchedule(),
+          now: now,
+          stationId: '902',
+          express: true,
+        );
+
+        expect(result, DateTime(2026, 2, 23, 0, 10));
+      },
+      skip: '알려진 제약(자정~첫차 구간 currentMinutes 롤오버 미처리) 문서화용 — '
+          '4원칙과 무관, 스펙/수정 여부는 별도 승인 필요',
+    );
+  });
+
   group('getExpectedWaitMinutes', () {
     test('러시아워 평균 대기시간은 배차간격/2이다', () {
       final now = DateTime(2026, 2, 23, 8, 0); // 월요일 08:00
@@ -759,6 +1093,59 @@ void main() {
       final result = findNextDeparture(schedule: schedule, now: now);
 
       expect(result, DateTime(2026, 2, 24, 5, 10));
+    });
+  });
+
+  group('findNextDeparture - 급행 심야 운영일 매칭 (express + 자정 처리 통합)', () {
+    // 완행(t)과 급행(tE) 모두 자정 넘김(1440+) 심야 출발분을 가지되 값이 다른
+    // 스케줄. 급행 조회의 전날 폴백이 완행 목록으로 오염되지 않아야 한다.
+    LineSchedule makeExpressLateNightSchedule() {
+      return const LineSchedule(
+        lineId: '9',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:50',
+          periods: [TimePeriod(start: '05:30', end: '00:50', headwayMinutes: 6)],
+          stationDepartures: {
+            '902': [330, 1460], // 완행 심야 00:20
+          },
+          expressStationDepartures: {
+            '902': [330, 1489], // 급행 심야 00:49
+          },
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8)],
+        ),
+      );
+    }
+
+    test('express=true 심야(00:10) 조회는 전날 급행 심야분(00:49)을 반환한다', () {
+      // 화요일 00:10 → 전날 월요일(평일) 급행 [330,1489], boosted=1450
+      // → 1450 초과 첫 값 1489 → 월(2/23)+1489분 = 화(2/24) 00:49
+      final now = DateTime(2026, 2, 24, 0, 10); // 화요일
+      final result = findNextDeparture(
+        schedule: makeExpressLateNightSchedule(),
+        now: now,
+        stationId: '902',
+        express: true,
+      );
+
+      expect(result, DateTime(2026, 2, 24, 0, 49));
+    });
+
+    test('express=false 동일 조회는 전날 완행 심야분(00:20)을 반환한다 (교차 오염 없음)', () {
+      // 급행이 아니라 완행을 봐야 하므로 00:20이 나와야 한다.
+      final now = DateTime(2026, 2, 24, 0, 10); // 화요일
+      final result = findNextDeparture(
+        schedule: makeExpressLateNightSchedule(),
+        now: now,
+        stationId: '902',
+        express: false,
+      );
+
+      expect(result, DateTime(2026, 2, 24, 0, 20));
     });
   });
 }
