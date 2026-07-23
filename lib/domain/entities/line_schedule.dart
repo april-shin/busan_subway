@@ -66,11 +66,20 @@ class DaySchedule with _$DaySchedule {
   /// firstTrain을 분 단위로 반환 (예: "05:30" → 330)
   int get firstTrainMinutes => parseTimeToMinutes(firstTrain);
 
-  /// lastTrain을 분 단위로 반환 (예: "00:00" → 1440)
+  /// lastTrain을 분 단위로 반환 (예: "00:00" → 1440, "00:50" → 1490)
+  ///
+  /// 자정 이후 막차(예: "00:30"~"00:59")는 firstTrain보다 작은 값으로
+  /// 파싱되므로, firstTrain **이하**이면 다음날로 넘어간 것으로 보고 1440을
+  /// 더한다("00:00"도 0 ≤ firstTrain 이라 1440으로 보정됨).
+  /// firstTrain 자체가 자정 근처인 데이터 이상 케이스(예: 1호선 "00:00",
+  /// 서해 상행 "00:01")는 lastTrain이 firstTrain보다 커서 걸리지 않는다.
+  ///
+  /// 여기서는 등호(`<=`)를 쓴다 — [TimePeriod.endMinutes]는 길이 0(start==end)
+  /// 구간을 보존해야 해서 `<` 를 쓰지만, 막차는 first==last 퇴화 데이터를
+  /// "종일 운행"으로 완화(롤오버)하는 편이 안전하며 이를 걸러내는 소비처도 없다.
   int get lastTrainMinutes {
     final minutes = parseTimeToMinutes(lastTrain);
-    // "00:00"은 자정 = 1440분 (다음날)
-    return minutes == 0 ? 1440 : minutes;
+    return minutes <= firstTrainMinutes ? minutes + 1440 : minutes;
   }
 }
 
@@ -91,9 +100,18 @@ class TimePeriod with _$TimePeriod {
   /// start를 분 단위로 반환
   int get startMinutes => parseTimeToMinutes(start);
 
-  /// end를 분 단위로 반환 (00:00 → 1440)
+  /// end를 분 단위로 반환 (예: "00:00" → 1440, "00:40" → 1480)
+  ///
+  /// "00:00"은 하루의 끝(자정) = 1440 관례를 유지한다. 그 외 종료 시각이
+  /// 시작 시각보다 작으면 자정을 넘긴 시간대로 보고 1440을 더한다.
+  /// 예: "16:30"~"00:40" period 는 end=40 < start(990) 이므로 1480.
+  ///
+  /// start == end 인 길이 0(비정상) 구간은 보정하지 않는다 —
+  /// [DaySchedule.lastTrainMinutes] 와 동일한 규칙이며, 이 구간을 걸러내는
+  /// 상위 소비처(headway_estimator의 `end <= start` 가드)를 무력화하지 않기 위함.
   int get endMinutes {
     final minutes = parseTimeToMinutes(end);
-    return minutes == 0 ? 1440 : minutes;
+    if (minutes == 0) return 1440;
+    return minutes < startMinutes ? minutes + 1440 : minutes;
   }
 }

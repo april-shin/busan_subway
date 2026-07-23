@@ -435,4 +435,330 @@ void main() {
       expect(result, 1);
     });
   });
+
+  group('findNextDeparture - 자정 처리 회귀 (버그1: 심야 운영일 매칭)', () {
+    // 김포골드류: 평일(금) 심야 운행이 자정을 넘겨 1440+ 값으로 저장되고,
+    // 다음날(토) 새벽 조회 시 이를 찾아야 한다.
+    LineSchedule makeMidnightSpanningSchedule() {
+      return const LineSchedule(
+        lineId: '김포골드',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:50', // 자정 이후 막차 (버그2 케이스 겸용)
+          periods: [
+            TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6),
+          ],
+          stationDepartures: {
+            // 금요일(평일) P01: 정상 운행 + 자정을 넘긴 심야 운행분(1440+)
+            'P01': [330, 350, 1420, 1440, 1460, 1480],
+          },
+        ),
+        weekend: DaySchedule(
+          firstTrain: '06:00',
+          lastTrain: '23:00',
+          periods: [
+            TimePeriod(start: '06:00', end: '23:00', headwayMinutes: 8),
+          ],
+          stationDepartures: {
+            // 토요일(주말) P01: 자체 심야 운행분 없음 (00시대 진입 시엔
+            // 항상 전날 평일 운영분을 우선 확인해야 함)
+            'P01': [360, 380, 400],
+          },
+        ),
+      );
+    }
+
+    test('토요일 00:10 조회 시 금요일(평일) 운영일의 1440+ 출발분을 반환한다', () {
+      // 토요일 00:10 (10분) → current+1440=1450 → 금요일 P01 리스트
+      // [330,350,1420,1440,1460,1480] 중 1450 초과 첫 값 1460
+      // reference: 금요일(2/20) 자정 + 1460분 = 토요일(2/21) 00:20
+      final now = DateTime(2026, 2, 21, 0, 10); // 토요일
+      final result = findNextDeparture(
+        schedule: makeMidnightSpanningSchedule(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 21, 0, 20));
+    });
+
+    test('전날 운영분(1440+)이 없으면 기존대로 오늘 스케줄에서 첫차를 찾는다', () {
+      final schedule = LineSchedule(
+        lineId: '경의중앙',
+        weekday: DaySchedule(
+          firstTrain: '05:10',
+          lastTrain: '23:40',
+          periods: const [
+            TimePeriod(start: '05:10', end: '23:40', headwayMinutes: 10),
+          ],
+          stationDepartures: const {
+            // 금요일: 자정을 넘기지 않는 정상 운행분만 존재
+            'K01': [310, 330, 350],
+          },
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:00',
+          periods: const [
+            TimePeriod(start: '05:30', end: '23:00', headwayMinutes: 12),
+          ],
+          stationDepartures: const {
+            'K01': [330, 350, 370],
+          },
+        ),
+      );
+
+      // 토요일 00:10 → 전날(금) K01 최대값 350(<1440) → 심야 매칭 대상 아님
+      // → 오늘(토) 스케줄에서 첫 항목 330(05:30) 반환 (기존 동작 유지)
+      final now = DateTime(2026, 2, 21, 0, 10); // 토요일
+      final result = findNextDeparture(
+        schedule: schedule,
+        now: now,
+        stationId: 'K01',
+      );
+
+      expect(result, DateTime(2026, 2, 21, 5, 30));
+    });
+
+    test('정상 첫차 시간대(예: 04:30) 조회는 기존 동작(첫차 반환)이 유지된다', () {
+      // makeMidnightSpanningSchedule의 금요일 firstTrain은 05:30이므로
+      // 04:30 조회도 여전히 첫차 전 구간 — 심야 매칭 로직이 개입해도
+      // 결과는 기존과 동일하게 정상 계산되어야 한다.
+      final now = DateTime(2026, 2, 20, 4, 30); // 금요일
+      final result = findNextDeparture(
+        schedule: makeMidnightSpanningSchedule(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 20, 5, 30));
+    });
+
+    test('getExpectedWaitMinutes도 동일한 심야 운영일 매칭을 사용한다', () {
+      // 토요일 00:10 → 금요일 1440+ 매칭 1460분(00:20) → 대기 10분
+      final now = DateTime(2026, 2, 21, 0, 10); // 토요일
+      final result = getExpectedWaitMinutes(
+        schedule: makeMidnightSpanningSchedule(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, 10);
+    });
+
+    test('전날 1440+가 존재하나 모두 지나갔으면 오늘 첫차로 폴백한다', () {
+      // 토요일 01:20 (80분) → current+1440=1520 > 금요일 P01 최대값 1480
+      //   → 심야 매칭 실패 → 오늘(토) 주말 리스트 [360,380,400]에서 첫 항목 360(06:00)
+      final now = DateTime(2026, 2, 21, 1, 20); // 토요일
+      final result = findNextDeparture(
+        schedule: makeMidnightSpanningSchedule(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 21, 6, 0));
+    });
+
+    // 상/하행 및 주말 각각 자정 넘김 운행분을 가진 스케줄.
+    LineSchedule makeMidnightBothDirections() {
+      return const LineSchedule(
+        lineId: '9',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:50',
+          periods: [TimePeriod(start: '05:30', end: '23:55', headwayMinutes: 6)],
+          stationDepartures: {
+            'P01': [330, 1450, 1470], // 평일 상행: 심야 1450,1470
+          },
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:40',
+          lastTrain: '00:30',
+          periods: [TimePeriod(start: '05:40', end: '23:55', headwayMinutes: 8)],
+          stationDepartures: {
+            'P01': [340, 1450, 1465], // 주말 상행: 심야 1450,1465
+          },
+        ),
+        weekdayDown: DaySchedule(
+          firstTrain: '05:25',
+          lastTrain: '00:45',
+          periods: [TimePeriod(start: '05:25', end: '23:55', headwayMinutes: 6)],
+          stationDepartures: {
+            'P01': [325, 1455, 1475], // 평일 하행: 심야 1455,1475
+          },
+        ),
+      );
+    }
+
+    test('전날이 주말인 경계도 요일 타입을 올바르게 재선택한다 (월요일 새벽 → 일요일 주말 운영분)', () {
+      // 월요일 00:10 (10분) → 전날 일요일 = 주말 스케줄 재선택
+      //   → current+1440=1450 → 주말 P01 [340,1450,1465] 중 1450 초과 첫 값 1465
+      //   → reference 일요일(2/22) + 1465분 = 월요일(2/23) 00:25
+      final now = DateTime(2026, 2, 23, 0, 10); // 월요일
+      final result = findNextDeparture(
+        schedule: makeMidnightBothDirections(),
+        now: now,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 23, 0, 25));
+    });
+
+    test('isDown=true이면 하행 시간표로 전날 심야 운영분을 매칭한다', () {
+      // 토요일 00:10 (10분), 하행 → 전날 금요일 = 평일 하행(weekdayDown) 재선택
+      //   → current+1440=1450 → 하행 P01 [325,1455,1475] 중 1450 초과 첫 값 1455
+      //   → reference 금요일(2/20) + 1455분 = 토요일(2/21) 00:15
+      final now = DateTime(2026, 2, 21, 0, 10); // 토요일
+      final result = findNextDeparture(
+        schedule: makeMidnightBothDirections(),
+        now: now,
+        isDown: true,
+        stationId: 'P01',
+      );
+
+      expect(result, DateTime(2026, 2, 21, 0, 15));
+    });
+  });
+
+  group('findNextDeparture - 자정 처리 회귀 (버그2: lastTrainMinutes 자정 이후)', () {
+    test('lastTrain이 "00:50"인 배차간격 스케줄로 주간(14:00) 조회 시 null이 아닌 배차 기반 출발을 반환한다', () {
+      final schedule = LineSchedule(
+        lineId: '2',
+        weekday: DaySchedule(
+          firstTrain: '05:41',
+          lastTrain: '00:50', // 자정 이후 막차 (버그 수정 전엔 50분으로 오인)
+          periods: const [
+            TimePeriod(start: '05:41', end: '09:00', headwayMinutes: 4),
+            TimePeriod(start: '09:00', end: '16:30', headwayMinutes: 6),
+            TimePeriod(start: '16:30', end: '00:50', headwayMinutes: 5),
+          ],
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:41',
+          lastTrain: '23:55',
+          periods: [
+            TimePeriod(start: '05:41', end: '23:55', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      // 월요일 14:00 (840분) → firstMin=341, lastMin은 수정 후 50+1440=1490
+      // → 840 < 1490 이므로 운행 종료(null) 처리되지 않고 배차 기반 출발 반환
+      final now = DateTime(2026, 2, 23, 14, 0); // 월요일
+      final result = findNextDeparture(schedule: schedule, now: now);
+
+      expect(result, isNotNull);
+    });
+
+    test('"00:00" 막차는 여전히 1440으로 처리되어 주간 조회가 null이 아니다 (경계 회귀 방지)', () {
+      // makeSchedule()의 평일 lastTrain은 "00:00". 새 getter는
+      // 0 <= firstTrainMinutes(300) 이므로 1440으로 보정한다.
+      // 만약 잘못하여 0으로 해석되면 currentMinutes >= lastMin(0)이 종일 참이 되어
+      // _findNextByHeadway가 하루 종일 null을 반환하는 버그2 증상이 재발한다.
+      final now = DateTime(2026, 2, 23, 12, 0); // 월요일 정오 (운행 시간대 한복판)
+      final result = findNextDeparture(schedule: makeSchedule(), now: now);
+
+      expect(result, isNotNull);
+    });
+
+    test('"00:00" 막차의 lastTrainMinutes는 1440이다 (경계 단위 검증)', () {
+      const day = DaySchedule(
+        firstTrain: '05:00',
+        lastTrain: '00:00',
+        periods: [],
+      );
+      expect(day.lastTrainMinutes, 1440);
+    });
+  });
+
+  group('findNextDeparture - 배차 자정 넘김 period (endMinutes)', () {
+    // 우이신설/인천1류: 마지막 배차 period가 자정을 넘긴다("19:30~00:40").
+    // 역별 시간표(stationDepartures) 없이 배차간격 폴백만 사용.
+    LineSchedule makeSpanningHeadwaySchedule() {
+      return const LineSchedule(
+        lineId: '우이신설',
+        weekday: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:40',
+          periods: [
+            TimePeriod(start: '05:30', end: '19:30', headwayMinutes: 5),
+            TimePeriod(start: '19:30', end: '00:40', headwayMinutes: 6),
+          ],
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:40',
+          periods: [
+            TimePeriod(start: '05:30', end: '19:30', headwayMinutes: 7),
+            TimePeriod(start: '19:30', end: '00:40', headwayMinutes: 8),
+          ],
+        ),
+      );
+    }
+
+    test('저녁(20:00) 자정 넘김 period가 활성이면 배차 기반 출발을 반환한다', () {
+      // 월요일 20:00 (1200분) → period "19:30~00:40"(end=1480) 활성, 배차 6분
+      // (1200-1170)/6=5 → 다음: 1170+6*6=1206 → 20:06
+      // endMinutes 수정 전에는 end=40으로 절단돼 _findPeriod가 null → 버그(null 반환)
+      final now = DateTime(2026, 2, 23, 20, 0); // 월요일
+      final result =
+          findNextDeparture(schedule: makeSpanningHeadwaySchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 23, 20, 6));
+    });
+
+    test('심야(00:20) 조회 시 전날 운영일의 자정 넘김 배차 출발을 반환한다', () {
+      // 화요일 00:20 (20분) → 전날 월요일(평일) period "19:30~00:40" 배차 6분
+      // boosted=1460 → (1460-1170)/6=48 → 다음: 1170+49*6=1464
+      // reference 월요일(2/23) + 1464분 = 화요일(2/24) 00:24
+      final now = DateTime(2026, 2, 24, 0, 20); // 화요일
+      final result =
+          findNextDeparture(schedule: makeSpanningHeadwaySchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 24, 0, 24));
+    });
+
+    test('심야 조회 시 전날이 주말이면 주말 배차로 자정 넘김 출발을 계산한다', () {
+      // 월요일 00:20 (20분) → 전날 일요일(주말) period "19:30~00:40" 배차 8분
+      // boosted=1460 → (1460-1170)/8=36 → 다음: 1170+37*8=1466
+      // reference 일요일(2/22) + 1466분 = 월요일(2/23) 00:26
+      final now = DateTime(2026, 2, 23, 0, 20); // 월요일
+      final result =
+          findNextDeparture(schedule: makeSpanningHeadwaySchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 23, 0, 26));
+    });
+
+    test('심야지만 전날 자정 넘김 운행이 이미 끝났으면 오늘 첫차를 반환한다', () {
+      // 화요일 00:50 (50분) → boosted=1490 > period end 1480 → 매칭 없음
+      // → 오늘(화) 첫차 05:30
+      final now = DateTime(2026, 2, 24, 0, 50); // 화요일
+      final result =
+          findNextDeparture(schedule: makeSpanningHeadwaySchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 24, 5, 30));
+    });
+
+    test('전날에 자정 넘김 period가 없는 노선은 심야 조회 시 오늘 첫차를 반환한다', () {
+      // 막차 23:40, 자정 넘김 period 없음 → 00:20 조회는 전날 매칭 실패 → 오늘 첫차
+      const schedule = LineSchedule(
+        lineId: '경의중앙',
+        weekday: DaySchedule(
+          firstTrain: '05:10',
+          lastTrain: '23:40',
+          periods: [TimePeriod(start: '05:10', end: '23:40', headwayMinutes: 10)],
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:00',
+          periods: [TimePeriod(start: '05:30', end: '23:00', headwayMinutes: 12)],
+        ),
+      );
+
+      final now = DateTime(2026, 2, 24, 0, 20); // 화요일
+      final result = findNextDeparture(schedule: schedule, now: now);
+
+      expect(result, DateTime(2026, 2, 24, 5, 10));
+    });
+  });
 }
