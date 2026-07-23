@@ -621,21 +621,14 @@ void main() {
       expect(result, DateTime(2026, 2, 24, 0, 10));
     });
 
-    test('알려진 제약: 자정 직후(00:10, 첫차 전) 조회는 심야 급행(1450분대)이 아니라 당일 첫차(05:30)를 반환한다', () {
-      // now.hour*60+now.minute 계산은 "현재 시각"을 항상 0~1439 범위로 취급한다.
-      // 00:10 시점은 실제로는 "어제 스케줄의 심야 연장 구간"(리스트 뒷부분의
-      // 1440+ 값들)에 해당할 수 있지만, findNextDeparture/getSchedule은
-      // now.weekday로 선택한 "오늘" 하루치 DaySchedule 하나만 보고,
-      // currentMinutes(=10)를 그 배열의 앞부분(첫차 이전)과 비교한다.
-      // 결과적으로 배열 뒤쪽의 1440+ 심야 값(1450=00:10, 1489=00:49)은
-      // 절대 매칭되지 않고 언제나 당일 첫차 시각으로 귀결된다.
-      //
-      // 이 동작은 9호선 급행(tE) 도입으로 생긴 회귀가 아니라, 자정~첫차 사이
-      // 시각을 다루는 기존 스케줄 모델(단일 DaySchedule, 자정 롤오버 없는
-      // currentMinutes 계산) 자체의 구조적 한계다. 4원칙과 무관.
-      // → 현재 동작을 고정(pin)하는 회귀 테스트로만 남겨두고, 실제 수정 여부는
-      //   realtime-data-engineer/graph-algorithm-engineer 판단에 맡긴다.
-      final now = DateTime(2026, 2, 23, 0, 10); // 월요일 00:10
+    test('전날 운영일(주말)에 급행 심야 데이터가 없으면 당일 급행 첫차로 폴백한다', () {
+      // 자정 직후(00:10, 첫차 전) 조회는 _nextStationDeparture 가 "전날 운영일"의
+      // 심야(1440+) 출발분을 먼저 확인한다. 월요일 00:10 의 전날은 일요일(주말)인데
+      // makeLateNightSchedule 의 주말 스케줄에는 급행(tE) 데이터가 없으므로,
+      // 매칭할 심야 출발분이 없어 당일 급행 첫차(05:30)로 귀결된다.
+      // (전날이 평일이어서 급행 심야분이 실제로 존재하는 경우의 매칭은
+      //  'findNextDeparture - 급행 심야 운영일 매칭' 그룹에서 검증한다.)
+      final now = DateTime(2026, 2, 23, 0, 10); // 월요일 00:10 → 전날=일요일(주말)
       final result = findNextDeparture(
         schedule: makeLateNightSchedule(),
         now: now,
@@ -645,27 +638,6 @@ void main() {
 
       expect(result, DateTime(2026, 2, 23, 5, 30));
     });
-
-    test(
-      '버그 후보(문서화용, 미실행): 자정 직후 조회는 원래 가장 가까운 심야 열차(00:10)를 반환해야 한다',
-      () {
-        // 위 테스트가 고정한 현재 동작과 달리, "정답"이라면 이 값을 반환해야
-        // 한다는 기대를 남겨둔다. 4원칙과 무관하므로 이 테스트 자체의 활성화
-        // 여부(스펙 변경)는 반드시 별도 승인 후 결정한다 — 여기서는 skip으로
-        // 문서화만 하고 스위트 통과 상태에는 영향을 주지 않는다.
-        final now = DateTime(2026, 2, 23, 0, 10);
-        final result = findNextDeparture(
-          schedule: makeLateNightSchedule(),
-          now: now,
-          stationId: '902',
-          express: true,
-        );
-
-        expect(result, DateTime(2026, 2, 23, 0, 10));
-      },
-      skip: '알려진 제약(자정~첫차 구간 currentMinutes 롤오버 미처리) 문서화용 — '
-          '4원칙과 무관, 스펙/수정 여부는 별도 승인 필요',
-    );
   });
 
   group('getExpectedWaitMinutes', () {
