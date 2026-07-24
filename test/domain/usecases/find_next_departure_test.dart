@@ -1120,4 +1120,59 @@ void main() {
       expect(result, DateTime(2026, 2, 24, 0, 20));
     });
   });
+
+  group('findNextDeparture - 마지막 period 배차 그리드가 실제 막차와 불일치', () {
+    // 막차가 배차간격 배수에 정확히 안 맞는 노선(예: SB 23:00~00:33, 10분 배차 →
+    // 이론상 다음 칸은 00:40으로 막차 00:33을 넘김)에서, "다음 칸이 period end를
+    // 초과 && 다음 period 없음"일 때 null(운행 종료)이 아니라 period.end(실제 막차)를
+    // 반환해야 한다. null이면 상위에서 오늘 첫차로 오폴백된다.
+    test('당일 마지막 period에서 그리드가 막차를 넘어서면 실제 막차 시각을 반환한다', () {
+      const schedule = LineSchedule(
+        lineId: 'SB',
+        weekday: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '23:33',
+          // 단일 period, 배차 10분: 05:00,05:10,... 23:30 다음 칸 23:40 > 막차 23:33
+          periods: [TimePeriod(start: '05:00', end: '23:33', headwayMinutes: 10)],
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:00',
+          periods: [TimePeriod(start: '05:30', end: '23:00', headwayMinutes: 12)],
+        ),
+      );
+
+      // 23:31 → 그리드 다음 칸 23:40 ≥ 막차 23:33, 다음 period 없음 → 막차 23:33 반환
+      final now = DateTime(2026, 2, 24, 23, 31); // 화요일
+      final result = findNextDeparture(schedule: schedule, now: now);
+
+      expect(result, DateTime(2026, 2, 24, 23, 33));
+    });
+
+    test('심야(전날 운영일)의 자정 넘김 마지막 period에서도 실제 막차를 반환한다', () {
+      const schedule = LineSchedule(
+        lineId: 'SB',
+        weekday: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '00:33', // 자정 넘김 막차
+          periods: [
+            TimePeriod(start: '05:00', end: '23:00', headwayMinutes: 10),
+            TimePeriod(start: '23:00', end: '00:33', headwayMinutes: 10),
+          ],
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:00',
+          periods: [TimePeriod(start: '05:30', end: '23:00', headwayMinutes: 12)],
+        ),
+      );
+
+      // 화요일 00:31 → 전날 월요일 period "23:00~00:33"(end=1473) boosted=1471
+      // 그리드 다음 칸 00:40(1480) ≥ 1473 → 실제 막차 00:33 반환
+      final now = DateTime(2026, 2, 24, 0, 31); // 화요일
+      final result = findNextDeparture(schedule: schedule, now: now);
+
+      expect(result, DateTime(2026, 2, 24, 0, 33));
+    });
+  });
 }

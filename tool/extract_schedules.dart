@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:dio/dio.dart';
 
@@ -324,11 +323,15 @@ Map<String, dynamic> _analyzeStationTimes(List<dynamic> items) {
     }
   }
 
-  final lastHour = sortedHours.last;
-  final endMin = min((lastHour + 1) * 60, lastMin + 1);
   periods.add({
     'start': _minutesToTimeStr(periodStart * 60),
-    'end': endMin >= 1440 ? '00:00' : _minutesToTimeStr(endMin),
+    // 마지막 period의 end는 실제 막차 시각(lastTrain)으로 저장한다.
+    // 이렇게 하면 (1) 자정 넘김 막차가 "00:00"으로 뭉개지지 않고,
+    // (2) hour 버킷 상한이나 +1분 off-by-one 없이
+    //     tool/fix_midnight_schedule_data.dart 마이그레이션 산출물과 동일한
+    //     컨벤션(마지막 period end == 막차 시각)을 유지한다.
+    //     ("00:00"이면 자정 정각 종료를 의미하며 endMinutes getter가 1440으로 해석).
+    'end': lastTrain,
     'headwayMinutes': prevAvg.round(),
   });
 

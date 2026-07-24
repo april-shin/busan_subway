@@ -200,8 +200,28 @@ DateTime? _nextInPeriod(
   // 다음 출발이 현재 시간대를 초과하면 다음 시간대 첫 열차
   if (nextDepartureMinutes >= period.endMinutes) {
     final nextPeriod = _findNextPeriod(daySchedule, period.endMinutes);
-    if (nextPeriod == null) return null;
-    return _minutesToDateTime(referenceDate, nextPeriod.startMinutes);
+    if (nextPeriod != null) {
+      return _minutesToDateTime(referenceDate, nextPeriod.startMinutes);
+    }
+    // 다음 period가 없다(하루의 마지막 period). 배차간격 배수가 실제 막차
+    // 시각과 정확히 맞아떨어지지 않는 노선(막차가 headway 그리드에서 벗어난
+    // 경우 — 예: 23:00~00:33, 10분 배차면 23:00,23:10,...,00:30 다음
+    // 이론상 다음 칸은 00:40이라 period.end(00:33)를 넘어서 버림)에서는
+    // 위 계산이 실제 막차를 넘어서더라도, 조회 시각(nowMinutes)이 아직
+    // period.endMinutes 이전이라면(현재 두 호출부 모두 lookupMinutes==nowMinutes
+    // 이고 _findPeriod가 lookup<endMinutes를 보장하므로 항상 참)
+    // 막차 실제 시각이 유효한 마지막 출발이다.
+    // 이를 무시하고 null을 반환하면 심야 조회가 "운행 종료"로 오판되어
+    // 상위 호출부가 (전날 자정 넘김 조회 실패 시) 오늘 첫차로 잘못 폴백한다.
+    //
+    // period.endMinutes 와 lastTrainMinutes 중 작은 값을 쓴다 — 데이터 생성
+    // 컨벤션에 따라 마지막 period end가 막차보다 1분 늦게(막차+1) 기록될 수
+    // 있어(extract_schedules 재생성분), 그 경우 막차 정각을 반환해 유령 출발을
+    // 방지한다. 두 값 모두 자정 넘김이 +1440으로 정규화돼 있어 비교가 안전하다.
+    final lastMin = daySchedule.lastTrainMinutes;
+    final lastDeparture =
+        period.endMinutes < lastMin ? period.endMinutes : lastMin;
+    return _minutesToDateTime(referenceDate, lastDeparture);
   }
 
   return _minutesToDateTime(referenceDate, nextDepartureMinutes);
