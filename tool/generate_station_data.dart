@@ -778,8 +778,10 @@ void main() {
     StationData('S07', '당곡', '신림', 37.4855, 126.9310),
     StationData('S08', '신림', '신림', 37.4843, 126.9296, isTransfer: true, transferLines: ['2', '신림']),
     StationData('S09', '서원', '신림', 37.4790, 126.9340),
-    StationData('S11', '서울대벤처타운', '신림', 37.4740, 126.9370),
-    StationData('S10', '관악산', '신림', 37.4720, 126.9400),
+    // 물리 순서: 서원 → 서울대벤처타운 → 관악산(종점). ID도 물리 순서와 일치해야
+    // isDownBetween(숫자 ID 증가=하행)이 올바르므로 S10=서울대벤처타운, S11=관악산.
+    StationData('S10', '서울대벤처타운', '신림', 37.4740, 126.9370),
+    StationData('S11', '관악산', '신림', 37.4720, 126.9400),
   ];
   stations.addAll(shinlim);
 
