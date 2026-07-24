@@ -38,7 +38,7 @@
 //   dart run tool/build_metro_timetable.dart --lines=9    # 특정 노선만
 //   dart run tool/build_metro_timetable.dart --lines=1,3,9
 //
-//   ⚠ 2호선은 이 API 가 시간표를 제공하지 않아 대상에서 제외된다(순환선).
+//   ⚠ 2호선(순환선)은 2026-07 갱신으로 신규 제공됨. 방향은 INOUT 1→idx0(상행/내선).
 //
 // 4원칙 무관 — 실시간 열차 애니메이션과 무관한 정적 데이터 생성기다.
 
@@ -50,9 +50,12 @@ import 'package:dio/dio.dart';
 
 const _baseUrl = 'http://openapi.seoul.go.kr:8088';
 
-/// 앱 lineId → API LINE_NUM. 2호선은 API 미지원이라 제외.
+/// 앱 lineId → API LINE_NUM.
+/// (2호선은 2026-07 데이터셋 갱신으로 신규 제공 시작 — 순환선이라 방향은
+///  INOUT 1=상행/내선→idx0, 2=하행/외선→idx1로 앱 _isLine2DownBetween과 정합.)
 const _apiLineNum = {
   '1': '01호선',
+  '2': '02호선',
   '3': '03호선',
   '4': '04호선',
   '5': '05호선',
@@ -62,7 +65,7 @@ const _apiLineNum = {
   '9': '09호선',
 };
 
-const _defaultLines = ['1', '3', '4', '5', '6', '7', '8'];
+const _defaultLines = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 /// WEEK_TAG → 컴팩트 스키마 요일 키
 const _weekTagToDay = {1: 'wd', 3: 'we'};
@@ -324,7 +327,7 @@ void main(List<String> args) async {
   // 지원 노선만 필터
   final invalid = targetLines.where((l) => !_apiLineNum.containsKey(l)).toList();
   if (invalid.isNotEmpty) {
-    print('⚠ 미지원 노선 무시: ${invalid.join(', ')} (2호선은 API 미제공)');
+    print('⚠ 미지원 노선 무시: ${invalid.join(', ')}');
     targetLines = targetLines.where(_apiLineNum.containsKey).toList();
   }
   print('대상 노선: ${targetLines.join(', ')}');

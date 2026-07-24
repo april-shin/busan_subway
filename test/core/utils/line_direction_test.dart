@@ -68,6 +68,52 @@ void main() {
     });
   });
 
+  group('isDownBetween - 2호선 성수지선 (211-244-245-246-250, 본선과 반대 극성)', () {
+    // 실제 관례: ID 증가(신설동 방향) = 하행/외선(true), ID 감소(성수 방향) = 상행/내선(false).
+    // 지선 전용 분기가 없던 시절엔 내부 간선이 전부 반대로 판정됐다(회귀 가드).
+    test('진입 성수→용답 (211→244): 하행(true)', () {
+      expect(isDownBetween('211', '244', '2'), isTrue);
+    });
+    test('진입 용답→성수 (244→211): 상행(false)', () {
+      expect(isDownBetween('244', '211', '2'), isFalse);
+    });
+    test('내부 용답→신답 (244→245): 하행(true)', () {
+      expect(isDownBetween('244', '245', '2'), isTrue);
+    });
+    test('내부 신답→용답 (245→244): 상행(false)', () {
+      expect(isDownBetween('245', '244', '2'), isFalse);
+    });
+    test('내부 신답→용두 (245→246): 하행(true)', () {
+      expect(isDownBetween('245', '246', '2'), isTrue);
+    });
+    test('내부 용두→신답 (246→245): 상행(false)', () {
+      expect(isDownBetween('246', '245', '2'), isFalse);
+    });
+    test('종점 용두→신설동 (246→250): 하행(true)', () {
+      expect(isDownBetween('246', '250', '2'), isTrue);
+    });
+    test('종점 신설동→용두 (250→246): 상행(false) — 신설동발은 상행만 존재', () {
+      expect(isDownBetween('250', '246', '2'), isFalse);
+    });
+  });
+
+  group('isDownBetween - 2호선 신정지선 (234-247-248-249, 본선 공식과 동일 극성)', () {
+    // 실제 관례: ID 증가(신정네거리 방향) = 상행/내선(false), ID 감소 = 하행/외선(true).
+    // 본선 공식(작은 step)만으로 이미 정합 — 회귀 가드.
+    test('신도림→도림천 (234→247): 내선/상행(false)', () {
+      expect(isDownBetween('234', '247', '2'), isFalse);
+    });
+    test('도림천→신도림 (247→234): 외선/하행(true)', () {
+      expect(isDownBetween('247', '234', '2'), isTrue);
+    });
+    test('도림천→양천구청 (247→248): 내선/상행(false)', () {
+      expect(isDownBetween('247', '248', '2'), isFalse);
+    });
+    test('양천구청→도림천 (248→247): 외선/하행(true)', () {
+      expect(isDownBetween('248', '247', '2'), isTrue);
+    });
+  });
+
   group('isDownBetween - 4호선', () {
     test('본선 내부 증가 (402→406): 하행(true)', () {
       expect(isDownBetween('402', '406', '4'), isTrue);
