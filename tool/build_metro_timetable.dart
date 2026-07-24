@@ -72,6 +72,10 @@ late final String _apiKey;
 /// 에러 메시지에서 API 키를 마스킹한다.
 String _mask(String s) => s.replaceAll(_apiKey, '***');
 
+// 전체 진행률 표시용(대상 노선 총 역수 대비 처리한 역수).
+int _progDone = 0;
+int _progTotal = 0;
+
 /// "HH:MM:SS" 출발시각을 자정 기준 분(int)으로. 자정 이후(24/25시)는 1440+.
 /// 종착(출발 없음, "00:00:00")은 null.
 int? _leftTimeToMinutes(String lefttime) {
@@ -211,6 +215,9 @@ Future<LineResult> _collectLine(
   final failures = <String>[];
 
   for (final (id, name) in stations) {
+    _progDone++;
+    final pct = _progTotal == 0 ? 100 : (_progDone * 100 / _progTotal).round();
+    print('  [$pct% $_progDone/$_progTotal] $lineId $name');
     String? cd;
     var lookupThrew = false;
     try {
@@ -341,6 +348,8 @@ void main(List<String> args) async {
   ));
 
   // 결과를 노선별로 모은 뒤 마지막에 한 번에 JSON 병합·기록
+  _progTotal =
+      targetLines.fold(0, (sum, l) => sum + (byLine[l]?.length ?? 0));
   final collected = <String, LineResult>{};
 
   for (final lineId in targetLines) {

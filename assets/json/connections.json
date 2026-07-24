@@ -4554,14 +4554,14 @@
   },
   {
     "fromStationId": "S09",
-    "toStationId": "S11",
+    "toStationId": "S10",
     "lineId": "신림",
     "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
-    "fromStationId": "S11",
-    "toStationId": "S10",
+    "fromStationId": "S10",
+    "toStationId": "S11",
     "lineId": "신림",
     "travelTimeSeconds": 60,
     "isTransfer": false
