@@ -62,8 +62,10 @@ API 갱신으로 열차의 목표 위치(target)가 갑자기 바뀌어도, 아�
 
 ```bash
 # 코드 생성 (freezed, json_serializable, riverpod_generator)
-dart run build_runner build --delete-conflicting-outputs
-dart run build_runner watch --delete-conflicting-outputs  # 워치 모드
+# build_runner 2.15+ 에서 --delete-conflicting-outputs 는 제거됨(기본 동작화).
+# ⚠️ 구 삭제형 플래그는 데드락 시 생성물을 통째로 지워 복구 불가(gitignore)라 위험.
+dart run build_runner build
+dart run build_runner watch  # 워치 모드
 
 # 앱 실행
 flutter run                    # 시뮬레이터 (debug 모드 OK)
@@ -96,9 +98,9 @@ dart run tool/build_map_html.dart
 
 프로젝트 루트의 `.env` 파일 (`pubspec.yaml` assets에 등록됨):
 ```
-SEOUL_API_KEY=<data.seoul.go.kr에서 발급받은 키>
+SEOUL_SUBWAY_API_KEY=<data.seoul.go.kr에서 발급받은 실시간 지하철 API 키>
 ```
-앱 런타임에 키를 검증하며, placeholder 값이면 예외를 던진다.
+실시간 도착정보 데이터소스(`seoul_api_data_source.dart`)가 `SEOUL_SUBWAY_API_KEY` 를 읽는다. 앱 런타임에 키를 검증하며, 미설정/placeholder 값이면 예외를 던진다.
 
 ## 아키텍처
 
@@ -195,7 +197,7 @@ Expanded → WebViewWidget (전체 화면)
 
 ## 코드 생성
 
-모든 `@freezed` 모델과 `@riverpod` 프로바이더는 변경 후 `build_runner` 실행이 필요하다. 생성 파일: `*.freezed.dart`, `*.g.dart`. 항상 `--delete-conflicting-outputs` 옵션과 함께 실행할 것.
+모든 `@freezed` 모델과 `@riverpod` 프로바이더는 변경 후 `build_runner` 실행이 필요하다. 생성 파일: `*.freezed.dart`, `*.g.dart`. `dart run build_runner build` 로 실행한다(build_runner 2.15+ 부터 충돌 산출물은 기본 덮어쓰기되며, 구 `--delete-conflicting-outputs` 플래그는 제거됨).
 
 ## 컨벤션
 

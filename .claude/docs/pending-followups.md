@@ -51,16 +51,22 @@ freezed3/riverpod3 마이그레이션은 `flutter analyze`(에러 0) + `flutter 
   계속 기본 실행됨(커버리지 유지). analyze lib/test 에러·warning 0.
 - 잔여: CLAUDE.md "환경 설정" 섹션의 `SEOUL_API_KEY` 표기는 P5(문서 현행화)에서 정정.
 
-## P3 — riverpod 3 정리 (info 레벨, 선택)
-`flutter analyze` info `unnecessary_import` 6건 — 아래 프로바이더 파일에서 `import 'package:flutter_riverpod/flutter_riverpod.dart';` 가 riverpod_annotation로 대체 가능(중복):
-`arrival_providers.dart`, `timetable_providers.dart`, `feedback_provider.dart`, `home_station_provider.dart`, `live_train_provider.dart`, `subway_map_providers.dart`.
-(단 live_train/subway_map은 legacy.dart로 StateProvider를 쓰므로 flutter_riverpod 제거해도 legacy는 유지.)
+## P3 — riverpod 3 정리 (2026-07-26 완료)
+`unnecessary_import` 6건 제거: 아래 6개 프로바이더 파일에서 중복 `import
+'package:flutter_riverpod/flutter_riverpod.dart';` 삭제(riverpod_annotation 가 대체).
+`arrival_providers.dart`, `timetable_providers.dart`, `feedback_provider.dart`,
+`home_station_provider.dart`, `live_train_provider.dart`, `subway_map_providers.dart`.
+live_train/subway_map 은 `legacy.dart`(StateProvider/StateNotifier) 유지.
+검증: analyze lib unnecessary_import 0, 전체 test 651 pass/1 skip/0 fail.
 
 ## P4 — 도착 API 데이터 후속 (station_api_name_overrides.dart)
 - [ ] **세종대왕릉/신둔도예촌 중복역**: stations.json에 `신둔도예촌`(C29)·`세종대왕릉`(C32)이 위경도 다른 별개 역으로 공존. API는 `세종대왕릉` INFO-200, `신둔도예촌`만 응답. 정합성 확인 후 치환맵 추가 판단. (별도 태스크 `task_ed103f8a`로도 등록됨)
 - [ ] **응암(6호선)·자양(7호선)** known-open: 반복 조회 INFO-200이나 정식 API명 미확정 → 치환맵 제외 중. 열차 있을 때 `realtimePosition`의 `statnNm`으로 재확인.
 - 조사법·현황은 파일 상단 주석 + 메모리 `arrival-api-station-name-overrides` 참조.
 
-## P5 — 문서/빌드 명령 현행화
-- [ ] CLAUDE.md "빌드 및 개발 명령어"의 `dart run build_runner build --delete-conflicting-outputs` — build_runner 2.15+에서 `--delete-conflicting-outputs` **제거됨(기본값화)**. `dart run build_runner build` 로 갱신 권장. ⚠️ 구 삭제형 옵션은 데드락 시 생성물을 통째로 지워 복구불가(gitignore)라 위험.
-- [ ] pubspec `version: 1.0.3+5` 는 세션 시작 전부터 있던 변경(이번 작업 아님). 릴리스 의도 확인.
+## P5 — 문서/빌드 명령 현행화 (2026-07-26 대부분 완료)
+- [x] CLAUDE.md "빌드 및 개발 명령어" + "코드 생성" 섹션의 `--delete-conflicting-outputs` 제거
+      → `dart run build_runner build`(watch 동일)로 갱신. 구 삭제형 플래그 위험 경고 주석 추가.
+- [x] CLAUDE.md "환경 설정" 섹션 `SEOUL_API_KEY` → `SEOUL_SUBWAY_API_KEY`(정식명) 정정
+      + 데이터소스가 읽는 키임을 명시. (P2 잔여 문서 항목 흡수)
+- [ ] pubspec `version: 1.0.3+5` 는 세션 시작 전부터 있던 변경(이번 작업 아님). **릴리스 의도 확인 필요**(사용자 판단 사안).

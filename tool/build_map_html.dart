@@ -319,6 +319,11 @@ $textElements
   var TAP_RADIUS = 12;
   var TEXT_BASE_FONT_SIZE = 12;
   var TEXT_BASE_STROKE_W = 2;
+  // 줌아웃 시 라벨을 화면상 완전 고정(12px)하면 최대 줌아웃에서 역명이 심하게
+  // 겹친다. 보정 하한(COMP_FLOOR)을 두어 scale 이 이 값 아래로 내려가면 라벨을
+  // 서서히 축소한다. 최대 줌아웃(scale=MIN_SCALE=0.5)에서의 화면 폰트 =
+  // TEXT_BASE_FONT_SIZE * MIN_SCALE / COMP_FLOOR = 12 * 0.5 / (2/3) = 9px.
+  var TEXT_COMP_FLOOR = 2 / 3;
   var INITIAL_SCALE = 1.0;
   var INITIAL_CENTER_X = 1040, INITIAL_CENTER_Y = 618;
   var TRAIN_IMG = 'data:image/webp;base64,$trainImageBase64';
@@ -386,7 +391,8 @@ $textElements
     trainLayer.setAttribute('viewBox', x0 + ' ' + y0 + ' ' + vbW + ' ' + vbH);
 
     // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로)
-    var cs = Math.min(scale, 1);
+    // 단, COMP_FLOOR 아래로는 완전 보상하지 않아 최대 줌아웃에서 라벨이 축소되도록.
+    var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
     textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
     textLayer.style.setProperty('--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
 
