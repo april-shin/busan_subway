@@ -23,6 +23,10 @@ class SvgWebView extends ConsumerStatefulWidget {
   final List<Connection> connections;
   final Set<String> routeStationIds;
   final Set<String> highlightedLineIds;
+
+  /// 역 이름 라벨을 밝게 유지할 역 이름 집합(경로 역 ∪ 출발역 상류 역).
+  /// 강조 노선에 속한 역이라도 이 집합에 없으면 흐리게 처리한다.
+  final Set<String> highlightLabelNames;
   final ({double x, double y})? panTarget;
   final ({double x, double y})? routeToolbarTarget;
   final bool hasTwoRoutes;
@@ -35,6 +39,7 @@ class SvgWebView extends ConsumerStatefulWidget {
     required this.connections,
     this.routeStationIds = const {},
     this.highlightedLineIds = const {},
+    this.highlightLabelNames = const {},
     this.panTarget,
     this.routeToolbarTarget,
     this.hasTwoRoutes = false,
@@ -330,7 +335,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
   void _highlightLines(Set<String> lineIds) {
     if (!_isReady) return;
     final json = jsonEncode(lineIds.toList());
-    _runJs("window.highlightLines(${_jsString(json)})");
+    final keepNamesJson = jsonEncode(widget.highlightLabelNames.toList());
+    _runJs(
+      "window.highlightLines(${_jsString(json)}, ${_jsString(keepNamesJson)})",
+    );
   }
 
   void _clearLineHighlight() {
@@ -414,8 +422,11 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
       }
     }
 
-    // 노선 강조 변경 감지
-    if (widget.highlightedLineIds != oldWidget.highlightedLineIds) {
+    // 노선 강조 변경 감지. 노선 집합이 같아도 유지할 역 이름 집합
+    // (highlightLabelNames)이 달라지는 모드 전환에서도 라벨 하이라이트를 다시
+    // 계산해야 하므로 함께 비교한다.
+    if (widget.highlightedLineIds != oldWidget.highlightedLineIds ||
+        widget.highlightLabelNames != oldWidget.highlightLabelNames) {
       if (widget.highlightedLineIds.isEmpty) {
         _clearLineHighlight();
       } else {

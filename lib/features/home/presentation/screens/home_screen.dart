@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/tokens/app_dimensions.dart';
-import '../../../../domain/usecases/search_route.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
-import '../../../route_search/presentation/providers/timetable_providers.dart';
+import '../../../route_search/presentation/utils/route_result_navigator.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../../../subway_map/presentation/screens/subway_map_screen.dart';
 import '../widgets/search_bar_widget.dart';
@@ -64,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                             ref.read(selectedStationsProvider.notifier).swap();
                           },
                           onSearchRoute: selectedStations.isComplete
-                              ? () => _searchRoute(context, ref)
+                              ? () => searchAndNavigateToResult(context, ref)
                               : null,
                           // 취소(X): 각 입력창 내부 우측에서 해당 역만 취소.
                           // 선택된 역이 있을 때만 콜백을 전달해 X 를 노출한다.
@@ -90,58 +89,5 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _searchRoute(BuildContext context, WidgetRef ref) async {
-    final selected = ref.read(selectedStationsProvider);
-    if (!selected.isComplete) return;
-
-    final repo = ref.read(stationRepositoryProvider);
-    final timetableSource = ref.read(timetableDataSourceProvider);
-    final useCase = SearchRoute(
-      stationRepository: repo,
-      timetableDataSource: timetableSource,
-    );
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final (
-        :fastest,
-        :leastTransfer,
-        :fastestExpress,
-        :fastestLocal,
-      ) = await useCase.executeAll(
-        selected.departure!.id,
-        selected.arrival!.id,
-      );
-
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-
-      if (fastest != null) {
-        context.go('/route-result', extra: (
-          fastest: fastest,
-          leastTransfer: leastTransfer,
-          fastestExpress: fastestExpress,
-          fastestLocal: fastestLocal,
-          departureStationName: selected.departure!.name,
-        ));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('경로를 찾을 수 없습니다')),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('경로 검색 실패: $e')),
-      );
-    }
   }
 }

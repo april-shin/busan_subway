@@ -754,8 +754,8 @@ $textElements
       routeSet[routeIds[i]] = true;
     }
 
-    // 오버레이 배경 활성화
-    overlayBg.setAttribute('opacity', '0.6');
+    // 오버레이 배경 활성화 (노선을 더 흐리게 덮어 경로 대비 강화)
+    overlayBg.setAttribute('opacity', '0.72');
 
     // 기존 경로 초기화
     routeLines.replaceChildren();
@@ -1117,9 +1117,16 @@ $textElements
   }
 
   // 특정 노선만 강조, 나머지 흐림 처리
-  window.highlightLines = function(lineIdsJson) {
+  // highlightLines(lineIdsJson, keepNamesJson)
+  //  - lineIdsJson: 경로가 지나는 전체 노선 ID. 노선 path/역 circle 강조 대상.
+  //  - keepNamesJson: 역 이름 라벨을 밝게 유지할 역 이름(경로 역 ∪ 출발역 상류
+  //      역). 강조 노선에 속한 역이라도 이 집합에 없으면 흐리게 처리한다.
+  //  keepNamesJson 이 비어 있으면(구 호출 형태) 기존 동작(강조 노선 전체 라벨
+  //  강조)과 동일하게 동작한다.
+  window.highlightLines = function(lineIdsJson, keepNamesJson) {
     if (!lineColors || Object.keys(lineColors).length === 0) return;
     var lineIds = JSON.parse(lineIdsJson);
+    var keepNamesArr = keepNamesJson ? JSON.parse(keepNamesJson) : [];
 
     // lineId → data-line 코드 집합 변환
     var codeSet = {};
@@ -1130,6 +1137,13 @@ $textElements
           codeSet[codes[j]] = true;
         }
       }
+    }
+
+    // 유지할 역 이름 집합(라벨 매칭용). 비어 있으면 라벨 이름필터 비활성.
+    var keepNameSet = {};
+    var hasKeepNameFilter = keepNamesArr.length > 0;
+    for (var i = 0; i < keepNamesArr.length; i++) {
+      keepNameSet[keepNamesArr[i].replace(/[\\n\\r]/g, '')] = true;
     }
 
     // path[data-line] 요소 처리
@@ -1149,24 +1163,29 @@ $textElements
       lineIdSet[lineIds[i]] = true;
     }
 
-    // text[data-line] 요소 처리
+    // text[data-line] 요소(역 이름 라벨) 처리
+    //  - 강조 노선에 속하고 keepNameSet 에 있는 역: 밝게 유지
+    //  - 강조 노선에 속하지만 keepNameSet 에 없는 역(경로 밖·하류): 흐리게
+    //  - 강조 노선에 속하지 않는 역: 기존대로 흐리게
     var texts = document.querySelectorAll('text[data-line]');
     for (var i = 0; i < texts.length; i++) {
       var dl = texts[i].getAttribute('data-line');
-      var matched = !!codeSet[dl];
+      var sName = (texts[i].getAttribute('data-station') || '').replace(/[\\n\\r]/g, '');
+      var sLines = stationLineMap[sName];
 
-      // data-line 불일치 시 역명의 소속 노선으로 재확인 (환승역 대응)
-      if (!matched) {
-        var sName = (texts[i].getAttribute('data-station') || '').replace(/[\\n\\r]/g, '');
-        var sLines = stationLineMap[sName];
-        if (sLines) {
-          for (var lid in sLines) {
-            if (lineIdSet[lid]) { matched = true; break; }
-          }
+      // 강조(경로 경유) 노선 소속 여부 (data-line 우선, 환승역은 역명 소속으로 재확인)
+      var onHighlightLine = !!codeSet[dl];
+      if (!onHighlightLine && sLines) {
+        for (var lid in sLines) {
+          if (lineIdSet[lid]) { onHighlightLine = true; break; }
         }
       }
 
-      if (matched) {
+      // 유지 이름 필터가 있으면 keepNameSet 에 있는 역만, 없으면(구 호출) 전체 유지
+      var keep = onHighlightLine &&
+          (hasKeepNameFilter ? !!keepNameSet[sName] : true);
+
+      if (keep) {
         texts[i].classList.remove('dimmed');
       } else {
         texts[i].classList.add('dimmed');

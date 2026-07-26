@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/route_result.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../../domain/usecases/search_route.dart';
+import '../../../route_search/presentation/providers/recent_search_provider.dart';
 import '../../../route_search/presentation/providers/timetable_providers.dart';
 import '../../../route_search/utils/departure_time_calculator.dart'
     show baseLineId;
@@ -36,6 +39,18 @@ class SubwayMapViewer extends ConsumerStatefulWidget {
 class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
   Set<String> _highlightedLineIds = const {};
   Set<String> _routeStationIds = const {};
+
+  /// 역 이름 라벨을 밝게 유지할 역 이름 집합. 강조 노선에 속한 역이라도
+  /// 이 집합에 없으면 흐리게 처리한다. (라벨은 `data-station` 이름으로 매칭)
+  ///
+  /// 구성:
+  ///  - 경로에 포함된 모든 역(급행 미정차역 포함)
+  ///  - 출발 노선에서 출발역 **상류**(출발역으로 열차가 들어오는 쪽) 역들
+  ///
+  /// 출발역 상류를 유지해야 출발역으로 다가오는 실시간 열차의 위치를 파악할 수
+  /// 있다. 반대로 출발 노선이라도 경로가 노선을 벗어난 뒤 이어지는 **하류**
+  /// 구간은 경로 밖이므로 이 집합에서 제외되어 흐려진다.
+  Set<String> _highlightLabelNames = const {};
   ({double x, double y})? _panTarget;
   ({double x, double y})? _toolbarTarget;
   RouteResult? _fastestRoute;
@@ -88,6 +103,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       connections: widget.connections,
       routeStationIds: _routeStationIds,
       highlightedLineIds: _highlightedLineIds,
+      highlightLabelNames: _highlightLabelNames,
       panTarget: _panTarget,
       routeToolbarTarget: _toolbarTarget,
       hasTwoRoutes: _leastTransferRoute != null &&
@@ -113,6 +129,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
         setState(() {
           _highlightedLineIds = const {};
           _routeStationIds = const {};
+          _highlightLabelNames = const {};
           _panTarget = null;
           _toolbarTarget = null;
           _liveTrains = const [];
@@ -162,6 +179,16 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
 
       if (!mounted || revision != _computeRevision) return;
 
+      // 최근 검색 이력 기록(fire-and-forget): 출발+도착이 모두 선택돼 경로가
+      // 실제로 계산된 시점에 1건을 저장한다. 무경로(fastest=null)는 남기지
+      // 않는다. 홈검색·지도탭·picker·이력탭 모든 진입경로가 이 지점으로 수렴.
+      if (fastest != null) {
+        ref.read(recentSearchProvider.notifier).record(
+              selected.departure!.id,
+              selected.arrival!.id,
+            );
+      }
+
       _expressSkippedIndex = skippedIndex;
       _fastestRoute = fastest;
       _leastTransferRoute = leastTransfer;
@@ -175,6 +202,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       setState(() {
         _highlightedLineIds = lineIds;
         _routeStationIds = _getRouteStationIdsForMode(_activeRouteMode);
+        _highlightLabelNames = _getHighlightLabelNamesForMode(_activeRouteMode);
         _panTarget = (
           x: selected.departure!.svgX,
           y: selected.departure!.svgY,
@@ -194,6 +222,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       setState(() {
         _highlightedLineIds = const {};
         _routeStationIds = const {};
+        _highlightLabelNames = const {};
         _panTarget = null;
         _toolbarTarget = null;
       });
@@ -257,6 +286,78 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     return ids;
   }
 
+  /// 역 이름 라벨을 밝게 유지할 역 이름 집합(`_highlightLabelNames` 참조).
+  ///
+  /// = 경로에 포함된 모든 역 이름 ∪ 출발 노선의 출발역 상류 역 이름.
+  Set<String> _getHighlightLabelNamesForMode(String mode) {
+    final routeIds = _getRouteStationIdsForMode(mode);
+    if (routeIds.isEmpty) return const {};
+
+    final idToName = {for (final s in widget.stations) s.id: s.name};
+
+    final names = <String>{};
+    for (final id in routeIds) {
+      final n = idToName[id];
+      if (n != null) names.add(n);
+    }
+    for (final id in _getDepartureUpstreamStationIds(mode)) {
+      final n = idToName[id];
+      if (n != null) names.add(n);
+    }
+    return names;
+  }
+
+  /// 출발 노선에서 출발역 **상류**(출발역으로 열차가 들어오는 쪽) 역 ID 집합.
+  ///
+  /// 경로 진행 방향의 반대 쪽으로 노선 연결을 따라가며 도달 가능한 모든 역을
+  /// 수집한다. 경로가 노선을 벗어난 뒤 이어지는 하류 구간은 포함하지 않는다.
+  /// 방향 판정은 [isDownBetween] 을 사용하므로 순환선(2호선)·급행 가상 노선도
+  /// base 규칙으로 정규화되어 처리된다.
+  Set<String> _getDepartureUpstreamStationIds(String mode) {
+    final route = _routeForMode(mode);
+    if (route == null || route.segments.isEmpty) return const {};
+    final firstSeg = route.segments.first;
+    final segStations = firstSeg.stations;
+    // 최소 2개 역이 있어야 진행 방향을 정할 수 있다.
+    if (segStations.length < 2) return const {};
+
+    final lineId = baseLineId(firstSeg.lineId);
+    final departureId = segStations.first.id;
+    final routeNextId = segStations[1].id;
+
+    // 경로 진행 방향(하행 여부). 상류는 이 방향의 반대.
+    final routeIsDown = isDownBetween(departureId, routeNextId, lineId);
+    final upstreamIsDown = !routeIsDown;
+
+    // 출발 노선(base)의 비환승 연결을 "상류 방향" 단방향 엣지로 인접 리스트 구성.
+    // (경로 방향 엣지는 제외되므로 출발역에서 하류로 새어나가지 않는다.)
+    final adjacency = <String, List<String>>{};
+    for (final c in widget.connections) {
+      if (c.isTransfer) continue;
+      if (baseLineId(c.lineId) != lineId) continue;
+      final edgeIsDown = isDownBetween(c.fromStationId, c.toStationId, lineId);
+      if (edgeIsDown == upstreamIsDown) {
+        adjacency.putIfAbsent(c.fromStationId, () => []).add(c.toStationId);
+      } else {
+        adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
+      }
+    }
+
+    // 출발역에서 상류 방향 엣지만 따라 BFS. 출발역 자신은 결과에서 제외.
+    final upstream = <String>{};
+    final visited = <String>{departureId};
+    final queue = Queue<String>()..add(departureId);
+    while (queue.isNotEmpty) {
+      final cur = queue.removeFirst();
+      for (final nb in adjacency[cur] ?? const <String>[]) {
+        if (!visited.add(nb)) continue;
+        upstream.add(nb);
+        queue.add(nb);
+      }
+    }
+    return upstream;
+  }
+
   void _handleRouteToolbarSelect(String mode) {
     if (mode == 'cancel') {
       ref.read(selectedStationsProvider.notifier).clear();
@@ -283,6 +384,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     setState(() {
       _highlightedLineIds = _getLineIdsForMode(mode);
       _routeStationIds = _getRouteStationIdsForMode(mode);
+      _highlightLabelNames = _getHighlightLabelNamesForMode(mode);
     });
   }
 }

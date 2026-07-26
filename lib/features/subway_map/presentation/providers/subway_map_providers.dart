@@ -55,6 +55,16 @@ class SelectedStationsNotifier extends StateNotifier<SelectedStations> {
     );
   }
 
+  /// 출발/도착을 한 번에 원자적으로 설정한다.
+  ///
+  /// 최근 검색 이력 탭처럼 두 역을 동시에 세팅해야 하는 경우, setDeparture →
+  /// setArrival 를 순차 호출하면 그 사이 중간 상태(이전 도착역과 새 출발역의
+  /// stale 쌍)로 `isComplete` 가 성립해 지도 뷰어가 엉뚱한 경로를 계산/기록할
+  /// 수 있다. 이를 막기 위해 단일 상태 전이로 갱신한다.
+  void setBoth(Station? departure, Station? arrival) {
+    state = SelectedStations(departure: departure, arrival: arrival);
+  }
+
   void clear() {
     state = const SelectedStations();
   }
