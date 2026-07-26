@@ -1,3 +1,8 @@
+// freezed factory 생성자 파라미터의 @JsonKey 는 freezed 3 + json_serializable
+// 조합에서 알려진 케이스로, analyzer 8.4 부터 invalid_annotation_target warning 을
+// 낸다(freezed 가 생성 코드에서 올바르게 소비하므로 무해). 전역 대신 이 파일에만
+// 한정해 억제한다 — 다른 곳의 진짜 annotation 오배치는 계속 검출되도록.
+// ignore_for_file: invalid_annotation_target
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/constants/station_api_name_overrides.dart';

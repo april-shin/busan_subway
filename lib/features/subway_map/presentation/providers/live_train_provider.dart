@@ -244,13 +244,16 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
 
-    // 현재 위치 역명이 없으면 건너뜀.
-    // API 가 부역명을 괄호로 붙이는 경우 정규화 (예: "오목교(목동운동장앞)" → "오목교",
-    // "신정(은행정)" → "신정"). 정규화 안 하면 stationsByName lookup 실패해
-    // train 이 해당 역 통과 시 화면에서 사라졌다 다시 나타나는 회귀 발생 (5호선
-    // 신정/오목교 케이스). enrichArrivalInfo 가 이미 currentStationName 정규화를
-    // 수행한다면 여기 strip 은 no-op.
-    final currentName = _stripStationAlias(arrival.currentStationName);
+    // 현재 위치 역명 → stations.json 매칭.
+    // 두 방향의 괄호 표기를 모두 처리하기 위해 "정확 매칭 우선, strip 은 폴백"으로 둔다.
+    //  - 정식명에 괄호가 있는 역(예: "관악산(서울대)", "총신대입구(이수)"): 그대로 매칭.
+    //    (DTO 인바운드 복원이 arvlMsg3 를 정식명으로 되돌려 놓음)
+    //  - API 가 부역명을 덧붙인 경우(예: "오목교(목동운동장앞)" → stations.json "오목교",
+    //    "신정(은행정)" → "신정"): 정확 매칭 실패 후 strip 으로 복원.
+    // strip 을 무조건 적용하면 전자의 괄호를 벗겨 lookup 이 실패하므로 순서가 중요하다.
+    final rawName = arrival.currentStationName;
+    final currentName =
+        stationsByName.containsKey(rawName) ? rawName : _stripStationAlias(rawName);
     if (currentName.isEmpty) continue;
 
     // 현재역의 SVG 좌표 조회 (같은 노선의 역 우선). 경로 확장 시작점으로 필요.
