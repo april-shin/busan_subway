@@ -1,9 +1,8 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/upstream_stations.dart';
 import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/route_result.dart';
 import '../../../../domain/entities/station.dart';
@@ -308,11 +307,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
   }
 
   /// 출발 노선에서 출발역 **상류**(출발역으로 열차가 들어오는 쪽) 역 ID 집합.
-  ///
-  /// 경로 진행 방향의 반대 쪽으로 노선 연결을 따라가며 도달 가능한 모든 역을
-  /// 수집한다. 경로가 노선을 벗어난 뒤 이어지는 하류 구간은 포함하지 않는다.
-  /// 방향 판정은 [isDownBetween] 을 사용하므로 순환선(2호선)·급행 가상 노선도
-  /// base 규칙으로 정규화되어 처리된다.
+  /// 상세 알고리즘·경계 처리는 [departureUpstreamStationIds] 참조.
   Set<String> _getDepartureUpstreamStationIds(String mode) {
     final route = _routeForMode(mode);
     if (route == null || route.segments.isEmpty) return const {};
@@ -321,41 +316,13 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     // 최소 2개 역이 있어야 진행 방향을 정할 수 있다.
     if (segStations.length < 2) return const {};
 
-    final lineId = baseLineId(firstSeg.lineId);
-    final departureId = segStations.first.id;
-    final routeNextId = segStations[1].id;
-
-    // 경로 진행 방향(하행 여부). 상류는 이 방향의 반대.
-    final routeIsDown = isDownBetween(departureId, routeNextId, lineId);
-    final upstreamIsDown = !routeIsDown;
-
-    // 출발 노선(base)의 비환승 연결을 "상류 방향" 단방향 엣지로 인접 리스트 구성.
-    // (경로 방향 엣지는 제외되므로 출발역에서 하류로 새어나가지 않는다.)
-    final adjacency = <String, List<String>>{};
-    for (final c in widget.connections) {
-      if (c.isTransfer) continue;
-      if (baseLineId(c.lineId) != lineId) continue;
-      final edgeIsDown = isDownBetween(c.fromStationId, c.toStationId, lineId);
-      if (edgeIsDown == upstreamIsDown) {
-        adjacency.putIfAbsent(c.fromStationId, () => []).add(c.toStationId);
-      } else {
-        adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
-      }
-    }
-
-    // 출발역에서 상류 방향 엣지만 따라 BFS. 출발역 자신은 결과에서 제외.
-    final upstream = <String>{};
-    final visited = <String>{departureId};
-    final queue = Queue<String>()..add(departureId);
-    while (queue.isNotEmpty) {
-      final cur = queue.removeFirst();
-      for (final nb in adjacency[cur] ?? const <String>[]) {
-        if (!visited.add(nb)) continue;
-        upstream.add(nb);
-        queue.add(nb);
-      }
-    }
-    return upstream;
+    return departureUpstreamStationIds(
+      connections: widget.connections,
+      lineId: baseLineId(firstSeg.lineId),
+      departureId: segStations.first.id,
+      routeNextId: segStations[1].id,
+      routeStationIds: _getRouteStationIdsForMode(mode),
+    );
   }
 
   void _handleRouteToolbarSelect(String mode) {
