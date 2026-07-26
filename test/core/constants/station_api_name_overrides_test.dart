@@ -28,7 +28,7 @@ void main() {
       expect(resolveArrivalApiStationName('관악산(서울대)'), '관악산');
       // 경강: API는 "대"를 뺀 축약명(2026-07-26 이웃역 arvlMsg3 교차 확인)
       expect(resolveArrivalApiStationName('세종대왕릉'), '세종왕릉');
-      // 7호선: 앱 "자양" ↔ API/실제 "뚝섬유원지" (완전한 역명 불일치)
+      // 7호선: 현행명 "자양"(앱 표기) ↔ API 개명 전 이름 "뚝섬유원지"
       expect(resolveArrivalApiStationName('자양'), '뚝섬유원지');
     });
 
