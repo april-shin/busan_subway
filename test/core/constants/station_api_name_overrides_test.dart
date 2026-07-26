@@ -28,6 +28,8 @@ void main() {
       expect(resolveArrivalApiStationName('관악산(서울대)'), '관악산');
       // 경강: API는 "대"를 뺀 축약명(2026-07-26 이웃역 arvlMsg3 교차 확인)
       expect(resolveArrivalApiStationName('세종대왕릉'), '세종왕릉');
+      // 7호선: 앱 "자양" ↔ API/실제 "뚝섬유원지" (완전한 역명 불일치)
+      expect(resolveArrivalApiStationName('자양'), '뚝섬유원지');
     });
 
     test('치환 대상이 아닌 역은 표시명을 그대로 반환한다', () {
@@ -48,6 +50,7 @@ void main() {
       expect(resolveDisplayStationName('관악산'), '관악산(서울대)');
       expect(resolveDisplayStationName('4.19 민주묘지'), '4·19민주묘지');
       expect(resolveDisplayStationName('세종왕릉'), '세종대왕릉');
+      expect(resolveDisplayStationName('뚝섬유원지'), '자양');
       // 부역명 덧붙임형도 역맵으로 복원 가능
       expect(resolveDisplayStationName('오목교(목동운동장앞)'), '오목교');
     });
