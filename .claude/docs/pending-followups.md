@@ -59,9 +59,20 @@ freezed3/riverpod3 마이그레이션은 `flutter analyze`(에러 0) + `flutter 
 live_train/subway_map 은 `legacy.dart`(StateProvider/StateNotifier) 유지.
 검증: analyze lib unnecessary_import 0, 전체 test 651 pass/1 skip/0 fail.
 
-## P4 — 도착 API 데이터 후속 (station_api_name_overrides.dart)
-- [ ] **세종대왕릉/신둔도예촌 중복역**: stations.json에 `신둔도예촌`(C29)·`세종대왕릉`(C32)이 위경도 다른 별개 역으로 공존. API는 `세종대왕릉` INFO-200, `신둔도예촌`만 응답. 정합성 확인 후 치환맵 추가 판단. (별도 태스크 `task_ed103f8a`로도 등록됨)
-- [ ] **응암(6호선)·자양(7호선)** known-open: 반복 조회 INFO-200이나 정식 API명 미확정 → 치환맵 제외 중. 열차 있을 때 `realtimePosition`의 `statnNm`으로 재확인.
+## P4 — 도착 API 데이터 후속 (2026-07-26 실 API 재조사)
+- [x] **세종대왕릉/신둔도예촌 "중복역"** — 오진 정정 + 해결. 실 API 재조사 결과:
+  - `신둔도예촌`(C29)은 표시명 그대로 정상 조회됨(경강선 1081). `세종대왕릉`(C32)과는
+    경강선상 **별개 역**(~4정거장 이격)으로 중복/데이터 이상 아님 → stations.json 정합성 OK.
+  - `세종대왕릉`의 API 정식명은 **`세종왕릉`**("대" 없는 축약형). 이웃역 `여주`의 접근열차
+    `arvlMsg3`="세종왕릉" 포착 + 직접 조회(열차 3대) 검증. → 치환맵에 `'세종대왕릉':'세종왕릉'`
+    추가, 아웃/인바운드 회귀 테스트 추가. (선행 태스크 `task_ed103f8a` 해결됨)
+- [~] **응암(6호선)** — 순환선 하선 종착역. 도착정보 조회는 항상 INFO-200(이웃 `역촌`
+  arvlMsg3 에 `응암(하선-종착)` 로 표기 — 조회용 정식명 아님). **종착 특성상 치환 불가**이며,
+  라이브맵 현재역 표시는 `_stripStationAlias`가 `응암(하선-종착)`→`응암` 복원해 이미 동작.
+  → 도착정보 화면 한정 known-open(구조적 한계, 추가 조치 불가).
+- [ ] **자양(7호선)** — `자양`·`자양(뚝섬한강공원)` 모두 INFO-200. realtimePosition 5회 폴링 +
+  이웃역(건대입구·뚝섬유원지) arvlMsg3 교차 확인에서도 미포착 → 정식명 미확정, 치환 보류.
+  재조사: 열차가 자양에 있을 때 `realtimePosition` `statnNm` 포착 필요.
 - 조사법·현황은 파일 상단 주석 + 메모리 `arrival-api-station-name-overrides` 참조.
 
 ## P5 — 문서/빌드 명령 현행화 (2026-07-26 대부분 완료)

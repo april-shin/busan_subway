@@ -21,11 +21,13 @@ void main() {
       expect(resolveArrivalApiStationName('평택지제'), '지제');
     });
 
-    test('1~8호선 외 노선도 치환한다 (우이신설·신림)', () {
+    test('1~8호선 외 노선도 치환한다 (우이신설·신림·경강)', () {
       // 우이신설: 가운뎃점(·)+공백없음 → 마침표+공백
       expect(resolveArrivalApiStationName('4·19민주묘지'), '4.19 민주묘지');
       // 신림: 앱은 부역명 병기, API는 본역명만
       expect(resolveArrivalApiStationName('관악산(서울대)'), '관악산');
+      // 경강: API는 "대"를 뺀 축약명(2026-07-26 이웃역 arvlMsg3 교차 확인)
+      expect(resolveArrivalApiStationName('세종대왕릉'), '세종왕릉');
     });
 
     test('치환 대상이 아닌 역은 표시명을 그대로 반환한다', () {
@@ -45,6 +47,7 @@ void main() {
       expect(resolveDisplayStationName('지제'), '평택지제');
       expect(resolveDisplayStationName('관악산'), '관악산(서울대)');
       expect(resolveDisplayStationName('4.19 민주묘지'), '4·19민주묘지');
+      expect(resolveDisplayStationName('세종왕릉'), '세종대왕릉');
       // 부역명 덧붙임형도 역맵으로 복원 가능
       expect(resolveDisplayStationName('오목교(목동운동장앞)'), '오목교');
     });
