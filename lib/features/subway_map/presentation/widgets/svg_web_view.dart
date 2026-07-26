@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../../../../core/constants/line_colors.dart';
 import '../../../../domain/entities/connection.dart';
@@ -492,6 +493,34 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
       }
     });
 
-    return WebViewWidget(controller: _controller);
+    return WebViewWidget.fromPlatformCreationParams(
+      params: _webViewWidgetParams(),
+    );
+  }
+
+  /// 플랫폼별 WebViewWidget 생성 파라미터.
+  ///
+  /// Android 는 Hybrid Composition 으로 렌더링한다. 기본 모드(TLHC)는
+  /// WebView 를 SurfaceTexture 텍스처로 복사해 합성하는데, 지도 팬 중에는
+  /// 매 프레임 콘텐츠가 무효화(transform/viewBox 갱신)되어 텍스처 프레임
+  /// 전달이 끊기면 화면이 점멸하듯 맵이 지워지는 현상이 발생한다
+  /// (SurfaceTexture 렌더링 한계 — flutter/flutter#104889, #116954).
+  /// Hybrid Composition 은 실제 Android View 를 직접 합성하므로 텍스처
+  /// 복사 단계가 없어 점멸이 없다. iOS(WKWebView)는 기존 기본 동작 유지.
+  ///
+  /// 트레이드오프: Android 10(API 29) 미만에서는 Hybrid Composition 이
+  /// 래스터 스레드를 플랫폼 스레드에 병합해 팬 프레임레이트 비용이 있으나,
+  /// 점멸(맵 소실)이 더 심각한 결함이므로 전 버전 무조건 적용한다.
+  PlatformWebViewWidgetCreationParams _webViewWidgetParams() {
+    PlatformWebViewWidgetCreationParams params =
+        PlatformWebViewWidgetCreationParams(controller: _controller.platform);
+    if (WebViewPlatform.instance is AndroidWebViewPlatform) {
+      params = AndroidWebViewWidgetCreationParams
+          .fromPlatformWebViewWidgetCreationParams(
+        params,
+        displayWithHybridComposition: true,
+      );
+    }
+    return params;
   }
 }

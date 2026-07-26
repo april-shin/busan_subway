@@ -34,6 +34,8 @@ dependencies:
 
   # WebView
   webview_flutter: ^4.10.0
+  # Android 렌더링 모드(Hybrid Composition) 설정용 — 팬 중 화면 점멸 방지
+  webview_flutter_android: ^4.12.0
 
   # XML
   xml: ^6.5.0
