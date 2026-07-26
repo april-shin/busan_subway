@@ -922,6 +922,24 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var toolbarSvgX = 0, toolbarSvgY = 0;
   var toolbarVisible = false;
   var cachedTbW = 0, cachedTbH = 0;
+  // 앵커(출발역) 기준 툴바 배치 오프셋(px, 화면 좌표계). 툴바 좌상단 =
+  // (앵커 화면좌표) + (toolbarDx, toolbarDy). showRouteToolbar 가 경로와 겹침이
+  // 가장 적은 방향을 골라 설정하고, pan/zoom·드래그가 이 오프셋을 공유한다.
+  var toolbarDx = 0, toolbarDy = 0;
+  // 사용자가 툴바를 직접 드래그해 옮겼는지. true 면 스마트 재배치를 하지 않아
+  // 사용자가 고른 위치를 존중한다.
+  var toolbarUserMoved = false;
+  // 현재 경로에 포함된 역 ID 집합(highlightRoute 가 채움). 툴바 스마트 배치에서
+  // "밝은 라벨 - 경로역 = 출발역 상류 역" 을 구하는 데 쓴다.
+  var currentRouteSet = {};
+  // 상류 역 주변에 예약하는 여유 반경(px, 화면 좌표). 상류 구간에는 접근 중인
+  // 열차 아이콘과 도착 말풍선("○○행 N분 후 도착", 폭 ~145px)이 그려지므로,
+  // 역 좌표만 피하면 말풍선이 잘린다. 열차를 실제로 조회하지 않고도 그 공간을
+  // 확보하기 위해 정적으로 반경을 둔다.
+  var UPSTREAM_RESERVE_PX = 70;
+  // 앵커에서 툴바까지 띄우는 간격(px, 화면 좌표). 역 마커·라벨·선로에서 툴바를
+  // 떼어놓는 최소 여백. 8방향 후보 모두에 동일하게 적용된다(좌/우 대칭).
+  var TOOLBAR_GAP = 28;
   var overlayBg = document.getElementById('route-overlay-bg');
   var routeLines = document.getElementById('route-lines');
   var routeMarkers = document.getElementById('route-markers');
@@ -1314,6 +1332,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   window.highlightRoute = function(routeStationIdsJson) {
     var routeIds = JSON.parse(routeStationIdsJson);
     var routeSet = {};
+    // 툴바 스마트 배치가 "밝은 라벨 중 경로가 아닌 역 = 출발역 상류 역"을
+    // 판별하는 데 사용한다.
+    currentRouteSet = routeSet;
     for (var i = 0; i < routeIds.length; i++) {
       routeSet[routeIds[i]] = true;
     }
@@ -1406,6 +1427,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
   // 경로 하이라이트 제거
   window.clearRoute = function() {
+    currentRouteSet = {};
     overlayBg.setAttribute('opacity', '0');
     routeLines.replaceChildren();
     routeMarkers.replaceChildren();
@@ -2797,6 +2819,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         delete trainSlotMemory[sk];
       }
     }
+
   };
 
   window.clearTrains = function() {
@@ -2835,8 +2858,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     var screenX = toolbarSvgX * scale + tx;
     var screenY = toolbarSvgY * scale + ty;
 
-    var left = screenX;
-    var top = screenY - cachedTbH - 18;
+    // 배치 오프셋(toolbarDx/Dy)은 showRouteToolbar 의 스마트 배치 또는 사용자
+    // 드래그가 정한 값. 앵커 화면좌표에 더해 툴바 좌상단을 구한다.
+    var left = screenX + toolbarDx;
+    var top = screenY + toolbarDy;
 
     // 앵커역이 화면 밖(특히 위쪽)으로 벗어나도 툴바가 잘리지 않도록 뷰포트
     // 안으로 클램프한다. 드래그 클램프와 동일한 8px 가장자리 마진 규칙.
@@ -2847,6 +2872,121 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
     routeToolbar.style.left = left + 'px';
     routeToolbar.style.top = top + 'px';
+  }
+
+  // 툴바가 가리면 안 되는 요소들의 화면 좌표 사각형 목록. 겹침 점수 계산용.
+  //  - 경로 오버레이: route-lines 의 polyline/line, route-markers 의 circle
+  //  - 밝게 유지된 역 이름 라벨: text-layer 의 dimmed 아닌 라벨.
+  //
+  // 라벨 하이라이트 정책상 밝게 남는 라벨은 "경로 역 + 출발역 상류 역" 뿐이다.
+  // 따라서 이 라벨들만 회피하면 출발역 상류 구간(= 열차가 들어오는 방향)이
+  // 가려지지 않는다. 실시간 열차 위치를 조회할 필요 없이 정적 기하만으로
+  // 해결되므로 열차 데이터에 의존하지 않는다.
+  // text-layer 는 map-container 와 동일한 viewBox 동기화를 쓰므로
+  // SVG 사용자 좌표 → 화면 좌표 환산 공식(scale/tx/ty)이 같다.
+  function collectAvoidScreenRects() {
+    var rects = [];
+    function pushBBox(el) {
+      // getBBox() 는 SVG 사용자 좌표 → scale/tx/ty 로 화면 좌표 환산.
+      var b;
+      try { b = el.getBBox(); } catch (_) { return; }
+      if (!b || (b.width === 0 && b.height === 0)) return;
+      rects.push({
+        left: b.x * scale + tx,
+        top: b.y * scale + ty,
+        right: (b.x + b.width) * scale + tx,
+        bottom: (b.y + b.height) * scale + ty
+      });
+    }
+    var lines = routeLines.children;
+    for (var i = 0; i < lines.length; i++) pushBBox(lines[i]);
+    var marks = routeMarkers.children;
+    for (var j = 0; j < marks.length; j++) pushBBox(marks[j]);
+    var brightNames = {};
+    var brightTexts = textLayer.querySelectorAll('text[data-line]:not(.dimmed)');
+    for (var t = 0; t < brightTexts.length; t++) {
+      pushBBox(brightTexts[t]);
+      var bn = (brightTexts[t].getAttribute('data-station') || '')
+        .replace(/[\n\r]/g, '');
+      if (bn) brightNames[bn] = true;
+    }
+
+    // 출발역 상류 역 주변 여유 영역. "밝은 라벨 - 경로역"이 상류 역이며,
+    // 이 구간에 접근 열차 아이콘·도착 말풍선이 그려지므로 반경을 예약한다.
+    for (var s = 0; s < stations.length; s++) {
+      var st = stations[s];
+      if (!brightNames[st.name] || currentRouteSet[st.id]) continue;
+      var cx = parseFloat(st.svgX) * scale + tx;
+      var cy = parseFloat(st.svgY) * scale + ty;
+      rects.push({
+        left: cx - UPSTREAM_RESERVE_PX,
+        top: cy - UPSTREAM_RESERVE_PX,
+        right: cx + UPSTREAM_RESERVE_PX,
+        bottom: cy + UPSTREAM_RESERVE_PX
+      });
+    }
+    return rects;
+  }
+
+  // 두 사각형의 교차 면적(px^2). 겹치지 않으면 0.
+  function rectOverlapArea(a, b) {
+    var w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    var h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    if (w <= 0 || h <= 0) return 0;
+    return w * h;
+  }
+
+  // 앵커 주변 8방향 후보 중 "가리면 안 되는 요소"(경로·상류 라벨·상류 여유
+  // 영역)와 겹침이 가장 적은 배치 오프셋을 고른다.
+  //
+  // 후보는 대각 4방향(좌상/우상/좌하/우하) + 정방향 4방향(상/하/좌/우).
+  // 각 후보에 대해 (1) 회피 요소들과의 교차 면적 합, (2) 뷰포트 밖으로 잘리는
+  // 면적을 더해 점수화하고 최소 점수를 선택한다. 동점이면 후보 순서를 유지하며,
+  // 대각을 먼저 두어 기존 기본값(좌상)과 일관성을 지킨다. 정방향은 선로가
+  // 앵커를 수직/수평으로 관통할 때(대각이 모두 선로에 걸릴 때) 유리하다.
+  //
+  // 반환: {dx, dy} — 앵커 화면좌표 기준 툴바 좌상단 오프셋.
+  function pickToolbarOffset(screenX, screenY, tbW, tbH) {
+    var G = TOOLBAR_GAP;
+    var candidates = [
+      // 대각 4방향 (기존 동작 유지: 좌상이 최우선 동점 승자)
+      {dx: -tbW - G, dy: -tbH - G}, // 좌상
+      {dx: G, dy: -tbH - G}, // 우상
+      {dx: -tbW - G, dy: G}, // 좌하
+      {dx: G, dy: G}, // 우하
+      // 정방향 4방향 (앵커 기준 가운데 정렬)
+      {dx: -tbW / 2, dy: -tbH - G}, // 상
+      {dx: -tbW / 2, dy: G}, // 하
+      {dx: -tbW - G, dy: -tbH / 2}, // 좌
+      {dx: G, dy: -tbH / 2} // 우
+    ];
+    var routeRects = collectAvoidScreenRects();
+    var vw = window.innerWidth, vh = window.innerHeight;
+
+    var best = null, bestScore = Infinity;
+    for (var i = 0; i < candidates.length; i++) {
+      var c = candidates[i];
+      var box = {
+        left: screenX + c.dx,
+        top: screenY + c.dy,
+        right: screenX + c.dx + tbW,
+        bottom: screenY + c.dy + tbH
+      };
+
+      var score = 0;
+      for (var r = 0; r < routeRects.length; r++) {
+        score += rectOverlapArea(box, routeRects[r]);
+      }
+
+      // 뷰포트 밖 잘림 면적을 가산 — 화면을 벗어나는 배치는 회피한다.
+      // (클램프되면 앵커에서 멀어져 어차피 경로를 가릴 수 있음)
+      var visW = Math.max(0, Math.min(box.right, vw - 8) - Math.max(box.left, 8));
+      var visH = Math.max(0, Math.min(box.bottom, vh - 8) - Math.max(box.top, 8));
+      score += (tbW * tbH) - (visW * visH);
+
+      if (score < bestScore) { bestScore = score; best = c; }
+    }
+    return best || candidates[0];
   }
 
   window.showRouteToolbar = function(svgX, svgY, hasTwoRoutes) {
@@ -2894,11 +3034,32 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
 
     toolbarVisible = true;
+    toolbarUserMoved = false; // 새로 띄우면 스마트 배치 재적용 허용
     routeToolbar.style.display = 'flex';
     cachedTbW = routeToolbar.offsetWidth;
     cachedTbH = routeToolbar.offsetHeight;
-    updateRouteToolbarPosition();
+
+    repickToolbarOffset();
+
+    // 툴바는 출발역 카메라 팬(panTo, 400ms)이 시작되기 전/도중에 표시된다.
+    // 겹침 판정은 앵커와 회피 요소가 같은 tx/ty 로 이동하므로 팬 중에도
+    // 유효하지만, "뷰포트 밖 잘림" 항은 절대 화면 위치에 의존해 팬이 끝나기
+    // 전에는 왜곡된다. 팬이 정착한 뒤 한 번 더 골라 배치를 확정한다.
+    setTimeout(repickToolbarOffset, 500);
   };
+
+  // 스마트 배치를 (재)적용한다. 사용자가 직접 드래그해 옮긴 뒤에는 그 선택을
+  // 존중해 아무것도 하지 않는다.
+  function repickToolbarOffset() {
+    if (!toolbarVisible || toolbarUserMoved) return;
+    var anchorScreenX = toolbarSvgX * scale + tx;
+    var anchorScreenY = toolbarSvgY * scale + ty;
+    var off = pickToolbarOffset(
+      anchorScreenX, anchorScreenY, cachedTbW, cachedTbH);
+    toolbarDx = off.dx;
+    toolbarDy = off.dy;
+    updateRouteToolbarPosition();
+  }
 
   window.hideRouteToolbar = function() {
     routeToolbar.style.display = 'none';
@@ -2969,14 +3130,18 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           routeToolbar.releasePointerCapture) {
         try { routeToolbar.releasePointerCapture(dragState.pointerId); } catch (_) {}
       }
-      // 드래그로 옮긴 툴바의 화면 위치를 SVG 좌표로 역변환하여 앵커로 저장.
-      // 이후 맵 pan/zoom 시 updateRouteToolbarPosition이 이 앵커 기준으로
-      // 툴바를 재배치하므로 툴바가 맵에 부착된 듯 함께 이동한다.
-      // updateRouteToolbarPosition의 기준: left = screenX, top = screenY - cachedTbH - 18
-      // 따라서 screenX = rect.left, screenY = rect.top + cachedTbH + 18
+      // 드래그로 옮긴 툴바 위치를 "앵커 기준 오프셋"으로 저장한다. 앵커
+      // (toolbarSvgX/Y = 출발역)는 그대로 두고 오프셋만 갱신하므로, 이후 맵
+      // pan/zoom 시 updateRouteToolbarPosition 이 툴바를 맵에 부착된 듯 함께
+      // 옮기면서 사용자가 고른 상대 위치도 유지된다.
+      // updateRouteToolbarPosition 의 기준: left = anchorScreenX + toolbarDx,
+      // top = anchorScreenY + toolbarDy.
       var rect = routeToolbar.getBoundingClientRect();
-      toolbarSvgX = (rect.left - tx) / scale;
-      toolbarSvgY = (rect.top + cachedTbH + 18 - ty) / scale;
+      var anchorScreenX = toolbarSvgX * scale + tx;
+      var anchorScreenY = toolbarSvgY * scale + ty;
+      toolbarDx = rect.left - anchorScreenX;
+      toolbarDy = rect.top - anchorScreenY;
+      toolbarUserMoved = true; // 이후 스마트 재배치가 덮어쓰지 않도록 고정
       dragState = null;
       // 맵 pan state 완전 클리어: 다음 맵 터치가 깨끗하게 pan을 시작하도록 보장
       for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
