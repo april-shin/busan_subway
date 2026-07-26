@@ -3,12 +3,15 @@
 /// 실행 방법:
 ///   flutter test test/integration/realtime_arrival_all_stations_test.dart
 ///
+/// 실행 방법 (기본 `flutter test` 에서는 dart_test.yaml 의 real-api skip 으로 제외됨):
+///   flutter test --run-skipped --tags real-api
+///
 /// 주의사항:
-///   - .env 파일에 유효한 SEOUL_API_KEY가 필요
+///   - .env 파일에 유효한 SEOUL_SUBWAY_API_KEY가 필요 (없으면 graceful skip)
 ///   - 실제 API를 호출하므로 네트워크 연결 필요
 ///   - 574개 역 전체 테스트 시 약 5~10분 소요
 ///   - 서울 열린데이터 API 일일 호출 한도에 주의
-@Tags(['integration'])
+@Tags(['integration', 'real-api'])
 library;
 
 import 'dart:convert';
@@ -27,29 +30,30 @@ const _batchSize = 5;
 /// API 호출 타임아웃
 const _timeout = Duration(seconds: 15);
 
+/// .env 에서 유효한 SEOUL_SUBWAY_API_KEY 를 읽는다. 없거나 플레이스홀더면 null.
+/// (테스트 등록 시점에 평가하여 skip 여부를 결정하기 위해 main() 밖에서 수행)
+String? _readApiKey() {
+  final envFile = File('.env');
+  if (!envFile.existsSync()) return null;
+  final match =
+      RegExp(r'SEOUL_SUBWAY_API_KEY=(.+)').firstMatch(envFile.readAsStringSync());
+  final value = match?.group(1)?.trim();
+  if (value == null || value.isEmpty || value == 'your_api_key_here') return null;
+  return value;
+}
+
 void main() {
+  // 키가 없으면 hard fail 대신 graceful skip. (기본 실행은 dart_test.yaml 의
+  // integration 태그 skip 으로 이미 제외되며, --run-skipped 로 명시 실행 시에만 도달)
+  final apiKey = _readApiKey();
+  final skipReason = apiKey == null
+      ? '.env 에 유효한 SEOUL_SUBWAY_API_KEY 가 없어 통합 테스트를 건너뜁니다.'
+      : null;
+
   Dio? dio;
-  late String apiKey;
   late List<String> uniqueStationNames;
 
   setUpAll(() {
-    // .env 파일에서 API 키 읽기
-    final envFile = File('.env');
-    if (!envFile.existsSync()) {
-      fail('.env 파일이 없습니다. 프로젝트 루트에 .env 파일을 생성하세요.');
-    }
-
-    final envContent = envFile.readAsStringSync();
-    final match = RegExp(r'SEOUL_API_KEY=(.+)').firstMatch(envContent);
-    if (match == null || match.group(1)!.trim().isEmpty) {
-      fail('.env 파일에 SEOUL_API_KEY가 설정되지 않았습니다.');
-    }
-
-    apiKey = match.group(1)!.trim();
-    if (apiKey == 'your_api_key_here') {
-      fail('SEOUL_API_KEY가 플레이스홀더 값입니다. 실제 키로 교체하세요.');
-    }
-
     // stations.json에서 고유 역명 추출
     final stationsJson = File('assets/json/stations.json');
     if (!stationsJson.existsSync()) {
@@ -218,6 +222,7 @@ void main() {
             '${parseErrorStations.keys.join(", ")}',
       );
     },
+    skip: skipReason,
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

@@ -40,11 +40,11 @@ class SeoulApiDataSource {
     final apiKey = dotenv.env['SEOUL_SUBWAY_API_KEY'];
     if (apiKey == null || apiKey.isEmpty || apiKey == 'your_api_key_here') {
       developer.log(
-        'API 키 오류: SEOUL_API_KEY가 설정되지 않았습니다',
+        'API 키 오류: SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다',
         name: 'SeoulApiDataSource',
         level: 1000,
       );
-      throw Exception('SEOUL_API_KEY가 설정되지 않았습니다');
+      throw Exception('SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다');
     }
 
     // 일부 역은 부역명이 포함된 정식 등록명으로만 조회된다(예: "남한산성입구" →
