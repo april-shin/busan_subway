@@ -441,6 +441,19 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
       if (next.arrival != null) {
         _setMarker('arrival', next.arrival!.svgX, next.arrival!.svgY);
       }
+
+      // 출발역을 선택하면 지도를 그 역으로 부드럽게 포커싱한다.
+      // - `arrival == null`: 도착역까지 선택돼 경로가 완성되면 SubwayMapViewer
+      //   의 panTarget 파이프라인이 출발역으로 팬하므로, 도착역이 아직 없을
+      //   때만 팬해 중복 발동을 피한다.
+      // - `prev?.arrival == null`: 도착역을 해제하는 (출발,도착)→(출발,null)
+      //   전이에서 출발역이 그대로여도 원치 않는 재팬이 일어나지 않게 막는다.
+      //   반대로 같은 출발역을 다시 선택하는 경우엔 선택 행위마다 포커싱된다.
+      if (next.departure != null &&
+          next.arrival == null &&
+          prev?.arrival == null) {
+        _panTo(next.departure!.svgX, next.departure!.svgY);
+      }
     });
 
     // tappedStation 변경 시 툴팁 제어
