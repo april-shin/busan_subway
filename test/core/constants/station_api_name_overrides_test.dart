@@ -30,6 +30,8 @@ void main() {
       expect(resolveArrivalApiStationName('세종대왕릉'), '세종왕릉');
       // 7호선: 현행명 "자양"(앱 표기) ↔ API 개명 전 이름 "뚝섬유원지"
       expect(resolveArrivalApiStationName('자양'), '뚝섬유원지');
+      // 6호선 응암순환 종착역: API 등록명은 "응암순환(상선)"
+      expect(resolveArrivalApiStationName('응암'), '응암순환(상선)');
     });
 
     test('치환 대상이 아닌 역은 표시명을 그대로 반환한다', () {
@@ -51,6 +53,7 @@ void main() {
       expect(resolveDisplayStationName('4.19 민주묘지'), '4·19민주묘지');
       expect(resolveDisplayStationName('세종왕릉'), '세종대왕릉');
       expect(resolveDisplayStationName('뚝섬유원지'), '자양');
+      expect(resolveDisplayStationName('응암순환(상선)'), '응암');
       // 부역명 덧붙임형도 역맵으로 복원 가능
       expect(resolveDisplayStationName('오목교(목동운동장앞)'), '오목교');
     });
@@ -68,6 +71,30 @@ void main() {
           reason: '$display 왕복 치환이 원복되지 않음',
         );
       });
+    });
+  });
+
+  group('resolveDisplayInText (자유텍스트 인바운드)', () {
+    test('방면 라벨의 응암순환(상선)을 응암으로 정리한다', () {
+      expect(
+        resolveDisplayInText('응암순환(상선)행 - 응암순환(상선)방면'),
+        '응암행 - 응암방면',
+      );
+    });
+
+    test('도착 메시지의 부역명형 API명을 표시명으로 정리한다', () {
+      expect(resolveDisplayInText('4분 후 (증산(명지대앞))'), '4분 후 (증산)');
+      expect(resolveDisplayInText('응암순환(상선) 도착'), '응암 도착');
+    });
+
+    test('인바운드 전용 표기 응암(하선-종착)도 응암으로 정리한다', () {
+      expect(resolveDisplayInText('1분 후 (응암(하선-종착))'), '1분 후 (응암)');
+    });
+
+    test('치환 대상이 없는 텍스트/빈 문자열은 그대로 둔다', () {
+      expect(resolveDisplayInText('성수행 - 을지로입구방면'), '성수행 - 을지로입구방면');
+      expect(resolveDisplayInText('전역 도착'), '전역 도착');
+      expect(resolveDisplayInText(''), '');
     });
   });
 

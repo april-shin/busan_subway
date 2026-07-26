@@ -198,6 +198,39 @@ void main() {
       });
     });
 
+    // 6호선 응암순환 종착역: API 는 "응암순환(상선)"으로 응답하며 이 문자열이
+    // 역명·방면·메시지 전반에 섞여 온다. toEntity 가 표시 필드를 "응암"으로 정리하되,
+    // 시간 파싱(arrivalSeconds)은 raw arvlMsg2 를 써야 하므로 영향받지 않아야 한다.
+    group('응암순환(상선) 표시 정규화 (인바운드)', () {
+      test('역명·방면·종착·메시지의 응암순환(상선)을 응암으로 정리한다', () {
+        const dto = ArrivalInfoDto(
+          subwayId: '1006',
+          statnNm: '응암순환(상선)',
+          trainLineNm: '응암순환(상선)행 - 응암순환(상선)방면',
+          bstatnNm: '응암순환(상선)',
+          arvlMsg2: '응암순환(상선) 도착',
+          arvlMsg3: '응암순환(상선) 도착',
+        );
+        final e = dto.toEntity();
+        expect(e.stationName, '응암');
+        expect(e.trainLineNm, '응암행 - 응암방면');
+        expect(e.destination, '응암');
+        expect(e.arrivalMessage, '응암 도착');
+        expect(e.currentStationName, '응암');
+      });
+
+      test('시간 파싱은 raw arvlMsg2 기준이라 정규화 영향 없음 ("4분 후" → 240)', () {
+        const dto = ArrivalInfoDto(
+          statnNm: '응암순환(상선)',
+          arvlMsg2: '4분 후 (증산(명지대앞))',
+        );
+        final e = dto.toEntity();
+        expect(e.arrivalSeconds, 240);
+        // 표시 메시지는 부역명까지 정리됨
+        expect(e.arrivalMessage, '4분 후 (증산)');
+      });
+    });
+
     // arvlMsg3(현재역)는 API 등록명으로 오므로 표시용 역명으로 되돌려야
     // stations.json 매칭(라이브맵 좌표·도착추정)이 성립한다. (인바운드 역치환)
     group('currentStationName 표시명 정규화', () {

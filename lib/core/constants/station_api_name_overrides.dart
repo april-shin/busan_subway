@@ -52,10 +52,12 @@
 ///   응답한다(평택지제→지제 와 동형). 이웃역 `뚝섬유원지` 조회 시 건대입구 하행이
 ///   "뚝섬유원지방면"·직전역=건대입구로 나와 동일 역임을 확정. stations.json 에 별도
 ///   `뚝섬유원지`가 없어 1:1 매핑 안전. 위 맵에 추가.
-/// - **미해결(known-open):** 6호선 `응암`은 순환선 하선 종착역이라 도착정보 조회 시 항상
-///   INFO-200(이웃 `역촌` arvlMsg3 에 `응암(하선-종착)` 로 표기됨 — 조회용 정식명이 아님).
-///   종착 특성상 치환으로 해결 불가하며, 라이브맵의 현재역 표시는 `_stripStationAlias`가
-///   `응암(하선-종착)`→`응암`으로 복원해 이미 동작한다.
+/// - **해결:** 6호선 `응암`(응암순환 종착역) → 도착 API 등록명 `응암순환(상선)`. 순환·회차
+///   구조라 표준 "도착" 개념이 없어 `응암`·`응암순환`·`응암(하선-종착)`은 모두 INFO-200 이나,
+///   이웃 `새절` 조회의 `trainLineNm`/`bstatnNm`="응암순환(상선)" 단서로 확정 — `응암순환(상선)`
+///   직접 조회 시 정상 응답(열차 4대). 위 맵에 추가. `응암순환(상선)`은 방면·메시지 텍스트에도
+///   섞여 오므로 [resolveDisplayInText]로 표시 시 `응암`으로 정리. (realtimePosition 은 별도로
+///   `응암(하선-종착)`을 쓰며 라이브맵은 `_stripStationAlias`로 복원.)
 const Map<String, String> arrivalApiStationNameOverrides = {
   // 1호선
   '평택지제': '지제', // API는 개명 전 역명 "지제"로만 응답(부역명 아님·축약형)
@@ -75,6 +77,11 @@ const Map<String, String> arrivalApiStationNameOverrides = {
   '월드컵경기장': '월드컵경기장(성산)',
   '증산': '증산(명지대앞)',
   '화랑대': '화랑대(서울여대입구)',
+  // 6호선 응암순환 종착역: 순환·회차 구조상 도착 API 는 "응암"이 아닌
+  //   "응암순환(상선)" 이름으로만 응답한다(realtimePosition 은 "응암(하선-종착)").
+  //   "응암순환(상선)"은 방면·메시지 텍스트에도 섞여 오므로 resolveDisplayInText 로
+  //   표시 시 "응암"으로 정리. (2026-07-26 실 API 확정)
+  '응암': '응암순환(상선)',
   // 7호선
   '공릉': '공릉(서울산업대입구)',
   '상도': '상도(중앙대앞)',
@@ -121,3 +128,43 @@ String resolveArrivalApiStationName(String displayName) =>
 /// ("지제"→"평택지제")은 이 함수가 유일한 복원 수단이다.
 String resolveDisplayStationName(String apiStationName) =>
     _displayNameByApiStationName[apiStationName] ?? apiStationName;
+
+/// 아웃바운드 질의명은 아니지만 API 응답 **텍스트**에 부가 표기로 섞여 오는 문자열 →
+/// 표시명. (양방향 치환맵과 분리 — 이 값들은 조회용 정식명이 아니므로 왕복 불변식·
+/// 값 유일성 대상이 아니다.) 예: 응암순환 종착 열차의 위치 표기 "응암(하선-종착)".
+const Map<String, String> _inboundOnlyTextReplacements = {
+  '응암(하선-종착)': '응암',
+};
+
+/// 자유텍스트에서 치환할 API 표기(양방향 맵 값 + 인바운드 전용)를 긴 것부터 정렬 —
+/// 부분 문자열 겹침 방지.
+final List<String> _apiNamesByLengthDesc = <String>[
+  ..._displayNameByApiStationName.keys,
+  ..._inboundOnlyTextReplacements.keys,
+]..sort((a, b) => b.length.compareTo(a.length));
+
+/// 자유텍스트 치환용 통합 역맵(API 표기 → 표시명).
+final Map<String, String> _textReplacements = {
+  ..._displayNameByApiStationName,
+  ..._inboundOnlyTextReplacements,
+};
+
+/// 자유 텍스트(방면 라벨 `trainLineNm`·도착 메시지 `arvlMsg2` 등)에 **부분 문자열로**
+/// 섞여 오는 API 등록명을 표시용 역명으로 되돌린다(인바운드, 표시 전용).
+///
+/// 예: "응암순환(상선)행 - 응암순환(상선)방면" → "응암행 - 응암방면",
+///     "4분 후 (증산(명지대앞))" → "4분 후 (증산)".
+/// [resolveDisplayStationName]은 문자열 전체가 역명일 때만 동작하므로, 역명이
+/// 다른 텍스트에 끼어 오는 경우를 위해 별도 제공한다. 시간·역수 파싱
+/// (`parseTimeFromMessage`/`parseStationCount`)은 역명을 사용하지 않으므로 이
+/// 정규화는 파싱 결과에 영향을 주지 않는다(표시 문자열만 정리).
+String resolveDisplayInText(String text) {
+  if (text.isEmpty) return text;
+  var out = text;
+  for (final apiName in _apiNamesByLengthDesc) {
+    if (out.contains(apiName)) {
+      out = out.replaceAll(apiName, _textReplacements[apiName]!);
+    }
+  }
+  return out;
+}

@@ -108,11 +108,15 @@ abstract class ArrivalInfoDto with _$ArrivalInfoDto {
   ArrivalInfo toEntity() {
     return ArrivalInfo(
       subwayId: subwayId ?? '',
-      stationName: statnNm ?? '',
-      trainLineNm: trainLineNm ?? '',
+      // 표시 필드는 API 등록명을 표시용 역명으로 되돌린다(인바운드). 역명 단독
+      // 필드는 resolveDisplayStationName, 역명이 텍스트에 섞인 필드는
+      // resolveDisplayInText. (예: 응암순환(상선)→응암) 시간·역수 파싱은 아래에서
+      // raw arvlMsg2 를 그대로 쓰므로 이 정규화의 영향을 받지 않는다.
+      stationName: resolveDisplayStationName(statnNm ?? ''),
+      trainLineNm: resolveDisplayInText(trainLineNm ?? ''),
       direction: updnLine ?? '',
-      arrivalMessage: arvlMsg2 ?? '',
-      destination: bstatnNm ?? '',
+      arrivalMessage: resolveDisplayInText(arvlMsg2 ?? ''),
+      destination: resolveDisplayStationName(bstatnNm ?? ''),
       trainType: btrainSttus ?? '일반',
       arrivalSeconds: _parseArrivalSeconds(barvlDt, arvlCd, arvlMsg2 ?? '')
           ?? parseTimeFromMessage(arvlMsg2 ?? ''),
