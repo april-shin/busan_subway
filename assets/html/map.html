@@ -1804,7 +1804,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
   // SVG 좌표(svgX, svgY)를 화면 중앙에 배치하도록 부드럽게 이동
   window.panTo = function(svgX, svgY, durationMs) {
-    var dur = durationMs || 400;
+    // `durationMs || 400` 은 0 을 falsy 로 삼켜 "즉시 이동(0ms)" 요청을
+    // 400ms 애니메이션으로 바꿔버린다. `== null` 로 "인자 생략"(undefined/null)
+    // 과 "값이 0" 을 구분한다.
+    var dur = (durationMs == null) ? 400 : durationMs;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
 
@@ -1814,6 +1817,17 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // clamp 적용 (clampTranslation 과 동일 규칙: 콘텐츠가 뷰포트보다 작으면 중앙 정렬)
     targetTx = clampAxis(targetTx, vw, CANVAS_W * scale, 70);
     targetTy = clampAxis(targetTy, vh, CANVAS_H * scale, 70);
+
+    // durationMs <= 0 이면 애니메이션 없이 즉시 이동. 진행 중인 팬이 있으면
+    // panAnimId 를 올려 무효화해 늦게 도착하는 프레임이 스냅 위치를 덮어쓰지
+    // 못하게 한다. (dur 로 나누는 진행도 계산의 0 division 도 회피)
+    if (dur <= 0) {
+      ++panAnimId;
+      tx = targetTx;
+      ty = targetTy;
+      applyTransform();
+      return;
+    }
 
     var startTx = tx, startTy = ty;
     var startTime = performance.now();

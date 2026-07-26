@@ -338,6 +338,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _runJs("window.clearLineHighlight()");
   }
 
+  /// 지도를 [svgX], [svgY] 가 화면 중앙에 오도록 이동한다(줌 레벨 유지).
+  ///
+  /// [durationMs] 가 0 이하이면 애니메이션 없이 즉시 스냅한다(홈역 초기 팬).
+  /// 그 외엔 easeInOut 애니메이션. (window.panTo 계약 — build_map_html.dart)
   void _panTo(double svgX, double svgY, {int durationMs = 400}) {
     if (!_isReady) return;
     _runJs("window.panTo($svgX, $svgY, $durationMs)");
