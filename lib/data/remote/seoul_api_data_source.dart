@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../core/constants/station_api_name_overrides.dart';
 import '../../core/network/api_client.dart';
 import 'dto/arrival_info_dto.dart';
 
@@ -46,10 +47,15 @@ class SeoulApiDataSource {
       throw Exception('SEOUL_API_KEY가 설정되지 않았습니다');
     }
 
-    final url = ApiConstants.realtimeArrivalUrl(apiKey, stationName);
+    // 일부 역은 부역명이 포함된 정식 등록명으로만 조회된다(예: "남한산성입구" →
+    // "남한산성입구(성남법원,검찰청)"). 질의명만 API 등록명으로 치환하고, 캐시 키·
+    // 화면 표시 등 앱 내부는 계속 표시용 역명(stationName)을 사용한다.
+    final apiStationName = resolveArrivalApiStationName(stationName);
+    final url = ApiConstants.realtimeArrivalUrl(apiKey, apiStationName);
 
     developer.log(
-      '실시간 도착정보 요청: 역명=$stationName',
+      '실시간 도착정보 요청: 역명=$stationName'
+      '${apiStationName != stationName ? ' (API명=$apiStationName)' : ''}',
       name: 'SeoulApiDataSource',
     );
 

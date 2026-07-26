@@ -16,7 +16,7 @@ int parseTimeToMinutes(String time) {
 /// weekdayDown/weekendDown은 하행(외선) 전용 스케줄이며,
 /// null이면 상행 스케줄과 동일하다는 의미이다.
 @freezed
-class LineSchedule with _$LineSchedule {
+abstract class LineSchedule with _$LineSchedule {
   const LineSchedule._();
 
   const factory LineSchedule({
@@ -55,7 +55,7 @@ class LineSchedule with _$LineSchedule {
 /// (JSON의 `tE` 키). 급행 미정차역은 키 자체가 없거나 값이 제외된다.
 /// 급행 모드 조회 시에만 사용하며, 급행 데이터가 없는 노선/역이면 null이다.
 @freezed
-class DaySchedule with _$DaySchedule {
+abstract class DaySchedule with _$DaySchedule {
   const DaySchedule._();
 
   const factory DaySchedule({
@@ -91,7 +91,7 @@ class DaySchedule with _$DaySchedule {
 
 /// 시간대별 배차간격
 @freezed
-class TimePeriod with _$TimePeriod {
+abstract class TimePeriod with _$TimePeriod {
   const TimePeriod._();
 
   const factory TimePeriod({

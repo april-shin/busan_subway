@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/constants/station_api_name_overrides.dart';
 import '../../../core/utils/parse_arrival_message.dart';
 import '../../../domain/entities/arrival_info.dart';
 
@@ -9,17 +10,24 @@ part 'arrival_info_dto.g.dart';
 /// API 응답 값을 String?으로 안전하게 변환 (int 등 비문자열 대응)
 String? _toNullableString(dynamic value) => value?.toString();
 
-/// arvlMsg3에서 순수 역명만 추출 ("강남 출발" → "강남")
+/// arvlMsg3에서 순수 역명만 추출 ("강남 출발" → "강남").
+///
+/// 추출한 역명은 API 등록명이므로 [resolveDisplayStationName]으로 표시용 역명으로
+/// 되돌린다. 예: "지제 도착" → "평택지제", "관악산 출발" → "관악산(서울대)".
+/// 이 정규화가 없으면 축약·치환형 역(예: 지제)에서 stations.json 매칭이 실패해
+/// 라이브맵 좌표 조회·도착시간 추정이 깨진다.
 String _extractStationName(String? raw) {
   if (raw == null || raw.isEmpty) return '';
   final parts = raw.split(' ');
   if (parts.length >= 2) {
     const suffixes = {'출발', '도착', '진입', '전역'};
     if (suffixes.contains(parts.last)) {
-      return parts.sublist(0, parts.length - 1).join(' ');
+      return resolveDisplayStationName(
+        parts.sublist(0, parts.length - 1).join(' '),
+      );
     }
   }
-  return raw;
+  return resolveDisplayStationName(raw);
 }
 
 /// arvlMsg3에서 위치 상태만 추출 ("강남 출발" → "출발")
@@ -69,7 +77,7 @@ int? _parseArrivalSeconds(String? barvlDt, String? arvlCd, String arvlMsg2) {
 }
 
 @freezed
-class ArrivalInfoDto with _$ArrivalInfoDto {
+abstract class ArrivalInfoDto with _$ArrivalInfoDto {
   const ArrivalInfoDto._();
 
   const factory ArrivalInfoDto({

@@ -10,7 +10,7 @@ part 'express_skip_edge.g.dart';
 ///
 /// 그래프 빌드 단계에서 `{lineId}E` 가상 노선의 노드와 edge로 변환된다.
 @freezed
-class ExpressSkipEdge with _$ExpressSkipEdge {
+abstract class ExpressSkipEdge with _$ExpressSkipEdge {
   const factory ExpressSkipEdge({
     required String lineId,
     required String fromStationId,

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart'; // StateProvider/StateNotifier (riverpod 3 레거시)
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../data/local/local_data_source.dart';

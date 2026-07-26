@@ -4,7 +4,7 @@ part 'line.freezed.dart';
 part 'line.g.dart';
 
 @freezed
-class Line with _$Line {
+abstract class Line with _$Line {
   const factory Line({
     required String id,
     required String name,

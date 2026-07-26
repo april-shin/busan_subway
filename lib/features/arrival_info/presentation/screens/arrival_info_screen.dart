@@ -73,8 +73,8 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
 
     return arrivalAsync.when(
       data: (rawArrivals) {
-        final stations = stationsAsync.valueOrNull;
-        final connections = connectionsAsync.valueOrNull;
+        final stations = stationsAsync.value;
+        final connections = connectionsAsync.value;
         final arrivals = (stations != null && connections != null)
             ? enrichArrivalInfoList(
                 arrivals: rawArrivals,

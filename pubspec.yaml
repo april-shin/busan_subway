@@ -1,7 +1,7 @@
 name: seoul_subway
 description: "서울 지하철 노선도 - 경로 검색 및 실시간 도착 정보"
 publish_to: 'none'
-version: 1.0.2+4
+version: 1.0.3+5
 
 environment:
   sdk: ^3.11.0
@@ -13,11 +13,11 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # State Management
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
+  flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^3.0.0
 
   # Immutable Models
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
   # Routing
@@ -55,9 +55,9 @@ dev_dependencies:
 
   # Code Generation
   build_runner: ^2.4.14
-  freezed: ^2.5.8
+  freezed: ^3.0.0
   json_serializable: ^6.9.4
-  riverpod_generator: ^2.6.3
+  riverpod_generator: ^3.0.0
 
   # Testing
   mocktail: ^1.0.4

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart'; // ProviderListenable (riverpod 3)
 
 import '../../../../core/constants/line_colors.dart';
 import '../../../../domain/entities/arrival_info.dart';
@@ -268,7 +269,7 @@ class _RouteViewState extends ConsumerState<_RouteView> {
     final isLoading =
         arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
 
-    final schedules = schedulesAsync.valueOrNull ?? <String, LineSchedule>{};
+    final schedules = schedulesAsync.value ?? <String, LineSchedule>{};
     final firstLineId = routeResult.segments.isNotEmpty
         ? routeResult.segments.first.lineId
         : null;

@@ -6,7 +6,7 @@ import 'transfer_guide.dart';
 part 'route_result.freezed.dart';
 
 @freezed
-class RouteResult with _$RouteResult {
+abstract class RouteResult with _$RouteResult {
   const factory RouteResult({
     required List<RouteSegment> segments,
     required int totalTimeSeconds,
@@ -24,7 +24,7 @@ class RouteResult with _$RouteResult {
 }
 
 @freezed
-class RouteSegment with _$RouteSegment {
+abstract class RouteSegment with _$RouteSegment {
   const factory RouteSegment({
     required String lineId,
     required String lineName,

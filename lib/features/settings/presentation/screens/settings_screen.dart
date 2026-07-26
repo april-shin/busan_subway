@@ -20,7 +20,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final homeStationAsync = ref.watch(homeStationProvider);
-    final homeStation = homeStationAsync.valueOrNull;
+    final homeStation = homeStationAsync.value;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLow,

@@ -4,7 +4,7 @@ part 'arrival_info.freezed.dart';
 part 'arrival_info.g.dart';
 
 @freezed
-class ArrivalInfo with _$ArrivalInfo {
+abstract class ArrivalInfo with _$ArrivalInfo {
   const factory ArrivalInfo({
     required String subwayId,
     required String stationName,

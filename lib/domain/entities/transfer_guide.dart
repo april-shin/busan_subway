@@ -8,7 +8,7 @@ part 'transfer_guide.g.dart';
 /// 환승역에서 하차 시 내려야 할 문 방향, 추천 객차, 문 번호를 제공한다.
 /// 모든 필드는 nullable이어서 일부 정보만 아는 경우에도 graceful하게 동작한다.
 @freezed
-class TransferGuide with _$TransferGuide {
+abstract class TransferGuide with _$TransferGuide {
   const factory TransferGuide({
     /// 하차 시 내릴 문 방향 (좌/우).
     DoorSide? doorSide,

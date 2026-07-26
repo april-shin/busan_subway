@@ -198,6 +198,32 @@ void main() {
       });
     });
 
+    // arvlMsg3(현재역)는 API 등록명으로 오므로 표시용 역명으로 되돌려야
+    // stations.json 매칭(라이브맵 좌표·도착추정)이 성립한다. (인바운드 역치환)
+    group('currentStationName 표시명 정규화', () {
+      test('축약형 API명 → 표시명 ("지제 도착" → 평택지제)', () {
+        const dto = ArrivalInfoDto(arvlMsg3: '지제 도착');
+        final e = dto.toEntity();
+        expect(e.currentStationName, '평택지제');
+        expect(e.positionStatus, '도착');
+      });
+
+      test('공백 포함 API명 → 표시명 ("4.19 민주묘지 출발" → 4·19민주묘지)', () {
+        const dto = ArrivalInfoDto(arvlMsg3: '4.19 민주묘지 출발');
+        expect(dto.toEntity().currentStationName, '4·19민주묘지');
+      });
+
+      test('부역명 덧붙임형 → 표시명 ("오목교(목동운동장앞) 진입" → 오목교)', () {
+        const dto = ArrivalInfoDto(arvlMsg3: '오목교(목동운동장앞) 진입');
+        expect(dto.toEntity().currentStationName, '오목교');
+      });
+
+      test('치환 대상 아닌 역명은 그대로 ("역삼 출발" → 역삼)', () {
+        const dto = ArrivalInfoDto(arvlMsg3: '역삼 출발');
+        expect(dto.toEntity().currentStationName, '역삼');
+      });
+    });
+
     // 신분당선 등 일부 노선은 btrainNo 를 빈 문자열로 보낸다. `??` 만 쓰면
     // 빈 문자열이 그대로 trainNo 가 되어 단조 감소 clamp 의 매칭 키가 깨지므로,
     // 빈 문자열도 누락으로 간주해 ordkey 로 폴백해야 한다 (원칙 1 보강).

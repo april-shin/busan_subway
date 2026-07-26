@@ -72,13 +72,13 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
 
     // 실시간 열차 데이터: AsyncLoading 중 리빌드를 방지하여 맵 깜빡임 제거
     ref.listen(liveTrainsProvider, (prev, next) {
-      final trains = next.valueOrNull;
+      final trains = next.value;
       if (trains != null && !identical(trains, _liveTrains)) {
         setState(() => _liveTrains = trains);
       }
     });
     // 초기 데이터 동기화 (화면 복귀 시 이미 캐시된 데이터 반영)
-    final cachedTrains = ref.read(liveTrainsProvider).valueOrNull;
+    final cachedTrains = ref.read(liveTrainsProvider).value;
     if (cachedTrains != null) {
       _liveTrains = cachedTrains;
     }

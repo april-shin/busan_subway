@@ -11,6 +11,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart'; // StateProvider (riverpod 3 레거시)
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_constants.dart';
