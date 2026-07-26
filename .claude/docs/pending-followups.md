@@ -30,11 +30,12 @@ freezed3/riverpod3 마이그레이션은 `flutter analyze`(에러 0) + `flutter 
 - [ ] **미커밋 A/B/C 커밋** — 현재 main 브랜치라 정책상 브랜치 분리 후 커밋 필요. 사용자 지시 대기.
 - [x] main 머지 — fac3643 이미 main 에 존재(별도 머지 불필요).
 
-### P1 잔여 경미 이슈 (리뷰 발견, 선택)
-- [ ] `station_api_name_overrides.dart` 주석 과장: "동명이역 부재를 테스트가 강제한다"지만 실제
-      테스트는 키의 stations.json 존재·값충돌만 검증(단일출현 미검증). 주석 완화 또는 단일출현 테스트 추가.
-- [ ] `4.19 민주묘지`(우이신설) 등 공백 포함 질의명의 Dio path 인코딩 앱 경로 1회 실측(리스크 낮음).
-- [ ] 프로세스: 버그수정+대규모 마이그레이션이 단일 커밋(fac3643)에 묶여 bisect/롤백 추적성 저하(기록용).
+### P1 잔여 경미 이슈 (리뷰 발견)
+- [x] `station_api_name_overrides.dart` 주석 과장 정정: (b) 동명이역 부재는 자동 검증이 아니라
+      **수동 확인 사항**임을 명시하도록 "갱신 방법" 주석 + `resolveArrivalApiStationName` 독주석 완화.
+- [x] `4.19 민주묘지` 공백 포함 질의명 인코딩 실측 완료: `4.19%20...` 로 API 정상 응답
+      (statnNm="4.19 민주묘지", 열차 3대). 문제 없음.
+- [ ] 프로세스: 버그수정+대규모 마이그레이션이 단일 커밋(fac3643)에 묶여 bisect/롤백 추적성 저하(기록용, 조치 불필요).
 
 ## P2 — 유일하게 실패하는 테스트 (2026-07-26 완료)
 `test/integration/realtime_arrival_all_stations_test.dart` (setUpAll 실패) 해결.
@@ -71,8 +72,8 @@ live_train/subway_map 은 `legacy.dart`(StateProvider/StateNotifier) 유지.
   라이브맵 현재역 표시는 `_stripStationAlias`가 `응암(하선-종착)`→`응암` 복원해 이미 동작.
   → 도착정보 화면 한정 known-open(구조적 한계, 추가 조치 불가).
 - [ ] **자양(7호선)** — `자양`·`자양(뚝섬한강공원)` 모두 INFO-200. realtimePosition 5회 폴링 +
-  이웃역(건대입구·뚝섬유원지) arvlMsg3 교차 확인에서도 미포착 → 정식명 미확정, 치환 보류.
-  재조사: 열차가 자양에 있을 때 `realtimePosition` `statnNm` 포착 필요.
+  이웃역(건대입구·뚝섬유원지) arvlMsg3 교차 확인 총 2차(2026-07-26 재시도 포함)에서도 미포착
+  → 정식명 미확정, 치환 보류. 재조사: 열차가 자양에 있을 때 `realtimePosition` `statnNm` 포착 필요.
 - 조사법·현황은 파일 상단 주석 + 메모리 `arrival-api-station-name-overrides` 참조.
 
 ## P5 — 문서/빌드 명령 현행화 (2026-07-26 대부분 완료)

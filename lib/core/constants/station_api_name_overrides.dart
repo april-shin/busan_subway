@@ -30,8 +30,11 @@
 ///   3. 정식명을 모르면 `realtimePosition`(노선별 열차 위치) API의 `statnNm`에서 확인.
 ///   4. **추가 전 확인(필수):** (a) 표시명이 `stations.json`에 실존하는지, (b) 같은
 ///      이름의 **타 노선 별개 역**(동명이역)이 없는지, (c) API 등록명(값)이 다른 역의
-///      표시명과 충돌하지 않는지. 세 가지는 `station_api_name_overrides_test.dart`가
-///      자동 검증하므로, 추가 후 테스트가 깨지면 위 조건 위반을 의심한다.
+///      표시명과 충돌하지 않는지.
+///      → (a)·(c) 및 값 유일성·이중치환 방지는 `station_api_name_overrides_test.dart`가
+///      자동 검증한다(추가 후 테스트가 깨지면 위반 의심). **(b) 동명이역 부재는 자동
+///      검증하지 않으므로 수동 확인이 필수** — 이름 기반(노선 무관) 치환이라 동명이역이
+///      있으면 엉뚱한 역 도착정보를 보일 수 있다.
 ///
 /// ## 조사 이력 / 미해결
 /// 최초 조사: 2026-07-25. 도착정보 API가 실제 제공하는 전 노선을 전수 스윕해 확인.
@@ -100,8 +103,8 @@ final Map<String, String> _displayNameByApiStationName = {
 /// 실시간 도착정보 API **질의**에 사용할 역명을 반환한다(아웃바운드).
 ///
 /// [arrivalApiStationNameOverrides]에 등록된 표시명이면 API 등록명으로 치환하고,
-/// 아니면 표시명을 그대로 반환한다. 등록된 키는 타 노선 동명이역이 없음을 검증했으므로
-/// (테스트 강제) 노선 정보 없이 이름만으로 안전하게 치환할 수 있다.
+/// 아니면 표시명을 그대로 반환한다. 이름만으로(노선 정보 없이) 치환하므로, 등록 키는
+/// 타 노선 동명이역이 없어야 안전하다(수동 확인 사항 — 위 "갱신 방법" 4-(b) 참조).
 String resolveArrivalApiStationName(String displayName) =>
     arrivalApiStationNameOverrides[displayName] ?? displayName;
 
