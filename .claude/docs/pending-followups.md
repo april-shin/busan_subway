@@ -81,4 +81,5 @@ live_train/subway_map 은 `legacy.dart`(StateProvider/StateNotifier) 유지.
       → `dart run build_runner build`(watch 동일)로 갱신. 구 삭제형 플래그 위험 경고 주석 추가.
 - [x] CLAUDE.md "환경 설정" 섹션 `SEOUL_API_KEY` → `SEOUL_SUBWAY_API_KEY`(정식명) 정정
       + 데이터소스가 읽는 키임을 명시. (P2 잔여 문서 항목 흡수)
-- [ ] pubspec `version: 1.0.3+5` 는 세션 시작 전부터 있던 변경(이번 작업 아님). **릴리스 의도 확인 필요**(사용자 판단 사안).
+- [x] pubspec 버전: 사용자 결정에 따라 이번 세션(마이그레이션+버그수정) 반영해
+      `1.0.3+5` → `1.0.4+6` 범프(프로젝트 관례 패치+1·빌드+1).
