@@ -2600,6 +2600,24 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
   }
 
+  // 열차 아이콘·상태를 도착 이펙트 없이 즉시 정리한다.
+  // (경로 스코프 변경 / silent 제거의 공통 경로)
+  function removeTrainSilently(trainState, trainNo) {
+    cancelTrainAnimation(trainState);
+    if (trainState.element && trainState.element.parentNode) {
+      trainState.element.parentNode.removeChild(trainState.element);
+    }
+    // [원칙 1 보강] 슬롯 메모리의 trainNo 가 자기 자신일 때만 삭제. 같은 슬롯에
+    // 이미 새 trainNo 가 등록돼 있으면(신분당선처럼 매 refresh trainNo 가 흔들림)
+    // 그 prev 정보를 지워선 안 된다 — 다음 cycle 의 fallback clamp 가 무력화됨.
+    if (trainState.slotKey
+        && trainSlotMemory[trainState.slotKey]
+        && trainSlotMemory[trainState.slotKey].trainNo === trainNo) {
+      delete trainSlotMemory[trainState.slotKey];
+    }
+    delete activeTrains[trainNo];
+  }
+
   // [원칙 1 보강] 슬롯 보조키: trainNo 가 흔들려도 같은 노선/방향/행선/현재역
   // 조합이면 단조 감소를 강제하기 위한 식별자.
   function makeSlotKey(t) {
@@ -2620,8 +2638,13 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     };
   }
 
-  window.showTrains = function(trainsJson) {
+  window.showTrains = function(trainsJson, routeScopeKey) {
     var trains = JSON.parse(trainsJson);
+    // 이 payload 가 속한 활성 경로 스코프('{lineId}|down' 등). Flutter 가
+    // activeRouteFilter 로부터 만들어 넘긴다. 스코프가 바뀌면 이전 스코프의
+    // 열차는 "API 가 누락(jitter)" 이 아니라 "경로 변경으로 무효" 이므로
+    // grace 없이 즉시 제거해야 한다(아래 toRemove 루프 (B) 참조).
+    var scopeKey = (typeof routeScopeKey === 'string') ? routeScopeKey : '';
     var newTrainIds = {};
 
     // [원칙 1 보강] 보조키 fallback 충돌 검사용 사전 점유 카운트.
@@ -2646,6 +2669,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       if (activeTrains[t.trainNo]) {
         var existing = activeTrains[t.trainNo];
         var nowMs = Date.now();
+        // 현재 스코프에서 다시 보고된 열차 → 스코프 갱신(경로 모드 전환 등으로
+        // 같은 열차가 새 스코프에 그대로 포함되는 경우도 정상 처리).
+        existing.scopeKey = scopeKey;
 
         // [원칙 1 보강] 단조 감소 강제 clamp.
         // API 가 arvlMsg2 라운딩 등으로 arrivalSeconds 를 동일 값으로 반복 반환하면
@@ -2730,7 +2756,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           baseReceivedAt: t.receivedAtEpochMs || nowMs2,
           // [원칙 1 보강] playArrivalEffect 시 이 trainNo 가 차지한 슬롯 메모리를
           // trainNo 매칭이 흔들려도 정확히 정리하기 위한 보조키 저장.
-          slotKey: slotKey
+          slotKey: slotKey,
+          // 이 열차가 속한 활성 경로 스코프. 스코프가 바뀌면 즉시 제거된다.
+          scopeKey: scopeKey
         };
         startTrainAnimation(activeTrains[t.trainNo], t);
         rememberSlot(t, nowMs2);
@@ -2746,7 +2774,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // [도착/필터변경/jitter 분리 가드]
     // toRemove 는 "API 응답에서 더 이상 보이지 않는 train". 세 가지 원인.
     //   (A) 진짜 도착: API 가 보고 안 함 → 도착 애니메이션 발동 ✓
-    //   (B) routeFilter 변경: 다른 노선/방향 → silent 제거
+    //   (B) routeFilter 변경: 다른 노선/방향 → scopeKey 불일치로 즉시 silent 제거
     //   (C) API jitter: Seoul 공공 API 가 same-cycle 에 train 을 일관성 없이 누락
     //       (다음 cycle 에 다시 보고됨). 즉시 제거 시 train 이 화면에서 증발 후
     //       재등장 → 사용자 인식 "탈선/증발". (5호선 영등포구청 이슈 원인)
@@ -2766,6 +2794,17 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     for (var i = 0; i < toRemove.length; i++) {
       var id = toRemove[i];
       var trainState = activeTrains[id];
+
+      // (B) 경로 스코프 변경 — 이 열차는 더 이상 활성 경로의 노선·방향이 아니다.
+      // API jitter 와 무관하므로 grace 를 주지 않고 즉시 제거한다. 도착한 게
+      // 아니므로 도착 펄스/trainArrived(스낵바)도 발동하지 않는다.
+      // (도착역 변경으로 경로 노선이 바뀌었는데 이전 노선 열차가 흐려진 지도 위에
+      //  최대 MAX_MISS_CYCLES 만큼 남아있던 문제 방지)
+      if (scopeKey && trainState.scopeKey && trainState.scopeKey !== scopeKey) {
+        removeTrainSilently(trainState, id);
+        continue;
+      }
+
       var last = trainState.lastArrivalSeconds;
       var lastUpdate = trainState.lastUpdateTime;
       var eta = (last != null && lastUpdate != null)
@@ -2784,19 +2823,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       cancelTrainAnimation(trainState);
       if (last != null && last > SILENT_REMOVE_THRESHOLD_S) {
         // silent 제거: 도착 펄스 / trainArrived 이벤트 발동 안 함
-        if (trainState.element && trainState.element.parentNode) {
-          trainState.element.parentNode.removeChild(trainState.element);
-        }
-        // [원칙 1 보강] slotKey 직접 삭제 시 같은 슬롯에 이미 새 trainNo 가
-        // 등록되어 있을 수 있으므로(신분당선처럼 매 refresh trainNo 가 흔들림),
-        // 메모리의 trainNo 가 자기 자신일 때만 삭제. 이 가드 누락 시 새 train 의
-        // prev 정보까지 같이 지워져 다음 cycle 의 fallback clamp 가 무력화됨.
-        if (trainState.slotKey
-            && trainSlotMemory[trainState.slotKey]
-            && trainSlotMemory[trainState.slotKey].trainNo === id) {
-          delete trainSlotMemory[trainState.slotKey];
-        }
-        delete activeTrains[id];
+        removeTrainSilently(trainState, id);
         continue;
       }
       playArrivalEffect(trainState, id);

@@ -184,5 +184,44 @@ void main() {
     test('텍스트 레이어 CSS에 font-size inherit !important가 설정되어 있다', () {
       expect(htmlContent, contains('font-size: inherit !important'));
     });
+
+    test('showTrains가 경로 스코프 키를 두 번째 인자로 받는다', () {
+      // Flutter 가 activeRouteFilter 를 스코프 키로 넘기고, JS 가 이를 열차
+      // 상태에 기록해야 경로 변경으로 무효해진 열차를 즉시 제거할 수 있다.
+      expect(
+        htmlContent,
+        contains('window.showTrains = function(trainsJson, routeScopeKey)'),
+      );
+      expect(htmlContent, contains('scopeKey: scopeKey'));
+      expect(htmlContent, contains('existing.scopeKey = scopeKey'));
+    });
+
+    test('경로 스코프가 바뀐 열차는 grace 없이 즉시 제거된다', () {
+      // 회귀 가드: 도착역만 바꿔 경로 노선이 달라졌을 때 이전 노선 열차가
+      // jitter grace(MAX_MISS_CYCLES)로 최대 2분간 지도에 남던 문제.
+      final showStart = htmlContent.indexOf('window.showTrains');
+      final showEnd = htmlContent.indexOf('window.clearTrains');
+      expect(showStart, greaterThan(0));
+      expect(showEnd, greaterThan(showStart));
+      final body = htmlContent.substring(showStart, showEnd);
+
+      // 스코프 불일치 분기가 jitter grace(missedCycles) 판정보다 앞에 있어야 한다.
+      final scopeGuardIdx =
+          body.indexOf("trainState.scopeKey !== scopeKey");
+      final graceIdx = body.indexOf('if (eta > JITTER_GRACE_S)');
+      expect(scopeGuardIdx, greaterThan(0),
+          reason: '스코프 불일치 즉시 제거 분기가 있어야 한다');
+      expect(scopeGuardIdx, lessThan(graceIdx),
+          reason: '스코프 판정이 jitter grace 판정보다 먼저 실행돼야 한다');
+      expect(body, contains('removeTrainSilently(trainState, id)'));
+
+      // 도착 이펙트(playArrivalEffect)로 빠지지 않아야 한다 — 도착이 아니므로
+      // 스낵바가 뜨면 오탐. 즉시 제거 분기는 continue 로 끊는다.
+      final afterGuard = body.substring(scopeGuardIdx);
+      final continueIdx = afterGuard.indexOf('continue;');
+      final arrivalIdx = afterGuard.indexOf('playArrivalEffect');
+      expect(continueIdx, greaterThan(0));
+      expect(continueIdx, lessThan(arrivalIdx));
+    });
   });
 }

@@ -368,10 +368,26 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _runJs("window.hideRouteToolbar()");
   }
 
+  /// 열차 목록과 함께 이 목록이 속한 **활성 경로 스코프**(노선+방향)를 넘긴다.
+  ///
+  /// JS 는 스코프가 바뀌면 이전 스코프의 열차를 즉시 제거한다. 이 값이 없으면
+  /// JS 가 "경로 변경으로 사라진 열차" 와 "API jitter 로 한 cycle 누락된 열차" 를
+  /// 구분할 수 없어, 도착역만 바꿔 경로 노선이 달라진 뒤에도 이전 노선 열차가
+  /// 흐려진 지도 위에 수십 초~2분간 남는다. (window.showTrains 계약)
   void _showTrains(List<LiveTrain> trains) {
     if (!_isReady) return;
     final json = jsonEncode([for (final t in trains) t.toJson()]);
-    _runJs("window.showTrains(${_jsString(json)})");
+    _runJs(
+      "window.showTrains(${_jsString(json)}, ${_jsString(_routeScopeKey())})",
+    );
+  }
+
+  /// 활성 경로 필터를 JS 로 넘길 스코프 키로 직렬화한다.
+  /// 필터가 없으면 빈 문자열 — JS 는 빈 스코프에선 스코프 기반 제거를 하지 않는다.
+  String _routeScopeKey() {
+    final filter = ref.read(activeRouteFilterProvider);
+    if (filter == null) return '';
+    return '${filter.lineId}|${filter.isDown ? 'down' : 'up'}';
   }
 
   void _clearTrains() {

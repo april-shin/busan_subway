@@ -145,9 +145,13 @@ class _EstimateEntry {
 final _estimateCacheProvider =
     StateProvider<Map<String, _EstimateEntry>>((ref) => {});
 
-/// 네트워크 오류 시 마지막 성공 데이터를 유지하기 위한 캐시
-final _lastSuccessfulTrainsProvider =
-    StateProvider<List<LiveTrain>>((ref) => []);
+/// 네트워크 오류 시 마지막 성공 데이터를 유지하기 위한 캐시.
+///
+/// 계산에 쓰인 `ActiveRouteFilter` 를 함께 보관한다. 필터(노선+방향)가 바뀐 뒤의
+/// API 실패에서 이전 필터의 열차를 그대로 돌려주면, 새 경로와 무관한 노선의
+/// 열차가 지도에 남는다(도착역만 바꿨을 때의 잔류 열차와 같은 증상).
+final _lastSuccessfulTrainsProvider = StateProvider<
+    ({ActiveRouteFilter filter, List<LiveTrain> trains})?>((ref) => null);
 
 /// enrichment 추정값 캐시: 동일 열차·동일 위치에서 추정값 재사용으로 카운트다운 안정화
 final _lastEnrichedArrivalsProvider =
@@ -192,8 +196,12 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     if (kDebugMode) {
       debugPrint('실시간 열차 데이터 로드 실패: $e\n$st');
     }
-    // 네트워크 오류 시 마지막 성공 데이터 반환 (기존 애니메이션 유지)
-    return ref.read(_lastSuccessfulTrainsProvider);
+    // 네트워크 오류 시 마지막 성공 데이터 반환 (기존 애니메이션 유지).
+    // 단, 그 데이터가 현재 활성 경로 필터에서 계산된 것일 때만 — 필터가 바뀐
+    // 뒤라면 이전 노선·방향의 열차이므로 재사용하지 않고 비운다.
+    final cached = ref.read(_lastSuccessfulTrainsProvider);
+    if (cached != null && cached.filter == routeFilter) return cached.trains;
+    return const [];
   }
 
   // stations와 connections 로드
@@ -386,8 +394,9 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   // 같은 역에 여러 열차가 있는 경우 Y축 오프셋 적용
   final adjusted = _applyOverlapOffset(result);
 
-  // 성공 시 캐시 업데이트
-  ref.read(_lastSuccessfulTrainsProvider.notifier).state = adjusted;
+  // 성공 시 캐시 업데이트 (계산에 쓰인 필터와 함께)
+  ref.read(_lastSuccessfulTrainsProvider.notifier).state =
+      (filter: routeFilter, trains: adjusted);
 
   return adjusted;
 }
