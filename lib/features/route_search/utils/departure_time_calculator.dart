@@ -7,54 +7,99 @@ import '../../../domain/entities/route_result.dart';
 import '../../../domain/usecases/find_next_departure.dart';
 import 'direction_resolver.dart';
 
-/// 시간표 기반 + 실시간 보정 방식으로 출발 시각을 계산한다.
+/// 출발 시각이 어느 소스에서 결정됐는지 나타낸다.
+///
+/// - [realtime]: 실시간 도착정보로 확정
+/// - [timetable]: 역별 시간표 또는 배차간격 추정으로 확정
+/// - [unavailable]: 둘 다 실패 — 운행 시간 외이거나 시간표 데이터 없음.
+///   이 경우 반환된 시각은 조회 기준 시각 그대로이며 **실제 열차가 아니다.**
+enum DepartureSource { realtime, timetable, unavailable }
+
+/// 출발 시각 조회에 필요한 첫 세그먼트 컨텍스트.
+///
+/// 실제 계산(`computeDepartureTimeDetailed`)과 UI 의 선택 가능 시각 목록
+/// (`buildDepartureCandidates`)이 **같은 (역, 방향, 급행여부, 노선)** 을 쓰도록
+/// 단일 진실 공급원으로 추출했다. 둘이 어긋나면 "목록에 보이는데 고르면 다른
+/// 열차가 잡히는" 현상이 생긴다.
+///
+/// 특히 `baseLine` 은 반드시 이 컨텍스트에서 가져와야 한다. 출발역이 환승역이라
+/// 첫 세그먼트가 1역뿐이면 `segments.first.lineId` 는 방향 판별에 쓰인 세그먼트와
+/// **다른 노선**이고, 모드 전환(`9M`)이면 시간표 맵에 아예 없는 키가 된다.
+typedef DepartureContext = ({
+  RouteSegment segment,
+  bool isDown,
+  bool express,
+  String baseLine,
+});
+
+/// [DepartureContext] 를 추출한다.
+/// 방향 판별이 가능한 세그먼트(역 2개 이상)가 없으면 null.
+DepartureContext? resolveDepartureContext(RouteResult routeResult) {
+  if (routeResult.segments.isEmpty) return null;
+
+  // 방향 판별이 가능한 세그먼트를 찾는다 (역 2개 이상)
+  final validSeg = findFirstDirectionalSegment(routeResult);
+  if (validSeg == null) return null;
+
+  return (
+    segment: validSeg,
+    isDown: isDownDirection(validSeg),
+    express: isExpressLineId(validSeg.lineId),
+    baseLine: baseLineId(validSeg.lineId),
+  );
+}
+
+/// 시간표 기반 + 실시간 보정 방식으로 출발 시각과 그 **출처**를 계산한다.
 ///
 /// 1순위: 실시간 도착정보가 있으면 이를 사용 (가장 정확, 방향+모드 필터)
 /// 2순위: 시간표(배차간격)에서 다음 출발 시각을 추정 (방향별)
-/// 3순위: 둘 다 없으면 현재 시각을 반환
+/// 3순위: 둘 다 없으면 조회 기준 시각을 그대로 반환 ([DepartureSource.unavailable])
 ///
 /// 첫 세그먼트의 lineId가 `E`로 끝나는 가상 급행 노선이면 실시간 필터에서
 /// `급행` trainType만 매칭한다.
-DateTime computeDepartureTime({
+///
+/// 3순위 폴백은 "그 시각에 운행하는 열차가 없다"는 뜻이라, 사용자가 시각을 직접
+/// 고르는 경우 화면이 이를 구분해 안내해야 한다. 반환 시각만으로는 구분할 수
+/// 없어 [DepartureSource] 를 함께 돌려준다.
+({DateTime departure, DepartureSource source}) computeDepartureTimeDetailed({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required RouteResult routeResult,
   required DateTime now,
   LineSchedule? lineSchedule,
 }) {
-  if (routeResult.segments.isEmpty) return now;
-
-  // 방향 판별이 가능한 세그먼트를 찾는다 (역 2개 이상)
-  final validSeg = findFirstDirectionalSegment(routeResult);
-  if (validSeg == null) return now;
-
-  final isDown = isDownDirection(validSeg);
-  final isExpressSegment = isExpressLineId(validSeg.lineId);
-  final realtimeLineId = baseLineId(validSeg.lineId);
+  final context = resolveDepartureContext(routeResult);
+  if (context == null) {
+    return (departure: now, source: DepartureSource.unavailable);
+  }
 
   // 1순위: 실시간 도착정보로 보정 (방향+모드 필터 적용)
   final realtimeDeparture = _getRealtimeDeparture(
     arrivalAsync: arrivalAsync,
-    lineId: realtimeLineId,
-    isDown: isDown,
+    lineId: context.baseLine,
+    isDown: context.isDown,
     now: now,
-    expressOnly: isExpressSegment,
+    expressOnly: context.express,
   );
-  if (realtimeDeparture != null) return realtimeDeparture;
+  if (realtimeDeparture != null) {
+    return (departure: realtimeDeparture, source: DepartureSource.realtime);
+  }
 
   // 2순위: 시간표 기반 추정 (방향별, 역별 시간표 포함)
   if (lineSchedule != null) {
     final timetableDeparture = findNextDeparture(
       schedule: lineSchedule,
       now: now,
-      isDown: isDown,
-      stationId: validSeg.stations.first.id,
-      express: isExpressSegment,
+      isDown: context.isDown,
+      stationId: context.segment.stations.first.id,
+      express: context.express,
     );
-    if (timetableDeparture != null) return timetableDeparture;
+    if (timetableDeparture != null) {
+      return (departure: timetableDeparture, source: DepartureSource.timetable);
+    }
   }
 
   // 3순위: 현재 시각 반환 (운행 시간 외이거나 데이터 없음)
-  return now;
+  return (departure: now, source: DepartureSource.unavailable);
 }
 
 /// `9E`처럼 `E`로 끝나는 가상 급행 노선 ID인지 판정.

@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:seoul_subway/domain/entities/arrival_info.dart';
+import 'package:seoul_subway/domain/entities/line_schedule.dart';
 import 'package:seoul_subway/domain/entities/route_result.dart';
 import 'package:seoul_subway/domain/entities/station.dart';
 import 'package:seoul_subway/domain/repositories/arrival_repository.dart';
 import 'package:seoul_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
+import 'package:seoul_subway/features/route_search/presentation/providers/timetable_providers.dart';
+import 'package:seoul_subway/features/route_search/utils/departure_query_time.dart';
 import 'package:seoul_subway/features/route_search/presentation/screens/route_result_screen.dart';
 
 class _MockArrivalRepository extends Mock implements ArrivalRepository {}
@@ -82,10 +85,13 @@ void main() {
     RouteResult? leastTransfer,
     RouteResult? fastestExpress,
     RouteResult? fastestLocal,
+    Map<String, LineSchedule>? schedules,
   }) {
     return ProviderScope(
       overrides: [
         arrivalRepositoryProvider.overrideWithValue(mockRepo),
+        if (schedules != null)
+          lineSchedulesProvider.overrideWith((ref) async => schedules),
       ],
       child: MaterialApp(
         home: RouteResultScreen(
@@ -410,6 +416,356 @@ void main() {
       expect(minutes, greaterThanOrEqualTo(18),
           reason: '총소요시간은 환승 대기 포함(≥18분)이어야 한다. '
               '도보만으로 축소(약 14분)되면 회귀.');
+    });
+  });
+
+  group('Case F — 출발시각 선택', () {
+    const periods = [
+      TimePeriod(start: '05:00', end: '00:00', headwayMinutes: 5),
+    ];
+
+    /// 평일/주말을 동일하게 채운 스케줄.
+    ///
+    /// 화면의 기본 요일 타입은 `dayTypeOf(DateTime.now())` 라 테스트 실행 요일에
+    /// 따라 달라진다. 평일·주말 데이터를 같게 두면 어느 요일에 돌려도 결과가
+    /// 동일해져 테스트가 결정적이 된다.
+    LineSchedule scheduleWith({
+      List<int>? local,
+      List<int>? express,
+    }) {
+      final day = DaySchedule(
+        firstTrain: '05:00',
+        lastTrain: '00:00',
+        periods: periods,
+        stationDepartures: local == null ? null : {station1.id: local},
+        expressStationDepartures:
+            express == null ? null : {station1.id: express},
+      );
+      return LineSchedule(lineId: '9', weekday: day, weekend: day);
+    }
+
+    /// 요약 헤더의 "HH:MM 출발" 텍스트를 찾는다.
+    String? departureLabel(WidgetTester tester) {
+      final re = RegExp(r'^\d{2}:\d{2}$');
+      final times = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((w) => w.data)
+          .whereType<String>()
+          .where(re.hasMatch)
+          .toList();
+      return times.isEmpty ? null : times.first;
+    }
+
+    /// 컴팩트 UI 진입점 — 출발 시각 옆 펼침 화살표. 이게 없으면 시각을 고를 수
+    /// 없는 상태(시간표 미보유/로딩)다.
+    final pickerAffordance = find.byIcon(Icons.expand_more);
+
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.tap(pickerAffordance.first);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('기본 상태에는 별도 컨트롤 줄 없이 출발 시각만 보인다',
+        (tester) async {
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith(local: [480])},
+      ));
+      await tester.pumpAndSettle();
+
+      // 시각을 고를 수 있다는 힌트는 있되,
+      expect(pickerAffordance, findsOneWidget);
+      // 기본 상태에서는 보조 줄(요일/리셋)이 헤더를 늘리지 않는다.
+      expect(find.text('평일 시간표'), findsNothing);
+      expect(find.text('주말 시간표'), findsNothing);
+      expect(find.text('지금 출발로'), findsNothing);
+      expect(find.text('선택한 시각에는 운행하지 않습니다'), findsNothing);
+    });
+
+    testWidgets('역별 시간표가 없으면 시각을 고를 수 없다 (힌트도 없음)',
+        (tester) async {
+      // 배차간격만 있고 stationDepartures 가 없는 경우.
+      // 실데이터에서는 급행 미보유 노선/역이 여기 해당한다(완행 시간표는
+      // 23개 노선 전부 보유).
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith()},
+      ));
+      await tester.pumpAndSettle();
+
+      // 누를 수 없는 것을 누를 수 있어 보이게 하지 않는다.
+      expect(pickerAffordance, findsNothing);
+      // 출발 시각 자체는 그대로 표시된다.
+      expect(departureLabel(tester), isNotNull);
+    });
+
+    testWidgets('시간표에서 고른 시각이 그대로 출발 시각이 되고 실시간은 무시된다',
+        (tester) async {
+      // 실시간은 2분 뒤 도착으로 응답 — 고정 시각을 고르면 무시되어야 한다.
+      when(() => mockRepo.getArrivalInfo(station1.name)).thenAnswer(
+        (_) async => [
+          ArrivalInfo(
+            subwayId: '1009',
+            stationName: station1.name,
+            trainLineNm: '개화행',
+            direction: '상행',
+            arrivalMessage: '전역 출발',
+            destination: '개화',
+            trainType: '일반',
+            arrivalSeconds: 120,
+            receivedAt: DateTime.now(),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith(local: [492])}, // 08:12
+      ));
+      await tester.pumpAndSettle();
+
+      // 출발 시각을 눌러 시트를 연다.
+      await openSheet(tester);
+
+      // 시(08) 행에 분(12) 칩이 있다.
+      expect(find.text('08'), findsOneWidget);
+      await tester.tap(find.text('12'));
+      await tester.pumpAndSettle();
+
+      // 출발 시각이 실시간(now+2분)이 아니라 08:12 여야 한다.
+      expect(departureLabel(tester), '08:12');
+      // 어떤 요일 시간표인지와 되돌리는 길이 보조 줄에 나타난다.
+      expect(
+        find.text('평일 시간표').evaluate().length +
+            find.text('주말 시간표').evaluate().length,
+        1,
+      );
+      expect(find.text('지금 출발로'), findsOneWidget);
+    });
+
+    testWidgets('선택 시각은 탭을 전환해도 유지된다', (tester) async {
+      // 급행 23:50 만 있고 완행은 08:00 이 막차인 스케줄.
+      await tester.pumpWidget(buildApp(
+        fastest: buildExpress(),
+        fastestExpress: buildExpress(total: 180),
+        fastestLocal: buildLocal(total: 300),
+        schedules: {
+          '9': scheduleWith(local: [480], express: [1430]), // 08:00 / 23:50
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      // 급행 탭에서 23:50 선택.
+      await openSheet(tester);
+      await tester.tap(find.text('50'));
+      await tester.pumpAndSettle();
+
+      expect(departureLabel(tester), '23:50');
+
+      // 완행 탭으로 전환해도 기준 시각이 유지된다 — 완행은 그 시각 이후
+      // 열차가 없으므로 안내가 뜨고, 되돌리는 길도 계속 노출된다.
+      await tester.tap(find.text('완행'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('지금 출발로'), findsWidgets,
+          reason: '탭을 바꿔도 선택 시각이 유지되어야 한다');
+    });
+
+    testWidgets('선택 시각에 운행 열차가 없으면 안내를 표시한다', (tester) async {
+      // 급행 23:50 을 고른 뒤 완행 탭으로 가면, 완행 막차(08:00)가 이미 지나
+      // 해당 시각에 탈 수 있는 완행 열차가 없다.
+      await tester.pumpWidget(buildApp(
+        fastest: buildExpress(),
+        fastestExpress: buildExpress(total: 180),
+        fastestLocal: buildLocal(total: 300),
+        schedules: {
+          '9': scheduleWith(local: [480], express: [1430]),
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+      await tester.tap(find.text('50'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('완행'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('선택한 시각에는 운행하지 않습니다'), findsOneWidget);
+    });
+
+    testWidgets('시트를 열면 기존 선택 시각의 시(hour) 행이 화면 안에 들어온다',
+        (tester) async {
+      // 회귀 가드: 지연 빌드(ListView.builder)로 그리면 목표 행이 viewport +
+      // cacheExtent 밖일 때 마운트 자체가 안 돼 초기 스크롤이 조용히 무시된다.
+      // 05시~23시 전 구간을 채워 목표(23시)가 확실히 화면 밖에서 시작하게 한다.
+      final allHours = [for (var h = 5; h <= 23; h++) h * 60 + 50];
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith(local: allHours)},
+      ));
+      await tester.pumpAndSettle();
+
+      // 먼저 23:50 을 선택해 두고,
+      await openSheet(tester);
+      await tester.dragUntilVisible(
+        find.text('23'),
+        find.byType(SingleChildScrollView),
+        const Offset(0, -100),
+      );
+      // 마지막 '50' 칩 = 23시 행 (매 시 :50 만 채웠으므로).
+      await tester.tap(find.text('50').last);
+      await tester.pumpAndSettle();
+
+      // 다시 열었을 때 23시 행이 화면 안에 있어야 한다.
+      await openSheet(tester);
+
+      final rowY = tester.getTopLeft(find.text('23')).dy;
+      final screenHeight = tester.view.physicalSize.height /
+          tester.view.devicePixelRatio;
+      expect(rowY, lessThan(screenHeight),
+          reason: '초기 스크롤이 동작해 목표 시(hour) 행이 화면 안에 있어야 한다');
+      expect(rowY, greaterThanOrEqualTo(0));
+    });
+
+    testWidgets(
+        '정확한 시간표가 없는 탭에서도 적용 중인 시각과 리셋 버튼이 유지되고 '
+        '추정치임을 안내한다', (tester) async {
+      // 최단시간=9호선(역별 시간표 있음), 최소환승=시간표 미보유 노선.
+      // 실데이터의 급행 미보유 케이스를 합성 픽스처로 재현한다.
+      final leastTransfer = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: 'NOTT',
+            lineName: '시간표없음선',
+            stations: const [station1, station2],
+            durationSeconds: 300,
+            direction: '신방화 방면',
+          ),
+        ],
+        totalTimeSeconds: 300,
+        transferCount: 0,
+        stationCount: 2,
+      );
+
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        leastTransfer: leastTransfer,
+        schedules: {
+          '9': scheduleWith(local: [492]), // 08:12
+          'NOTT': scheduleWith(), // 역별 시간표 없음 → 배차간격 폴백
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+      await tester.tap(find.text('12'));
+      await tester.pumpAndSettle();
+
+      // 최소환승 탭(시간표 없음)으로 전환.
+      await tester.tap(find.text('최소환승'));
+      await tester.pumpAndSettle();
+
+      // 이 탭은 08:12 열차가 없어 배차간격 추정(08:15)이 나온다. 그래도 어떤
+      // 시각을 기준으로 잡은 결과인지 보이고 해제도 가능해야 한다
+      // (여기서 상태가 사라지면 사용자가 맥락을 잃고 되돌릴 수도 없게 된다).
+      expect(find.text('평일 08:12 기준'), findsWidgets);
+      expect(find.text('지금 출발로'), findsWidgets);
+      // 고를 수는 없는 탭이므로 진입 힌트는 없다.
+      expect(pickerAffordance, findsNothing);
+      // 배차간격 추정치를 실제 시간표처럼 보여주지 않는다.
+      expect(find.text('이 경로는 정확한 시간표가 없어 예상 시각입니다'),
+          findsOneWidget);
+    });
+
+    testWidgets('"지금" 리셋 버튼이 실시간 기준으로 되돌린다', (tester) async {
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith(local: [492])},
+      ));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+      await tester.tap(find.text('12'));
+      await tester.pumpAndSettle();
+      expect(find.text('지금 출발로'), findsOneWidget);
+
+      await tester.tap(find.text('지금 출발로'));
+      await tester.pumpAndSettle();
+
+      // 보조 줄이 사라져 헤더가 다시 컴팩트해지고, 힌트만 남는다.
+      expect(find.text('지금 출발로'), findsNothing);
+      expect(find.text('평일 시간표'), findsNothing);
+      expect(find.text('주말 시간표'), findsNothing);
+      expect(pickerAffordance, findsOneWidget);
+      expect(find.text('선택한 시각에는 운행하지 않습니다'), findsNothing);
+    });
+
+    testWidgets('시트가 화면의 출발 시각을 짚어주고 그 위치로 스크롤된다',
+        (tester) async {
+      // 24시간 전 구간을 매 시 :59 로 채운다. 몇 시에 돌리든 화면 출발 시각에
+      // 대응하는 칩이 존재하게 해서 테스트가 시계에 따라 조용히 건너뛰지
+      // 않도록 한다. 행이 24개라 목표 행은 스크롤 없이는 화면 밖이다.
+      final allHours = [for (var h = 0; h <= 23; h++) h * 60 + 59];
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith(local: allHours)},
+      ));
+      await tester.pumpAndSettle();
+
+      // 헤더에 떠 있는 출발 시각 — 시트는 바로 이걸 짚어야 한다.
+      final headerDeparture = departureLabel(tester);
+      expect(headerDeparture, isNotNull);
+
+      await openSheet(tester);
+
+      // (1) 시트가 화면과 같은 시각을 기준으로 삼는다.
+      expect(find.text('현재 $headerDeparture 출발'), findsOneWidget,
+          reason: '시트 기준이 화면 출발 시각과 어긋나면 안 된다');
+
+      // (2) 그 시각의 행이 화면 안에 있어야 한다.
+      final hourLabel = headerDeparture!.substring(0, 2);
+      final rowY = tester.getTopLeft(find.text(hourLabel).last).dy;
+      final screenHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      expect(rowY, inInclusiveRange(0, screenHeight),
+          reason: '출발 시각 위치($hourLabel시 행)가 화면 안에 있어야 한다');
+    });
+
+    testWidgets('반대 요일을 골랐다 되돌리면 시트가 다시 오늘 요일로 열린다',
+        (tester) async {
+      // 회귀 가드: dayType 은 "지금 출발"에서 계산에 쓰이지 않아, 되돌릴 때
+      // 함께 정리하지 않으면 남아 있다가 다음 열람에서 그 요일 탭으로 열린다.
+      final todayType = dayTypeOf(DateTime.now());
+      final otherLabel =
+          todayType == DepartureDayType.weekday ? '주말' : '평일';
+
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': scheduleWith(local: [492])},
+      ));
+      await tester.pumpAndSettle();
+
+      // 반대 요일로 토글한 뒤 시각을 고르고,
+      await openSheet(tester);
+      await tester.tap(find.text(otherLabel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('12'));
+      await tester.pumpAndSettle();
+      expect(find.text('$otherLabel 시간표'), findsOneWidget);
+
+      // "지금 출발로" 되돌린 다음 시트를 다시 열면,
+      await tester.tap(find.text('지금 출발로'));
+      await tester.pumpAndSettle();
+      await openSheet(tester);
+
+      // 반대 요일이 아니라 오늘 요일이 선택돼 있어야 한다.
+      final selected = tester
+          .widget<SegmentedButton<DepartureDayType>>(
+              find.byType(SegmentedButton<DepartureDayType>))
+          .selected;
+      expect(selected, {todayType},
+          reason: '되돌린 뒤에는 오늘($todayType) 기준으로 열려야 한다');
     });
   });
 }

@@ -3,13 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart'; // ProviderListenable (riverpod 3)
 
 import '../../../../core/constants/line_colors.dart';
+import '../../../../core/theme/tokens/app_dimensions.dart';
+import '../../../../core/theme/tokens/app_radii.dart';
 import '../../../../domain/entities/arrival_info.dart';
 import '../../../../domain/entities/line_schedule.dart';
 import '../../../../domain/entities/route_result.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../arrival_info/presentation/providers/arrival_providers.dart';
 import '../providers/timetable_providers.dart';
+import '../../utils/departure_candidates.dart';
+import '../../utils/departure_query_time.dart';
 import '../../utils/departure_time_calculator.dart';
+import '../widgets/departure_time_sheet.dart';
 import '../widgets/transfer_row.dart';
 
 /// 결과 화면 탭 구성 — 두 후보 경로의 차이가 무엇이냐에 따라 라벨이 달라진다.
@@ -42,6 +47,12 @@ class RouteResultScreen extends ConsumerStatefulWidget {
 class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
+
+  /// 조회 기준 시각. 부모가 소유하므로 탭을 전환해도 선택이 유지된다.
+  ///
+  /// 선택 시각은 "역에 도착하는 기준 시각"으로 해석한다 — 급행 탭에서 08:12를
+  /// 고른 뒤 완행 탭으로 가면 08:12 이후 첫 완행이 잡힌다.
+  late DepartureQueryTime _query = DepartureQueryTime.nowAt(DateTime.now());
 
   /// 두 후보의 차이를 보고 탭 라벨/구성을 결정한다.
   ///
@@ -111,22 +122,21 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
       ),
       bottomNavigationBar: const HomeBannerAd(),
       body: routes.length == 1
-          ? _RouteView(
-              key: ValueKey(routes.first),
-              routeResult: routes.first,
-              departureStationName: widget.departureStationName,
-            )
+          ? _buildRouteView(routes.first)
           : TabBarView(
               controller: _tabController,
-              children: [
-                for (final r in routes)
-                  _RouteView(
-                    key: ValueKey(r),
-                    routeResult: r,
-                    departureStationName: widget.departureStationName,
-                  ),
-              ],
+              children: [for (final r in routes) _buildRouteView(r)],
             ),
+    );
+  }
+
+  Widget _buildRouteView(RouteResult route) {
+    return _RouteView(
+      key: ValueKey(route),
+      routeResult: route,
+      departureStationName: widget.departureStationName,
+      query: _query,
+      onQueryChanged: (next) => setState(() => _query = next),
     );
   }
 
@@ -179,10 +189,16 @@ class _RouteView extends ConsumerStatefulWidget {
   final RouteResult routeResult;
   final String departureStationName;
 
+  /// 조회 기준 시각 — 부모(`_RouteResultScreenState`)가 소유하고 탭 간 공유한다.
+  final DepartureQueryTime query;
+  final ValueChanged<DepartureQueryTime> onQueryChanged;
+
   const _RouteView({
     super.key,
     required this.routeResult,
     required this.departureStationName,
+    required this.query,
+    required this.onQueryChanged,
   });
 
   bool get _useExpress {
@@ -249,6 +265,34 @@ class _RouteViewState extends ConsumerState<_RouteView> {
     }
   }
 
+  /// 이 경로의 출발역에서 고를 수 있는 출발시각 목록(평일·주말)을 만든다.
+  ///
+  /// 실제 계산과 어긋나지 않도록 `resolveDepartureContext` 가 반환한 동일한
+  /// (역, 방향, 급행여부, 노선)으로 조회한다. 데이터가 없으면 빈 목록이고,
+  /// 그때 `DepartureTimeBar` 가 스스로 비활성 상태가 된다.
+  DepartureOptions _buildDepartureOptions({
+    required DepartureContext? context,
+    required LineSchedule? schedule,
+    required DateTime now,
+  }) {
+    if (context == null || schedule == null) return DepartureOptions.empty;
+
+    List<int> candidatesFor(DepartureDayType dayType) {
+      return buildDepartureCandidates(
+        schedule: schedule,
+        anchorDate: anchorDateFor(dayType, now),
+        isDown: context.isDown,
+        stationId: context.segment.stations.first.id,
+        express: context.express,
+      );
+    }
+
+    return DepartureOptions(
+      weekday: candidatesFor(DepartureDayType.weekday),
+      weekend: candidatesFor(DepartureDayType.weekend),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final routeResult = widget.routeResult;
@@ -266,18 +310,20 @@ class _RouteViewState extends ConsumerState<_RouteView> {
 
     // 정적 데이터(keepAlive) — 재조회되지 않으므로 그대로 watch.
     final schedulesAsync = ref.watch(lineSchedulesProvider);
+    final query = widget.query;
+    // 고정 시각 조회는 실시간 도착정보를 쓰지 않으므로 API 를 기다릴 이유가 없다.
+    final useRealtime = query.isNow;
     final isLoading =
-        arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
+        useRealtime && arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
 
     final schedules = schedulesAsync.value ?? <String, LineSchedule>{};
-    final firstLineId = routeResult.segments.isNotEmpty
-        ? routeResult.segments.first.lineId
-        : null;
-    // 시간표는 base 노선 ID(`9`)로 인덱싱돼 있으므로 가상 급행(`9E`) → `9` 변환.
-    final firstScheduleLineId =
-        firstLineId == null ? null : baseLineId(firstLineId);
-    final firstLineSchedule =
-        firstScheduleLineId != null ? schedules[firstScheduleLineId] : null;
+    // 출발 시각과 관련된 모든 조회(후보 목록·실제 계산)는 이 컨텍스트 하나에서
+    // 나온 (역, 방향, 급행여부, 노선)만 쓴다. 시간표는 base 노선 ID(`9`)로
+    // 인덱싱돼 있고 컨텍스트의 `baseLine` 이 이미 `9E` → `9` 변환을 마친 값이다.
+    final departureContext = resolveDepartureContext(routeResult);
+    final departureSchedule = departureContext == null
+        ? null
+        : schedules[departureContext.baseLine];
 
     // 환승역별 도착정보 — 각각 최초 1회 확정 후 freeze.
     final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{};
@@ -292,20 +338,66 @@ class _RouteViewState extends ConsumerState<_RouteView> {
     }
 
     final useExpress = widget._useExpress;
-
-    final now = DateTime.now();
-    final departureTime = computeDepartureTime(
-      arrivalAsync: arrivalAsync,
-      routeResult: routeResult,
-      now: now,
-      lineSchedule: firstLineSchedule,
+    final wallClock = DateTime.now();
+    final departureOptions = _buildDepartureOptions(
+      context: departureContext,
+      schedule: departureSchedule,
+      now: wallClock,
     );
+
+    // 고정 시각이면 실시간을 통째로 무시한다 — 미래 시각에 현재 열차 위치를
+    // 섞으면 명백히 틀린 값이 나온다. 빈 데이터를 넘기면 실시간 분기가 자연히
+    // null 을 반환해 시간표 경로로 떨어진다.
+    const noArrivals = AsyncValue<List<ArrivalInfo>>.data([]);
+    final effectiveArrival = useRealtime ? arrivalAsync : noArrivals;
+    final effectiveTransferArrivals =
+        useRealtime ? transferArrivals : const <String, AsyncValue<List<ArrivalInfo>>>{};
+
+    final now = resolveQueryDateTime(query, wallClock);
+
+    // 고른 시각이 이 경로의 실제 출발시각이면 탐색 없이 확정한다(사유는
+    // `resolveChosenDeparture` doc 참조). null 이면 기존 탐색 경로를 탄다.
+    final chosenDeparture = resolveChosenDeparture(
+      query: query,
+      candidates: departureOptions.forDayType(query.dayType),
+      now: wallClock,
+    );
+
+    final departureResult = chosenDeparture != null
+        ? (departure: chosenDeparture, source: DepartureSource.timetable)
+        : computeDepartureTimeDetailed(
+            arrivalAsync: effectiveArrival,
+            routeResult: routeResult,
+            now: now,
+            lineSchedule: departureSchedule,
+          );
+    final departureTime = departureResult.departure;
+
+    // 고정 시각 조회에서만 안내를 띄운다. "지금" 조회는 기존처럼 조용히
+    // 폴백한다(회귀 방지).
+    //
+    // 조회 시각은 탭 간에 공유되므로, 이 탭에는 역별 정확한 시간표가 없는데
+    // 다른 탭에서 고른 시각이 그대로 적용될 수 있다. 그 경우 시간표 계층이
+    // 배차간격으로 폴백해 "예상 시각"을 만들어내므로, 그것을 실제 열차처럼
+    // 보여주지 않도록 별도 문구로 구분한다.
+    final String? departureNotice;
+    if (query.isNow) {
+      departureNotice = null;
+    } else if (departureResult.source == DepartureSource.unavailable) {
+      // 애초에 시각을 못 구했다 — 막차 이후이거나 시간표 자체가 없다.
+      departureNotice = '선택한 시각에는 운행하지 않습니다';
+    } else if (departureOptions.forDayType(query.dayType).isEmpty) {
+      // 시각은 나왔지만 역별 시간표가 없어 배차간격에서 나온 추정치다.
+      departureNotice = '이 경로는 정확한 시간표가 없어 예상 시각입니다';
+    } else {
+      departureNotice = null;
+    }
 
     final segmentDepartures = computeSegmentDepartures(
       routeResult: routeResult,
       initialDeparture: departureTime,
       schedules: schedules,
-      transferArrivals: transferArrivals,
+      transferArrivals: effectiveTransferArrivals,
       now: now,
       useExpress: useExpress,
     );
@@ -333,8 +425,14 @@ class _RouteViewState extends ConsumerState<_RouteView> {
           departureTime: departureTime,
           arrivalTime: arrivalTime,
           isLoading: isLoading,
+          departureNotice: departureNotice,
           transferCount: routeResult.transferCount,
           stationCount: routeResult.stationCount,
+          query: query,
+          // 시간표 로딩 중에는 "고를 수 없음"으로 단정하지 않는다.
+          canPickTime: schedulesAsync.hasValue && departureOptions.hasAny,
+          options: departureOptions,
+          onQueryChanged: widget.onQueryChanged,
         ),
         const Divider(height: 1),
         Expanded(
@@ -359,17 +457,77 @@ class _RouteSummaryHeader extends StatelessWidget {
   final DateTime departureTime;
   final DateTime arrivalTime;
   final bool isLoading;
+
+  /// 표시된 시각을 그대로 믿으면 안 되는 경우의 안내 문구.
+  /// (해당 시각 미운행, 또는 정확한 시간표가 없어 배차간격 추정인 경우)
+  /// null 이면 안내를 표시하지 않는다.
+  final String? departureNotice;
   final int transferCount;
   final int stationCount;
+
+  /// 조회 기준 시각 — 출발 시각 표시를 탭하면 이 값을 바꾼다.
+  final DepartureQueryTime query;
+
+  /// 시각을 고를 수 있는지(역별 시간표 보유 + 로딩 완료). false 면 출발 시각은
+  /// 그냥 텍스트로만 보인다.
+  final bool canPickTime;
+  final DepartureOptions options;
+  final ValueChanged<DepartureQueryTime> onQueryChanged;
 
   const _RouteSummaryHeader({
     required this.totalMinutes,
     required this.departureTime,
     required this.arrivalTime,
     required this.isLoading,
+    required this.departureNotice,
     required this.transferCount,
     required this.stationCount,
+    required this.query,
+    required this.canPickTime,
+    required this.options,
+    required this.onQueryChanged,
   });
+
+  /// 고정 시각일 때 보조 줄에 쓸 라벨.
+  ///
+  /// 보통은 큰 글씨의 출발 시각이 곧 고른 시각이라 요일만 알리면 된다. 그러나
+  /// 조회 시각은 탭 간에 공유되므로, 이 탭에 그 시각의 열차가 없으면 실제
+  /// 출발은 그 이후 열차가 된다. 그 경우 무엇을 기준으로 잡은 결과인지
+  /// 보이지 않으면 사용자가 맥락을 잃으므로 기준 시각을 함께 적는다.
+  String get _baseTimeLabel {
+    final minutes = query.minutes;
+    if (minutes == null) return '${query.dayType.label} 시간표';
+
+    final base = formatOperatingMinutes(minutes);
+    if (base == _formatTime(departureTime)) {
+      return '${query.dayType.label} 시간표';
+    }
+    return '${query.dayType.label} $base 기준';
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    final result = await showDepartureTimeSheet(
+      context: context,
+      query: query,
+      options: options,
+      // 화면에 떠 있는 출발 시각을 그대로 넘긴다 — 시트는 이 시각을 시간표에서
+      // 짚어준다. 시트가 벽시계 현재 시각을 따로 계산하면 화면과 어긋난다
+      // (막차 이후엔 화면이 내일 첫차를 보여주는데 시트는 "운행 종료"라 하는 식).
+      referenceMinutes: departureTime.hour * 60 + departureTime.minute,
+    );
+    if (result != null) onQueryChanged(result);
+  }
+
+  /// 도착이 출발과 다른 달력일이면 `+1일` 접미사. 표기가 `HH:mm` 뿐이라
+  /// 자정을 넘긴 도착이 더 이른 시각처럼 보이는 것을 막는다.
+  String get _arrivalDaySuffix {
+    final departureDay =
+        DateTime(departureTime.year, departureTime.month, departureTime.day);
+    final arrivalDay =
+        DateTime(arrivalTime.year, arrivalTime.month, arrivalTime.day);
+    final dayDiff = arrivalDay.difference(departureDay).inDays;
+    return dayDiff > 0 ? ' +$dayDiff일' : '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -379,6 +537,29 @@ class _RouteSummaryHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Column(
         children: [
+          if (departureNotice != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.space8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: AppIconSize.sm,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: AppSpacing.space4),
+                  Flexible(
+                    child: Text(
+                      departureNotice!,
+                      style: t.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (isLoading)
             Text(
               '실시간 정보 조회중...',
@@ -390,22 +571,17 @@ class _RouteSummaryHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  _formatTime(departureTime),
-                  style: t.titleLarge,
-                ),
-                Text(
-                  ' 출발',
-                  style: t.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                _DepartureTimeControl(
+                  time: _formatTime(departureTime),
+                  enabled: canPickTime,
+                  onTap: () => _pickTime(context),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Icon(Icons.arrow_forward, size: 20),
                 ),
                 Text(
-                  _formatTime(arrivalTime),
+                  '${_formatTime(arrivalTime)}$_arrivalDaySuffix',
                   style: t.titleLarge,
                 ),
                 Text(
@@ -415,6 +591,41 @@ class _RouteSummaryHeader extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          // 고정 시각일 때만 나타나는 보조 줄 — 어떤 요일 시간표인지 알리고
+          // 실시간으로 되돌릴 길을 준다. "지금 출발" 기본 상태에서는 아무것도
+          // 추가되지 않아 헤더가 기존과 동일하게 컴팩트하다.
+          if (!query.isNow)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.space4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _baseTimeLabel,
+                    style: t.labelMedium?.copyWith(color: Colors.grey[600]),
+                  ),
+                  const _ChipDivider(),
+                  InkWell(
+                    onTap: () =>
+                        onQueryChanged(DepartureQueryTime.nowAt(DateTime.now())),
+                    borderRadius: AppBorderRadius.xs,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space4,
+                        vertical: AppSpacing.space2,
+                      ),
+                      child: Text(
+                        '지금 출발로',
+                        style: t.labelMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           const SizedBox(height: 8),
           Row(
@@ -437,6 +648,58 @@ class _RouteSummaryHeader extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 출발 시각 표시 겸 시각 선택 진입점.
+///
+/// 별도 컨트롤 바를 두지 않고 시각 자체를 누르게 해서 헤더를 컴팩트하게 유지한다.
+/// [enabled] 가 false 면(역별 시간표 미보유 노선 등) 탭 대상이 아니므로 화살표
+/// 힌트도 그리지 않는다 — 누를 수 없는 것을 누를 수 있어 보이게 하지 않는다.
+class _DepartureTimeControl extends StatelessWidget {
+  final String time;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _DepartureTimeControl({
+    required this.time,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final label = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(time, style: t.titleLarge),
+        Text(
+          ' 출발',
+          style: t.bodyMedium?.copyWith(color: Colors.grey[600]),
+        ),
+        if (enabled)
+          Icon(
+            Icons.expand_more,
+            size: AppIconSize.md,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+      ],
+    );
+
+    if (!enabled) return label;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppBorderRadius.sm,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space4,
+          vertical: AppSpacing.space2,
+        ),
+        child: label,
       ),
     );
   }

@@ -6,6 +6,25 @@ import 'package:seoul_subway/domain/entities/route_result.dart';
 import 'package:seoul_subway/domain/entities/station.dart';
 import 'package:seoul_subway/features/route_search/utils/departure_time_calculator.dart';
 
+/// 출발 시각만 뽑는 테스트용 축약자.
+///
+/// 프로덕션은 출처가 필요해 `computeDepartureTimeDetailed` 만 쓴다. 아래 기존
+/// 테스트들은 시각 계산 자체(실시간 우선순위·방향 필터·역별 시간표)를 검증하는
+/// 회귀 가드이므로, 출처를 신경 쓰지 않는 호출부를 여기서 감싼다.
+DateTime computeDepartureTime({
+  required AsyncValue<List<ArrivalInfo>> arrivalAsync,
+  required RouteResult routeResult,
+  required DateTime now,
+  LineSchedule? lineSchedule,
+}) {
+  return computeDepartureTimeDetailed(
+    arrivalAsync: arrivalAsync,
+    routeResult: routeResult,
+    now: now,
+    lineSchedule: lineSchedule,
+  ).departure;
+}
+
 void main() {
   final fixedNow = DateTime(2026, 2, 23, 9, 0, 0); // 월요일
 
@@ -965,6 +984,128 @@ void main() {
       // E로 끝나지 않는 모드 전환은 그대로
       expect(baseLineId('9M'), '9M');
     });
+  });
+
+  group('resolveDepartureContext', () {
+    test('첫 방향성 세그먼트의 역·방향·급행여부·base 노선을 반환한다', () {
+      final context = resolveDepartureContext(makeRouteResult(lineId: '2'));
+      expect(context, isNotNull);
+      expect(context!.segment.stations.first.id, '201');
+      expect(context.express, isFalse);
+      expect(context.baseLine, '2');
+      // 2호선 순환: ID 증가(201 → 202)는 내선(상행)이므로 isDown=false
+      expect(context.isDown, isFalse);
+    });
+
+    test('가상 급행 노선은 express=true, baseLine 은 E 제거', () {
+      final context = resolveDepartureContext(makeRouteResult(lineId: '2E'));
+      expect(context!.express, isTrue);
+      expect(context.baseLine, '2');
+    });
+
+    test('세그먼트가 없으면 null', () {
+      const empty = RouteResult(
+        segments: [],
+        totalTimeSeconds: 0,
+        transferCount: 0,
+        stationCount: 0,
+      );
+      expect(resolveDepartureContext(empty), isNull);
+    });
+
+    test('방향 판별 가능한 세그먼트가 없으면 null', () {
+      final singleStation = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '2',
+            lineName: '2호선',
+            stations: const [
+              Station(
+                id: '201',
+                name: '강남',
+                lineId: '2',
+                latitude: 37.49,
+                longitude: 127.02,
+              ),
+            ],
+            durationSeconds: 0,
+            direction: '강남 방면',
+          ),
+        ],
+        totalTimeSeconds: 0,
+        transferCount: 0,
+        stationCount: 1,
+      );
+      expect(resolveDepartureContext(singleStation), isNull);
+    });
+  });
+
+  group('computeDepartureTimeDetailed - source', () {
+    test('실시간 도착정보가 있으면 realtime', () {
+      final result = computeDepartureTimeDetailed(
+        arrivalAsync: AsyncData([
+          makeArrival(subwayId: '1002', arrivalSeconds: 120),
+        ]),
+        routeResult: makeRouteResult(lineId: '2'),
+        now: fixedNow,
+        lineSchedule: makeSchedule(),
+      );
+      expect(result.source, DepartureSource.realtime);
+      expect(result.departure, fixedNow.add(const Duration(seconds: 120)));
+    });
+
+    test('실시간이 없고 시간표가 있으면 timetable', () {
+      final result = computeDepartureTimeDetailed(
+        arrivalAsync: const AsyncData([]),
+        routeResult: makeRouteResult(lineId: '2'),
+        now: fixedNow,
+        lineSchedule: makeSchedule(),
+      );
+      expect(result.source, DepartureSource.timetable);
+      expect(result.departure.isAfter(fixedNow), isTrue);
+    });
+
+    test('시간표 데이터 자체가 없으면 unavailable + 기준 시각 그대로', () {
+      final result = computeDepartureTimeDetailed(
+        arrivalAsync: const AsyncData([]),
+        routeResult: makeRouteResult(lineId: '2'),
+        now: fixedNow,
+        lineSchedule: null,
+      );
+      expect(result.source, DepartureSource.unavailable);
+      expect(result.departure, fixedNow);
+    });
+
+    test('막차 이후(운행 종료)면 unavailable', () {
+      // 2026-02-28 은 토요일 → 주말 스케줄(막차 23:40) 적용.
+      final afterLastTrain = DateTime(2026, 2, 28, 23, 50);
+      final result = computeDepartureTimeDetailed(
+        arrivalAsync: const AsyncData([]),
+        routeResult: makeRouteResult(lineId: '2'),
+        now: afterLastTrain,
+        lineSchedule: makeSchedule(),
+      );
+      expect(result.source, DepartureSource.unavailable);
+      expect(result.departure, afterLastTrain);
+    });
+
+    test('세그먼트가 없으면 unavailable', () {
+      const empty = RouteResult(
+        segments: [],
+        totalTimeSeconds: 0,
+        transferCount: 0,
+        stationCount: 0,
+      );
+      final result = computeDepartureTimeDetailed(
+        arrivalAsync: const AsyncData([]),
+        routeResult: empty,
+        now: fixedNow,
+        lineSchedule: makeSchedule(),
+      );
+      expect(result.source, DepartureSource.unavailable);
+      expect(result.departure, fixedNow);
+    });
+
   });
 }
 
