@@ -447,7 +447,7 @@ void main() {
           '인천대입구 → 인하대: 원인재 환승 1회 경로가 선택됨 (환승역 데이터 보강 회귀)',
           () async {
         // 원인재는 인천1호선과 수인분당선 환승역이지만, 과거 stations.json 에
-        // 인천1호선 레코드(I22)만 있고 수인분당선 레코드와 환승 플래그가 누락되어
+        // 인천1호선 레코드(I24)만 있고 수인분당선 레코드와 환승 플래그가 누락되어
         // Dijkstra 가 인천1호선 본선을 끝까지 타고 인천역 근처로 돌아가 수인분당선
         // 으로 갈아타는 비상식적 경로를 선택했다.
         //
@@ -455,11 +455,11 @@ void main() {
         // 를 구성하고 fastest 가 원인재 환승 1회 경로를 선택하는지 검증한다.
         final st = [
           // 인천1호선 (인천대입구 → 캠퍼스타운 → 원인재)
-          const Station(id: 'I28', name: '인천대입구', lineId: '인천1',
+          const Station(id: 'I30', name: '인천대입구', lineId: '인천1',
               latitude: 0, longitude: 0),
-          const Station(id: 'I25', name: '캠퍼스타운', lineId: '인천1',
+          const Station(id: 'I27', name: '캠퍼스타운', lineId: '인천1',
               latitude: 0, longitude: 0),
-          const Station(id: 'I22', name: '원인재', lineId: '인천1',
+          const Station(id: 'I24', name: '원인재', lineId: '인천1',
               latitude: 0, longitude: 0,
               isTransfer: true, transferLines: ['인천1', '수인분당']),
           // 수인분당선 (원인재 → 연수 → 인하대) — 실제 순서는 다르지만
@@ -473,9 +473,9 @@ void main() {
               latitude: 0, longitude: 0),
         ];
         final conns = [
-          const Connection(fromStationId: 'I28', toStationId: 'I25',
+          const Connection(fromStationId: 'I30', toStationId: 'I27',
               lineId: '인천1', travelTimeSeconds: 120),
-          const Connection(fromStationId: 'I25', toStationId: 'I22',
+          const Connection(fromStationId: 'I27', toStationId: 'I24',
               lineId: '인천1', travelTimeSeconds: 120),
           const Connection(fromStationId: 'K266', toStationId: 'B61',
               lineId: '수인분당', travelTimeSeconds: 240),
@@ -490,7 +490,7 @@ void main() {
         when(() => mockRepo.getExpressSkipEdges())
             .thenAnswer((_) async => <ExpressSkipEdge>[]);
 
-        final result = await searchRoute.executeAll('I28', 'B54');
+        final result = await searchRoute.executeAll('I30', 'B54');
 
         expect(result.fastest, isNotNull);
         expect(result.fastest!.transferCount, 1,

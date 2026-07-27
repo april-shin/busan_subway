@@ -4661,7 +4661,7 @@
     "fromStationId": "I01",
     "toStationId": "I02",
     "lineId": "인천1",
-    "travelTimeSeconds": 60,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -4675,28 +4675,28 @@
     "fromStationId": "I03",
     "toStationId": "I04",
     "lineId": "인천1",
-    "travelTimeSeconds": 300,
+    "travelTimeSeconds": 270,
     "isTransfer": false
   },
   {
     "fromStationId": "I04",
     "toStationId": "I05",
     "lineId": "인천1",
-    "travelTimeSeconds": 240,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
     "fromStationId": "I05",
     "toStationId": "I06",
     "lineId": "인천1",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 180,
     "isTransfer": false
   },
   {
     "fromStationId": "I06",
     "toStationId": "I07",
     "lineId": "인천1",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -4717,7 +4717,7 @@
     "fromStationId": "I09",
     "toStationId": "I10",
     "lineId": "인천1",
-    "travelTimeSeconds": 120,
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {
@@ -4731,7 +4731,7 @@
     "fromStationId": "I11",
     "toStationId": "I12",
     "lineId": "인천1",
-    "travelTimeSeconds": 270,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -4745,7 +4745,7 @@
     "fromStationId": "I13",
     "toStationId": "I14",
     "lineId": "인천1",
-    "travelTimeSeconds": 120,
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {
@@ -4759,7 +4759,7 @@
     "fromStationId": "I15",
     "toStationId": "I16",
     "lineId": "인천1",
-    "travelTimeSeconds": 300,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -4773,7 +4773,7 @@
     "fromStationId": "I17",
     "toStationId": "I18",
     "lineId": "인천1",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 180,
     "isTransfer": false
   },
   {
@@ -4787,28 +4787,28 @@
     "fromStationId": "I19",
     "toStationId": "I20",
     "lineId": "인천1",
-    "travelTimeSeconds": 60,
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {
     "fromStationId": "I20",
     "toStationId": "I21",
     "lineId": "인천1",
-    "travelTimeSeconds": 150,
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {
     "fromStationId": "I21",
     "toStationId": "I22",
     "lineId": "인천1",
-    "travelTimeSeconds": 150,
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {
     "fromStationId": "I22",
     "toStationId": "I23",
     "lineId": "인천1",
-    "travelTimeSeconds": 150,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -4822,21 +4822,21 @@
     "fromStationId": "I24",
     "toStationId": "I25",
     "lineId": "인천1",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
     "fromStationId": "I25",
     "toStationId": "I26",
     "lineId": "인천1",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
     "fromStationId": "I26",
     "toStationId": "I27",
     "lineId": "인천1",
-    "travelTimeSeconds": 90,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {
@@ -4850,21 +4850,35 @@
     "fromStationId": "I28",
     "toStationId": "I29",
     "lineId": "인천1",
-    "travelTimeSeconds": 300,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {
     "fromStationId": "I29",
     "toStationId": "I30",
     "lineId": "인천1",
-    "travelTimeSeconds": 60,
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {
     "fromStationId": "I30",
     "toStationId": "I31",
     "lineId": "인천1",
-    "travelTimeSeconds": 60,
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I31",
+    "toStationId": "I32",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "I32",
+    "toStationId": "I33",
+    "lineId": "인천1",
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {

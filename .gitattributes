@@ -18,3 +18,7 @@
 
 # Windows 배치 파일만 CRLF 허용
 *.bat text eol=crlf
+
+# 외부 원본 데이터는 바이트 그대로 보존 (CP949 인코딩 + CRLF).
+# 인천교통공사 열차운행시각표 CSV — 재수집 시 원본과 diff 비교가 가능해야 한다.
+tool/data/incheon1/*.csv -text
