@@ -220,6 +220,29 @@ void main() {
       expect(htmlContent, contains('existing.scopeKey = scopeKey'));
     });
 
+    test('앞선 열차가 위에 오도록 열차 DOM 순서를 재정렬한다', () {
+      // SVG 는 문서 순서대로 페인트 → 마지막 자식이 최상위.
+      // 남은시간 내림차순으로 재삽입해야 남은시간이 가장 적은(앞선) 열차가
+      // 마지막 = 최상위가 되어 말풍선 겹침에서 가려지지 않는다.
+      final fnStart = htmlContent.indexOf('function reorderTrainsByRemaining');
+      expect(fnStart, greaterThan(0), reason: '재정렬 함수가 존재해야 한다');
+      final fnBody = htmlContent.substring(fnStart, fnStart + 1200);
+
+      expect(fnBody, contains('return b.rem - a.rem'));
+      expect(fnBody, contains('liveTrainsGroup.appendChild(items[i].el)'));
+
+      // showTrains 가 신규 추가·제거를 끝낸 뒤 호출해야 한다.
+      final showStart = htmlContent.indexOf('window.showTrains');
+      final showEnd = htmlContent.indexOf('window.clearTrains');
+      final showBody = htmlContent.substring(showStart, showEnd);
+      expect(showBody, contains('reorderTrainsByRemaining()'));
+      expect(
+        showBody.indexOf('reorderTrainsByRemaining()'),
+        greaterThan(showBody.indexOf('toRemove.length')),
+        reason: '제거 처리 이후에 재정렬해야 한다',
+      );
+    });
+
     test('경로 스코프가 바뀐 열차는 grace 없이 즉시 제거된다', () {
       // 회귀 가드: 도착역만 바꿔 경로 노선이 달라졌을 때 이전 노선 열차가
       // jitter grace(MAX_MISS_CYCLES)로 최대 2분간 지도에 남던 문제.
