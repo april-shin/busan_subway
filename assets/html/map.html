@@ -111,9 +111,16 @@ html, body {
 #text-layer {
   position: absolute;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 2416px; height: 1560px;
+  transform-origin: 0 0;
+  will-change: transform;
   pointer-events: none;
-  overflow: hidden;
+  /* 레이어가 지도 캔버스(2416x1560)로 고정 치수화되면서 UA 기본값(hidden)이
+     경계 밖으로 삐져나오는 콘텐츠(말단역 도착 말풍선, 화면 끝 라벨 등)를
+     실제로 잘라내기 시작했다. 컴포지터 전용 transform 특성은 overflow 값과
+     무관하므로 visible로 되돌려 구버전(뷰포트 전체 크기 레이어)과 동일하게
+     클리핑 없이 렌더링한다. */
+  overflow: visible;
 }
 #text-layer text {
   font-size: inherit !important;
@@ -126,9 +133,11 @@ html, body {
 #train-layer {
   position: absolute;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 2416px; height: 1560px;
+  transform-origin: 0 0;
+  will-change: transform;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 path[data-line] { stroke-width: 5 !important; }
 /* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
@@ -205,7 +214,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 </div>
 
 <svg id="text-layer" xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 2416 1560">
+  viewBox="0 0 2416 1560" width="2416" height="1560">
 <text x="2056.0" y="1204.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="1-GA" data-station="수서">수서</text>
 <text x="1828.0" y="1240.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="성남">성남</text>
 <text x="1492.0" y="1360.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="구성">구성</text>
@@ -864,7 +873,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 </svg>
 
 <svg id="train-layer" xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 2416 1560">
+  viewBox="0 0 2416 1560" width="2416" height="1560">
   <g id="live-trains"></g>
 </svg>
 
@@ -897,6 +906,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // ============================================================
   var scale = INITIAL_SCALE;
   var tx = 0, ty = 0;
+  // text-layer 폰트/스트로크 보정을 마지막으로 계산한 scale (팬 전용 프레임에서
+  // scale 이 안 바뀌면 재계산을 건너뛰기 위한 캐시). null 이면 최초 1회 강제 계산.
+  var lastFontScale = null;
   var stations = [];
   var connections = [];
   var lineColors = {};
@@ -960,23 +972,47 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // 변환 적용
   // ============================================================
   function applyTransform() {
-    container.style.transform = 'matrix(' + scale + ',0,0,' + scale + ',' + tx + ',' + ty + ')';
+    // map-container / text-layer / train-layer 는 모두 뷰포트 원점(0,0)에 고정된
+    // 채 viewBox 1:1(2416x1560)로 렌더링되고, 팬/줌은 이 CSS transform matrix
+    // 하나로만 표현된다. 셋 다 순수 컴포지터 레이어 이동/스케일이라 팬 중
+    // 메인스레드 리페인트가 발생하지 않는다.
+    //
+    // [래스터 기아 수정, 2026-07-29] 이전에는 text-layer/train-layer가
+    // width:100%/height:100% + 매 프레임 viewBox 재계산 방식이었다. viewBox
+    // 변경은 SVG 뷰포트의 좌표 매핑 자체를 바꾸는 것이라 컴포지터 전용 연산이
+    // 아니라 내부 콘텐츠(특히 text-layer의 역명 라벨 수백 개) 전체를 메인스레드
+    // 에서 강제로 다시 레이아웃/페인트한다. 팬 제스처 동안 매 rAF(pointermove)
+    // 마다 이 강제 리페인트가 반복되며 메인스레드를 점유해, map-container가
+    // 새로 노출된 영역의 타일을 래스터링할 기회(커밋)를 밀어내 안드로이드에서
+    // 노선이 잠깐(수 프레임) 완전히 사라지는 점멸이 발생했다(텍스트 라벨은
+    // 새 위치에 정상 표시된 채로). CSS transform 방식으로 바꿔 팬 중 재페인트
+    // 자체를 제거한다.
+    var matrixStr =
+        'matrix(' + scale + ',0,0,' + scale + ',' + tx + ',' + ty + ')';
+    container.style.transform = matrixStr;
+    textLayer.style.transform = matrixStr;
+    trainLayer.style.transform = matrixStr;
 
-    // 텍스트 레이어: viewBox로 맵과 동일 영역 표시
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var x0 = -tx / scale, y0 = -ty / scale;
-    var vbW = vw / scale, vbH = vh / scale;
-    textLayer.setAttribute('viewBox', x0 + ' ' + y0 + ' ' + vbW + ' ' + vbH);
-    // 열차 레이어: text-layer와 동일한 viewBox 동기화로 map-container와 같은
-    // 화면 매핑을 만든다 (좌표/크기는 그대로, z-order만 text-layer 위로 분리).
-    // font-size/stroke 보정(아래)은 텍스트 전용이므로 trainLayer에는 적용하지 않는다.
-    trainLayer.setAttribute('viewBox', x0 + ' ' + y0 + ' ' + vbW + ' ' + vbH);
-
-    // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로)
+    // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로).
     // 단, COMP_FLOOR 아래로는 완전 보상하지 않아 최대 줌아웃에서 라벨이 축소되도록.
-    var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
-    textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
-    textLayer.style.setProperty('--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+    // [2026-07 리뷰 수정] 구 viewBox 구현도 element(vw×vh) : viewBox(vw/scale×vh/scale)
+    // 비율로 이미 scale배 확대를 수행하고 있었다 — CSS transform(scale)과 수학적으로
+    // 동일한 배율이다. 즉 로컬(SVG 사용자 단위) font-size/stroke-width 값은 구현을
+    // 바꾸기 전과 후 모두 "그 위에 scale배가 곱해진다"는 전제가 같으므로, 여기서
+    // 추가로 /scale 을 나눠 상쇄할 필요가 없다(그렇게 하면 scale배 보정이 이중으로
+    // 취소되어 최종 화면 크기가 scale=0.5에서 2배, scale=2에서 1/2배로 어긋난다 —
+    // 브라우저 A/B 실측으로 확인된 회귀). 최종 화면 크기 = 로컬값 × scale =
+    // TEXT_BASE_FONT_SIZE/cs × scale, TEXT_BASE_STROKE_W/cs × scale 로 구버전과
+    // 동일하게 유지된다. scale 이 실제로 바뀐 프레임(핀치/휠 줌)에서만 재계산하고,
+    // 팬 전용 프레임(scale 불변, tx/ty만 변경)에서는 건너뛰어 --stroke-w/font-size
+    // 변경으로 인한 text-layer 리페인트를 추가로 만들지 않는다.
+    if (scale !== lastFontScale) {
+      var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
+      textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
+      textLayer.style.setProperty(
+          '--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+      lastFontScale = scale;
+    }
 
     updateRouteToolbarPosition();
   }
@@ -1160,6 +1196,11 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // 인접 역 라벨을 침범한다. (이후 setInitialView→applyTransform 이 현재
     // 줌에 맞는 값으로 다시 설정하므로 임시 고정은 무해.)
     textLayer.style.fontSize = TEXT_BASE_FONT_SIZE + 'px';
+    // 위에서 fontSize를 직접 덮어썼으므로, applyTransform의 lastFontScale 캐시가
+    // "이미 현재 scale에 맞게 계산됐다"고 오인해 재계산을 건너뛰지 않도록 무효화한다.
+    // 현재는 buildTextTargets가 최초 applyTransform 이전(lastFontScale=null인 시점)
+    // 에만 호출되어 무해하지만, 향후 재측정 목적으로 재호출될 경우를 대비한 안전장치.
+    lastFontScale = null;
     var texts = textLayer.querySelectorAll('text[data-station]');
     for (var i = 0; i < texts.length; i++) {
       var el = texts[i];
@@ -2946,7 +2987,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // 따라서 이 라벨들만 회피하면 출발역 상류 구간(= 열차가 들어오는 방향)이
   // 가려지지 않는다. 실시간 열차 위치를 조회할 필요 없이 정적 기하만으로
   // 해결되므로 열차 데이터에 의존하지 않는다.
-  // text-layer 는 map-container 와 동일한 viewBox 동기화를 쓰므로
+  // text-layer 는 map-container 와 동일한 CSS transform(matrix(scale,...))을 쓰므로
   // SVG 사용자 좌표 → 화면 좌표 환산 공식(scale/tx/ty)이 같다.
   function collectAvoidScreenRects() {
     var rects = [];

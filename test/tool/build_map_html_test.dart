@@ -170,15 +170,133 @@ void main() {
       expect(htmlContent, contains('pointer-events: none'));
     });
 
-    test('applyTransform에서 텍스트 레이어 viewBox를 동기화한다', () {
+    test(
+        'applyTransform에서 텍스트/열차 레이어를 CSS transform(컴포지터 전용)으로 동기화한다',
+        () {
+      // [래스터 기아 수정] text-layer/train-layer는 더 이상 매 프레임 viewBox를
+      // 재계산하지 않는다 — viewBox 변경은 SVG 뷰포트 좌표 매핑을 바꿔 내부 콘텐츠
+      // (역명 라벨 수백 개) 전체를 메인스레드에서 강제 리페인트시키고, 팬 제스처
+      // 동안 이 리페인트가 map-container의 신규 타일 래스터를 기아시켜 안드로이드
+      // 에서 노선이 순간 소실되는 점멸을 유발했다. 이제 map-container와 동일한
+      // CSS transform matrix를 text-layer/train-layer에도 그대로 적용해 팬 중
+      // 재페인트 자체를 제거한다(회귀 가드).
       final applyStart = htmlContent.indexOf('function applyTransform()');
       final applyEnd =
           htmlContent.indexOf('function setInitialView()', applyStart);
       final applyBody = htmlContent.substring(applyStart, applyEnd);
 
-      expect(applyBody, contains("textLayer.setAttribute('viewBox'"));
+      expect(applyBody, isNot(contains("textLayer.setAttribute('viewBox'")));
+      expect(applyBody, isNot(contains("trainLayer.setAttribute('viewBox'")));
+      expect(applyBody, contains('textLayer.style.transform = matrixStr'));
+      expect(applyBody, contains('trainLayer.style.transform = matrixStr'));
       expect(applyBody, contains('textLayer.style.fontSize'));
       expect(applyBody, contains("'--stroke-w'"));
+      // 팬 전용 프레임(scale 불변)에서는 폰트/스트로크 보정을 건너뛰어야 한다.
+      expect(applyBody, contains('scale !== lastFontScale'));
+    });
+
+    test('text-layer/train-layer가 map-container와 동일한 고정 viewBox(1:1)를 갖는다',
+        () {
+      // viewBox는 최초 렌더링 시 "0 0 2416 1560"으로 고정되고 이후 JS에서 다시
+      // 바뀌지 않는다 (팬/줌은 오직 CSS transform으로만 표현).
+      // 생성기 템플릿의 줄바꿈/공백 변화에 깨지지 않도록 개행 포함 원문 대신
+      // 정규식(공백류는 \s+로 흡수)으로 매칭한다.
+      final textLayerTagPattern = RegExp(
+        r'id="text-layer"\s+xmlns="http://www\.w3\.org/2000/svg"\s+'
+        r'viewBox="0 0 2416 1560"\s+width="2416"\s+height="1560"',
+      );
+      final trainLayerTagPattern = RegExp(
+        r'id="train-layer"\s+xmlns="http://www\.w3\.org/2000/svg"\s+'
+        r'viewBox="0 0 2416 1560"\s+width="2416"\s+height="1560"',
+      );
+      expect(textLayerTagPattern.hasMatch(htmlContent), isTrue,
+          reason: 'text-layer의 viewBox/width/height 고정 마크업을 찾지 못했다');
+      expect(trainLayerTagPattern.hasMatch(htmlContent), isTrue,
+          reason: 'train-layer의 viewBox/width/height 고정 마크업을 찾지 못했다');
+    });
+
+    test('텍스트 폰트/스트로크 보정 수식이 scale 이중 나눗셈 없이 TEXT_BASE/cs 형태를 유지한다', () {
+      // [회귀 가드, 2026-07-29] CSS transform 전환 당시 "text-layer 전체가
+      // scale배로 확대되니 로컬 값에서 미리 나눠 상쇄해야 한다"고 잘못 판단해
+      // `/ scale`을 추가로 나눈 적이 있다. 그러나 구 viewBox 구현도 이미 동일한
+      // scale 배율로 확대되고 있었으므로(뷰포트:viewBox 비율 = scale) 이는 이중
+      // 보정이었다 — 브라우저 A/B 실측으로 scale=0.5에서 라벨 2배, scale=2에서
+      // 라벨 1/2배가 되는 회귀가 확정됐다. `contains('textLayer.style.fontSize')`
+      // 같은 문자열 존재 검사만으로는 이 회귀를 잡지 못하므로, 대입 우변 수식을
+      // 정규식으로 추출해 정확한 값 형태(scale 없음)를 고정한다.
+      final applyStart = htmlContent.indexOf('function applyTransform()');
+      final applyEnd =
+          htmlContent.indexOf('function setInitialView()', applyStart);
+      final applyBody = htmlContent.substring(applyStart, applyEnd);
+
+      final fontSizeMatch =
+          RegExp(r"textLayer\.style\.fontSize\s*=\s*\(([^)]+)\)\s*\+\s*'px'")
+              .firstMatch(applyBody);
+      expect(fontSizeMatch, isNotNull,
+          reason: 'textLayer.style.fontSize 대입식을 찾지 못했다');
+      expect(
+        fontSizeMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
+        equals('TEXT_BASE_FONT_SIZE/cs'),
+        reason: '/scale 이 붙으면 CSS transform의 scale 배율과 이중으로 곱해져 '
+            '화면 폰트 크기가 scale=0.5에서 2배, scale=2에서 1/2배로 어긋난다',
+      );
+
+      final strokeMatch =
+          RegExp(r"'--stroke-w',\s*\(([^)]+)\)\s*\+\s*'px'")
+              .firstMatch(applyBody);
+      expect(strokeMatch, isNotNull, reason: '--stroke-w 대입식을 찾지 못했다');
+      expect(
+        strokeMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
+        equals('TEXT_BASE_STROKE_W/cs'),
+        reason: '/scale 이 붙으면 화면 stroke 두께도 동일하게 이중 보정된다',
+      );
+
+      // 설계 불변식 검증: 최대 줌아웃(MIN_SCALE)에서 화면 폰트 =
+      // TEXT_BASE_FONT_SIZE * MIN_SCALE / TEXT_COMP_FLOOR = 12 * 0.5 / (2/3) = 9px
+      // (소스 상단 주석에 문서화된 값). 상수들이 실제로 이 값을 만들어내는지
+      // 재계산해 문서-코드 드리프트까지 함께 감지한다.
+      final baseFontMatch = RegExp(r'TEXT_BASE_FONT_SIZE\s*=\s*([\d.]+)')
+          .firstMatch(htmlContent);
+      final minScaleMatch =
+          RegExp(r'MIN_SCALE\s*=\s*([\d.]+)').firstMatch(htmlContent);
+      final compFloorMatch =
+          RegExp(r'TEXT_COMP_FLOOR\s*=\s*(\d+)\s*/\s*(\d+)')
+              .firstMatch(htmlContent);
+      expect(baseFontMatch, isNotNull, reason: 'TEXT_BASE_FONT_SIZE 상수를 찾지 못했다');
+      expect(minScaleMatch, isNotNull, reason: 'MIN_SCALE 상수를 찾지 못했다');
+      expect(compFloorMatch, isNotNull, reason: 'TEXT_COMP_FLOOR 상수를 찾지 못했다');
+
+      final baseFont = double.parse(baseFontMatch!.group(1)!);
+      final minScale = double.parse(minScaleMatch!.group(1)!);
+      final compFloor = double.parse(compFloorMatch!.group(1)!) /
+          double.parse(compFloorMatch.group(2)!);
+
+      final screenFontAtMinScale = baseFont * minScale / compFloor;
+      expect(
+        screenFontAtMinScale,
+        closeTo(9.0, 0.001),
+        reason: '최대 줌아웃 화면 폰트 불변식(TEXT_BASE_FONT_SIZE*MIN_SCALE/TEXT_COMP_FLOOR'
+            ' = 9px)이 깨졌다',
+      );
+    });
+
+    test('text-layer/train-layer CSS가 overflow: visible로 캔버스 밖 클리핑을 막는다', () {
+      // [회귀 가드, 2026-07-29] 두 레이어가 지도 캔버스(2416x1560)로 고정
+      // 치수화되면서 UA 기본값(hidden)이 말단역 도착 말풍선·화면 끝 라벨을
+      // 실제로 잘라냈다. overflow: visible 이 빠지면(hidden 원복 포함) 같은
+      // 클리핑이 재발하므로 각 레이어의 CSS 규칙 블록에서 값을 직접 고정한다.
+      for (final layer in ['#text-layer', '#train-layer']) {
+        final ruleMatch = RegExp(
+          RegExp.escape(layer) + r'\s*\{([^}]*)\}',
+        ).firstMatch(htmlContent);
+        expect(ruleMatch, isNotNull, reason: '$layer CSS 규칙 블록을 찾지 못했다');
+        expect(
+          RegExp(r'overflow\s*:\s*visible').hasMatch(ruleMatch!.group(1)!),
+          isTrue,
+          reason: '$layer 에 overflow: visible 이 없으면 고정 치수(2416x1560) '
+              '경계 밖 말풍선·라벨이 잘린다',
+        );
+      }
     });
 
     test('텍스트 레이어 CSS에 font-size inherit !important가 설정되어 있다', () {
