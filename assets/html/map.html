@@ -1732,8 +1732,14 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       keepNameSet[keepNamesArr[i].replace(/[\n\r]/g, '')] = true;
     }
 
+    // ⚠️ 흐림 처리 쿼리는 반드시 원본 지도(container)·라벨 레이어(textLayer)로
+    // 스코프를 제한한다. document 전역으로 조회하면 #train-layer 안의 실시간
+    // 열차 요소까지 잡힌다 — 도착 말풍선 배경(rect, 노선색)·급행 배지·디버그
+    // 박스가 .dimmed(opacity 0.12) 되어 흰색 말풍선 글씨만 남아 안 보이게 된다.
+    // (경로 모드 최단경로↔최소환승 전환처럼 열차가 이미 그려진 뒤 재호출될 때 발생)
+
     // path[data-line] 요소 처리
-    var paths = document.querySelectorAll('path[data-line]');
+    var paths = container.querySelectorAll('path[data-line]');
     for (var i = 0; i < paths.length; i++) {
       var dl = paths[i].getAttribute('data-line');
       if (codeSet[dl]) {
@@ -1753,7 +1759,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     //  - 강조 노선에 속하고 keepNameSet 에 있는 역: 밝게 유지
     //  - 강조 노선에 속하지만 keepNameSet 에 없는 역(경로 밖·하류): 흐리게
     //  - 강조 노선에 속하지 않는 역: 기존대로 흐리게
-    var texts = document.querySelectorAll('text[data-line]');
+    var texts = textLayer.querySelectorAll('text[data-line]');
     for (var i = 0; i < texts.length; i++) {
       var dl = texts[i].getAttribute('data-line');
       var sName = (texts[i].getAttribute('data-station') || '').replace(/[\n\r]/g, '');
@@ -1791,7 +1797,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
 
     // circle 요소 처리 (좌표 매칭, overlay 제외)
-    var circles = document.querySelectorAll('circle:not([data-overlay])');
+    var circles = container.querySelectorAll('circle:not([data-overlay])');
     for (var i = 0; i < circles.length; i++) {
       var c = circles[i];
       var coordKey = parseFloat(c.getAttribute('cx')) + ',' + parseFloat(c.getAttribute('cy'));
@@ -1805,7 +1811,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // rect 요소 처리 (환승역 연결선, 확장 영역 매칭)
     // 여유값 8px: 환승역 circle 반지름(r=5) + 3px 마진
     var RECT_MATCH_MARGIN = 8;
-    var rects = document.querySelectorAll('rect:not(#route-overlay-bg)');
+    var rects = container.querySelectorAll('rect:not(#route-overlay-bg)');
     for (var i = 0; i < rects.length; i++) {
       var r = rects[i];
       var rx = parseFloat(r.getAttribute('x') || '0');

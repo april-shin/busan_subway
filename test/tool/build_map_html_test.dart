@@ -185,6 +185,30 @@ void main() {
       expect(htmlContent, contains('font-size: inherit !important'));
     });
 
+    test('highlightLines 흐림 처리가 열차 레이어를 건드리지 않는다', () {
+      // 회귀 가드: document 전역 조회는 #train-layer 안의 도착 말풍선 배경(rect)·
+      // 급행 배지·디버그 박스까지 .dimmed 처리해, 경로 모드(최단경로↔최소환승)
+      // 전환 시 흰색 말풍선 글씨만 남아 남은시간이 안 보이게 된다.
+      final hlStart = htmlContent.indexOf('window.highlightLines');
+      final hlEnd = htmlContent.indexOf('window.clearLineHighlight');
+      expect(hlStart, greaterThan(0));
+      expect(hlEnd, greaterThan(hlStart));
+      final hlBody = htmlContent.substring(hlStart, hlEnd);
+
+      // 원본 지도(container) / 라벨 레이어(textLayer) 로 스코프가 제한돼야 한다.
+      expect(hlBody, contains("container.querySelectorAll('path[data-line]')"));
+      expect(hlBody,
+          contains("container.querySelectorAll('circle:not([data-overlay])')"));
+      expect(
+        hlBody,
+        contains("container.querySelectorAll('rect:not(#route-overlay-bg)')"),
+      );
+      expect(hlBody, contains("textLayer.querySelectorAll('text[data-line]')"));
+
+      // 전역 조회가 남아 있으면 열차 요소가 다시 흐려진다.
+      expect(hlBody, isNot(contains('document.querySelectorAll')));
+    });
+
     test('showTrains가 경로 스코프 키를 두 번째 인자로 받는다', () {
       // Flutter 가 activeRouteFilter 를 스코프 키로 넘기고, JS 가 이를 열차
       // 상태에 기록해야 경로 변경으로 무효해진 열차를 즉시 제거할 수 있다.
