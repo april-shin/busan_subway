@@ -126,14 +126,16 @@ lib/
 - **환승 시간 키 형식:** `"{역이름}_{lineId1}_{lineId2}"` (`transfer_times.json` 내)
 ### 노선 정보
 
-22개 노선 (1~9호선, 신분당, 경의중앙, 경춘, 공항철도 등). 상세: `.claude/docs/lines-reference.md`
+23개 노선 (1~9호선, 신분당, 경의중앙, 경춘, 공항철도 등). 상세: `.claude/docs/lines-reference.md`
 
 ### 상태 관리
 
-Riverpod 2.x + 코드 생성 (`@riverpod` 어노테이션). 주요 프로바이더:
+Riverpod 3.x + 코드 생성 (`@riverpod` 어노테이션). `StateProvider`/`StateNotifier` 는
+riverpod 3 에서 레거시로 이동해 `package:flutter_riverpod/legacy.dart` 임포트가 필요하다.
+주요 프로바이더:
 
 - `allStationsProvider` — 번들 JSON에서 전체 역 목록 로드
-- `selectedStationsProvider` — 출발/도착역 선택용 `StateNotifier<SelectedStations>` (수동 작성, 비생성)
+- `selectedStationsProvider` — 출발/경유/도착역 선택용 `StateNotifier<SelectedStations>` (수동 작성, 비생성). 경유역은 `waypoints` 리스트로 최대 `maxWaypoints`(3)개
 - `tappedStationProvider` — 지도 탭 상호작용용 `StateProvider<Station?>`
 - `arrivalInfoProvider(stationName)` — 실시간 도착 정보 family 프로바이더
 - `activeRouteFilterProvider` — 활성 경로의 첫 세그먼트 노선+방향 필터 (`StateProvider<ActiveRouteFilter?>`)
@@ -148,7 +150,7 @@ Riverpod 2.x + 코드 생성 (`@riverpod` 어노테이션). 주요 프로바이�
 | 경로 | 스크린 | 비고 |
 |---|---|---|
 | `/` | HomeScreen | 지도 + 검색바 |
-| `/pick-station/:purpose` | StationPickerScreen | purpose = "departure" 또는 "arrival" |
+| `/pick-station/:purpose` | StationPickerScreen | purpose = `departure` / `arrival` / `waypoint` / `home`(지도 시작점). `waypoint` 는 쿼리 `?index=N`(대상 슬롯) + `?insert=true`(그 자리에 삽입, 없으면 교체) |
 | `/route-result` | RouteResultScreen | `RouteResult`를 `state.extra`로 전달 |
 | `/station/:stationId` | StationDetailScreen | |
 | `/arrivals/:stationName` | ArrivalInfoScreen | 15초마다 자동 새로고침 |

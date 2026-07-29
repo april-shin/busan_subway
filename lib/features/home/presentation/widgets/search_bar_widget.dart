@@ -22,10 +22,12 @@ const Color _fieldActionColor = Color(0xFF616161);
 ///
 /// 필드는 위에서부터 출발 → 경유역들(방문 순서) → 도착 순으로 쌓인다.
 ///
-/// 출발을 제외한 각 필드는 취소(X) 좌측에 경유 추가(+) 를 갖는다. + 를 누르면
-/// **그 필드 바로 위**에 경유칸이 삽입된다 — 경유 필드의 + 는 그 자리에 끼워넣고
-/// (기존 경유역은 아래로 밀림), 도착 필드의 + 는 마지막 경유역으로 추가된다.
-/// 출발 필드에 + 가 없는 이유: 출발역 위에는 정차할 곳이 없다.
+/// 출발을 제외한 각 필드는 취소(X) 좌측에 경유지 추가(+) 를 갖는다. 삽입 위치는
+/// **누른 정차역 바로 다음**이다 — 즉 새 칸이 그 필드 아래에 생긴다:
+///   - 경유지 필드의 + → 그 경유지 **아래**(index i+1). 뒤 경유역들은 한 칸 밀린다.
+///   - 도착 필드의 + → 도착역 **위**(index waypoints.length). 도착역 뒤에는 정차할
+///     곳이 없으므로 이 필드만 위로 삽입된다.
+/// 출발 필드에 + 가 없는 이유: 출발 다음 자리는 첫 경유지 필드의 + 가 담당한다.
 /// 경유역 상한 도달 시 호출부가 `onInsertWaypointAt: null` 로 모든 + 를 숨긴다.
 class RouteSearchBar extends StatelessWidget {
   final Station? departure;
@@ -53,7 +55,8 @@ class RouteSearchBar extends StatelessWidget {
   final void Function(int index)? onWaypointClear;
 
   /// index 위치에 경유칸을 삽입(+). index 는 [waypoints] 의 삽입 지점이며
-  /// `0..waypoints.length` 범위다(도착 필드의 + 는 `waypoints.length`).
+  /// `0..waypoints.length` 범위다 — 경유지 필드는 `i+1`, 도착 필드는
+  /// `waypoints.length` 를 넘긴다(위 클래스 문서의 삽입 규칙 참조).
   ///
   /// null 이면 모든 필드의 + 를 그리지 않는다 — 호출부가 경유역 상한 도달 시
   /// null 을 넘겨 추가 UI 를 숨긴다.
@@ -122,7 +125,7 @@ class RouteSearchBar extends StatelessWidget {
                   onClear: onClearDeparture,
                 ),
                 // 경유역: 출발 다음, 도착 앞에 방문 순서대로.
-                // 각 경유 필드의 + 는 자기 자리(i)에 새 칸을 끼워 넣는다.
+                // 각 경유 필드의 + 는 자기 **다음** 자리(i+1)에 새 칸을 끼워 넣는다.
                 for (var i = 0; i < waypoints.length; i++) ...[
                   const SizedBox(height: AppSpacing.space4),
                   _StationField(
@@ -136,13 +139,14 @@ class RouteSearchBar extends StatelessWidget {
                     onClear: onWaypointClear == null
                         ? null
                         : () => onWaypointClear!(i),
-                    onAddAbove: onInsertWaypointAt == null
+                    onAddStop: onInsertWaypointAt == null
                         ? null
-                        : () => onInsertWaypointAt!(i),
+                        : () => onInsertWaypointAt!(i + 1),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.space4),
-                // 도착 필드의 + 는 마지막 경유역으로 추가(= 도착 바로 위).
+                // 도착 필드의 + 는 맨 뒤 경유역으로 추가(= 도착 바로 위).
+                // 도착역 뒤에는 정차할 곳이 없어 이 필드만 위로 삽입한다.
                 _StationField(
                   label: '도착',
                   station: arrival,
@@ -150,7 +154,7 @@ class RouteSearchBar extends StatelessWidget {
                   iconColor: Colors.red,
                   onTap: onArrivalTap,
                   onClear: onClearArrival,
-                  onAddAbove: onInsertWaypointAt == null
+                  onAddStop: onInsertWaypointAt == null
                       ? null
                       : () => onInsertWaypointAt!(waypoints.length),
                 ),
@@ -230,12 +234,14 @@ class _StationField extends StatelessWidget {
   /// 입력창 내부 우측에 X 버튼을 그린다.
   final VoidCallback? onClear;
 
-  /// 이 입력창 **바로 위**에 경유칸을 추가(+). X 버튼 좌측에 그린다.
+  /// 이 입력창 옆에 경유칸을 추가(+). X 버튼 좌측에 그린다.
   /// null 이면 + 를 그리지 않는다(출발 필드, 또는 경유역 상한 도달).
   ///
-  /// 역 선택 여부와 무관하게 노출한다 — "이 정차역 앞에 한 곳 더 들른다"는
-  /// 조작은 이 칸이 비어 있어도 의미가 있다(도착역 미정 상태에서 경유 추가).
-  final VoidCallback? onAddAbove;
+  /// 삽입 위치(위/아래)는 호출부가 정한다 — [RouteSearchBar] 문서 참조.
+  ///
+  /// 역 선택 여부와 무관하게 노출한다 — "여기 한 곳 더 들른다"는 조작은 이 칸이
+  /// 비어 있어도 의미가 있다(도착역 미정 상태에서 경유지 추가).
+  final VoidCallback? onAddStop;
 
   const _StationField({
     required this.label,
@@ -244,7 +250,7 @@ class _StationField extends StatelessWidget {
     required this.iconColor,
     this.onTap,
     this.onClear,
-    this.onAddAbove,
+    this.onAddStop,
   });
 
   @override
@@ -302,12 +308,12 @@ class _StationField extends StatelessWidget {
             // 입력창 내부 우측 액션들(+, X). 부모 GestureDetector 보다 안쪽이라
             // 탭 시 역 선택 화면으로 이동하지 않고 각자의 동작만 수행한다.
             //
-            // 경유 추가(+) 가 취소(X) 왼쪽에 온다.
-            if (onAddAbove != null)
+            // 경유지 추가(+) 가 취소(X) 왼쪽에 온다.
+            if (onAddStop != null)
               _FieldAction(
                 icon: Icons.add,
-                tooltip: '위에 경유역 추가',
-                onTap: onAddAbove!,
+                tooltip: '경유지 추가',
+                onTap: onAddStop!,
               ),
             if (showClear)
               _FieldAction(

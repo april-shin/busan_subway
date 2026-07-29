@@ -384,7 +384,7 @@ void main() {
       expect(firstAddY, greaterThan(tester.getTopLeft(find.text('강남')).dy));
     });
 
-    testWidgets('경유 필드의 + 는 그 자리(index)에 삽입을 요청한다', (tester) async {
+    testWidgets('경유 필드의 + 는 그 아래(index+1)에 삽입을 요청한다', (tester) async {
       final onInsert = _IndexCallbacks();
 
       await tester.pumpWidget(
@@ -396,12 +396,37 @@ void main() {
         ),
       );
 
-      // 두 번째 경유(사당, index 1)의 + → index 1 에 삽입.
-      await tester.tap(find.byIcon(Icons.add).at(1));
+      // 첫 경유(삼성, index 0)의 + → 그 아래(index 1)에 삽입.
+      // 삼성 위(index 0)가 아니어야 한다.
+      await tester.tap(find.byIcon(Icons.add).first);
       await tester.pump();
 
       verify(() => onInsert.call(1)).called(1);
       verifyNever(() => onInsert.call(0));
+    });
+
+    testWidgets('마지막 경유 필드의 + 와 도착 필드의 + 는 같은 자리를 요청한다',
+        (tester) async {
+      final onInsert = _IndexCallbacks();
+
+      await tester.pumpWidget(
+        buildHarness(
+          departure: departureStation,
+          arrival: arrivalStation,
+          waypoints: const [waypointStation, waypointStation2],
+          onInsertWaypointAt: onInsert.call,
+        ),
+      );
+
+      // 마지막 경유(사당, index 1) 아래 = 도착 위 = index 2. 두 + 가 같은 위치를
+      // 가리키는 것이 정상이다(사이에 다른 정차역이 없으므로).
+      await tester.tap(find.byIcon(Icons.add).at(1));
+      await tester.pump();
+      verify(() => onInsert.call(2)).called(1);
+
+      await tester.tap(find.byIcon(Icons.add).last);
+      await tester.pump();
+      verify(() => onInsert.call(2)).called(1);
     });
 
     testWidgets('도착 필드의 + 는 맨 뒤(waypoints.length)에 삽입을 요청한다',
