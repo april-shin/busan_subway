@@ -391,4 +391,189 @@ void main() {
       expect(result.nodeIds, ['A', 'C', 'B']);
     });
   });
+
+  group('findShortestPathVia — 경유역', () {
+    test('stops 2개면 findShortestPathMulti 와 동일한 결과', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      final via = finder.findShortestPathVia([
+        {'A_1'},
+        {'E_2'},
+      ]);
+      final multi = finder.findShortestPathMulti({'A_1'}, {'E_2'});
+
+      expect(via, isNotNull);
+      expect(via!.nodeIds, multi!.nodeIds);
+      expect(via.totalTimeSeconds, multi.totalTimeSeconds);
+      expect(via.totalDwellTimeSeconds, multi.totalDwellTimeSeconds);
+    });
+
+    test('경로상 경유역은 직행과 동일한 경로/시간을 만든다', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      // A→C 최단경로는 A-B-C. B 를 경유로 지정해도 같아야 한다.
+      final direct = finder.findShortestPathMulti({'A_1'}, {'C_1'});
+      final via = finder.findShortestPathVia([
+        {'A_1'},
+        {'B_1'},
+        {'C_1'},
+      ]);
+
+      expect(via, isNotNull);
+      expect(via!.nodeIds, ['A_1', 'B_1', 'C_1']);
+      expect(via.totalTimeSeconds, direct!.totalTimeSeconds);
+      expect(via.edges.length, 2);
+    });
+
+    test('우회 경유역을 실제로 지나며 시간이 늘어난다', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      // A→C 직행(A-B-C, 240초) 대신 D(2호선) 를 경유하도록 강제.
+      final via = finder.findShortestPathVia([
+        {'A_1'},
+        {'D_2'},
+        {'C_1'},
+      ]);
+
+      expect(via, isNotNull);
+      expect(via!.nodeIds, contains('D_2'));
+      expect(via.nodeIds, ['A_1', 'B_1', 'B_2', 'D_2', 'B_2', 'B_1', 'C_1']);
+      // 이동 90+180+90+90+180+120 = 750. 정차는 환승 인접 노드를 뺀 중간 노드만.
+      expect(via.totalTimeSeconds, greaterThan(240));
+      expect(
+        via.edges.where((e) => e.isTransfer).length,
+        2,
+        reason: 'B역에서 1→2호선, 2→1호선 환승을 각각 한 번씩 지난다',
+      );
+    });
+
+    test('경유역이 환승역이면 다음 구간이 필요한 노선으로 환승 edge 를 포함한다', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      // 경유역 B 는 1·2호선 환승역 — 두 노드를 모두 후보로 준다.
+      final via = finder.findShortestPathVia([
+        {'A_1'},
+        {'B_1', 'B_2'},
+        {'E_2'},
+      ]);
+
+      expect(via, isNotNull);
+      expect(via!.nodeIds, ['A_1', 'B_1', 'B_2', 'D_2', 'E_2']);
+      expect(via.edges.where((e) => e.isTransfer).length, 1);
+    });
+
+    test('경유역이 직전 정차역과 같으면 0-edge 구간으로 무시된다', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      final via = finder.findShortestPathVia([
+        {'A_1'},
+        {'A_1'},
+        {'C_1'},
+      ]);
+
+      expect(via, isNotNull);
+      expect(via!.nodeIds, ['A_1', 'B_1', 'C_1']);
+      expect(via.totalTimeSeconds, 240);
+    });
+
+    test('어느 구간이라도 경로가 없으면 null', () {
+      final graph = _buildSimpleGraph();
+      graph.addNode(GraphNode(id: 'Z_9', stationName: 'Z역', lineId: '9'));
+      final finder = ShortestPathFinder(graph: graph);
+
+      expect(
+        finder.findShortestPathVia([
+          {'A_1'},
+          {'Z_9'},
+          {'C_1'},
+        ]),
+        isNull,
+      );
+    });
+
+    test('stops 가 2개 미만이면 null', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      expect(finder.findShortestPathVia([]), isNull);
+      expect(finder.findShortestPathVia([{'A_1'}]), isNull);
+    });
+
+    test('경유역 플랫폼 선택이 뒤 구간까지 고려된다 (그리디 금지 회귀 가드)', () {
+      // 경유역 W 에 두 플랫폼(W_1/W_2)이 있고, 서로 환승이 비싼(500s) 구조.
+      //   S→W_1 = 10   (가장 싸게 W 에 닿는 플랫폼)
+      //   S→W_2 = 30   (T역 환승을 거쳐 조금 더 비쌈)
+      //   W_1→E = 600  (또는 W_1→W_2 환승 500 + 10 = 510)
+      //   W_2→E = 10
+      // 앞 구간만 보는 그리디는 W_1(10) 에 고정돼 총 520 이 되지만,
+      // 최적은 W_2 를 골라 이동 40 + 경유역 W 정차 30 = 70 이다.
+      final graph = SubwayGraph();
+      for (final n in [
+        ['S_1', 'S역', '1'],
+        ['T_1', 'T역', '1'],
+        ['T_2', 'T역', '2'],
+        ['W_1', 'W역', '1'],
+        ['W_2', 'W역', '2'],
+        ['E_1', 'E역', '1'],
+        ['E_2', 'E역', '2'],
+      ]) {
+        graph.addNode(GraphNode(id: n[0], stationName: n[1], lineId: n[2]));
+      }
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'S_1', toNodeId: 'W_1', lineId: '1', weightSeconds: 10,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'S_1', toNodeId: 'T_1', lineId: '1', weightSeconds: 5,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'T_1', toNodeId: 'T_2', lineId: 'transfer',
+        weightSeconds: 20, isTransfer: true,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'T_2', toNodeId: 'W_2', lineId: '2', weightSeconds: 5,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'W_1', toNodeId: 'W_2', lineId: 'transfer',
+        weightSeconds: 500, isTransfer: true,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'W_1', toNodeId: 'E_1', lineId: '1', weightSeconds: 600,
+      ));
+      graph.addBidirectionalEdge(GraphEdge(
+        fromNodeId: 'W_2', toNodeId: 'E_2', lineId: '2', weightSeconds: 10,
+      ));
+
+      final via = ShortestPathFinder(graph: graph).findShortestPathVia([
+        {'S_1'},
+        {'W_1', 'W_2'},
+        {'E_1', 'E_2'},
+      ]);
+
+      expect(via, isNotNull);
+      expect(
+        via!.nodeIds,
+        ['S_1', 'T_1', 'T_2', 'W_2', 'E_2'],
+        reason: 'W 를 2호선 플랫폼으로 잡는 것이 전체 최적 — 그리디면 '
+            "['S_1','W_1','W_2','E_2'] 로 520초가 된다",
+      );
+      // 이동 40 + 경유역 W_2 정차 30. 그리디 경로는 520(환승 인접 노드라 정차 0).
+      expect(via.totalTimeSeconds, 70);
+    });
+
+    test('nodeFilter 가 모든 구간에 적용된다', () {
+      final finder = ShortestPathFinder(graph: _buildSimpleGraph());
+
+      // 2호선 노드를 전부 금지하면 D 경유는 불가능.
+      expect(
+        finder.findShortestPathVia(
+          [
+            {'A_1'},
+            {'D_2'},
+            {'C_1'},
+          ],
+          nodeFilter: (id) => id.endsWith('_1'),
+        ),
+        isNull,
+      );
+    });
+  });
 }

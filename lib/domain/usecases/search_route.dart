@@ -7,6 +7,7 @@ import '../repositories/station_repository.dart';
 import '../../data/local/timetable_data_source.dart';
 import '../../graph/graph_builder.dart';
 import '../../graph/shortest_path.dart';
+import '../../graph/subway_graph.dart';
 import '../../core/constants/dwell_time.dart';
 import '../../core/constants/line_colors.dart';
 import '../../core/utils/headway_estimator.dart';
@@ -74,6 +75,10 @@ class SearchRoute {
   /// 노선 공유 여부와 무관하게 일반화되어, 신논현→마곡나루(9호선 단독)뿐 아니라
   /// 총신대입구→마곡나루(4호선→9호선 환승 후 급행)처럼 환승이 낀 경로에서도
   /// 같은 경로의 완행 대안을 함께 보여준다. 자세한 판정 근거는 본문 주석 참조.
+  ///
+  /// [viaStationIds] 는 출발→도착 사이에 **지정된 순서대로** 반드시 지나야 하는
+  /// 경유역 ID 목록이다. 비어 있으면(기본값) 경유 없는 기존 동작과 완전히 동일하다.
+  /// 4가지 후보 모두 같은 경유 제약을 받는다.
   Future<
       ({
         RouteResult? fastest,
@@ -82,8 +87,9 @@ class SearchRoute {
         RouteResult? fastestLocal,
       })> executeAll(
     String fromStationId,
-    String toStationId,
-  ) async {
+    String toStationId, {
+    List<String> viaStationIds = const [],
+  }) async {
     final stations = await _stationRepository.getAllStations();
     final connections = await _stationRepository.getAllConnections();
     final transferTimes = await _stationRepository.getTransferTimes();
@@ -114,46 +120,22 @@ class SearchRoute {
 
     final finder = ShortestPathFinder(graph: graph);
 
-    // 환승역은 같은 물리 역이므로 출발/도착이 환승역이면 소속 모든 노선 노드를
-    // "거리 0" 의 multi-source/sink 로 간주한다. 이렇게 해야 종합운동장(2·9호선)
-    // ↔ 동작(4·9호선) 조회에서 9호선 단독 경로가 환승 0 으로 올바르게 잡힌다.
-    //
-    // 동명이역(예: 5호선 "양평" vs 경의중앙선 "양평")을 피하기 위해 사용자가
-    // 선택한 Station 의 `lineId + transferLines` 에 포함된 노선만 허용한다.
-    //
-    // 가상 급행 노드(`{base}E`)도 함께 포함해야 한다. 그렇지 않으면 출발/도착이
-    // 급행 정차역이어도 `_base → 9M edge → _E` 모드 전환이 첫/마지막 세그먼트에
-    // 삽입되어 "종합운동장에서 환승 시작" 같은 부자연스러운 경로가 나온다.
-    final fromLineIds = <String>{
-      fromStation.lineId,
-      ...fromStation.transferLines,
-    };
-    final toLineIds = <String>{
-      toStation.lineId,
-      ...toStation.transferLines,
-    };
-    final allowedFromNodeSuffixes = <String>{
-      for (final base in fromLineIds) ...['_$base', '_${base}E'],
-    };
-    final allowedToNodeSuffixes = <String>{
-      for (final base in toLineIds) ...['_$base', '_${base}E'],
-    };
-    // graph 에 실제로 존재하는 동명 노드(base + 가상 급행) 를 모두 후보로 편입.
-    final fromNodeIds = graph
-        .getNodeIdsForStation(fromStation.name)
-        .where((id) => allowedFromNodeSuffixes.any(id.endsWith))
-        .toSet();
-    final toNodeIds = graph
-        .getNodeIdsForStation(toStation.name)
-        .where((id) => allowedToNodeSuffixes.any(id.endsWith))
-        .toSet();
+    // 정차 순서: 출발 → 경유역들(지정 순서) → 도착. 경유가 없으면 [출발, 도착].
+    final stops = _buildStops(
+      fromStation: fromStation,
+      toStation: toStation,
+      viaStationIds: viaStationIds,
+      stationMap: stationMap,
+    );
+    final stopNodeIds = [
+      for (final stop in stops) _nodeIdsForStation(graph, stop),
+    ];
 
-    final fastestPath = finder.findShortestPathMulti(fromNodeIds, toNodeIds);
+    final fastestPath = finder.findShortestPathVia(stopNodeIds);
     // 환승 페널티가 큰 Dijkstra로 최소환승 경로 산출 (shortest_path.dart의
     // _transferPenalty=100000 과 동일 수치를 사용).
-    final minTransferPath = finder.findShortestPathMulti(
-      fromNodeIds,
-      toNodeIds,
+    final minTransferPath = finder.findShortestPathVia(
+      stopNodeIds,
       transferPenalty: 100000,
     );
     final fastest = fastestPath == null
@@ -196,9 +178,8 @@ class SearchRoute {
           .where((e) => !e.isTransfer && !e.lineId.endsWith('M'))
           .map((e) => _stripExpressSuffix(e.lineId))
           .toSet();
-      final localPath = finder.findShortestPathMulti(
-        fromNodeIds,
-        toNodeIds,
+      final localPath = finder.findShortestPathVia(
+        stopNodeIds,
         nodeFilter: (id) =>
             !_isExpressNode(id) && fastestBaseLines.contains(id.split('_').last),
       );
@@ -243,6 +224,59 @@ class SearchRoute {
       fastestExpress: fastestExpress,
       fastestLocal: fastestLocal,
     );
+  }
+
+  /// 출발 → 경유역들 → 도착 순서의 정차역 목록을 만든다.
+  ///
+  /// 정규화 규칙(경로 계산이 무의미한 입력을 제거):
+  ///   - [stationMap] 에 없는 경유역 ID 는 무시한다.
+  ///   - 직전 정차역과 **같은 역 이름**인 경유역은 무시한다(연속 중복, 출발역과
+  ///     동일한 첫 경유역 등). 같은 역을 다시 지나라는 제약은 경로를 바꾸지 않는다.
+  ///   - 마지막 경유역이 도착역과 같은 역이면 도착역 레코드로 교체한다. 사용자가
+  ///     고른 도착역 레코드가 최종 정차역으로 남아야 노드 후보 집합이 도착역
+  ///     기준으로 잡힌다.
+  static List<Station> _buildStops({
+    required Station fromStation,
+    required Station toStation,
+    required List<String> viaStationIds,
+    required Map<String, Station> stationMap,
+  }) {
+    final stops = <Station>[fromStation];
+    for (final id in viaStationIds) {
+      final via = stationMap[id];
+      if (via == null || via.name == stops.last.name) continue;
+      stops.add(via);
+    }
+    if (stops.length > 1 && stops.last.name == toStation.name) {
+      stops[stops.length - 1] = toStation;
+    } else {
+      stops.add(toStation);
+    }
+    return stops;
+  }
+
+  /// 사용자가 선택한 [station] 에 대응하는 그래프 노드 후보 집합.
+  ///
+  /// 환승역은 같은 물리 역이므로 소속 모든 노선 노드를 "거리 0" 의
+  /// multi-source/sink 후보로 간주한다. 이렇게 해야 종합운동장(2·9호선) ↔
+  /// 동작(4·9호선) 조회에서 9호선 단독 경로가 환승 0 으로 올바르게 잡힌다.
+  ///
+  /// 동명이역(예: 5호선 "양평" vs 경의중앙선 "양평")을 피하기 위해 선택된 Station 의
+  /// `lineId + transferLines` 에 포함된 노선만 허용한다.
+  ///
+  /// 가상 급행 노드(`{base}E`)도 함께 포함해야 한다. 그렇지 않으면 정차역이 급행
+  /// 정차역이어도 `_base → 9M edge → _E` 모드 전환이 앞뒤 세그먼트 경계에 삽입되어
+  /// "종합운동장에서 환승 시작" 같은 부자연스러운 경로가 나온다.
+  static Set<String> _nodeIdsForStation(SubwayGraph graph, Station station) {
+    final lineIds = <String>{station.lineId, ...station.transferLines};
+    final allowedSuffixes = <String>{
+      for (final base in lineIds) ...['_$base', '_${base}E'],
+    };
+    // graph 에 실제로 존재하는 동명 노드(base + 가상 급행) 를 모두 후보로 편입.
+    return graph
+        .getNodeIdsForStation(station.name)
+        .where((id) => allowedSuffixes.any(id.endsWith))
+        .toSet();
   }
 
   /// 노선별 평균 배차간격(초) 맵을 로드한다.
@@ -358,8 +392,8 @@ class SearchRoute {
         final fromNodeId = edge.fromNodeId;
         final stationId = fromNodeId.split('_').first;
         final station = stationMap[stationId];
-        if (station != null && !currentStations.contains(station)) {
-          currentStations.add(station);
+        if (_shouldAppend(currentStations, station)) {
+          currentStations.add(station!);
         }
 
         RouteSegment? completedSegment;
@@ -435,8 +469,8 @@ class SearchRoute {
       final fromNodeId = edge.fromNodeId;
       final stationId = fromNodeId.split('_').first;
       final station = stationMap[stationId];
-      if (station != null && !currentStations.contains(station)) {
-        currentStations.add(station);
+      if (_shouldAppend(currentStations, station)) {
+        currentStations.add(station!);
       }
 
       currentDurationSeconds += edge.weightSeconds;
@@ -484,6 +518,20 @@ class SearchRoute {
       transferWalkDurations: List.unmodifiable(transferWalkDurations),
       transferGuides: List.unmodifiable(transferGuidesList),
     );
+  }
+
+  /// [station] 을 세그먼트의 역 목록에 이어붙여야 하는지.
+  ///
+  /// **바로 앞 역과 같을 때만** 건너뛴다. 같은 물리 역의 노선별 노드를 연속으로
+  /// 지나는 경우(환승 edge 전후, 완행↔급행 모드 전환)에 역이 두 번 들어가는 것을
+  /// 막는 것이 이 중복 제거의 목적이다.
+  ///
+  /// 목록 전체를 검사하지 않는 이유: 경유역 지정으로 되돌아오는 경로(A→…→D→…→B)나
+  /// 2호선 순환 구간에서는 같은 역을 **떨어진 위치에서** 다시 지나는 것이 정상이다.
+  /// 전체 검사로 지우면 그 재방문이 역 목록·정거장 수에서 사라진다.
+  static bool _shouldAppend(List<Station> stations, Station? station) {
+    if (station == null) return false;
+    return stations.isEmpty || stations.last != station;
   }
 
   /// 환승 가이드 키를 조립하여 매칭되는 가이드를 반환한다.

@@ -130,6 +130,170 @@ void main() {
       expect(result.leastTransfer, isNull);
     });
 
+    group('executeAll — 경유역(viaStationIds)', () {
+      test('viaStationIds 가 비면 경유 없는 기존 결과와 완전히 동일', () async {
+        final plain = await searchRoute.executeAll('201', '317');
+        final empty = await searchRoute.executeAll(
+          '201',
+          '317',
+          viaStationIds: const [],
+        );
+
+        expect(empty.fastest, isNotNull);
+        expect(empty.fastest!.totalTimeSeconds, plain.fastest!.totalTimeSeconds);
+        expect(empty.fastest!.transferCount, plain.fastest!.transferCount);
+        expect(empty.fastest!.segments.length, plain.fastest!.segments.length);
+      });
+
+      test('이미 경로상에 있는 경유역은 결과를 바꾸지 않는다', () async {
+        // 시청→을지로3가 최단경로는 을지로입구를 지난다.
+        final plain = await searchRoute.executeAll('201', '203');
+        final via = await searchRoute.executeAll(
+          '201',
+          '203',
+          viaStationIds: const ['202'],
+        );
+
+        expect(via.fastest, isNotNull);
+        expect(via.fastest!.totalTimeSeconds, plain.fastest!.totalTimeSeconds);
+        expect(via.fastest!.segments.length, 1,
+            reason: '같은 노선을 계속 타므로 경유가 세그먼트를 쪼개지 않는다');
+        expect(via.fastest!.transferCount, 0);
+      });
+
+      test('경유역을 실제로 지난다 (되돌아오는 우회 포함)', () async {
+        // 을지로입구→시청 은 반대 방향. 시청을 경유로 강제하면
+        // 을지로입구→시청→을지로입구→을지로3가 로 되돌아와야 한다.
+        final via = await searchRoute.executeAll(
+          '202',
+          '203',
+          viaStationIds: const ['201'],
+        );
+
+        expect(via.fastest, isNotNull);
+        final names = [
+          for (final seg in via.fastest!.segments)
+            for (final s in seg.stations) s.name,
+        ];
+        expect(names, contains('시청'));
+        // 직행(을지로입구→을지로3가, 90초)보다 반드시 오래 걸린다.
+        expect(via.fastest!.totalTimeSeconds, greaterThan(90));
+      });
+
+      test('되돌아오는 경로에서 재방문 역이 역 목록에서 지워지지 않는다', () async {
+        // 을지로입구 →[경유] 시청 → 을지로3가.
+        // 을지로입구를 두 번(출발, 되돌아올 때) 지나므로 역 목록에도 두 번 남아야
+        // 한다. 세그먼트 역 중복 제거가 "바로 앞 역"만 검사해야 하는 이유.
+        final via = await searchRoute.executeAll(
+          '202',
+          '203',
+          viaStationIds: const ['201'],
+        );
+
+        expect(via.fastest, isNotNull);
+        expect(via.fastest!.segments.length, 1);
+        expect(
+          via.fastest!.segments.single.stations.map((s) => s.name).toList(),
+          ['을지로입구', '시청', '을지로입구', '을지로3가'],
+        );
+        // hop = 3 (역 목록 길이 - 1). 재방문을 지우면 2로 줄어든다.
+        expect(via.fastest!.stationCount, 3);
+      });
+
+      test('환승역을 경유로 지정하면 환승이 포함된 경로가 나온다', () async {
+        // 시청(2호선) → [경유] 을지로3가(2·3호선 환승) → 충무로(3호선)
+        final via = await searchRoute.executeAll(
+          '201',
+          '317',
+          viaStationIds: const ['203'],
+        );
+
+        expect(via.fastest, isNotNull);
+        expect(via.fastest!.transferCount, greaterThanOrEqualTo(1));
+        expect(via.fastest!.segments.first.lineId, '2');
+        expect(via.fastest!.segments.last.lineId, '3');
+      });
+
+      test('존재하지 않는 경유역 ID 는 무시된다', () async {
+        final plain = await searchRoute.executeAll('201', '203');
+        final via = await searchRoute.executeAll(
+          '201',
+          '203',
+          viaStationIds: const ['999'],
+        );
+
+        expect(via.fastest, isNotNull);
+        expect(via.fastest!.totalTimeSeconds, plain.fastest!.totalTimeSeconds);
+      });
+
+      test('출발역과 같은 경유역은 무시된다', () async {
+        final plain = await searchRoute.executeAll('201', '203');
+        final via = await searchRoute.executeAll(
+          '201',
+          '203',
+          viaStationIds: const ['201'],
+        );
+
+        expect(via.fastest, isNotNull);
+        expect(via.fastest!.totalTimeSeconds, plain.fastest!.totalTimeSeconds);
+        expect(via.fastest!.segments.length, 1);
+      });
+
+      test('도착역과 같은 마지막 경유역은 도착역으로 흡수된다', () async {
+        // 을지로3가는 2·3호선 두 레코드(203/316)가 있다. 도착역과 같은 역을
+        // 경유로 넣어도 중복 정차 없이 도착역 하나로 합쳐져야 한다.
+        final plain = await searchRoute.executeAll('201', '203');
+        final via = await searchRoute.executeAll(
+          '201',
+          '203',
+          viaStationIds: const ['316'],
+        );
+
+        expect(via.fastest, isNotNull);
+        expect(via.fastest!.totalTimeSeconds, plain.fastest!.totalTimeSeconds);
+        expect(via.fastest!.transferCount, 0);
+      });
+
+      test('여러 경유역이 지정 순서대로 반영된다', () async {
+        final via = await searchRoute.executeAll(
+          '201',
+          '317',
+          viaStationIds: const ['202', '203'],
+        );
+
+        expect(via.fastest, isNotNull);
+        final names = [
+          for (final seg in via.fastest!.segments)
+            for (final s in seg.stations) s.name,
+        ];
+        expect(names.indexOf('을지로입구'), lessThan(names.indexOf('충무로')));
+        expect(names, containsAll(['시청', '을지로입구', '을지로3가', '충무로']));
+      });
+
+      test('경유역을 지날 방법이 없으면 fastest 는 null', () async {
+        // 317(충무로, 3호선)에서 갈 수 없는 고립 역을 경유로 지정.
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => [
+              ...testStations,
+              const Station(
+                id: '999',
+                name: '고립역',
+                lineId: '9',
+                latitude: 37.0,
+                longitude: 127.0,
+              ),
+            ]);
+
+        final via = await searchRoute.executeAll(
+          '201',
+          '317',
+          viaStationIds: const ['999'],
+        );
+
+        expect(via.fastest, isNull);
+        expect(via.leastTransfer, isNull);
+      });
+    });
+
     group('executeAll 4종 반환 — 모드 트레이드오프', () {
       // 9호선 시뮬레이션:
       //   902(A) ~ 907(F) 6개역. 완행 200초/구간.

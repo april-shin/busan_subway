@@ -116,14 +116,8 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
       );
     }
 
-    // 기존 선택된 역 마커 복원
-    final selected = ref.read(selectedStationsProvider);
-    if (selected.departure != null) {
-      _setMarker('departure', selected.departure!.svgX, selected.departure!.svgY);
-    }
-    if (selected.arrival != null) {
-      _setMarker('arrival', selected.arrival!.svgX, selected.arrival!.svgY);
-    }
+    // 기존 선택된 역 마커 복원 (출발/경유/도착)
+    _setSelectionMarkers(ref.read(selectedStationsProvider));
 
     // 초기 열차 데이터 표시
     if (widget.liveTrains.isNotEmpty) {
@@ -222,6 +216,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
           final stationId = data['stationId'];
           if (stationId is! String) return;
           _handleSetArrival(stationId);
+        case 'addWaypoint':
+          final stationId = data['stationId'];
+          if (stationId is! String) return;
+          _handleAddWaypoint(stationId);
         case 'viewArrivalInfo':
           final stationName = data['stationName'];
           if (stationName is! String) return;
@@ -282,6 +280,30 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _setMarker('arrival', station.svgX, station.svgY);
   }
 
+  /// 지도 툴팁의 "경유" 액션. 상한을 넘으면 상태를 바꾸지 않고 스낵바로 알린다.
+  ///
+  /// 마커는 `selectedStationsProvider` 리스너가 전체를 다시 그리므로 여기서
+  /// 개별 `_setMarker` 를 호출하지 않는다.
+  void _handleAddWaypoint(String stationId) {
+    final station = _findStation(stationId);
+    if (station == null) return;
+
+    final added =
+        ref.read(selectedStationsProvider.notifier).addWaypoint(station);
+    ref.read(tappedStationProvider.notifier).state = null;
+    if (added || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('경유역은 최대 $maxWaypoints개까지 추가할 수 있습니다'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   void _handleViewArrivalInfo(String stationName) {
     // 로컬 데이터에 존재하는 역명인지 검증
     final exists = widget.stations.any((s) => s.name == stationName);
@@ -308,10 +330,33 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     _runJs("window.clearRoute()");
   }
 
+  /// 허용된 마커 타입만 JS 로 넘긴다(문자열이 JS 리터럴에 그대로 들어가므로
+  /// 화이트리스트로 주입 위험을 차단). `window.setMarker` 계약과 동일한 집합.
+  static final RegExp _markerTypePattern =
+      RegExp(r'^(departure|arrival|waypoint-\d+)$');
+
   void _setMarker(String type, double svgX, double svgY) {
     if (!_isReady) return;
-    if (type != 'departure' && type != 'arrival') return;
+    if (!_markerTypePattern.hasMatch(type)) return;
     _runJs("window.setMarker('$type', $svgX, $svgY)");
+  }
+
+  /// 현재 선택(출발/경유/도착)의 마커를 모두 다시 그린다.
+  void _setSelectionMarkers(SelectedStations selected) {
+    if (selected.departure != null) {
+      _setMarker(
+        'departure',
+        selected.departure!.svgX,
+        selected.departure!.svgY,
+      );
+    }
+    for (var i = 0; i < selected.waypoints.length; i++) {
+      final w = selected.waypoints[i];
+      _setMarker('waypoint-$i', w.svgX, w.svgY);
+    }
+    if (selected.arrival != null) {
+      _setMarker('arrival', selected.arrival!.svgX, selected.arrival!.svgY);
+    }
   }
 
   void _clearMarkers() {
@@ -487,12 +532,7 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     ref.listen(selectedStationsProvider, (prev, next) {
       if (!_isReady) return;
       _clearMarkers();
-      if (next.departure != null) {
-        _setMarker('departure', next.departure!.svgX, next.departure!.svgY);
-      }
-      if (next.arrival != null) {
-        _setMarker('arrival', next.arrival!.svgX, next.arrival!.svgY);
-      }
+      _setSelectionMarkers(next);
 
       // 출발역을 선택하면 지도를 그 역으로 부드럽게 포커싱한다.
       // 판정 규칙은 SvgWebView.shouldPanToDeparture 참고.

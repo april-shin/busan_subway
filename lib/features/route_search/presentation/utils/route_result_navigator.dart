@@ -42,6 +42,7 @@ Future<void> searchAndNavigateToResult(
     ) = await useCase.executeAll(
       selected.departure!.id,
       selected.arrival!.id,
+      viaStationIds: [for (final s in selected.waypoints) s.id],
     );
 
     if (!context.mounted) return;

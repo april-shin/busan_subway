@@ -910,13 +910,16 @@ $textElements
     routeMarkers.replaceChildren();
   };
 
-  // 출발/도착 마커 설정
+  // 출발/경유/도착 마커 설정.
+  // type: 'departure' | 'arrival' | 'waypoint-{index}' (경유 슬롯별 개별 마커)
   window.setMarker = function(type, svgX, svgY) {
     var markerId = 'marker-' + type;
     var existing = document.getElementById(markerId);
     if (existing) existing.remove();
 
-    var color = type === 'departure' ? '#2196F3' : '#F44336';
+    var color = type === 'departure' ? '#2196F3'
+      : type === 'arrival' ? '#F44336'
+      : '#FF9800';
     var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('id', markerId);
 
@@ -1016,6 +1019,7 @@ $textElements
     }
 
     actions.appendChild(makeBtn('\u25c9', '출발', '#2196F3', function() { window._setDeparture(s.id); }));
+    actions.appendChild(makeBtn('⬦', '경유', '#FF9800', function() { window._addWaypoint(s.id); }));
     actions.appendChild(makeBtn('\u26b2', '도착', '#F44336', function() { window._setArrival(s.id); }));
     actions.appendChild(makeBtn('\u23f0', '도착정보', '#4CAF50', function() { window._viewArrivalInfo(s.name); }));
 
@@ -1055,6 +1059,13 @@ $textElements
   window._setArrival = function(stationId) {
     window.hideTooltip();
     sendToFlutter({ action: 'setArrival', stationId: stationId });
+  };
+
+  // 경유역 추가. 상한(경유 최대 개수)은 Flutter 쪽 상태가 알고 있으므로
+  // 여기선 항상 보내고, 초과 시 Flutter 가 스낵바로 알린다.
+  window._addWaypoint = function(stationId) {
+    window.hideTooltip();
+    sendToFlutter({ action: 'addWaypoint', stationId: stationId });
   };
 
   window._viewArrivalInfo = function(stationName) {

@@ -108,33 +108,7 @@ class ShortestPathFinder {
       current = previous[current];
     }
 
-    final reversedEdges = edges.reversed.toList();
-    final reversedPath = path.reversed.toList();
-    final travelTime =
-        reversedEdges.fold(0, (sum, edge) => sum + edge.weightSeconds);
-
-    // 중간 노드 정차시간 계산 (출발역·도착역 제외, 환승 인접 노드 제외)
-    final transferAdjacentNodes = <int>{};
-    for (var i = 0; i < reversedEdges.length; i++) {
-      if (reversedEdges[i].isTransfer) {
-        transferAdjacentNodes.add(i); // 환승 직전 노드
-        transferAdjacentNodes.add(i + 1); // 환승 직후 노드
-      }
-    }
-    var dwellCount = 0;
-    for (var i = 1; i < reversedPath.length - 1; i++) {
-      if (!transferAdjacentNodes.contains(i)) {
-        dwellCount++;
-      }
-    }
-    final dwellTime = dwellCount * dwellTimeSeconds;
-
-    return PathResult(
-      nodeIds: reversedPath,
-      edges: reversedEdges,
-      totalTimeSeconds: travelTime + dwellTime,
-      totalDwellTimeSeconds: dwellTime,
-    );
+    return _assemblePath(path.reversed.toList(), edges.reversed.toList());
   }
 
   /// 복수 출발/도착 노드 Dijkstra (multi-source / multi-sink).
@@ -237,27 +211,141 @@ class ShortestPathFinder {
       current = previous[current];
     }
 
-    final reversedEdges = edges.reversed.toList();
-    final reversedPath = path.reversed.toList();
-    final travelTime =
-        reversedEdges.fold(0, (sum, edge) => sum + edge.weightSeconds);
+    return _assemblePath(path.reversed.toList(), edges.reversed.toList());
+  }
+
+  /// 경유지를 포함한 다구간 최단 경로.
+  ///
+  /// [stops] 는 `[출발후보, 경유1후보, …, 도착후보]` 순서의 노드 후보 집합 목록이다.
+  /// 각 원소는 한 물리 역의 노선별 노드 집합(환승역이면 소속 노선 노드 전부 + 가상
+  /// 급행 노드)이며, 구성 규칙은 [findShortestPathMulti] 문서와 동일하다.
+  ///
+  /// 구간마다 [findShortestPathMulti] 를 호출해 이어 붙인다. 앞 구간이 도달한 노드를
+  /// 다음 구간의 **유일한 출발 노드**로 고정하므로 edge 열에 빈틈이 없고, 경유역에서
+  /// 노선을 바꿔야 하면 다음 구간 Dijkstra 가 그 역의 환승 edge 를 자연히 포함한다.
+  /// 따라서 결과는 단일 경로와 완전히 같은 형태이며 세그먼트·환승 카운트 계산도
+  /// 그대로 재사용할 수 있다.
+  ///
+  /// 경유역에서 **어느 노선 플랫폼에 서는지**는 그리디로 정하면 안 된다. 앞 구간
+  /// 비용만 보고 가장 싸게 닿는 플랫폼에 고정하면, 뒤 구간이 그 플랫폼에서 출발해야
+  /// 해서 훨씬 나쁜 경로가 나온다.
+  ///
+  /// > 실제 사례: 신논현 →[강남, 선릉]→ 왕십리.
+  /// > 선릉에 가장 싸게 닿는 플랫폼은 2호선(강남에서 2정거장)이지만, 2호선 선릉에서
+  /// > 왕십리로 가려면 순환선을 12정거장 돌아 37.7분이 된다. 선릉을 수인분당선
+  /// > 플랫폼으로 잡으면(강남에서 2호선 2정거장 + 선릉 환승) 왕십리까지 5정거장,
+  /// > 총 33.7분이다.
+  ///
+  /// 그래서 정차역마다 **모든 플랫폼 후보를 상태로 남기는 DP** 로 푼다.
+  /// `dp[정차역 i][노드 X]` = "출발에서 경유 1..i 를 순서대로 지나 노드 X 에서 끝나는
+  /// 최소비용 경로". 각 단계에서 (이전 상태 × 현재 후보) 쌍마다 구간 Dijkstra 를
+  /// 돌려 최소를 취한다. 후보 수는 역당 소수(플랫폼 + 가상 급행 노드)이고 경유역
+  /// 개수도 UI 에서 제한되므로 비용은 실측 기준 수십 ms 수준이다.
+  ///
+  /// 비용 척도는 구간 Dijkstra 가 최적화하는 것과 같게 맞춘다 —
+  /// `구간 소요시간 + transferPenalty × 구간 내 환승 edge 수`. [transferPenalty] 가
+  /// 0 인 기본(최단시간) 모드에서는 순수 소요시간이 되고, 최소환승 모드에서는
+  /// 구간 경계를 넘어서도 환승 수가 우선된다.
+  ///
+  /// 경유지가 없으면([stops].length == 2) [findShortestPathMulti] 와 동일하게 위임한다.
+  /// [stops] 가 2개 미만이거나 어느 한 구간이라도 경로가 없으면 null.
+  PathResult? findShortestPathVia(
+    List<Set<String>> stops, {
+    int transferPenalty = 0,
+    bool Function(String nodeId)? nodeFilter,
+  }) {
+    if (stops.length < 2) return null;
+    if (stops.length == 2) {
+      return findShortestPathMulti(
+        stops.first,
+        stops.last,
+        transferPenalty: transferPenalty,
+        nodeFilter: nodeFilter,
+      );
+    }
+
+    /// 구간 하나의 DP 비용 — 구간 Dijkstra 의 목적함수와 동일한 형태.
+    int legCost(PathResult leg) =>
+        leg.totalTimeSeconds +
+        (transferPenalty > 0
+            ? transferPenalty * leg.edges.where((e) => e.isTransfer).length
+            : 0);
+
+    // 1단계: 출발 후보 집합(multi-source) → 첫 경유역의 각 플랫폼 후보.
+    var dp = <String, _ViaState>{};
+    for (final target in stops[1]) {
+      final leg = findShortestPathMulti(
+        stops.first,
+        {target},
+        transferPenalty: transferPenalty,
+        nodeFilter: nodeFilter,
+      );
+      if (leg == null) continue;
+      dp[leg.nodeIds.last] = _ViaState(
+        cost: legCost(leg),
+        nodeIds: leg.nodeIds,
+        edges: leg.edges,
+      );
+    }
+    if (dp.isEmpty) return null;
+
+    // 2단계 이후: 이전 상태의 종점 노드에서 출발해 현재 정차역의 각 후보로.
+    for (var i = 2; i < stops.length; i++) {
+      final next = <String, _ViaState>{};
+      for (final prev in dp.entries) {
+        for (final target in stops[i]) {
+          final leg = findShortestPathMulti(
+            {prev.key},
+            {target},
+            transferPenalty: transferPenalty,
+            nodeFilter: nodeFilter,
+          );
+          if (leg == null) continue;
+          final endNode = leg.nodeIds.last;
+          final cost = prev.value.cost + legCost(leg);
+          final existing = next[endNode];
+          if (existing != null && existing.cost <= cost) continue;
+          next[endNode] = prev.value.append(leg, cost);
+        }
+      }
+      if (next.isEmpty) return null;
+      dp = next;
+    }
+
+    _ViaState? best;
+    for (final state in dp.values) {
+      if (best == null || state.cost < best.cost) best = state;
+    }
+    return _assemblePath(best!.nodeIds, best.edges);
+  }
+
+  /// 노드/엣지 열로 [PathResult] 를 조립한다(이동시간 + 중간역 정차시간).
+  ///
+  /// 정차시간은 출발·도착 노드와 **환승 인접 노드**를 제외한 중간 노드 수 ×
+  /// [dwellTimeSeconds]. 환승 인접 노드를 빼는 이유는 환승 edge 의 가중치가 이미
+  /// 도보+대기 시간을 포함하므로 정차시간을 이중 계상하지 않기 위함이다.
+  static PathResult _assemblePath(
+    List<String> nodeIds,
+    List<GraphEdge> edges,
+  ) {
+    final travelTime = edges.fold(0, (sum, edge) => sum + edge.weightSeconds);
 
     final transferAdjacentNodes = <int>{};
-    for (var i = 0; i < reversedEdges.length; i++) {
-      if (reversedEdges[i].isTransfer) {
-        transferAdjacentNodes.add(i);
-        transferAdjacentNodes.add(i + 1);
+    for (var i = 0; i < edges.length; i++) {
+      if (edges[i].isTransfer) {
+        transferAdjacentNodes.add(i); // 환승 직전 노드
+        transferAdjacentNodes.add(i + 1); // 환승 직후 노드
       }
     }
     var dwellCount = 0;
-    for (var i = 1; i < reversedPath.length - 1; i++) {
+    for (var i = 1; i < nodeIds.length - 1; i++) {
       if (!transferAdjacentNodes.contains(i)) dwellCount++;
     }
     final dwellTime = dwellCount * dwellTimeSeconds;
 
     return PathResult(
-      nodeIds: reversedPath,
-      edges: reversedEdges,
+      nodeIds: nodeIds,
+      edges: edges,
       totalTimeSeconds: travelTime + dwellTime,
       totalDwellTimeSeconds: dwellTime,
     );
@@ -353,6 +441,32 @@ class ShortestPathFinder {
 
   static const int _transferPenalty = 100000;
   static const int _infinity = 999999999;
+}
+
+/// [ShortestPathFinder.findShortestPathVia] 의 DP 상태.
+///
+/// "출발에서 여기까지 이어붙인 경로"를 누적 비용과 함께 들고 다닌다. `nodeIds` 의
+/// 마지막 원소가 이 상태의 종점(= 다음 구간의 출발 노드)이다.
+class _ViaState {
+  final int cost;
+  final List<String> nodeIds;
+  final List<GraphEdge> edges;
+
+  const _ViaState({
+    required this.cost,
+    required this.nodeIds,
+    required this.edges,
+  });
+
+  /// 이 상태 뒤에 [leg] 를 이어붙인 새 상태.
+  ///
+  /// [leg] 의 첫 노드는 이 상태의 종점과 같으므로 빼고 잇는다. 경유역이 직전
+  /// 정차역과 같아 0-edge 구간이 되면 아무것도 추가되지 않는다.
+  _ViaState append(PathResult leg, int newCost) => _ViaState(
+        cost: newCost,
+        nodeIds: [...nodeIds, ...leg.nodeIds.skip(1)],
+        edges: [...edges, ...leg.edges],
+      );
 }
 
 class _QueueEntry {

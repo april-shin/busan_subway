@@ -71,6 +71,17 @@ void main() {
       expect(htmlContent, contains('window.hideTooltip'));
     });
 
+    test('경유역 액션이 툴팁과 마커에 배선되어 있다', () {
+      // 툴팁 "경유" 버튼 → Flutter 로 addWaypoint 액션 전송
+      // (svg_web_view.dart 의 _onJsMessage case 'addWaypoint' 와 짝)
+      expect(htmlContent, contains('window._addWaypoint'));
+      expect(htmlContent, contains("action: 'addWaypoint'"));
+      expect(htmlContent, contains("'경유'"));
+      // 경유 마커 색: 출발(파랑)/도착(빨강)이 아닌 3순위 분기(주황).
+      // search_bar_widget.dart 의 waypointColor(0xFFFF9800) 와 같아야 한다.
+      expect(htmlContent, contains('#FF9800'));
+    });
+
     test('Flutter 통신 채널이 설정되어 있다', () {
       expect(htmlContent, contains('StationChannel'));
       expect(htmlContent, contains('postMessage'));

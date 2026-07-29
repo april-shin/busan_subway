@@ -12,7 +12,22 @@ import '../utils/route_result_navigator.dart';
 class StationPickerScreen extends ConsumerStatefulWidget {
   final String purpose;
 
-  const StationPickerScreen({super.key, required this.purpose});
+  /// `purpose == 'waypoint'` 일 때 대상 경유 슬롯 index.
+  /// null 이면 맨 뒤에 추가한다(상한 도달 시 무시).
+  final int? waypointIndex;
+
+  /// `purpose == 'waypoint'` 일 때 [waypointIndex] 자리에 **끼워 넣을지** 여부.
+  ///
+  /// true(검색바 + 버튼) — 그 자리에 삽입하고 이후 경유역을 뒤로 밀어낸다.
+  /// false(경유 필드 탭) — 그 슬롯의 역을 교체한다.
+  final bool insertWaypoint;
+
+  const StationPickerScreen({
+    super.key,
+    required this.purpose,
+    this.waypointIndex,
+    this.insertWaypoint = false,
+  });
 
   @override
   ConsumerState<StationPickerScreen> createState() =>
@@ -35,6 +50,7 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
     final title = switch (widget.purpose) {
       'departure' => '출발역 선택',
       'arrival' => '도착역 선택',
+      'waypoint' => '경유역 선택',
       'home' => '지도 시작점 선택',
       _ => '역 선택',
     };
@@ -137,6 +153,16 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
         ref.read(selectedStationsProvider.notifier).setDeparture(station);
       case 'arrival':
         ref.read(selectedStationsProvider.notifier).setArrival(station);
+      case 'waypoint':
+        // index 누락 시 맨 뒤 슬롯을 대상으로 한다.
+        final index = widget.waypointIndex ??
+            ref.read(selectedStationsProvider).waypoints.length;
+        final notifier = ref.read(selectedStationsProvider.notifier);
+        if (widget.insertWaypoint) {
+          notifier.insertWaypoint(index, station);
+        } else {
+          notifier.setWaypoint(index, station);
+        }
       case 'home':
         // fire-and-forget: SharedPreferences 저장 후 상태 반영. 실패 시
         // provider 가 이전 값을 유지하므로 UI 는 안전하게 되돌아간다.

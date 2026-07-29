@@ -52,13 +52,28 @@ class HomeScreen extends StatelessWidget {
                       builder: (context, ref, _) {
                         final selectedStations =
                             ref.watch(selectedStationsProvider);
+                        final notifier =
+                            ref.read(selectedStationsProvider.notifier);
                         return RouteSearchBar(
                           departure: selectedStations.departure,
                           arrival: selectedStations.arrival,
+                          waypoints: selectedStations.waypoints,
                           onDepartureTap: () =>
                               context.go('/pick-station/departure'),
                           onArrivalTap: () =>
                               context.go('/pick-station/arrival'),
+                          // 경유역 필드 탭 = 그 슬롯을 다시 고르기(교체).
+                          onWaypointTap: (index) => context
+                              .go('/pick-station/waypoint?index=$index'),
+                          onWaypointClear: notifier.removeWaypointAt,
+                          // + 버튼 = 그 필드 위에 경유칸 삽입(`insert=true`).
+                          // 상한 도달 시 null 을 넘겨 모든 + 를 숨긴다.
+                          onInsertWaypointAt: selectedStations.canAddWaypoint
+                              ? (index) => context.go(
+                                    '/pick-station/waypoint'
+                                    '?index=$index&insert=true',
+                                  )
+                              : null,
                           onSwap: () {
                             ref.read(selectedStationsProvider.notifier).swap();
                           },

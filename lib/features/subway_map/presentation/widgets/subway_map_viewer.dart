@@ -164,6 +164,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       ) = await useCase.executeAll(
         selected.departure!.id,
         selected.arrival!.id,
+        viaStationIds: [for (final s in selected.waypoints) s.id],
       );
 
       // 급행 미정차역 인덱스 갱신 (없으면 빈 맵). 하이라이트 누락 방지용.
