@@ -6177,9 +6177,10 @@
     "longitude": 127.1118,
     "svgX": 1668.0,
     "svgY": 1256.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "SB"
+      "SB",
+      "경강"
     ]
   },
   {
@@ -7370,121 +7371,162 @@
     ]
   },
   {
-    "id": "C25",
-    "name": "삼동",
-    "lineId": "경춘",
-    "latitude": 37.38,
-    "longitude": 127.13,
-    "svgX": 1928.0,
-    "svgY": 1320.0,
+    "id": "GG01",
+    "name": "판교",
+    "lineId": "경강",
+    "latitude": 37.3949,
+    "longitude": 127.1118,
+    "svgX": 1668.0,
+    "svgY": 1256.0,
     "isTransfer": true,
     "transferLines": [
-      "경춘",
+      "경강",
+      "SB"
+    ]
+  },
+  {
+    "id": "GG02",
+    "name": "성남",
+    "lineId": "경강",
+    "latitude": 37.42,
+    "longitude": 127.126,
+    "svgX": 1836.0,
+    "svgY": 1248.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경강",
+      "GTX-A"
+    ]
+  },
+  {
+    "id": "GG03",
+    "name": "이매",
+    "lineId": "경강",
+    "latitude": 37.3959,
+    "longitude": 127.1264,
+    "svgX": 1928.0,
+    "svgY": 1260.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경강",
       "수인분당"
     ]
   },
   {
-    "id": "C26",
+    "id": "GG04",
+    "name": "삼동",
+    "lineId": "경강",
+    "latitude": 37.38,
+    "longitude": 127.13,
+    "svgX": 1928.0,
+    "svgY": 1320.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경강"
+    ]
+  },
+  {
+    "id": "GG05",
     "name": "경기광주",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.368,
     "longitude": 127.2195,
     "svgX": 1984.0,
     "svgY": 1376.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C27",
+    "id": "GG06",
     "name": "초월",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.376,
     "longitude": 127.2578,
     "svgX": 2048.0,
     "svgY": 1376.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C28",
+    "id": "GG07",
     "name": "곤지암",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.36,
     "longitude": 127.3224,
     "svgX": 2112.0,
     "svgY": 1376.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C29",
+    "id": "GG08",
     "name": "신둔도예촌",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.344,
     "longitude": 127.37,
     "svgX": 2176.0,
     "svgY": 1376.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C30",
+    "id": "GG09",
     "name": "이천",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.2765,
     "longitude": 127.4433,
     "svgX": 2240.0,
     "svgY": 1376.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C31",
+    "id": "GG10",
     "name": "부발",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.25,
     "longitude": 127.47,
     "svgX": 2304.0,
     "svgY": 1376.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C32",
+    "id": "GG11",
     "name": "세종대왕릉",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.24,
     "longitude": 127.51,
     "svgX": 2376.0,
     "svgY": 1416.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
-    "id": "C33",
+    "id": "GG12",
     "name": "여주",
-    "lineId": "경춘",
+    "lineId": "경강",
     "latitude": 37.2912,
     "longitude": 127.6372,
     "svgX": 2376.0,
     "svgY": 1456.0,
     "isTransfer": false,
     "transferLines": [
-      "경춘"
+      "경강"
     ]
   },
   {
@@ -7946,7 +7988,7 @@
     "isTransfer": true,
     "transferLines": [
       "수인분당",
-      "경춘"
+      "경강"
     ]
   },
   {
@@ -10264,9 +10306,10 @@
     "longitude": 127.126,
     "svgX": 1836.0,
     "svgY": 1248.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "GTX-A"
+      "GTX-A",
+      "경강"
     ]
   },
   {

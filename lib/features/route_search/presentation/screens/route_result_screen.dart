@@ -600,8 +600,20 @@ class _RouteSummaryHeader extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Icon(Icons.arrow_forward, size: 20),
                 ),
-                Text(
-                  '${_formatTime(arrivalTime)}$_arrivalDaySuffix',
+                Text.rich(
+                  TextSpan(
+                    text: _formatTime(arrivalTime),
+                    children: [
+                      // 날짜 접미사는 시각보다 부수적인 정보라 작고 가는 글씨로.
+                      if (_arrivalDaySuffix.isNotEmpty)
+                        TextSpan(
+                          text: _arrivalDaySuffix,
+                          style: t.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                    ],
+                  ),
                   style: t.titleLarge,
                 ),
                 Text(

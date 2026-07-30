@@ -10,6 +10,11 @@ import 'estimate_arrival_seconds.dart';
 /// 추정값은 recptnDt 기준이므로 경과 시간을 차감하고 receivedAt을 현재 시각으로 갱신한다.
 /// 원본 리스트를 변경하지 않고 새 리스트를 반환한다.
 ///
+/// `arrivalSeconds` 의 세 상태를 구분해 유지한다:
+/// - 양수: 잔여초 (receivedAt 기준 카운트다운)
+/// - 0: "그 역에 있음" 상태 — 경과시간 차감 대상이 아니며 receivedAt 을 보존한다
+/// - null: **알 수 없음** — 추정 실패, 또는 경과시간이 추정값을 넘겨 무효가 된 경우
+///
 /// [previousArrivals]가 주어지면, 동일 열차·동일 역 위치의 이전 추정값을 재사용하여
 /// API 재조회 시 카운트다운이 리셋되는 것을 방지한다.
 List<ArrivalInfo> enrichArrivalInfoList({
@@ -72,13 +77,27 @@ ArrivalInfo _enrichSingle(
   );
   if (estimated == null) return arrival;
 
+  // 추정값 0 은 잔여초가 아니라 "그 역에 있음"이라는 **상태**다. 경과시간을 차감하면
+  // 곧바로 음수가 되어 아래에서 무효 처리되므로, 기준 시각(recptnDt)을 유지한 채
+  // 그대로 통과시킨다. 데이터가 낡았는지는 표시 단계가
+  // ApiConstants.arrivalStateGrace 로 판단한다.
+  if (estimated == 0) {
+    return arrival.copyWith(arrivalSeconds: 0, isEstimated: true);
+  }
+
   // recptnDt 경과 시간 보정: 추정값은 recptnDt 기준 → 현재까지 경과분 차감
   final now = DateTime.now();
   final elapsed = now.difference(arrival.receivedAt).inSeconds;
   final corrected = estimated - elapsed;
 
+  // 경과시간이 추정값을 넘었다면 이 데이터로는 잔여시간을 알 수 없다.
+  // 예전에는 0 으로 클램프해 "곧 도착"으로 보였다 — GTX-A 는 recptnDt 지연이
+  // 최대 817초라 구간 소요시간(300초)보다 커서 이 경로로 0초가 대량 생성됐다.
+  // 모르는 값은 0 이 아니라 **알 수 없음**(arrivalSeconds: null)으로 남긴다.
+  if (corrected <= 0) return arrival;
+
   return arrival.copyWith(
-    arrivalSeconds: corrected < 0 ? 0 : corrected,
+    arrivalSeconds: corrected,
     isEstimated: true,
     receivedAt: now,
   );

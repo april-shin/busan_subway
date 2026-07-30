@@ -85,17 +85,13 @@ class SeoulSubwayApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Android 15(API 35)부터 edge-to-edge가 강제되어 시스템 네비게이션 바가
-    // 앱 콘텐츠 위에 그려지면서 하단이 가려진다. 시스템 nav bar 색을 명시하고
-    // 모든 화면을 SafeArea(top:false)로 감싸 bottom inset만큼 콘텐츠를 올린다.
-    // top은 AppBar/Scaffold가 status bar 영역을 처리하므로 제외.
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
-
+    // 시스템 바 스타일은 여기서 명령형으로 설정하지 않는다.
+    // MaterialApp 이 자기 build 안에서 테마 brightness 를 보고
+    // `SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark)` 를
+    // 매번 호출하므로(flutter/src/material/app.dart), build 전에 설정한 값은
+    // 즉시 덮어써진다. 대신 appRootBuilder 의 AnnotatedRegion 에서 선언적으로
+    // 지정한다 — RenderView 가 매 프레임 화면 최상/최하단에서 샘플링해
+    // 적용하므로 MaterialApp 의 호출보다 나중에 반영된다.
     return MaterialApp.router(
       title: '서울 지하철',
       debugShowCheckedModeBanner: false,
@@ -108,13 +104,15 @@ class SeoulSubwayApp extends StatelessWidget {
 
 /// `MaterialApp.router` 의 `builder` 콜백.
 ///
-/// 두 가지 변환을 한 번에 적용한다:
+/// 세 가지 변환을 한 번에 적용한다:
 ///   (1) 시스템 폰트 배율(textScaler)을 0.9~1.15 로 클램프.
 ///       너무 작으면 가독성 저하, 너무 크면 레이아웃 깨짐.
 ///       4원칙 코드(map.html WebView) 는 textScaler 영향 없음 (자체 CSS).
 ///   (2) Android 15 edge-to-edge 처리: bottom inset 만큼 콘텐츠 올림.
 ///       MediaQuery 가 바깥, SafeArea 가 안쪽이어야 SafeArea 가
 ///       `MediaQuery.of(context).padding` 을 정상적으로 읽어들인다.
+///   (3) 시스템 바 영역 마감: SafeArea 로 비워진 하단 띠를 Flutter 가 직접
+///       칠하고, 시스템 바 아이콘 밝기를 앱(light 전용)에 맞춘다.
 ///
 /// `@visibleForTesting` 으로 노출해 위젯 테스트가 동일 builder 패턴을
 /// 그대로 검증할 수 있게 한다.
@@ -128,11 +126,39 @@ Widget appRootBuilder(BuildContext context, Widget? child) {
     maxScaleFactor: 1.15,
   );
 
+  // Scaffold 기본 배경과 동일한 색 — 하단 띠가 본문과 이어져 보이게 한다.
+  final surface = Theme.of(context).colorScheme.surface;
+
   return MediaQuery(
     data: mq.copyWith(textScaler: clamped),
-    child: SafeArea(
-      top: false,
-      child: child,
+    // AnnotatedRegion 은 RenderView 가 매 프레임 화면 최상단/최하단 픽셀에서
+    // 샘플링해 반영하므로(rendering/view.dart), MaterialApp 이 테마 brightness
+    // 기준으로 호출하는 SystemUiOverlayStyle.dark 를 덮어쓸 수 있다.
+    // 그 프리셋은 nav bar 아이콘을 Brightness.light(흰색)로 두는데, 이 앱은
+    // light 전용이라 흰 배경 위 흰 아이콘이 되어 보이지 않는다.
+    // AppBar 가 있는 화면은 AppBar 의 AnnotatedRegion 이 상단(status bar)
+    // 속성을 제공하고, 이 루트 리전이 하단(nav bar) 속성을 제공한다.
+    child: AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Android
+        statusBarBrightness: Brightness.light, // iOS
+        // Android 15(API 35)+ 는 이 값을 무시한다(Window.setNavigationBarColor
+        // deprecated·no-op). API 35 미만 대비로 남겨두고, 35+ 에서는 아래
+        // ColoredBox 가 같은 색으로 그 영역을 칠해 결과를 동일하게 맞춘다.
+        systemNavigationBarColor: surface,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      // SafeArea 가 만든 하단 여백은 Flutter 가 아무것도 그리지 않는 영역이라
+      // 그대로 두면 Android window background 가 노출된다
+      // (values-night 다크모드 기기에서는 검정 띠). 직접 칠해 막는다.
+      child: ColoredBox(
+        color: surface,
+        child: SafeArea(
+          top: false,
+          child: child,
+        ),
+      ),
     ),
   );
 }

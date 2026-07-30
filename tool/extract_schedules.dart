@@ -36,6 +36,7 @@ void main() async {
     {'lineId': 'SB', 'apiLineName': '신분당선', 'station': '강남', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '경의중앙', 'apiLineName': '', 'station': '', 'upDir': '', 'dnDir': ''},
     {'lineId': '경춘', 'apiLineName': '경춘선', 'station': '상봉', 'upDir': '상행', 'dnDir': '하행'},
+    {'lineId': '경강', 'apiLineName': '경강선', 'station': '이매', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '공항철도', 'apiLineName': '공항철도', 'station': '서울역', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '수인분당', 'apiLineName': '수인분당선', 'station': '왕십리', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '신림', 'apiLineName': '신림선', 'station': '보라매', 'upDir': '상행', 'dnDir': '하행'},

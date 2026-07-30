@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is on -->
-    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+    <!-- 이 앱은 light 테마 전용이다 (AppTheme.light 만 존재, MaterialApp 에
+         darkTheme/themeMode 미지정). 따라서 다크모드 기기에서도 Android
+         window background 는 light 와 동일해야 한다.
+
+         Theme.Black.NoTitleBar 를 쓰면 ?android:colorBackground 가 검정이 되어
+         (1) launch_background(흰색) → NormalTheme(검정) 전환 시 검은 플래시,
+         (2) Android 15+ edge-to-edge 에서 SafeArea 로 비워진 하단 띠에 검은
+             배경이 노출되는 문제가 생긴다. (2) 는 lib/app.dart 의 ColoredBox
+             로도 막지만, 첫 프레임 이전 구간은 여기서만 막을 수 있다. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <!-- Show a splash screen on the activity. Automatically removed when
              the Flutter engine draws its first frame -->
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
-    <!-- Theme applied to the Android Window as soon as the process has started.
-         This theme determines the color of the Android Window while your
-         Flutter UI initializes, as well as behind your Flutter UI while its
-         running.
-
-         This Theme is only used starting with V2 of Flutter's Android embedding. -->
-    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 </resources>

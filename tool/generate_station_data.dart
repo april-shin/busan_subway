@@ -567,7 +567,7 @@ void main() {
     StationData('D05', '양재', 'SB', 37.4843, 127.0354, isTransfer: true, transferLines: ['3', '신분당']),
     StationData('D06', '양재시민의숲', 'SB', 37.4706, 127.0377),
     StationData('D07', '청계산입구', 'SB', 37.4536, 127.0533),
-    StationData('D08', '판교', 'SB', 37.3949, 127.1118),
+    StationData('D08', '판교', 'SB', 37.3949, 127.1118, isTransfer: true, transferLines: ['SB', '경강']),
     StationData('D09', '정자', 'SB', 37.3666, 127.1083, isTransfer: true, transferLines: ['신분당', '수인분당']),
     StationData('D10', '미금', 'SB', 37.3505, 127.1093, isTransfer: true, transferLines: ['신분당', '수인분당']),
     StationData('D11', '동천', 'SB', 37.3379, 127.1069),
@@ -668,18 +668,35 @@ void main() {
     StationData('C22', '김유정', '경춘', 37.8233, 127.6409),
     StationData('C23', '남춘천', '경춘', 37.8653, 127.7188),
     StationData('C24', '춘천', '경춘', 37.8847, 127.7178),
-    // 경강선 (lineId='경춘'으로 매핑, 물리적으로 분리됨 — 수인분당 이매에서 환승)
-    StationData('C25', '삼동', '경춘', 37.3800, 127.1300, isTransfer: true, transferLines: ['경춘', '수인분당']),
-    StationData('C26', '경기광주', '경춘', 37.3680, 127.2195),
-    StationData('C27', '초월', '경춘', 37.3760, 127.2578),
-    StationData('C28', '곤지암', '경춘', 37.3600, 127.3224),
-    StationData('C29', '신둔도예촌', '경춘', 37.3440, 127.3700),
-    StationData('C30', '이천', '경춘', 37.2765, 127.4433),
-    StationData('C31', '부발', '경춘', 37.2500, 127.4700),
-    StationData('C32', '세종대왕릉', '경춘', 37.2400, 127.5100),
-    StationData('C33', '여주', '경춘', 37.2912, 127.6372),
   ];
   stations.addAll(gyeongchun);
+
+  // ======= 경강선 (판교↔여주) =======
+  // 경춘선과는 무관한 별개 노선이다. 2026-07-30 까지 lineId='경춘' 의 C25~C33
+  // (삼동~여주)으로 접혀 있었고 판교·성남·이매 3역은 아예 빠져 있었다. 그 상태에서는
+  // 삼동~여주가 그래프에서 고립돼(이매↔삼동 환승 connection 은 GraphBuilder 가
+  // isTransfer 라 건너뛰고, 환승 edge 는 역명 일치로만 생성됨) 경로 탐색이 불가능했다.
+  // 실시간 API subwayId 도 1081 = 경강선이다(에버라인 아님).
+  //
+  // ⚠ connections.json 의 경강선 소요시간(11구간)은 이 생성기의 좌표거리 추정값이
+  // 아니라 getTrainSch 실측값이다 — `다음역 trainArvlTm − 현재역 trainDptreTm`
+  // (dwell 제외, 앱 규약과 동일). 평일 상·하행 전 편성에서 대칭·편차 0 으로 일치하며
+  // 판교→여주 주행 합계 2700초(45분). 이 생성기를 단독 실행하면 추정값으로 되돌아간다.
+  final gyeonggang = [
+    StationData('GG01', '판교', '경강', 37.3949, 127.1118, isTransfer: true, transferLines: ['경강', 'SB']),
+    StationData('GG02', '성남', '경강', 37.4200, 127.1260, isTransfer: true, transferLines: ['경강', 'GTX-A']),
+    StationData('GG03', '이매', '경강', 37.3959, 127.1264, isTransfer: true, transferLines: ['경강', '수인분당']),
+    StationData('GG04', '삼동', '경강', 37.3800, 127.1300),
+    StationData('GG05', '경기광주', '경강', 37.3680, 127.2195),
+    StationData('GG06', '초월', '경강', 37.3760, 127.2578),
+    StationData('GG07', '곤지암', '경강', 37.3600, 127.3224),
+    StationData('GG08', '신둔도예촌', '경강', 37.3440, 127.3700),
+    StationData('GG09', '이천', '경강', 37.2765, 127.4433),
+    StationData('GG10', '부발', '경강', 37.2500, 127.4700),
+    StationData('GG11', '세종대왕릉', '경강', 37.2400, 127.5100),
+    StationData('GG12', '여주', '경강', 37.2912, 127.6372),
+  ];
+  stations.addAll(gyeonggang);
 
   // ======= 공항철도 (서울역↔인천공항2터미널) =======
   final airportRailroad = [
@@ -720,7 +737,7 @@ void main() {
     StationData('B16', '태평', '수인분당', 37.4413, 127.1266),
     StationData('B17', '모란', '수인분당', 37.4320, 127.1294, isTransfer: true, transferLines: ['8', '수인분당']),
     StationData('B18', '야탑', '수인분당', 37.4115, 127.1272),
-    StationData('B19', '이매', '수인분당', 37.3959, 127.1264, isTransfer: true, transferLines: ['수인분당', '경춘']),
+    StationData('B19', '이매', '수인분당', 37.3959, 127.1264, isTransfer: true, transferLines: ['수인분당', '경강']),
     StationData('B20', '서현', '수인분당', 37.3844, 127.1214),
     StationData('B21', '수내', '수인분당', 37.3771, 127.1138),
     StationData('B22', '정자', '수인분당', 37.3666, 127.1083, isTransfer: true, transferLines: ['수인분당', 'SB']),
@@ -954,7 +971,7 @@ void main() {
     StationData('G04', '연신내', 'GTX-A', 37.6190, 126.9211, isTransfer: true, transferLines: ['3', '6', 'GTX-A']),
     StationData('G05', '서울역', 'GTX-A', 37.5547, 126.9706, isTransfer: true, transferLines: ['1', '4', '경의중앙', '공항철도', 'GTX-A']),
     StationData('G06', '수서', 'GTX-A', 37.4873, 127.1017, isTransfer: true, transferLines: ['3', '수인분당', 'GTX-A']),
-    StationData('G07', '성남', 'GTX-A', 37.4200, 127.1260),
+    StationData('G07', '성남', 'GTX-A', 37.4200, 127.1260, isTransfer: true, transferLines: ['GTX-A', '경강']),
     StationData('G08', '구성', 'GTX-A', 37.2994, 127.0956, isTransfer: true, transferLines: ['수인분당', 'GTX-A']),
     StationData('G09', '동탄', 'GTX-A', 37.2000, 127.0570),
   ];
@@ -1182,13 +1199,6 @@ void main() {
         'isTransfer': false,
       });
     }
-    // Handle 경춘선 경강선 분리 (춘천→삼동 잘못된 연결 제거)
-    if (lineId == '경춘') {
-      connectionsList.removeWhere((c) =>
-          c['fromStationId'] == 'C24' &&
-          c['toStationId'] == 'C25' &&
-          c['lineId'] == '경춘');
-    }
     // Handle GTX-A 미개통 구간 (서울역 ↔ 수서): 삼성역 미완공으로 두 구간이
     // 분리 운행된다 — 북부(운정중앙↔서울역) / 남부(수서↔동탄). 실시간 도착 API도
     // 전 열차가 서울역 또는 수서에서 종착하며, line_schedules.json 역시 서울역
@@ -1205,21 +1215,10 @@ void main() {
     }
   }
 
-  // 이매(B19)↔삼동(C25) 환승 연결 추가 (역명이 달라 자동 생성 안 됨)
-  connectionsList.add({
-    'fromStationId': 'B19', // 이매 (수인분당)
-    'toStationId': 'C25', // 삼동 (경춘/경강)
-    'lineId': '수인분당',
-    'travelTimeSeconds': 240,
-    'isTransfer': true,
-  });
-  connectionsList.add({
-    'fromStationId': 'C25', // 삼동 (경춘/경강)
-    'toStationId': 'B19', // 이매 (수인분당)
-    'lineId': '경춘',
-    'travelTimeSeconds': 240,
-    'isTransfer': true,
-  });
+  // 경강선 판교(GG01)·성남(GG02)·이매(GG03)는 각각 신분당(D08)·GTX-A(G07)·
+  // 수인분당(B19) 과 역명이 같으므로 GraphBuilder 가 환승 edge 를 자동 생성한다.
+  // (구 이매(B19)↔삼동(C25) 수기 환승 connection 은 삭제 — 역명이 달라 그래프에
+  //  반영되지 않는 죽은 데이터였고, 경강선을 별개 노선으로 분리하며 불필요해졌다.)
 
   // 별내(819, 8호선)↔별내(C08, 경춘선) 환승 연결 추가 (같은 이름이지만 다른 ID)
   connectionsList.add({
@@ -1284,6 +1283,7 @@ void main() {
     'SB': 0xD31145,
     '경의중앙': 0x77C4A3,
     '경춘': 0x0C8E72,
+    '경강': 0x004EA7,
     '공항철도': 0x0090D2,
     '수인분당': 0xFFD400,
     '신림': 0x6789CA,
@@ -1309,6 +1309,7 @@ void main() {
     'SB': '신분당선',
     '경의중앙': '경의중앙선',
     '경춘': '경춘선',
+    '경강': '경강선',
     '공항철도': '공항철도',
     '수인분당': '수인분당선',
     '신림': '신림선',

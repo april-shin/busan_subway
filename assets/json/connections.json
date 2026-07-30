@@ -3883,59 +3883,80 @@
     "expressTimeSeconds": 210
   },
   {
-    "fromStationId": "C25",
-    "toStationId": "C26",
-    "lineId": "경춘",
+    "fromStationId": "GG01",
+    "toStationId": "GG02",
+    "lineId": "경강",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "GG02",
+    "toStationId": "GG03",
+    "lineId": "경강",
+    "travelTimeSeconds": 90,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "GG03",
+    "toStationId": "GG04",
+    "lineId": "경강",
     "travelTimeSeconds": 300,
     "isTransfer": false
   },
   {
-    "fromStationId": "C26",
-    "toStationId": "C27",
-    "lineId": "경춘",
+    "fromStationId": "GG04",
+    "toStationId": "GG05",
+    "lineId": "경강",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "GG05",
+    "toStationId": "GG06",
+    "lineId": "경강",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "GG06",
+    "toStationId": "GG07",
+    "lineId": "경강",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "GG07",
+    "toStationId": "GG08",
+    "lineId": "경강",
     "travelTimeSeconds": 300,
     "isTransfer": false
   },
   {
-    "fromStationId": "C27",
-    "toStationId": "C28",
-    "lineId": "경춘",
-    "travelTimeSeconds": 300,
+    "fromStationId": "GG08",
+    "toStationId": "GG09",
+    "lineId": "경강",
+    "travelTimeSeconds": 330,
     "isTransfer": false
   },
   {
-    "fromStationId": "C28",
-    "toStationId": "C29",
-    "lineId": "경춘",
-    "travelTimeSeconds": 300,
+    "fromStationId": "GG09",
+    "toStationId": "GG10",
+    "lineId": "경강",
+    "travelTimeSeconds": 210,
     "isTransfer": false
   },
   {
-    "fromStationId": "C29",
-    "toStationId": "C30",
-    "lineId": "경춘",
-    "travelTimeSeconds": 300,
+    "fromStationId": "GG10",
+    "toStationId": "GG11",
+    "lineId": "경강",
+    "travelTimeSeconds": 360,
     "isTransfer": false
   },
   {
-    "fromStationId": "C30",
-    "toStationId": "C31",
-    "lineId": "경춘",
-    "travelTimeSeconds": 300,
-    "isTransfer": false
-  },
-  {
-    "fromStationId": "C31",
-    "toStationId": "C32",
-    "lineId": "경춘",
-    "travelTimeSeconds": 300,
-    "isTransfer": false
-  },
-  {
-    "fromStationId": "C32",
-    "toStationId": "C33",
-    "lineId": "경춘",
-    "travelTimeSeconds": 300,
+    "fromStationId": "GG11",
+    "toStationId": "GG12",
+    "lineId": "경강",
+    "travelTimeSeconds": 270,
     "isTransfer": false
   },
   {
@@ -5370,20 +5391,6 @@
     "lineId": "GTX-A",
     "travelTimeSeconds": 300,
     "isTransfer": false
-  },
-  {
-    "fromStationId": "B19",
-    "toStationId": "C25",
-    "lineId": "수인분당",
-    "travelTimeSeconds": 240,
-    "isTransfer": true
-  },
-  {
-    "fromStationId": "C25",
-    "toStationId": "B19",
-    "lineId": "경춘",
-    "travelTimeSeconds": 240,
-    "isTransfer": true
   },
   {
     "fromStationId": "819",
