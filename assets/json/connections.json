@@ -5351,13 +5351,6 @@
     "isTransfer": false
   },
   {
-    "fromStationId": "G05",
-    "toStationId": "G06",
-    "lineId": "GTX-A",
-    "travelTimeSeconds": 300,
-    "isTransfer": false
-  },
-  {
     "fromStationId": "G06",
     "toStationId": "G07",
     "lineId": "GTX-A",
