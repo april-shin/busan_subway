@@ -43,28 +43,14 @@ PathWithDurations? findPathOnLine({
   if (fromIds == null || toIds == null) return null;
 
   // 해당 노선의 비환승 연결로 인접 리스트 + travelTime 맵 구축.
-  // isDown이 지정되면 각 연결을 방향에 맞는 단일 엣지로만 등록하여 역방향 탐색을 차단.
-  final adjacency = <String, List<String>>{};
+  final adjacency = buildLineAdjacency(
+    connections: connections,
+    lineId: lineId,
+    isDown: isDown,
+  );
   final travelTimeMap = <String, int>{};
   for (final c in connections) {
     if (c.lineId != lineId || c.isTransfer) continue;
-
-    if (isDown == null) {
-      // 기존 동작: 양방향 엣지 모두 추가
-      adjacency.putIfAbsent(c.fromStationId, () => []).add(c.toStationId);
-      adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
-    } else {
-      // 방향 제한: connection의 from→to 방향이 요청 방향과 같으면 from→to만,
-      // 반대면 to→from만 추가 (역방향 edge 차단)
-      final connectionIsDown =
-          isDownBetween(c.fromStationId, c.toStationId, lineId);
-      if (connectionIsDown == isDown) {
-        adjacency.putIfAbsent(c.fromStationId, () => []).add(c.toStationId);
-      } else {
-        adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
-      }
-    }
-
     travelTimeMap['${c.fromStationId}_${c.toStationId}'] =
         c.travelTimeSeconds;
     travelTimeMap['${c.toStationId}_${c.fromStationId}'] =
@@ -95,6 +81,57 @@ PathWithDurations? findPathOnLine({
   }
 
   return null;
+}
+
+/// [lineId] 의 비환승 연결로 인접 리스트를 만든다.
+///
+/// [isDown] 이 null 이면 양방향 엣지를 모두 등록한다. 지정되면 각 연결을 요청
+/// 방향에 맞는 단일 엣지로만 등록해 역방향 탐색을 차단한다(순환선에서 진행
+/// 방향과 반대 경로가 뽑히는 것을 방지).
+Map<String, List<String>> buildLineAdjacency({
+  required List<Connection> connections,
+  required String lineId,
+  bool? isDown,
+}) {
+  final adjacency = <String, List<String>>{};
+  for (final c in connections) {
+    if (c.lineId != lineId || c.isTransfer) continue;
+
+    if (isDown == null) {
+      adjacency.putIfAbsent(c.fromStationId, () => []).add(c.toStationId);
+      adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
+      continue;
+    }
+
+    final connectionIsDown =
+        isDownBetween(c.fromStationId, c.toStationId, lineId);
+    if (connectionIsDown == isDown) {
+      adjacency.putIfAbsent(c.fromStationId, () => []).add(c.toStationId);
+    } else {
+      adjacency.putIfAbsent(c.toStationId, () => []).add(c.fromStationId);
+    }
+  }
+  return adjacency;
+}
+
+/// 같은 노선 내 [fromStationId] → [toStationId] 경유 **역 ID** 목록을 반환한다.
+///
+/// [findPathOnLine] 과 같은 그래프·방향 규칙을 쓰지만 SVG 좌표가 아니라 역 ID를
+/// 돌려준다. 지선 분기 판정처럼 "어느 역들을 지나는가"만 필요한 경우에 쓴다.
+/// 경로가 없으면 null.
+List<String>? findStationIdPathOnLine({
+  required String fromStationId,
+  required String toStationId,
+  required String lineId,
+  required List<Connection> connections,
+  bool? isDown,
+}) {
+  final adjacency = buildLineAdjacency(
+    connections: connections,
+    lineId: lineId,
+    isDown: isDown,
+  );
+  return bfs(fromStationId, toStationId, adjacency);
 }
 
 /// BFS로 [fromId] → [toId] 경로를 찾는다.

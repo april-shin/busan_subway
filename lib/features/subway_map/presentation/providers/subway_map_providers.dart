@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/legacy.dart'; // StateProvider/StateNotifier (riverpod 3 레거시)
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -197,17 +198,30 @@ class ActiveRouteFilter {
   final String lineId;
   final bool isDown;
 
-  const ActiveRouteFilter({required this.lineId, required this.isDown});
+  /// 탑승 구간(첫 유효 세그먼트)의 역 ID 목록 — 출발역부터 순서대로.
+  ///
+  /// 노선+방향이 같아도 지선에서 갈라지는 열차(예: `천호 → 굽은다리` 경로의
+  /// 5호선 하행 "마천행")를 걸러내는 데 쓴다. 판정이 불가능하거나 불필요하면
+  /// 빈 목록이며, 그 경우 지선 필터는 적용되지 않는다.
+  final List<String> routeStationIds;
+
+  const ActiveRouteFilter({
+    required this.lineId,
+    required this.isDown,
+    this.routeStationIds = const [],
+  });
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ActiveRouteFilter &&
           lineId == other.lineId &&
-          isDown == other.isDown;
+          isDown == other.isDown &&
+          listEquals(routeStationIds, other.routeStationIds);
 
   @override
-  int get hashCode => Object.hash(lineId, isDown);
+  int get hashCode =>
+      Object.hash(lineId, isDown, Object.hashAll(routeStationIds));
 }
 
 final activeRouteFilterProvider =

@@ -1098,6 +1098,27 @@ void main() {
         'isTransfer': false,
       });
     }
+    // Handle 5호선 마천 지선 (강동에서 분기)
+    // 역 목록이 하남검단산(549) 다음에 둔촌동(550)~마천(556)을 잇달아 나열하므로
+    // 자동 인접 연결이 하남검단산→둔촌동을 만든다. 실제로는 강동(539)에서
+    // 분기하므로, 이를 고치지 않으면 5호선이 지선 없는 일직선으로 모델링돼
+    // "천호→마천"이 하남검단산을 경유하는 경로로 뽑히고, 실시간 열차의 지선
+    // 판정(마천행이 굽은다리를 지나는지)도 불가능해진다.
+    if (lineId == '5') {
+      // 하남검단산(549)→둔촌동(550) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '549' &&
+          c['toStationId'] == '550' &&
+          c['lineId'] == '5');
+      // 강동(539)→둔촌동(550) 올바른 연결 추가
+      connectionsList.add({
+        'fromStationId': '539',
+        'toStationId': '550',
+        'lineId': '5',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+      });
+    }
     // Handle Line 2 circular connection + 지선 처리
     if (lineId == '2') {
       // 순환 연결 (충정로→시청)

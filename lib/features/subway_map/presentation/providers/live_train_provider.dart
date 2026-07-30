@@ -19,6 +19,7 @@ import '../../../../core/constants/subway_id_mapping.dart';
 import '../../../../core/utils/enrich_arrival_info.dart';
 import '../../../../core/utils/expand_path_backward.dart';
 import '../../../../core/utils/path_on_line.dart';
+import '../../../../core/utils/route_branch.dart';
 import '../../../../domain/entities/arrival_info.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../arrival_info/presentation/providers/arrival_providers.dart';
@@ -237,6 +238,32 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     ref.read(_estimateCacheProvider),
   );
 
+  // 지선 필터는 "탑승 구간이 출발역에서 시작한다"는 전제 위에서만 유효하다.
+  // 열차 경로는 출발역까지 계산되므로, 첫 유효 세그먼트가 다른 역에서 시작하면
+  // (출발역이 환승역이라 앞 세그먼트가 1역뿐인 변형) 비교 기준이 어긋나 정상
+  // 열차를 지워버릴 수 있다. 그 경우 필터를 끈다.
+  final routeStartStation =
+      stationsById[routeFilter.routeStationIds.firstOrNull ?? '']?.firstOrNull;
+  final branchFilterEnabled = routeStartStation?.name == departureStationName;
+
+  // 지선 판정 메모 — 같은 행선지의 열차가 여러 대 오므로 행선지별 1회만 계산한다.
+  final branchCache = <String, bool>{};
+  bool staysOnRouteBranch(String destination) {
+    return branchCache.putIfAbsent(destination, () {
+      final destIds = [
+        for (final s in stationsByName[destination] ?? const <Station>[])
+          if (s.lineId == routeFilter.lineId) s.id,
+      ];
+      return trainStaysOnRouteBranch(
+        routeStationIds: routeFilter.routeStationIds,
+        destinationStationIds: destIds,
+        lineId: routeFilter.lineId,
+        connections: connections,
+        isDown: routeFilter.isDown,
+      );
+    });
+  }
+
   final result = <LiveTrain>[];
 
   for (final arrival in enrichedArrivals) {
@@ -250,6 +277,15 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     // 방향 필터링: 활성 경로 방향과 일치하는 열차만
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
+
+    // 지선 필터링: 노선·방향이 같아도 다른 지선으로 갈라지는 열차는 경로를
+    // 태워주지 않으므로 제외한다. 예) `천호 → 굽은다리` 경로에서 5호선 하행
+    // "마천행"은 강동에서 갈라져 굽은다리를 지나지 않는다.
+    if (branchFilterEnabled &&
+        arrival.destination.isNotEmpty &&
+        !staysOnRouteBranch(arrival.destination)) {
+      continue;
+    }
 
     // 현재 위치 역명 → stations.json 매칭.
     // 두 방향의 괄호 표기를 모두 처리하기 위해 "정확 매칭 우선, strip 은 폴백"으로 둔다.

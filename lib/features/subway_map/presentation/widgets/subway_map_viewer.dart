@@ -247,6 +247,10 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     ref.read(activeRouteFilterProvider.notifier).state = ActiveRouteFilter(
       lineId: baseLineId(validSeg.lineId),
       isDown: isDownDirection(validSeg),
+      // 지선 필터용 탑승 구간 역 목록. 급행 세그먼트는 정차역만 담고 있지만
+      // 판정이 "부분수열" 규칙이라 그대로 넘겨도 안전하다
+      // (`trainPathCoversRoute` 참조).
+      routeStationIds: [for (final s in validSeg.stations) s.id],
     );
   }
 

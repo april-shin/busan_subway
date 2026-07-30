@@ -2053,6 +2053,13 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "539",
+    "toStationId": "550",
+    "lineId": "5",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "540",
     "toStationId": "541",
     "lineId": "5",
@@ -2113,13 +2120,6 @@
     "toStationId": "549",
     "lineId": "5",
     "travelTimeSeconds": 180,
-    "isTransfer": false
-  },
-  {
-    "fromStationId": "549",
-    "toStationId": "550",
-    "lineId": "5",
-    "travelTimeSeconds": 110,
     "isTransfer": false
   },
   {
