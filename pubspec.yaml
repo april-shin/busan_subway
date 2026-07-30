@@ -76,6 +76,21 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
 
+  # Swift Package Manager 비활성화 (iOS 빌드는 CocoaPods 유지).
+  #
+  # SPM 을 켜면 SPM 을 지원하는 플러그인(webview_flutter_wkwebview,
+  # path_provider_foundation 등)이 CocoaPods 선언에서 빠지는데,
+  # google_mobile_ads(5.3.1)는 CocoaPods 전용이면서 podspec 에서
+  # `webview_flutter_wkwebview` 를 의존한다. 그 결과 pod install 이
+  # "Unable to find a specification for `webview_flutter_wkwebview`
+  # depended upon by `google_mobile_ads`" 로 실패한다.
+  #
+  # 이 플래그가 없으면 `flutter build ios` 가 매번 Xcode 프로젝트에 SPM 을
+  # 자동 마이그레이션하므로, pbxproj 를 되돌리는 것만으로는 막을 수 없다.
+  # google_mobile_ads 가 SPM 을 지원하는 버전으로 올라가면 제거할 것.
+  config:
+    enable-swift-package-manager: false
+
   assets:
     - .env
     - assets/svg/

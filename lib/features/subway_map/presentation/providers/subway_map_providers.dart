@@ -78,22 +78,18 @@ class SelectedStationsNotifier extends StateNotifier<SelectedStations> {
     state = SelectedStations(departure: departure, arrival: arrival);
   }
 
-  /// 경유역을 맨 뒤(도착역 직전)에 추가한다.
+  /// [index] 자리에 **빈 경유지 칸**을 끼워 넣는다. 기존 [index] 이후 경유지는
+  /// 한 칸씩 밀린다. 검색바의 + 버튼이 쓰는 연산이다.
   ///
-  /// 상한([maxWaypoints]) 에 도달했으면 상태를 바꾸지 않고 false 를 반환한다.
-  /// 호출부가 사용자에게 알릴 수 있도록 성공 여부를 돌려준다.
-  bool addWaypoint(Station station) =>
-      insertWaypoint(state.waypoints.length, station);
-
-  /// [index] 자리에 경유역을 **끼워 넣는다**. 기존 [index] 이후 경유역은 한 칸씩
-  /// 밀린다. 검색바의 + 버튼("이 필드 위에 경유칸 추가")이 쓰는 연산이다.
+  /// + 는 화면 이동 없이 칸만 만든다. 역 선택은 사용자가 그 칸을 눌렀을 때
+  /// 일어난다([setWaypoint]).
   ///
   /// [index] 는 삽입 지점이라 `0..waypoints.length` 가 유효하다(길이와 같으면
   /// 맨 뒤). 범위 밖이거나 상한 도달이면 상태를 바꾸지 않고 false.
-  bool insertWaypoint(int index, Station station) {
+  bool insertWaypointSlot(int index) {
     if (!state.canAddWaypoint) return false;
     if (index < 0 || index > state.waypoints.length) return false;
-    final next = [...state.waypoints]..insert(index, station);
+    final next = [...state.waypoints]..insert(index, null);
     state = SelectedStations(
       departure: state.departure,
       arrival: state.arrival,
@@ -102,16 +98,33 @@ class SelectedStationsNotifier extends StateNotifier<SelectedStations> {
     return true;
   }
 
-  /// [index] 슬롯의 경유역을 설정한다.
+  /// 경유역을 채운다 — 지도 툴팁의 "경유" 액션용.
   ///
-  /// - `index == waypoints.length`: 맨 뒤에 추가(상한 초과 시 무시).
-  /// - 범위 안: 그 슬롯을 교체.
-  /// - 그 외(음수/범위 초과): 무시.
-  void setWaypoint(int index, Station station) {
-    if (index == state.waypoints.length) {
-      addWaypoint(station);
-      return;
+  /// **빈 칸이 있으면 그중 첫 칸을 채우고**, 없으면 맨 뒤에 새로 추가한다.
+  /// 빈 칸을 두고 뒤에 덧붙이면 사용자가 만든 칸이 미아로 남기 때문이다
+  /// (+ 로 칸을 만든 뒤 지도에서 역을 고르는 것이 자연스러운 흐름).
+  ///
+  /// 채울 칸도 없고 상한([maxWaypoints])에도 도달했으면 상태를 바꾸지 않고
+  /// false 를 반환한다. 호출부가 사용자에게 알릴 수 있도록 성공 여부를 돌려준다.
+  bool addWaypoint(Station station) {
+    final emptySlot = state.waypoints.indexWhere((w) => w == null);
+    if (emptySlot >= 0) {
+      setWaypoint(emptySlot, station);
+      return true;
     }
+    if (!state.canAddWaypoint) return false;
+    state = SelectedStations(
+      departure: state.departure,
+      arrival: state.arrival,
+      waypoints: List.unmodifiable([...state.waypoints, station]),
+    );
+    return true;
+  }
+
+  /// [index] 칸의 경유역을 설정한다. 범위 밖([0, length))이면 무시.
+  ///
+  /// 빈 칸을 채울 때도, 이미 고른 역을 바꿀 때도 같은 연산이다.
+  void setWaypoint(int index, Station station) {
     if (index < 0 || index >= state.waypoints.length) return;
     final next = [...state.waypoints];
     next[index] = station;
@@ -142,9 +155,13 @@ class SelectedStations {
   final Station? departure;
   final Station? arrival;
 
-  /// 경유역 — 출발역 다음부터 도착역 직전까지 **이 순서대로** 방문한다.
+  /// 경유지 칸 — 출발역 다음부터 도착역 직전까지 **이 순서대로** 방문한다.
   /// 길이는 항상 [maxWaypoints] 이하 (notifier 가 보장).
-  final List<Station> waypoints;
+  ///
+  /// `null` 원소는 **칸만 추가되고 아직 역을 고르지 않은 빈 칸**이다. 검색바의
+  /// + 버튼이 빈 칸을 만들고, 사용자가 그 칸을 눌러 역을 고르면 채워진다.
+  /// 경로 계산에는 빈 칸을 제외한 [waypointStationIds] 를 넘긴다.
+  final List<Station?> waypoints;
 
   const SelectedStations({
     this.departure,
@@ -154,8 +171,15 @@ class SelectedStations {
 
   bool get isComplete => departure != null && arrival != null;
 
-  /// 경유역을 더 추가할 수 있는지.
+  /// 경유지 칸을 더 추가할 수 있는지. 빈 칸도 자리를 차지하므로 함께 센다.
   bool get canAddWaypoint => waypoints.length < maxWaypoints;
+
+  /// 경로 계산에 넘길 경유역 ID 목록 — **빈 칸은 제외**하고 순서는 유지한다.
+  ///
+  /// 사용자가 칸만 만들고 역을 고르지 않았다면 그 칸은 제약이 아니므로 경로에
+  /// 영향을 주지 않는다(빈 칸이 있어도 경로 검색은 그대로 동작).
+  List<String> get waypointStationIds =>
+      [for (final w in waypoints) if (w != null) w.id];
 }
 
 final selectedStationsProvider =

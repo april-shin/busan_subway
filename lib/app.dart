@@ -20,16 +20,13 @@ final GoRouter router = GoRouter(
       routes: [
         GoRoute(
           path: 'pick-station/:purpose',
-          // purpose == 'waypoint' 일 때:
-          //   `?index=N`       — 어느 경유 슬롯을 대상으로 할지. 파싱 실패/누락
-          //                      이면 null → picker 가 맨 뒤에 추가.
-          //   `?insert=true`   — 그 자리에 **끼워 넣기**(검색바 + 버튼).
-          //                      없으면 그 슬롯을 **교체**(경유 필드 탭).
+          // purpose == 'waypoint' 일 때 `?index=N` 으로 어느 경유지 칸을 채울지
+          // 지정한다. 칸은 검색바의 + 가 미리 만들어 두므로 이 화면은 채우기만
+          // 한다. 파싱 실패/누락이면 null → picker 가 빈 칸/맨 뒤로 폴백.
           builder: (context, state) => StationPickerScreen(
             purpose: state.pathParameters['purpose']!,
             waypointIndex:
                 int.tryParse(state.uri.queryParameters['index'] ?? ''),
-            insertWaypoint: state.uri.queryParameters['insert'] == 'true',
           ),
         ),
         GoRoute(

@@ -55,7 +55,7 @@ void main() {
   Widget buildHarness({
     Station? departure,
     Station? arrival,
-    List<Station> waypoints = const [],
+    List<Station?> waypoints = const [],
     VoidCallback? onDepartureTap,
     VoidCallback? onArrivalTap,
     VoidCallback? onSwap,
@@ -64,7 +64,7 @@ void main() {
     VoidCallback? onClearArrival,
     void Function(int index)? onWaypointTap,
     void Function(int index)? onWaypointClear,
-    void Function(int index)? onInsertWaypointAt,
+    void Function(int index)? onAddSlotAt,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -80,7 +80,7 @@ void main() {
           onClearArrival: onClearArrival,
           onWaypointTap: onWaypointTap,
           onWaypointClear: onWaypointClear,
-          onInsertWaypointAt: onInsertWaypointAt,
+          onAddSlotAt: onAddSlotAt,
         ),
       ),
     );
@@ -349,15 +349,89 @@ void main() {
 
   });
 
+  group('빈 경유지 칸', () {
+    testWidgets('빈 칸(null)은 안내 문구와 함께 그려진다', (tester) async {
+      await tester.pumpWidget(
+        buildHarness(
+          departure: departureStation,
+          arrival: arrivalStation,
+          waypoints: const [null],
+        ),
+      );
+
+      expect(find.byIcon(Icons.adjust), findsOneWidget);
+      expect(find.text('경유역을 선택하세요'), findsOneWidget);
+    });
+
+    testWidgets('빈 칸도 X 로 지울 수 있다 (출발/도착과 다른 점)', (tester) async {
+      final onWaypointClear = _IndexCallbacks();
+
+      await tester.pumpWidget(
+        buildHarness(
+          // 출발·도착은 미선택 + 취소 콜백 없음 → X 없음.
+          waypoints: const [null],
+          onWaypointClear: onWaypointClear.call,
+        ),
+      );
+
+      expect(find.byIcon(Icons.close), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pump();
+
+      verify(() => onWaypointClear.call(0)).called(1);
+    });
+
+    testWidgets('빈 칸을 탭하면 그 index 로 onWaypointTap 이 호출된다',
+        (tester) async {
+      final onWaypointTap = _IndexCallbacks();
+
+      await tester.pumpWidget(
+        buildHarness(
+          waypoints: const [waypointStation, null],
+          onWaypointTap: onWaypointTap.call,
+        ),
+      );
+
+      await tester.tap(find.text('경유역을 선택하세요'));
+      await tester.pump();
+
+      verify(() => onWaypointTap.call(1)).called(1);
+      verifyNever(() => onWaypointTap.call(0));
+    });
+
+    testWidgets('채워진 칸과 빈 칸이 섞여도 순서대로 그려진다', (tester) async {
+      await tester.pumpWidget(
+        buildHarness(
+          departure: departureStation,
+          arrival: arrivalStation,
+          waypoints: const [waypointStation, null, waypointStation2],
+        ),
+      );
+
+      double dy(Finder f) => tester.getTopLeft(f).dy;
+      expect(dy(find.text('강남')), lessThan(dy(find.text('삼성'))));
+      expect(
+        dy(find.text('삼성')),
+        lessThan(dy(find.text('경유역을 선택하세요'))),
+      );
+      expect(
+        dy(find.text('경유역을 선택하세요')),
+        lessThan(dy(find.text('사당'))),
+      );
+      expect(dy(find.text('사당')), lessThan(dy(find.text('역삼'))));
+    });
+  });
+
   group('경유 추가(+) 버튼', () {
-    testWidgets('onInsertWaypointAt 가 null 이면 어떤 필드에도 + 를 그리지 않는다',
+    testWidgets('onAddSlotAt 가 null 이면 어떤 필드에도 + 를 그리지 않는다',
         (tester) async {
       await tester.pumpWidget(
         buildHarness(
           departure: departureStation,
           arrival: arrivalStation,
           waypoints: const [waypointStation],
-          onInsertWaypointAt: null,
+          onAddSlotAt: null,
         ),
       );
 
@@ -372,7 +446,7 @@ void main() {
           departure: departureStation,
           arrival: arrivalStation,
           waypoints: const [waypointStation, waypointStation2],
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -392,7 +466,7 @@ void main() {
           departure: departureStation,
           arrival: arrivalStation,
           waypoints: const [waypointStation, waypointStation2],
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -414,7 +488,7 @@ void main() {
           departure: departureStation,
           arrival: arrivalStation,
           waypoints: const [waypointStation, waypointStation2],
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -438,7 +512,7 @@ void main() {
           departure: departureStation,
           arrival: arrivalStation,
           waypoints: const [waypointStation, waypointStation2],
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -457,7 +531,7 @@ void main() {
         buildHarness(
           departure: departureStation,
           arrival: arrivalStation,
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -473,7 +547,7 @@ void main() {
       final onInsert = _IndexCallbacks();
 
       await tester.pumpWidget(
-        buildHarness(onInsertWaypointAt: onInsert.call),
+        buildHarness(onAddSlotAt: onInsert.call),
       );
 
       // 도착역 미선택 → X 는 없지만 + 는 있어야 한다.
@@ -489,7 +563,7 @@ void main() {
         buildHarness(
           arrival: arrivalStation,
           onArrivalTap: onArrivalTap.call,
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -508,7 +582,7 @@ void main() {
         buildHarness(
           arrival: arrivalStation,
           onClearArrival: onClearArrival.call,
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 
@@ -525,7 +599,7 @@ void main() {
         buildHarness(
           arrival: arrivalStation,
           onClearArrival: onClearArrival.call,
-          onInsertWaypointAt: onInsert.call,
+          onAddSlotAt: onInsert.call,
         ),
       );
 

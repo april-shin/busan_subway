@@ -62,17 +62,15 @@ class HomeScreen extends StatelessWidget {
                               context.go('/pick-station/departure'),
                           onArrivalTap: () =>
                               context.go('/pick-station/arrival'),
-                          // 경유역 필드 탭 = 그 슬롯을 다시 고르기(교체).
+                          // 경유지 칸 탭 = 역 선택 화면으로. 빈 칸은 "고르기",
+                          // 채워진 칸은 "바꾸기" — 둘 다 그 index 를 채운다.
                           onWaypointTap: (index) => context
                               .go('/pick-station/waypoint?index=$index'),
                           onWaypointClear: notifier.removeWaypointAt,
-                          // + 버튼 = 그 필드 위에 경유칸 삽입(`insert=true`).
+                          // + 버튼 = 화면 이동 없이 빈 칸만 추가.
                           // 상한 도달 시 null 을 넘겨 모든 + 를 숨긴다.
-                          onInsertWaypointAt: selectedStations.canAddWaypoint
-                              ? (index) => context.go(
-                                    '/pick-station/waypoint'
-                                    '?index=$index&insert=true',
-                                  )
+                          onAddSlotAt: selectedStations.canAddWaypoint
+                              ? notifier.insertWaypointSlot
                               : null,
                           onSwap: () {
                             ref.read(selectedStationsProvider.notifier).swap();

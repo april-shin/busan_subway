@@ -22,19 +22,24 @@ const Color _fieldActionColor = Color(0xFF616161);
 ///
 /// 필드는 위에서부터 출발 → 경유역들(방문 순서) → 도착 순으로 쌓인다.
 ///
-/// 출발을 제외한 각 필드는 취소(X) 좌측에 경유지 추가(+) 를 갖는다. 삽입 위치는
-/// **누른 정차역 바로 다음**이다 — 즉 새 칸이 그 필드 아래에 생긴다:
-///   - 경유지 필드의 + → 그 경유지 **아래**(index i+1). 뒤 경유역들은 한 칸 밀린다.
+/// 출발을 제외한 각 필드는 취소(X) 좌측에 경유지 추가(+) 를 갖는다. + 는 화면을
+/// 이동시키지 않고 **빈 경유지 칸만 만든다**. 역 선택은 그 칸을 눌렀을 때 일어난다
+/// ([onWaypointTap]). 삽입 위치는 누른 정차역 바로 다음이다:
+///   - 경유지 필드의 + → 그 경유지 **아래**(index i+1). 뒤 경유지들은 한 칸 밀린다.
 ///   - 도착 필드의 + → 도착역 **위**(index waypoints.length). 도착역 뒤에는 정차할
 ///     곳이 없으므로 이 필드만 위로 삽입된다.
 /// 출발 필드에 + 가 없는 이유: 출발 다음 자리는 첫 경유지 필드의 + 가 담당한다.
-/// 경유역 상한 도달 시 호출부가 `onInsertWaypointAt: null` 로 모든 + 를 숨긴다.
+/// 경유지 상한 도달 시 호출부가 `onAddSlotAt: null` 로 모든 + 를 숨긴다.
+///
+/// [waypoints] 의 `null` 원소는 아직 역을 고르지 않은 빈 칸이며, 안내 문구와 함께
+/// 그려진다. 빈 칸도 X 로 지울 수 있어야 실수로 만든 칸을 되돌릴 수 있다.
 class RouteSearchBar extends StatelessWidget {
   final Station? departure;
   final Station? arrival;
 
-  /// 경유역 목록(방문 순서). 출발/도착 필드 사이에 순서대로 렌더된다.
-  final List<Station> waypoints;
+  /// 경유지 칸(방문 순서). 출발/도착 필드 사이에 순서대로 렌더된다.
+  /// `null` 원소는 아직 역을 고르지 않은 빈 칸이다.
+  final List<Station?> waypoints;
 
   final VoidCallback? onDepartureTap;
   final VoidCallback? onArrivalTap;
@@ -48,19 +53,20 @@ class RouteSearchBar extends StatelessWidget {
   /// 도착역만 취소(X). 도착역이 선택돼 있을 때만 노출된다.
   final VoidCallback? onClearArrival;
 
-  /// [waypoints] 의 index 번째 경유역 필드를 탭했을 때(= 그 슬롯을 다시 고름).
+  /// [waypoints] 의 index 번째 경유지 칸을 탭했을 때 — 역 선택 화면으로 간다.
+  /// 빈 칸이면 "고르기", 이미 채워진 칸이면 "바꾸기"로, 동작은 같다.
   final void Function(int index)? onWaypointTap;
 
-  /// [waypoints] 의 index 번째 경유역만 제거(X).
+  /// [waypoints] 의 index 번째 경유지 칸만 제거(X). 빈 칸도 제거 가능해야 한다.
   final void Function(int index)? onWaypointClear;
 
-  /// index 위치에 경유칸을 삽입(+). index 는 [waypoints] 의 삽입 지점이며
-  /// `0..waypoints.length` 범위다 — 경유지 필드는 `i+1`, 도착 필드는
+  /// index 위치에 **빈 경유지 칸**을 추가(+). index 는 [waypoints] 의 삽입
+  /// 지점이며 `0..waypoints.length` 범위다 — 경유지 필드는 `i+1`, 도착 필드는
   /// `waypoints.length` 를 넘긴다(위 클래스 문서의 삽입 규칙 참조).
   ///
-  /// null 이면 모든 필드의 + 를 그리지 않는다 — 호출부가 경유역 상한 도달 시
+  /// null 이면 모든 필드의 + 를 그리지 않는다 — 호출부가 경유지 상한 도달 시
   /// null 을 넘겨 추가 UI 를 숨긴다.
-  final void Function(int index)? onInsertWaypointAt;
+  final void Function(int index)? onAddSlotAt;
 
   const RouteSearchBar({
     super.key,
@@ -75,7 +81,7 @@ class RouteSearchBar extends StatelessWidget {
     this.onClearArrival,
     this.onWaypointTap,
     this.onWaypointClear,
-    this.onInsertWaypointAt,
+    this.onAddSlotAt,
   });
 
   @override
@@ -139,9 +145,12 @@ class RouteSearchBar extends StatelessWidget {
                     onClear: onWaypointClear == null
                         ? null
                         : () => onWaypointClear!(i),
-                    onAddStop: onInsertWaypointAt == null
+                    // 빈 칸(station == null)도 X 로 지울 수 있어야 실수로 만든
+                    // 칸을 되돌릴 수 있다. 출발/도착과 다른 점.
+                    clearableWhenEmpty: true,
+                    onAddStop: onAddSlotAt == null
                         ? null
-                        : () => onInsertWaypointAt!(i + 1),
+                        : () => onAddSlotAt!(i + 1),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.space4),
@@ -154,9 +163,9 @@ class RouteSearchBar extends StatelessWidget {
                   iconColor: Colors.red,
                   onTap: onArrivalTap,
                   onClear: onClearArrival,
-                  onAddStop: onInsertWaypointAt == null
+                  onAddStop: onAddSlotAt == null
                       ? null
-                      : () => onInsertWaypointAt!(waypoints.length),
+                      : () => onAddSlotAt!(waypoints.length),
                 ),
               ],
             ),
@@ -231,8 +240,14 @@ class _StationField extends StatelessWidget {
   final VoidCallback? onTap;
 
   /// 이 입력창의 역만 취소(X). 역이 선택돼 있고 콜백이 주어질 때만
-  /// 입력창 내부 우측에 X 버튼을 그린다.
+  /// 입력창 내부 우측에 X 버튼을 그린다([clearableWhenEmpty] 로 완화 가능).
   final VoidCallback? onClear;
+
+  /// 역이 선택되지 않아도 X 를 노출할지. 경유지 칸 전용.
+  ///
+  /// 출발/도착은 항상 존재하는 칸이라 비었을 때 지울 대상이 없지만, 경유지는
+  /// + 로 만든 빈 칸 자체를 되돌릴 수 있어야 한다.
+  final bool clearableWhenEmpty;
 
   /// 이 입력창 옆에 경유칸을 추가(+). X 버튼 좌측에 그린다.
   /// null 이면 + 를 그리지 않는다(출발 필드, 또는 경유역 상한 도달).
@@ -250,6 +265,7 @@ class _StationField extends StatelessWidget {
     required this.iconColor,
     this.onTap,
     this.onClear,
+    this.clearableWhenEmpty = false,
     this.onAddStop,
   });
 
@@ -257,7 +273,8 @@ class _StationField extends StatelessWidget {
   Widget build(BuildContext context) {
     final color =
         station != null ? lineColors[station!.lineId] ?? Colors.grey : null;
-    final showClear = station != null && onClear != null;
+    final showClear =
+        onClear != null && (station != null || clearableWhenEmpty);
 
     return GestureDetector(
       onTap: onTap,

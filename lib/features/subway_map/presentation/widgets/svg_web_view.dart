@@ -350,8 +350,11 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
         selected.departure!.svgY,
       );
     }
+    // 빈 칸(아직 역 미선택)은 찍을 좌표가 없으므로 건너뛴다. 인덱스는 칸 기준을
+    // 유지해 같은 칸이 항상 같은 마커 id 를 갖게 한다.
     for (var i = 0; i < selected.waypoints.length; i++) {
       final w = selected.waypoints[i];
+      if (w == null) continue;
       _setMarker('waypoint-$i', w.svgX, w.svgY);
     }
     if (selected.arrival != null) {

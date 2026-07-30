@@ -12,21 +12,16 @@ import '../utils/route_result_navigator.dart';
 class StationPickerScreen extends ConsumerStatefulWidget {
   final String purpose;
 
-  /// `purpose == 'waypoint'` 일 때 대상 경유 슬롯 index.
-  /// null 이면 맨 뒤에 추가한다(상한 도달 시 무시).
-  final int? waypointIndex;
-
-  /// `purpose == 'waypoint'` 일 때 [waypointIndex] 자리에 **끼워 넣을지** 여부.
+  /// `purpose == 'waypoint'` 일 때 채울 경유지 칸 index.
   ///
-  /// true(검색바 + 버튼) — 그 자리에 삽입하고 이후 경유역을 뒤로 밀어낸다.
-  /// false(경유 필드 탭) — 그 슬롯의 역을 교체한다.
-  final bool insertWaypoint;
+  /// 칸은 검색바의 + 가 미리 만들어 두고, 이 화면은 그 칸을 채우기만 한다.
+  /// null 이면 빈 칸을 찾아 채우고 없으면 맨 뒤에 추가한다(방어적 폴백).
+  final int? waypointIndex;
 
   const StationPickerScreen({
     super.key,
     required this.purpose,
     this.waypointIndex,
-    this.insertWaypoint = false,
   });
 
   @override
@@ -154,12 +149,11 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
       case 'arrival':
         ref.read(selectedStationsProvider.notifier).setArrival(station);
       case 'waypoint':
-        // index 누락 시 맨 뒤 슬롯을 대상으로 한다.
-        final index = widget.waypointIndex ??
-            ref.read(selectedStationsProvider).waypoints.length;
         final notifier = ref.read(selectedStationsProvider.notifier);
-        if (widget.insertWaypoint) {
-          notifier.insertWaypoint(index, station);
+        final index = widget.waypointIndex;
+        if (index == null) {
+          // index 누락 방어 — 빈 칸을 채우거나 맨 뒤에 추가.
+          notifier.addWaypoint(station);
         } else {
           notifier.setWaypoint(index, station);
         }

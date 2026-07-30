@@ -121,19 +121,21 @@ void main() {
       longitude: 126.98,
     );
 
-    test('초기 상태는 경유역 없음 + 추가 가능', () {
+    /// 경유지 칸을 이름 목록으로. 빈 칸은 null 로 남는다.
+    List<String?> names() =>
+        notifier.state.waypoints.map((s) => s?.name).toList();
+
+    test('초기 상태는 경유지 없음 + 추가 가능', () {
       expect(notifier.state.waypoints, isEmpty);
       expect(notifier.state.canAddWaypoint, true);
+      expect(notifier.state.waypointStationIds, isEmpty);
     });
 
     test('addWaypoint 는 순서대로 추가하고 true 를 반환한다', () {
       expect(notifier.addWaypoint(yeoksam), true);
       expect(notifier.addWaypoint(samseong), true);
 
-      expect(
-        notifier.state.waypoints.map((s) => s.name).toList(),
-        ['역삼', '삼성'],
-      );
+      expect(names(), ['역삼', '삼성']);
     });
 
     test('상한($maxWaypoints)에 도달하면 addWaypoint 는 false + 상태 불변', () {
@@ -144,89 +146,126 @@ void main() {
 
       expect(notifier.addWaypoint(samseong), false);
       expect(notifier.state.waypoints.length, maxWaypoints);
-      expect(notifier.state.waypoints.last.name, '역삼');
+      expect(names().last, '역삼');
     });
 
-    test('insertWaypoint 는 그 자리에 끼워 넣고 이후 경유역을 밀어낸다', () {
-      notifier.addWaypoint(yeoksam);
-      notifier.addWaypoint(samseong);
-
-      expect(notifier.insertWaypoint(1, sadang), true);
-      expect(
-        notifier.state.waypoints.map((s) => s.name).toList(),
-        ['역삼', '사당', '삼성'],
-      );
-    });
-
-    test('insertWaypoint(0) 은 맨 앞(출발역 직후)에 넣는다', () {
-      notifier.addWaypoint(yeoksam);
-
-      expect(notifier.insertWaypoint(0, sadang), true);
-      expect(notifier.state.waypoints.map((s) => s.name).toList(),
-          ['사당', '역삼']);
-    });
-
-    test('insertWaypoint(길이) 는 맨 뒤(도착역 직전)에 넣는다', () {
-      notifier.addWaypoint(yeoksam);
-
-      expect(notifier.insertWaypoint(1, sadang), true);
-      expect(notifier.state.waypoints.map((s) => s.name).toList(),
-          ['역삼', '사당']);
-    });
-
-    test('insertWaypoint 의 범위 밖 index 는 false + 상태 불변', () {
-      notifier.addWaypoint(yeoksam);
-
-      expect(notifier.insertWaypoint(-1, sadang), false);
-      expect(notifier.insertWaypoint(2, sadang), false);
-      expect(notifier.state.waypoints.map((s) => s.name).toList(), ['역삼']);
-    });
-
-    test('상한 도달 시 insertWaypoint 는 false + 상태 불변', () {
-      for (var i = 0; i < maxWaypoints; i++) {
+    group('빈 칸(+ 버튼)', () {
+      test('insertWaypointSlot 은 빈 칸을 그 자리에 끼워 넣는다', () {
         notifier.addWaypoint(yeoksam);
-      }
+        notifier.addWaypoint(samseong);
 
-      expect(notifier.insertWaypoint(0, sadang), false);
-      expect(notifier.state.waypoints.length, maxWaypoints);
-      expect(notifier.state.waypoints.first.name, '역삼');
+        expect(notifier.insertWaypointSlot(1), true);
+        expect(names(), ['역삼', null, '삼성']);
+      });
+
+      test('insertWaypointSlot(0) 은 맨 앞(출발역 직후)에 넣는다', () {
+        notifier.addWaypoint(yeoksam);
+
+        expect(notifier.insertWaypointSlot(0), true);
+        expect(names(), [null, '역삼']);
+      });
+
+      test('insertWaypointSlot(길이) 는 맨 뒤(도착역 직전)에 넣는다', () {
+        notifier.addWaypoint(yeoksam);
+
+        expect(notifier.insertWaypointSlot(1), true);
+        expect(names(), ['역삼', null]);
+      });
+
+      test('범위 밖 index 는 false + 상태 불변', () {
+        notifier.addWaypoint(yeoksam);
+
+        expect(notifier.insertWaypointSlot(-1), false);
+        expect(notifier.insertWaypointSlot(2), false);
+        expect(names(), ['역삼']);
+      });
+
+      test('빈 칸도 상한에 포함된다', () {
+        for (var i = 0; i < maxWaypoints; i++) {
+          expect(notifier.insertWaypointSlot(0), true);
+        }
+        expect(notifier.state.canAddWaypoint, false);
+        expect(notifier.insertWaypointSlot(0), false);
+        expect(notifier.state.waypoints.length, maxWaypoints);
+      });
+
+      test('빈 칸은 waypointStationIds 에서 제외된다', () {
+        notifier.addWaypoint(yeoksam);
+        notifier.insertWaypointSlot(0);
+        notifier.addWaypoint(samseong); // 빈 칸(index 0)을 채운다
+
+        expect(names(), ['삼성', '역삼']);
+        expect(notifier.state.waypointStationIds, ['219', '217']);
+      });
+
+      test('빈 칸이 남아 있으면 그 칸만 경로 계산에서 빠진다', () {
+        notifier.addWaypoint(yeoksam);
+        notifier.insertWaypointSlot(1); // 뒤에 빈 칸
+
+        expect(names(), ['역삼', null]);
+        expect(notifier.state.waypointStationIds, ['217']);
+      });
     });
 
-    test('setWaypoint 로 범위 안 슬롯을 교체한다', () {
+    group('addWaypoint 의 빈 칸 우선 채우기 (지도 툴팁 "경유")', () {
+      test('빈 칸이 있으면 뒤에 덧붙이지 않고 첫 빈 칸을 채운다', () {
+        notifier.insertWaypointSlot(0);
+
+        expect(notifier.addWaypoint(yeoksam), true);
+        expect(names(), ['역삼'], reason: '칸이 미아로 남으면 안 된다');
+      });
+
+      test('빈 칸이 여러 개면 앞쪽부터 채운다', () {
+        notifier.insertWaypointSlot(0);
+        notifier.insertWaypointSlot(1);
+        notifier.addWaypoint(yeoksam);
+
+        expect(names(), ['역삼', null]);
+      });
+
+      test('상한에 도달했어도 빈 칸이 있으면 채울 수 있다', () {
+        for (var i = 0; i < maxWaypoints; i++) {
+          notifier.insertWaypointSlot(0);
+        }
+        expect(notifier.state.canAddWaypoint, false);
+
+        expect(notifier.addWaypoint(yeoksam), true);
+        expect(names(), ['역삼', null, null]);
+      });
+    });
+
+    test('setWaypoint 로 범위 안 칸을 교체한다', () {
       notifier.addWaypoint(yeoksam);
       notifier.addWaypoint(samseong);
       notifier.setWaypoint(0, sadang);
 
-      expect(
-        notifier.state.waypoints.map((s) => s.name).toList(),
-        ['사당', '삼성'],
-      );
+      expect(names(), ['사당', '삼성']);
     });
 
-    test('setWaypoint(index == 길이) 는 맨 뒤에 추가한다', () {
-      notifier.addWaypoint(yeoksam);
-      notifier.setWaypoint(1, samseong);
+    test('setWaypoint 로 빈 칸을 채운다', () {
+      notifier.insertWaypointSlot(0);
+      notifier.setWaypoint(0, sadang);
 
-      expect(
-        notifier.state.waypoints.map((s) => s.name).toList(),
-        ['역삼', '삼성'],
-      );
+      expect(names(), ['사당']);
     });
 
     test('setWaypoint 의 범위 밖 index 는 무시된다', () {
       notifier.addWaypoint(yeoksam);
       notifier.setWaypoint(-1, samseong);
+      notifier.setWaypoint(1, samseong);
       notifier.setWaypoint(5, samseong);
 
-      expect(notifier.state.waypoints.map((s) => s.name).toList(), ['역삼']);
+      expect(names(), ['역삼'],
+          reason: '칸이 없는 index 는 추가가 아니라 무시다');
     });
 
-    test('removeWaypointAt 는 해당 슬롯만 제거한다', () {
+    test('removeWaypointAt 는 해당 칸만 제거한다 (빈 칸 포함)', () {
       notifier.addWaypoint(yeoksam);
-      notifier.addWaypoint(samseong);
-      notifier.removeWaypointAt(0);
+      notifier.insertWaypointSlot(0);
+      expect(names(), [null, '역삼']);
 
-      expect(notifier.state.waypoints.map((s) => s.name).toList(), ['삼성']);
+      notifier.removeWaypointAt(0);
+      expect(names(), ['역삼']);
     });
 
     test('removeWaypointAt 의 범위 밖 index 는 무시된다', () {
@@ -237,27 +276,28 @@ void main() {
       expect(notifier.state.waypoints.length, 1);
     });
 
-    test('setDeparture/setArrival 은 경유역을 보존한다', () {
+    test('setDeparture/setArrival 은 경유지를 보존한다', () {
       notifier.addWaypoint(yeoksam);
       notifier.setDeparture(gangnam);
       notifier.setArrival(seoul);
 
-      expect(notifier.state.waypoints.map((s) => s.name).toList(), ['역삼']);
+      expect(names(), ['역삼']);
       expect(notifier.state.isComplete, true);
     });
 
-    test('swap 은 경유 순서를 뒤집는다', () {
+    test('swap 은 경유 순서를 뒤집는다 (빈 칸 위치도 함께)', () {
       notifier.setDeparture(gangnam);
       notifier.setArrival(seoul);
       notifier.addWaypoint(yeoksam);
       notifier.addWaypoint(samseong);
+      notifier.insertWaypointSlot(2);
       notifier.swap();
 
       expect(notifier.state.departure?.name, '서울역');
       expect(notifier.state.arrival?.name, '강남');
       expect(
-        notifier.state.waypoints.map((s) => s.name).toList(),
-        ['삼성', '역삼'],
+        names(),
+        [null, '삼성', '역삼'],
         reason: '여정을 거꾸로 타면 경유 순서도 반대가 된다',
       );
     });
