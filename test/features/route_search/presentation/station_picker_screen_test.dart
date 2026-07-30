@@ -54,6 +54,22 @@ void main() {
       isTransfer: true,
       transferLines: ['2', '9'],
     ),
+    // 동명이역: 5호선 양평(서울 영등포구) ↔ 경의중앙선 양평(경기 양평군), 약 53km.
+    // 이름만으로 중복 제거하면 뒤쪽(K50)이 사라져 검색으로 선택할 수 없다.
+    const Station(
+      id: '513',
+      name: '양평',
+      lineId: '5',
+      latitude: 37.5273,
+      longitude: 126.8874,
+    ),
+    const Station(
+      id: 'K50',
+      name: '양평',
+      lineId: '경의중앙',
+      latitude: 37.4895,
+      longitude: 127.4879,
+    ),
   ];
 
   // 최근검색 섹션이 watch 하는 recentSearchProvider 는 SharedPreferences 를
@@ -141,6 +157,60 @@ void main() {
     // transferLines 가 양쪽 노선을 모두 포함해야 이후 executeAll 에서
     // "양쪽 다 급행 지원 노선" 공유 판정이 가능하다.
     expect(selected.transferLines, containsAll(['2', '9']));
+  });
+
+  group('동명이역(양평)', () {
+    testWidgets('이름이 같아도 멀리 떨어진 두 역은 각각 표시된다', (tester) async {
+      await tester.pumpWidget(buildHarness());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '양평');
+      await tester.pumpAndSettle();
+
+      // 검색어를 담은 TextField 도 '양평' 텍스트를 갖고 있으므로 목록 항목만 센다.
+      expect(
+        find.descendant(
+          of: find.byType(ListTile),
+          matching: find.text('양평'),
+        ),
+        findsNWidgets(2),
+      );
+      // 노선 뱃지로 구분된다.
+      expect(find.text('5호선'), findsOneWidget);
+      expect(find.text('경의중앙선'), findsOneWidget);
+    });
+
+    testWidgets('경의중앙선 양평을 탭하면 K50 이 선택된다', (tester) async {
+      late ProviderContainer container;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            allStationsProvider.overrideWith((ref) async => testStations),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              container = ProviderScope.containerOf(context);
+              return const MaterialApp(
+                home: StationPickerScreen(purpose: 'departure'),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '양평');
+      await tester.pumpAndSettle();
+
+      // 경의중앙선 뱃지가 붙은 항목(두 번째)을 탭.
+      await tester.tap(find.text('경의중앙선'));
+      await tester.pumpAndSettle();
+
+      final selected = container.read(selectedStationsProvider).departure;
+      expect(selected?.id, 'K50');
+      expect(selected?.lineId, '경의중앙');
+    });
   });
 
   group('최근 검색 섹션', () {

@@ -11,6 +11,7 @@ import '../../../../core/utils/enrich_arrival_info.dart';
 import '../../../../domain/entities/arrival_info.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
+import '../../utils/filter_arrivals_by_station.dart';
 import '../providers/arrival_providers.dart';
 import '../widgets/arrival_card.dart';
 
@@ -20,7 +21,17 @@ import '../widgets/arrival_card.dart';
 class ArrivalInfoScreen extends ConsumerStatefulWidget {
   final String stationName;
 
-  const ArrivalInfoScreen({super.key, required this.stationName});
+  /// 조회 대상 역의 Station ID. 동명이역(5호선 양평 vs 경의중앙선 양평)에서
+  /// 어느 역인지 구분해 API 응답을 그 역의 노선으로 한정하는 데 쓴다.
+  ///
+  /// null 이면 노선 필터 없이 역명 조회 결과 전체를 보여준다.
+  final String? stationId;
+
+  const ArrivalInfoScreen({
+    super.key,
+    required this.stationName,
+    this.stationId,
+  });
 
   @override
   ConsumerState<ArrivalInfoScreen> createState() => _ArrivalInfoScreenState();
@@ -75,15 +86,22 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
       data: (rawArrivals) {
         final stations = stationsAsync.value;
         final connections = connectionsAsync.value;
+        // 동명이역 걸러내기는 보강(enrich) 전에 — 다른 역 열차의 도착시간을
+        // 추정하는 헛일을 하지 않는다.
+        final ownArrivals = filterArrivalsToOwnLines(
+          arrivals: rawArrivals,
+          stationId: widget.stationId,
+          stations: stations,
+        );
         final arrivals = (stations != null && connections != null)
             ? enrichArrivalInfoList(
-                arrivals: rawArrivals,
+                arrivals: ownArrivals,
                 targetStationName: widget.stationName,
                 stations: stations,
                 connections: connections,
                 previousArrivals: _previousEnriched,
               )
-            : rawArrivals;
+            : ownArrivals;
         _previousEnriched = arrivals;
 
         // subwayId로 그룹화 → 노선 탭의 기준

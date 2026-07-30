@@ -130,7 +130,9 @@ class _StationDetailBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.space24),
           ElevatedButton.icon(
             onPressed: () {
-              context.go('/arrivals/${station.name}');
+              // stationId 를 함께 넘겨 동명이역(양평 등)의 도착 정보가
+              // 섞이지 않게 한다.
+              context.go('/arrivals/${station.name}?stationId=${station.id}');
             },
             icon: const Icon(Icons.access_time),
             label: const Text('실시간 도착 정보 보기'),

@@ -63,9 +63,12 @@ final GoRouter router = GoRouter(
           ),
         ),
         GoRoute(
+          // `?stationId=` 는 동명이역(5호선 양평 vs 경의중앙선 양평) 구분용 —
+          // 없으면 역명만으로 조회한다(노선 필터 없음).
           path: 'arrivals/:stationName',
           builder: (context, state) => ArrivalInfoScreen(
             stationName: state.pathParameters['stationName']!,
+            stationId: state.uri.queryParameters['stationId'],
           ),
         ),
         GoRoute(

@@ -305,14 +305,23 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
   }
 
   void _handleViewArrivalInfo(String stationName) {
+    // 툴팁은 직전에 탭한 역에 붙어 있으므로 tappedStation 이 곧 조회 대상이다.
+    // 동명이역(양평 등) 구분을 위해 그 Station ID 를 함께 넘긴다. 역명이
+    // 어긋나거나 비어 있으면 ID 없이 역명만으로 진행한다(기존 동작).
+    final tapped = ref.read(tappedStationProvider);
+    final station =
+        tapped != null && tapped.name == stationName ? tapped : null;
+
     // 로컬 데이터에 존재하는 역명인지 검증
-    final exists = widget.stations.any((s) => s.name == stationName);
-    if (!exists) return;
+    if (station == null && !widget.stations.any((s) => s.name == stationName)) {
+      return;
+    }
 
     ref.read(tappedStationProvider.notifier).state = null;
-    if (mounted) {
-      context.go('/arrivals/$stationName');
-    }
+    if (!mounted) return;
+
+    final query = station == null ? '' : '?stationId=${station.id}';
+    context.go('/arrivals/$stationName$query');
   }
 
   // ============================================================

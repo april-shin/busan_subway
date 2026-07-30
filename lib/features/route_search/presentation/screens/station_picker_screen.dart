@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/line_colors.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
+import '../../../../core/utils/same_station.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../settings/presentation/providers/home_station_provider.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
@@ -103,13 +104,10 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
                   );
                 }
 
-                // 같은 이름 역(환승역)을 하나의 항목으로 통합한다. 환승역 Station
-                // 레코드는 이미 `transferLines`에 모든 소속 노선(`['2','9']` 등)을
-                // 포함하므로 어느 레코드를 대표로 저장하든 환승 정보는 동일하다.
-                // 입력이 lineId 오름차순 기준 정렬이라 가정하고, 첫 레코드를
-                // 결정적으로 대표로 선택한다 (동일 역 이름이 다른 화면에서도
-                // 동일한 Station ID로 표시되도록 보장).
-                final unique = _uniqueByName(filtered);
+                // 같은 물리 역(환승역)의 노선별 레코드를 하나의 항목으로 통합한다.
+                // 이름이 같아도 위치가 먼 동명이역(5호선 양평 vs 경의중앙선 양평)은
+                // 별개 항목으로 남는다 — 자세한 규칙은 [uniqueStationsByLocation].
+                final unique = uniqueStationsByLocation(filtered);
 
                 return ListView.builder(
                   itemCount: unique.length,
@@ -130,16 +128,6 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
         ],
       ),
     );
-  }
-
-  /// 역 이름 기준 고유 목록 반환. 첫 등장 Station 레코드를 대표로 사용한다.
-  List<Station> _uniqueByName(List<Station> stations) {
-    final seen = <String>{};
-    final result = <Station>[];
-    for (final s in stations) {
-      if (seen.add(s.name)) result.add(s);
-    }
-    return result;
   }
 
   void _selectStation(Station station) {
