@@ -6,10 +6,13 @@ import '../../../../core/constants/line_colors.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../core/theme/tokens/app_radii.dart';
 import '../../../../domain/entities/arrival_info.dart';
+import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/line_schedule.dart';
 import '../../../../domain/entities/route_result.dart';
+import '../../../../domain/entities/station.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../arrival_info/presentation/providers/arrival_providers.dart';
+import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../providers/timetable_providers.dart';
 import '../../utils/departure_candidates.dart';
 import '../../utils/departure_query_time.dart';
@@ -184,7 +187,10 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
 /// 확정하면 그 스냅샷을 State에 고정하고, 이후 지도 화면(`liveTrainsProvider`)
 /// 등에서 동일 station name provider를 invalidate/refetch해도 표시값을 바꾸지
 /// 않는다. 정적 데이터인 `lineSchedulesProvider`(keepAlive)는 재조회되지 않으므로
-/// 예외적으로 `ref.watch`를 그대로 유지한다.
+/// 예외적으로 `ref.watch`를 그대로 유지한다. 지선 필터용
+/// `allStationsProvider`/`allConnectionsProvider`도 같은 이유로 `ref.watch`다 —
+/// 번들 JSON을 한 번 읽고 끝이며 어디서도 invalidate하지 않으므로, 화면이 살아
+/// 있는 동안 값이 로딩→확정으로 한 번만 바뀐다.
 class _RouteView extends ConsumerStatefulWidget {
   final RouteResult routeResult;
   final String departureStationName;
@@ -310,6 +316,16 @@ class _RouteViewState extends ConsumerState<_RouteView> {
 
     // 정적 데이터(keepAlive) — 재조회되지 않으므로 그대로 watch.
     final schedulesAsync = ref.watch(lineSchedulesProvider);
+
+    // 지선 필터용 정적 데이터. 로딩 중에는 빈 목록이 넘어가 필터가 적용되지
+    // 않는다(fail-open) — 실시간 도착정보보다 늦게 도착하는 경우에도 표시된
+    // 출발 시각이 잠시 필터 이전 값일 뿐, 값이 확정되면 리빌드로 교정된다.
+    // `isLoading` 판정에는 넣지 않는다: 실시간 조회 대기와 무관한 로컬 JSON
+    // 로드까지 "실시간 정보 조회중..." 으로 묶으면 기존 표시가 흔들린다.
+    final stations =
+        ref.watch(allStationsProvider).value ?? const <Station>[];
+    final connections =
+        ref.watch(allConnectionsProvider).value ?? const <Connection>[];
     final query = widget.query;
     // 고정 시각 조회는 실시간 도착정보를 쓰지 않으므로 API 를 기다릴 이유가 없다.
     final useRealtime = query.isNow;
@@ -370,6 +386,8 @@ class _RouteViewState extends ConsumerState<_RouteView> {
             routeResult: routeResult,
             now: now,
             lineSchedule: departureSchedule,
+            stations: stations,
+            connections: connections,
           );
     final departureTime = departureResult.departure;
 
@@ -400,6 +418,8 @@ class _RouteViewState extends ConsumerState<_RouteView> {
       transferArrivals: effectiveTransferArrivals,
       now: now,
       useExpress: useExpress,
+      stations: stations,
+      connections: connections,
     );
 
     // 실제 도착시간: 마지막 세그먼트 출발 + 마지막 세그먼트 소요시간(모드별)

@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/subway_id_mapping.dart';
+import '../../../core/utils/route_branch.dart';
 import '../../../domain/entities/arrival_info.dart';
+import '../../../domain/entities/connection.dart';
 import '../../../domain/entities/line_schedule.dart';
 import '../../../domain/entities/route_result.dart';
+import '../../../domain/entities/station.dart';
 import '../../../domain/usecases/find_next_departure.dart';
 import 'direction_resolver.dart';
 
@@ -61,24 +64,41 @@ DepartureContext? resolveDepartureContext(RouteResult routeResult) {
 /// 3순위 폴백은 "그 시각에 운행하는 열차가 없다"는 뜻이라, 사용자가 시각을 직접
 /// 고르는 경우 화면이 이를 구분해 안내해야 한다. 반환 시각만으로는 구분할 수
 /// 없어 [DepartureSource] 를 함께 돌려준다.
+///
+/// [stations]/[connections] 를 넘기면 실시간 필터에 **지선 판정**이 추가된다
+/// (`천호 → 굽은다리` 경로의 5호선 하행 "마천행"처럼 노선·방향·모드가 같아도
+/// 경로를 태워주지 않는 열차 제외). 로딩 전이라 비어 있으면 필터가 적용되지
+/// 않는다 — fail-open.
 ({DateTime departure, DepartureSource source}) computeDepartureTimeDetailed({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required RouteResult routeResult,
   required DateTime now,
   LineSchedule? lineSchedule,
+  List<Station> stations = const [],
+  List<Connection> connections = const [],
 }) {
   final context = resolveDepartureContext(routeResult);
   if (context == null) {
     return (departure: now, source: DepartureSource.unavailable);
   }
 
-  // 1순위: 실시간 도착정보로 보정 (방향+모드 필터 적용)
+  // 1순위: 실시간 도착정보로 보정 (방향+모드+지선 필터 적용)
   final realtimeDeparture = _getRealtimeDeparture(
     arrivalAsync: arrivalAsync,
     lineId: context.baseLine,
     isDown: context.isDown,
     now: now,
     expressOnly: context.express,
+    staysOnRouteBranch: makeDestinationBranchFilter(
+      // 급행 세그먼트는 정차역만 담고 있지만 판정이 "부분수열" 규칙이라 그대로
+      // 넘겨도 안전하다(`trainPathCoversRoute` 참조). 역 ID 는 가상 급행
+      // 노선에서도 base 노선의 것이므로 `baseLine` 과 짝이 맞는다.
+      routeStationIds: [for (final s in context.segment.stations) s.id],
+      lineId: context.baseLine,
+      isDown: context.isDown,
+      stations: stations,
+      connections: connections,
+    ),
   );
   if (realtimeDeparture != null) {
     return (departure: realtimeDeparture, source: DepartureSource.realtime);
@@ -130,6 +150,9 @@ String baseLineId(String lineId) {
 /// 1순위: [transferArrivals]에서 해당 역의 실시간 데이터 (afterTransfer 이후 열차만)
 /// 2순위: 시간표 기반 다음 출발
 /// 3순위: afterTransfer 그대로 사용
+///
+/// [stations]/[connections] 의 역할은 [computeDepartureTimeDetailed] 와 같다
+/// (환승 후 세그먼트에 지선 판정 추가, 미로딩 시 fail-open).
 List<DateTime> computeSegmentDepartures({
   required RouteResult routeResult,
   required DateTime initialDeparture,
@@ -137,6 +160,8 @@ List<DateTime> computeSegmentDepartures({
   Map<String, AsyncValue<List<ArrivalInfo>>> transferArrivals = const {},
   required DateTime now,
   bool useExpress = false,
+  List<Station> stations = const [],
+  List<Connection> connections = const [],
 }) {
   final departures = <DateTime>[initialDeparture];
   var currentTime = initialDeparture;
@@ -168,6 +193,8 @@ List<DateTime> computeSegmentDepartures({
 
       // 1순위: 환승역 실시간 도착정보 (afterTransfer 이후 열차만 유효)
       // 다음 세그먼트가 급행(`{line}E`)이면 급행 trainType만 매칭한다.
+      // 다음 세그먼트가 지선으로 갈라지는 노선이면, 그 구간을 태워주지 않는
+      // 행선지의 열차는 제외한다(출발역과 같은 규칙).
       final arrivalAsync = transferArrivals[transferStationName];
       final nextIsExpress = isExpressLineId(nextSegment.lineId);
       final nextRealtimeLineId = baseLineId(nextSegment.lineId);
@@ -181,6 +208,13 @@ List<DateTime> computeSegmentDepartures({
           now: now,
           minArrivalSeconds: minSeconds,
           expressOnly: nextIsExpress,
+          staysOnRouteBranch: makeDestinationBranchFilter(
+            routeStationIds: [for (final s in nextSegment.stations) s.id],
+            lineId: nextRealtimeLineId,
+            isDown: nextIsDown,
+            stations: stations,
+            connections: connections,
+          ),
         );
       }
 
@@ -217,6 +251,8 @@ List<DateTime> computeSegmentDepartures({
 /// `afterTransfer.difference(now).inSeconds`를 전달한다.
 /// [expressOnly]가 true면 `trainType == '급행'`인 도착 정보만 매칭한다.
 /// false면 급행/완행 구분 없이 가장 빠른 열차를 반환한다.
+/// [staysOnRouteBranch]를 넘기면 행선지가 탑승 구간을 태워주지 않는 열차를
+/// 제외한다 (지선 필터). null이면 지선 판정 없이 기존과 동일하게 동작한다.
 DateTime? _getRealtimeDeparture({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required String lineId,
@@ -224,6 +260,7 @@ DateTime? _getRealtimeDeparture({
   required DateTime now,
   int minArrivalSeconds = 0,
   bool expressOnly = false,
+  bool Function(String destination)? staysOnRouteBranch,
 }) {
   return arrivalAsync.whenOrNull(
     data: (arrivals) {
@@ -234,6 +271,11 @@ DateTime? _getRealtimeDeparture({
         if (a.arrivalSeconds == null) return false;
         if (a.arrivalSeconds! <= minArrivalSeconds) return false;
         if (expressOnly && a.trainType != '급행') return false;
+        // 지선 판정은 그래프 탐색이 필요해 가장 비싸므로 맨 뒤에 둔다.
+        if (staysOnRouteBranch != null &&
+            !staysOnRouteBranch(a.destination)) {
+          return false;
+        }
         return true;
       }).toList();
 
