@@ -69,8 +69,9 @@ class LiveTrain {
   /// JS 측은 `'급행'`이면 마커에 빨간 "급" 딱지를 그린다.
   final String trainType;
 
-  /// 탑승 구간을 완주하지 못하는 **중간 종착** 열차인지
-  /// ([RouteCoverage.earlyTerminus]). 같은 선로를 달리므로 지도에는 남기되,
+  /// 탑승 구간을 완주하지 못하는 열차인지 — 중간 종착
+  /// ([RouteCoverage.earlyTerminus]) 과 지선 분기([RouteCoverage.diverged]) 둘 다.
+  /// 화면에 그려지는 구간에서는 같은 선로를 달리므로 지도에는 남기되,
   /// JS 측이 투명도를 낮춰 "유령"처럼 그린다.
   final bool isGhost;
 
@@ -288,17 +289,17 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
 
-    // 구간 완주 판정.
-    //  - 지선 분기(`천호 → 굽은다리` 경로의 5호선 하행 "마천행")는 하차역 쪽
-    //    선로를 아예 타지 않으므로 지도에서 제외한다.
-    //  - 중간 종착(`내방 → 장암` 경로의 7호선 상행 "도봉산행")은 실제로 같은
-    //    선로를 달리는 열차다. 숨기면 지도가 비어 보이므로 남겨두되 유령처럼
-    //    흐리게 그린다(`isGhost` → JS 가 투명도로 반영).
+    // 구간 완주 판정 — 태워주지 못하는 열차도 **지우지 않고** 유령으로 남긴다.
+    //  - 중간 종착(`내방 → 장암` 경로의 7호선 상행 "도봉산행")
+    //  - 지선 분기(`천호 → 굽은다리` 경로의 5호선 하행 "마천행")
+    // 둘 다 열차 아이콘이 그려지는 구간(현재역 → 출발역)에서는 실제로 같은
+    // 선로를 달린다 — 갈라지거나 멈추는 지점은 출발역 **이후**라 화면에 나오지
+    // 않는다. 그래서 위치는 정확하고, 다만 이 경로를 완주하지 못한다는 뜻으로
+    // 흐리게 그린다(`isGhost` → JS 가 투명도로 반영).
+    // 경로 결과의 출발 시각 계산은 이와 별개로 `full` 만 후보로 쓴다.
     var isGhost = false;
     if (branchFilterEnabled && arrival.destination.isNotEmpty) {
-      final coverage = coverageOf(arrival.destination);
-      if (coverage == RouteCoverage.diverged) continue;
-      isGhost = coverage == RouteCoverage.earlyTerminus;
+      isGhost = coverageOf(arrival.destination) != RouteCoverage.full;
     }
 
     // 현재 위치 역명 → stations.json 매칭.
