@@ -1055,6 +1055,13 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  // 좌·우·하단 오버스크롤 여백.
+  var OVERSCROLL_PAD = 70;
+  // 상단 여백만 크게 잡는다. 지도 위에는 검색바 카드가 떠 있어(HomeScreen 의
+  // 상단 오버레이) 캔버스 최상단에 있는 역(연천·발곡 등)이 카드에 가려진다.
+  // 기존 70px 로는 끝까지 내려도 카드 높이를 벗어나지 못해 라벨을 읽을 수 없었다.
+  var OVERSCROLL_PAD_TOP = 170;
+
   // 한 축의 translation 을 정한다. 이 로직은 지도 pan/zoom 화면 배치 전용이며
   // 실시간 열차 애니메이션 4원칙(카운트다운/역산/3-way/보간)과 무관하다.
   // - 콘텐츠(맵)가 뷰포트보다 작으면 (예: iPad 세로에서 줌아웃 시) 가장자리에
@@ -1062,19 +1069,21 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   //   (기존엔 항상 +pad 쪽에 붙어 하단/우측에 거대한 빈 공간이 생겼다.)
   // - 콘텐츠가 뷰포트보다 크면 기존대로 [viewport - content - pad, pad] 범위로
   //   클램프해 가장자리 pad 만큼의 오버스크롤 여백만 허용한다.
-  function clampAxis(t, viewport, content, pad) {
+  // - padStart 는 시작 가장자리(좌/상), padEnd 는 끝 가장자리(우/하) 의 여백이다.
+  //   상단만 따로 키워 검색바 카드 아래에 가려지는 영역을 벗어날 수 있게 한다.
+  function clampAxis(t, viewport, content, padStart, padEnd) {
     if (content <= viewport) {
       return (viewport - content) / 2;
     }
-    var minT = viewport - content - pad;
-    return Math.min(pad, Math.max(minT, t));
+    var minT = viewport - content - padEnd;
+    return Math.min(padStart, Math.max(minT, t));
   }
 
   function clampTranslation() {
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    tx = clampAxis(tx, vw, CANVAS_W * scale, 70);
-    ty = clampAxis(ty, vh, CANVAS_H * scale, 70);
+    tx = clampAxis(tx, vw, CANVAS_W * scale, OVERSCROLL_PAD, OVERSCROLL_PAD);
+    ty = clampAxis(ty, vh, CANVAS_H * scale, OVERSCROLL_PAD_TOP, OVERSCROLL_PAD);
   }
 
   document.addEventListener('pointerdown', function(e) {
@@ -1915,8 +1924,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     var targetTy = vh / 2 - svgY * scale;
 
     // clamp 적용 (clampTranslation 과 동일 규칙: 콘텐츠가 뷰포트보다 작으면 중앙 정렬)
-    targetTx = clampAxis(targetTx, vw, CANVAS_W * scale, 70);
-    targetTy = clampAxis(targetTy, vh, CANVAS_H * scale, 70);
+    targetTx = clampAxis(targetTx, vw, CANVAS_W * scale,
+                         OVERSCROLL_PAD, OVERSCROLL_PAD);
+    targetTy = clampAxis(targetTy, vh, CANVAS_H * scale,
+                         OVERSCROLL_PAD_TOP, OVERSCROLL_PAD);
 
     // durationMs <= 0 이면 애니메이션 없이 즉시 이동. 진행 중인 팬이 있으면
     // panAnimId 를 올려 무효화해 늦게 도착하는 프레임이 스냅 위치를 덮어쓰지
@@ -1981,6 +1992,50 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var BUBBLE_HEIGHT = BUBBLE_LINE_H * 2; // 2줄(행선/카운트다운)
   var BUBBLE_Y = -20 - BUBBLE_HEIGHT;    // 열차 아이콘(image y=-6.5) 위에 배치
   var BUBBLE_TAIL_H = 5;
+
+  // ============================================================
+  // 유령 열차 (중간 종착)
+  // ============================================================
+  // 탑승 구간을 완주하지 못하는 중간 종착 열차(Dart 의 `isGhost`)는 실제로 같은
+  // 선로를 달리므로 지도에 남기되, 흐리게 그려 "탈 수 있는 열차"와 구분한다.
+  // (지선으로 갈라지는 열차는 Dart 단계에서 아예 제외돼 여기 오지 않는다.)
+  //
+  // 반드시 **inline opacity 속성**으로만 다룬다. CSS 클래스로 처리하면 도착
+  // 이펙트(playArrivalEffect)가 쓰는 inline 속성을 CSS 가 이겨서 페이드아웃이
+  // 먹지 않는다 (SVG presentation attribute < CSS 규칙).
+  // 0.4 — 실 열차(1.0)와 한눈에 구분되면서, 말풍선의 "{행선}행" 글씨는 읽을 수
+  // 있는 선. 더 낮추면 왜 흐린지(= 중간 종착) 사용자가 알 수 없다.
+  var GHOST_OPACITY = 0.4;
+
+  function trainBaseOpacity(train) {
+    return train && train.isGhost ? GHOST_OPACITY : 1;
+  }
+
+  // 열차 그룹의 기본 투명도를 현재 유령 여부에 맞춘다. refresh 로 행선지가
+  // 바뀌면 유령 여부도 뒤집히므로 갱신 경로에서도 호출해야 한다.
+  // 도착 이펙트가 곱셈 기준으로 쓰도록 trainState 에도 보관한다.
+  function applyTrainGhostState(trainState, train) {
+    var base = trainBaseOpacity(train);
+    trainState.baseOpacity = base;
+    if (trainState.element) {
+      trainState.element.setAttribute('opacity', String(base));
+    }
+  }
+
+  // [원칙 1] 기준 시각(receivedAt = API recptnDt) 대비 남은시간.
+  //
+  // 경과시간에 0 하한을 둔다. 일부 노선(신분당선 등)은 recptnDt 를 실제보다 수 분
+  // 앞선 시각으로 보내는데, 그대로 빼면 경과가 음수가 되어 남은시간이 **부풀어**
+  // 오른다. 특히 arrivalSeconds=0("그 역에 있음" 상태)이 양수 카운트다운으로
+  // 둔갑해, 이미 도착역에 있는 열차가 "N초 후 도착" 말풍선을 단 채 그 역에
+  // 붙박이로 남는다. 하한을 두어도 남은시간은 시간이 지날수록 줄어들기만 하므로
+  // 단조 감소(원칙 1)는 그대로 유지된다.
+  // Dart 측 동일 규칙: arrival_card.dart 의 `_liveSeconds`,
+  // enrich_arrival_info.dart 의 elapsed 하한.
+  function remainingFromReceivedAt(baseArrival, receivedAtMs, nowMs) {
+    var elapsed = Math.max(0, (nowMs - receivedAtMs) / 1000);
+    return Math.max(0, (baseArrival || 0) - elapsed);
+  }
 
   // realRemaining(초, 단조 감소) → 표시 문구.
   function formatArrivalBubbleText(remainingSeconds) {
@@ -2165,6 +2220,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
 
     g.setAttribute('transform', 'translate(' + startX + ',' + startY + ')');
+    // 중간 종착 열차는 흐리게(유령). 갱신 경로는 applyTrainGhostState 가 담당.
+    g.setAttribute('opacity', String(trainBaseOpacity(train)));
     return g;
   }
 
@@ -2519,8 +2576,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
     function step() {
       // [원칙 1] realRemaining = arrivalSeconds - (now - recptnDt)
-      var realRemaining = Math.max(0,
-        baseArrival - (Date.now() - receivedAt) / 1000);
+      // (미래 recptnDt 방어를 위해 경과시간 0 하한 — remainingFromReceivedAt 주석 참조)
+      var realRemaining =
+        remainingFromReceivedAt(baseArrival, receivedAt, Date.now());
 
       // 도착 말풍선: realRemaining(단조 감소, 원칙 1) 을 그대로 정수화해 표시.
       // 별도 카운트다운 변수를 두지 않고, 정수 초가 바뀔 때만 DOM 을 갱신해
@@ -2631,7 +2689,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       var eased = 1 - Math.pow(1 - progress, 3);
 
       var scale = 1 + eased;
-      var opacity = 1 - eased;
+      // 유령 열차는 이미 흐리므로 그 투명도에서부터 페이드아웃한다
+      // (1 에서 시작하면 도착 순간 갑자기 진해진다).
+      var base = (trainState.baseOpacity != null) ? trainState.baseOpacity : 1;
+      var opacity = (1 - eased) * base;
 
       el.setAttribute('transform', currentTransform + ' scale(' + scale + ')');
       el.setAttribute('opacity', opacity);
@@ -2693,7 +2754,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       if (!st.element || st.element.parentNode !== liveTrainsGroup) continue;
       // 기준값이 없는 열차는 Infinity 로 두어 가장 아래에 깔린다.
       var rem = (st.baseArrival != null && st.baseReceivedAt != null)
-        ? Math.max(0, st.baseArrival - (nowMs - st.baseReceivedAt) / 1000)
+        ? remainingFromReceivedAt(st.baseArrival, st.baseReceivedAt, nowMs)
         : Infinity;
       items.push({ el: st.element, rem: rem });
     }
@@ -2766,12 +2827,12 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         // recptnDt 만 갱신되어 realRemaining 이 원복된다. 이전 refresh 기반 예상
         // realRemaining 보다 새 값이 크면 이전 값으로 clamp.
         if (existing.baseArrival != null && existing.baseReceivedAt != null) {
-          var prevReal = Math.max(0,
-            existing.baseArrival - (nowMs - existing.baseReceivedAt) / 1000);
+          var prevReal = remainingFromReceivedAt(
+            existing.baseArrival, existing.baseReceivedAt, nowMs);
           var newReceivedAt = (t.receivedAtEpochMs != null)
             ? t.receivedAtEpochMs : nowMs;
-          var newReal = Math.max(0,
-            (t.arrivalSeconds || 0) - (nowMs - newReceivedAt) / 1000);
+          var newReal = remainingFromReceivedAt(
+            t.arrivalSeconds, newReceivedAt, nowMs);
           if (newReal > prevReal + 2) { // 2초 오차 허용 (네트워크 지터)
             t.arrivalSeconds = Math.round(prevReal);
             t.receivedAtEpochMs = nowMs;
@@ -2790,6 +2851,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           // 행선지는 말풍선의 .bubble-dest 줄(class 기반)로 갱신 —
           // 길이 변화에 맞춰 말풍선 너비도 재계산(짧아질 때도 재축소).
           updateArrivalBubbleDestination(existing.element, t.destination);
+          applyTrainGhostState(existing, t);
           updateTrainDebugInfo(existing.element, t);
           existing.slotKey = makeSlotKey(t);
           rememberSlot(t, nowMs);
@@ -2805,6 +2867,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
         existing.slotKey = makeSlotKey(t);
         updateArrivalBubbleDestination(existing.element, t.destination);
+        applyTrainGhostState(existing, t);
         // [디버그용] 기존 열차의 디버그 정보 갱신
         updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);
@@ -2822,12 +2885,12 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         if (slotMem != null
             && slotOccupancy[slotKey] === 1
             && (nowMs2 - slotMem.lastSeenMs) < 60000) {
-          var prevReal = Math.max(0,
-            slotMem.baseArrival - (nowMs2 - slotMem.baseReceivedAt) / 1000);
+          var prevReal = remainingFromReceivedAt(
+            slotMem.baseArrival, slotMem.baseReceivedAt, nowMs2);
           var newReceivedAt2 = (t.receivedAtEpochMs != null)
             ? t.receivedAtEpochMs : nowMs2;
-          var newReal2 = Math.max(0,
-            (t.arrivalSeconds || 0) - (nowMs2 - newReceivedAt2) / 1000);
+          var newReal2 = remainingFromReceivedAt(
+            t.arrivalSeconds, newReceivedAt2, nowMs2);
           if (newReal2 > prevReal + 2) {
             t.arrivalSeconds = Math.round(prevReal);
             t.receivedAtEpochMs = nowMs2;
@@ -2846,7 +2909,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           // trainNo 매칭이 흔들려도 정확히 정리하기 위한 보조키 저장.
           slotKey: slotKey,
           // 이 열차가 속한 활성 경로 스코프. 스코프가 바뀌면 즉시 제거된다.
-          scopeKey: scopeKey
+          scopeKey: scopeKey,
+          // 유령(중간 종착) 여부에 따른 기본 투명도. 도착 이펙트가 곱셈 기준으로 쓴다.
+          baseOpacity: trainBaseOpacity(t)
         };
         startTrainAnimation(activeTrains[t.trainNo], t);
         rememberSlot(t, nowMs2);

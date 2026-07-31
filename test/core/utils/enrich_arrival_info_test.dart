@@ -256,6 +256,39 @@ void main() {
       expect(result[0].arrivalSeconds!, closeTo(80, 2));
     });
 
+    test('미래 recptnDt: 음수 경과로 추정값이 부풀지 않는다', () {
+      // 신분당선 등 일부 노선은 recptnDt 를 실제보다 수 분 앞선 시각으로 보낸다.
+      // 음수 경과를 그대로 차감하면 추정값이 그만큼 커져(90 → 240초) 열차가
+      // 도착한 뒤에도 카운트다운이 남는다.
+      final futureTime = DateTime.now().add(const Duration(seconds: 150));
+      final arrivals = [
+        ArrivalInfo(
+          subwayId: '1002',
+          stationName: '선릉',
+          trainLineNm: '2호선',
+          direction: '상행',
+          arrivalMessage: '역삼 도착',
+          destination: '시청',
+          trainType: '일반',
+          arrivalSeconds: null,
+          receivedAt: futureTime,
+          currentStationName: '역삼',
+          positionStatus: '도착',
+          arrivalCode: 1,
+        ),
+      ];
+
+      final result = enrichArrivalInfoList(
+        arrivals: arrivals,
+        targetStationName: '선릉',
+        stations: stations,
+        connections: connections,
+      );
+
+      // 역삼 → 선릉 추정은 90초. 미래 recptnDt 라도 그 이상으로 커지면 안 된다.
+      expect(result[0].arrivalSeconds, 90);
+    });
+
     test('previousArrivals: 동일 역 정보면 이전 추정값을 재사용한다', () {
       final estimatedAt = DateTime.now().subtract(const Duration(seconds: 5));
       final newReceivedAt = DateTime.now();

@@ -69,6 +69,11 @@ class LiveTrain {
   /// JS 측은 `'급행'`이면 마커에 빨간 "급" 딱지를 그린다.
   final String trainType;
 
+  /// 탑승 구간을 완주하지 못하는 **중간 종착** 열차인지
+  /// ([RouteCoverage.earlyTerminus]). 같은 선로를 달리므로 지도에는 남기되,
+  /// JS 측이 투명도를 낮춰 "유령"처럼 그린다.
+  final bool isGhost;
+
   const LiveTrain({
     required this.trainNo,
     required this.lineId,
@@ -88,6 +93,7 @@ class LiveTrain {
     this.initialProgress = 0.0,
     this.currentStationIndex = 0,
     this.trainType = '일반',
+    this.isGhost = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -111,8 +117,11 @@ class LiveTrain {
         'initialProgress': initialProgress,
         'currentStationIndex': currentStationIndex,
         'trainType': trainType,
+        'isGhost': isGhost,
       };
 
+  // 유령 여부는 행선지가 바뀌면 뒤집히는 **표시 속성**이라 동등성에 포함한다.
+  // 빠지면 다른 필드가 같을 때 WebView 갱신이 스킵돼 투명도가 그대로 남는다.
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -120,11 +129,12 @@ class LiveTrain {
           trainNo == other.trainNo &&
           lineId == other.lineId &&
           arrivalSeconds == other.arrivalSeconds &&
-          currentStation == other.currentStation;
+          currentStation == other.currentStation &&
+          isGhost == other.isGhost;
 
   @override
   int get hashCode =>
-      Object.hash(trainNo, lineId, arrivalSeconds, currentStation);
+      Object.hash(trainNo, lineId, arrivalSeconds, currentStation, isGhost);
 }
 
 /// 추정값 캐시 엔트리: 초단위 도착시간 없는 열차의 최초 추정값과 시점을 보존
@@ -238,7 +248,7 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     ref.read(_estimateCacheProvider),
   );
 
-  // 지선 필터는 "탑승 구간이 출발역에서 시작한다"는 전제 위에서만 유효하다.
+  // 구간 완주 판정은 "탑승 구간이 출발역에서 시작한다"는 전제 위에서만 유효하다.
   // 열차 경로는 출발역까지 계산되므로, 첫 유효 세그먼트가 다른 역에서 시작하면
   // (출발역이 환승역이라 앞 세그먼트가 1역뿐인 변형) 비교 기준이 어긋나 정상
   // 열차를 지워버릴 수 있다. 그 경우 필터를 끈다.
@@ -246,15 +256,15 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       stationsById[routeFilter.routeStationIds.firstOrNull ?? '']?.firstOrNull;
   final branchFilterEnabled = routeStartStation?.name == departureStationName;
 
-  // 지선 판정 메모 — 같은 행선지의 열차가 여러 대 오므로 행선지별 1회만 계산한다.
-  final branchCache = <String, bool>{};
-  bool staysOnRouteBranch(String destination) {
-    return branchCache.putIfAbsent(destination, () {
+  // 완주 판정 메모 — 같은 행선지의 열차가 여러 대 오므로 행선지별 1회만 계산한다.
+  final coverageCache = <String, RouteCoverage>{};
+  RouteCoverage coverageOf(String destination) {
+    return coverageCache.putIfAbsent(destination, () {
       final destIds = [
         for (final s in stationsByName[destination] ?? const <Station>[])
           if (s.lineId == routeFilter.lineId) s.id,
       ];
-      return trainStaysOnRouteBranch(
+      return classifyDestinationCoverage(
         routeStationIds: routeFilter.routeStationIds,
         destinationStationIds: destIds,
         lineId: routeFilter.lineId,
@@ -278,13 +288,17 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
 
-    // 지선 필터링: 노선·방향이 같아도 다른 지선으로 갈라지는 열차는 경로를
-    // 태워주지 않으므로 제외한다. 예) `천호 → 굽은다리` 경로에서 5호선 하행
-    // "마천행"은 강동에서 갈라져 굽은다리를 지나지 않는다.
-    if (branchFilterEnabled &&
-        arrival.destination.isNotEmpty &&
-        !staysOnRouteBranch(arrival.destination)) {
-      continue;
+    // 구간 완주 판정.
+    //  - 지선 분기(`천호 → 굽은다리` 경로의 5호선 하행 "마천행")는 하차역 쪽
+    //    선로를 아예 타지 않으므로 지도에서 제외한다.
+    //  - 중간 종착(`내방 → 장암` 경로의 7호선 상행 "도봉산행")은 실제로 같은
+    //    선로를 달리는 열차다. 숨기면 지도가 비어 보이므로 남겨두되 유령처럼
+    //    흐리게 그린다(`isGhost` → JS 가 투명도로 반영).
+    var isGhost = false;
+    if (branchFilterEnabled && arrival.destination.isNotEmpty) {
+      final coverage = coverageOf(arrival.destination);
+      if (coverage == RouteCoverage.diverged) continue;
+      isGhost = coverage == RouteCoverage.earlyTerminus;
     }
 
     // 현재 위치 역명 → stations.json 매칭.
@@ -419,6 +433,7 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       initialProgress: initialProgress,
       currentStationIndex: currentStationIndex,
       trainType: arrival.trainType,
+      isGhost: isGhost,
     ));
   }
 
@@ -476,6 +491,7 @@ List<LiveTrain> _applyOverlapOffset(List<LiveTrain> trains) {
           initialProgress: t.initialProgress,
           currentStationIndex: t.currentStationIndex,
           trainType: t.trainType,
+          isGhost: t.isGhost,
         );
       }(),
   ];

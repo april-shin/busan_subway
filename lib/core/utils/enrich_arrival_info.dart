@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../domain/entities/arrival_info.dart';
 import '../../domain/entities/connection.dart';
 import '../../domain/entities/station.dart';
@@ -85,9 +87,12 @@ ArrivalInfo _enrichSingle(
     return arrival.copyWith(arrivalSeconds: 0, isEstimated: true);
   }
 
-  // recptnDt 경과 시간 보정: 추정값은 recptnDt 기준 → 현재까지 경과분 차감
+  // recptnDt 경과 시간 보정: 추정값은 recptnDt 기준 → 현재까지 경과분 차감.
+  // 경과에 0 하한을 둔다 — 일부 노선(신분당선 등)은 recptnDt 를 실제보다 수 분
+  // 앞선 시각으로 보내며, 음수 경과를 그대로 빼면 추정값이 그만큼 **부풀어** 오른다
+  // (예: 정자→판교 203초 추정이 350초로). arrival_card 의 `_liveSeconds` 와 동일 규칙.
   final now = DateTime.now();
-  final elapsed = now.difference(arrival.receivedAt).inSeconds;
+  final elapsed = math.max(0, now.difference(arrival.receivedAt).inSeconds);
   final corrected = estimated - elapsed;
 
   // 경과시간이 추정값을 넘었다면 이 데이터로는 잔여시간을 알 수 없다.

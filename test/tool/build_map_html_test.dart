@@ -338,6 +338,34 @@ void main() {
       expect(hlBody, isNot(contains('document.querySelectorAll')));
     });
 
+    test('남은시간 계산은 경과시간에 0 하한을 둔다 (미래 recptnDt 방어)', () {
+      // 회귀 가드: 일부 노선(신분당선 등)은 recptnDt 가 실제보다 수 분 앞선다.
+      // 경과가 음수로 들어가면 남은시간이 부풀어, arrivalSeconds=0("그 역에 있음")
+      // 열차가 도착역에 붙박이로 선 채 "N초 후 도착" 말풍선을 달게 된다.
+      final fnStart = htmlContent.indexOf('function remainingFromReceivedAt');
+      expect(fnStart, greaterThan(0), reason: '남은시간 헬퍼가 존재해야 한다');
+      final fnBody = htmlContent.substring(fnStart, fnStart + 300);
+      expect(fnBody, contains('Math.max(0, (nowMs - receivedAtMs) / 1000)'));
+
+      // 카운트다운·정렬·단조감소 clamp 가 모두 이 헬퍼를 거쳐야 한다.
+      // (직접 뺄셈이 남아 있으면 그 경로만 다시 부풀어 오른다.)
+      expect(htmlContent, isNot(contains('(Date.now() - receivedAt) / 1000')));
+      expect(htmlContent, isNot(contains('(nowMs - newReceivedAt) / 1000')));
+      expect(htmlContent, isNot(contains('(nowMs2 - newReceivedAt2) / 1000')));
+      expect(
+        htmlContent,
+        isNot(contains('(nowMs - existing.baseReceivedAt) / 1000')),
+      );
+      expect(
+        htmlContent,
+        isNot(contains('(nowMs - st.baseReceivedAt) / 1000')),
+      );
+      expect(
+        htmlContent,
+        isNot(contains('(nowMs2 - slotMem.baseReceivedAt) / 1000')),
+      );
+    });
+
     test('showTrains가 경로 스코프 키를 두 번째 인자로 받는다', () {
       // Flutter 가 activeRouteFilter 를 스코프 키로 넘기고, JS 가 이를 열차
       // 상태에 기록해야 경로 변경으로 무효해진 열차를 즉시 제거할 수 있다.
@@ -398,6 +426,32 @@ void main() {
       final arrivalIdx = afterGuard.indexOf('playArrivalEffect');
       expect(continueIdx, greaterThan(0));
       expect(continueIdx, lessThan(arrivalIdx));
+    });
+
+    test('중간 종착(isGhost) 열차는 흐린 투명도로 그려진다', () {
+      // 유령 투명도는 inline opacity 속성이어야 한다 — CSS 클래스로 처리하면
+      // 도착 이펙트의 inline opacity 를 CSS 가 이겨 페이드아웃이 먹지 않는다.
+      expect(htmlContent, contains('var GHOST_OPACITY'));
+      expect(htmlContent, contains('train.isGhost ? GHOST_OPACITY : 1'));
+      expect(htmlContent, isNot(contains('.train-ghost')));
+
+      // 신규 생성 경로: createTrainIcon 이 기본 투명도를 세팅한다.
+      expect(htmlContent,
+          contains("g.setAttribute('opacity', String(trainBaseOpacity(train)))"));
+
+      // 갱신 경로: refresh 로 행선지가 바뀌면 유령 여부도 뒤집히므로
+      // showTrains 의 기존 열차 분기 양쪽에서 재적용해야 한다.
+      final showStart = htmlContent.indexOf('window.showTrains');
+      final showEnd = htmlContent.indexOf('window.clearTrains');
+      final showBody = htmlContent.substring(showStart, showEnd);
+      expect(
+        'applyTrainGhostState(existing, t)'.allMatches(showBody).length,
+        2,
+        reason: '도착 임박 조기 continue 분기와 일반 갱신 분기 모두에서 재적용해야 한다',
+      );
+
+      // 도착 페이드아웃은 유령의 흐린 투명도에서 시작해야 한다(곱셈).
+      expect(htmlContent, contains('var opacity = (1 - eased) * base;'));
     });
   });
 }

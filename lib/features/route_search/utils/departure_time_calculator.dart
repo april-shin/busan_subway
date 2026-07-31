@@ -65,10 +65,11 @@ DepartureContext? resolveDepartureContext(RouteResult routeResult) {
 /// 고르는 경우 화면이 이를 구분해 안내해야 한다. 반환 시각만으로는 구분할 수
 /// 없어 [DepartureSource] 를 함께 돌려준다.
 ///
-/// [stations]/[connections] 를 넘기면 실시간 필터에 **지선 판정**이 추가된다
-/// (`천호 → 굽은다리` 경로의 5호선 하행 "마천행"처럼 노선·방향·모드가 같아도
-/// 경로를 태워주지 않는 열차 제외). 로딩 전이라 비어 있으면 필터가 적용되지
-/// 않는다 — fail-open.
+/// [stations]/[connections] 를 넘기면 실시간 필터에 **구간 완주 판정**이 추가된다
+/// — 노선·방향·모드가 같아도 탑승 구간을 끝까지 태워주지 않는 열차는 제외한다
+/// (`천호 → 굽은다리` 경로의 5호선 하행 "마천행"처럼 갈라지는 열차, `내방 → 장암`
+/// 경로의 7호선 상행 "도봉산행"처럼 하차역 앞에서 끝나는 중간 종착 열차).
+/// 로딩 전이라 비어 있으면 필터가 적용되지 않는다 — fail-open.
 ({DateTime departure, DepartureSource source}) computeDepartureTimeDetailed({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required RouteResult routeResult,
@@ -152,7 +153,7 @@ String baseLineId(String lineId) {
 /// 3순위: afterTransfer 그대로 사용
 ///
 /// [stations]/[connections] 의 역할은 [computeDepartureTimeDetailed] 와 같다
-/// (환승 후 세그먼트에 지선 판정 추가, 미로딩 시 fail-open).
+/// (환승 후 세그먼트에 구간 완주 판정 추가, 미로딩 시 fail-open).
 List<DateTime> computeSegmentDepartures({
   required RouteResult routeResult,
   required DateTime initialDeparture,
@@ -193,8 +194,8 @@ List<DateTime> computeSegmentDepartures({
 
       // 1순위: 환승역 실시간 도착정보 (afterTransfer 이후 열차만 유효)
       // 다음 세그먼트가 급행(`{line}E`)이면 급행 trainType만 매칭한다.
-      // 다음 세그먼트가 지선으로 갈라지는 노선이면, 그 구간을 태워주지 않는
-      // 행선지의 열차는 제외한다(출발역과 같은 규칙).
+      // 그 구간을 끝까지 태워주지 않는 행선지의 열차(지선 분기·중간 종착)는
+      // 제외한다(출발역과 같은 규칙).
       final arrivalAsync = transferArrivals[transferStationName];
       final nextIsExpress = isExpressLineId(nextSegment.lineId);
       final nextRealtimeLineId = baseLineId(nextSegment.lineId);
@@ -251,8 +252,8 @@ List<DateTime> computeSegmentDepartures({
 /// `afterTransfer.difference(now).inSeconds`를 전달한다.
 /// [expressOnly]가 true면 `trainType == '급행'`인 도착 정보만 매칭한다.
 /// false면 급행/완행 구분 없이 가장 빠른 열차를 반환한다.
-/// [staysOnRouteBranch]를 넘기면 행선지가 탑승 구간을 태워주지 않는 열차를
-/// 제외한다 (지선 필터). null이면 지선 판정 없이 기존과 동일하게 동작한다.
+/// [staysOnRouteBranch]를 넘기면 행선지가 탑승 구간을 끝까지 태워주지 않는
+/// 열차를 제외한다 (지선 분기 + 중간 종착). null이면 판정 없이 동작한다.
 DateTime? _getRealtimeDeparture({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required String lineId,
