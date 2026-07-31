@@ -4,8 +4,17 @@ class ApiConstants {
   static const String subwayBaseUrl =
       'http://swopenapi.seoul.go.kr/api/subway';
 
+  /// 도착정보 1회 질의로 받아올 최대 행 수.
+  ///
+  /// 종전 20 은 4개 노선 환승역에서 실제로 절단됐다 — 2026-07-31 금요일 18:45 실측
+  /// `total`: 서울역 22, 왕십리 21, 공덕 20, 청량리 20 (그 외 주요 환승역은 4~17).
+  /// 한 질의에 5개 노선이 걸리는 역은 없으므로 관측 최대 22 에 여유를 둔 30 으로 잡았다.
+  /// 상한이라 20행 미만인 대다수 역의 응답 크기·캐시 용량에는 영향이 없다.
+  static const int arrivalRowLimit = 30;
+
   static String realtimeArrivalUrl(String apiKey, String stationName) =>
-      '$subwayBaseUrl/$apiKey/json/realtimeStationArrival/0/20/$stationName';
+      '$subwayBaseUrl/$apiKey/json/realtimeStationArrival'
+      '/0/$arrivalRowLimit/$stationName';
 
   // 캐시 TTL 은 refreshInterval 이하로 유지해야 한다.
   // 초과하면 refresh 때 캐시 응답만 재사용되어 실제 API 호출이 일어나지 않는다.

@@ -16,7 +16,7 @@ class SeoulApiDataSource {
   /// 서울 열린데이터 실시간 지하철 도착정보 API를 호출한다.
   ///
   /// **엔드포인트:**
-  /// `http://swopenapi.seoul.go.kr/api/subway/{apiKey}/json/realtimeStationArrival/0/20/{stationName}`
+  /// `http://swopenapi.seoul.go.kr/api/subway/{apiKey}/json/realtimeStationArrival/0/{ApiConstants.arrivalRowLimit}/{stationName}`
   ///
   /// **응답 필드 (`realtimeArrivalList[]`):**
   ///

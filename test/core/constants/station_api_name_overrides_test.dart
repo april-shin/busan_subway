@@ -34,9 +34,15 @@ void main() {
       expect(resolveArrivalApiStationName('응암'), '응암순환(상선)');
     });
 
+    test('서울역은 다수 노선의 등록명 "서울"로 질의한다', () {
+      // 1·4·경의중앙·공항철도는 "서울", GTX-A만 "서울역"으로 등록돼 있다.
+      // 표시명 그대로 질의하면 GTX-A만 잡히고 4개 노선이 통째로 누락된다.
+      expect(resolveArrivalApiStationName('서울역'), '서울');
+    });
+
     test('치환 대상이 아닌 역은 표시명을 그대로 반환한다', () {
       expect(resolveArrivalApiStationName('강남'), '강남');
-      expect(resolveArrivalApiStationName('서울역'), '서울역');
+      expect(resolveArrivalApiStationName('시청'), '시청');
       expect(resolveArrivalApiStationName('잠실'), '잠실');
     });
 
@@ -56,6 +62,9 @@ void main() {
       expect(resolveDisplayStationName('응암순환(상선)'), '응암');
       // 부역명 덧붙임형도 역맵으로 복원 가능
       expect(resolveDisplayStationName('오목교(목동운동장앞)'), '오목교');
+      // 서울역: statnNm·arvlMsg3 이 "서울"로 오므로 표시명으로 복원해야
+      // stations.json 매칭(라이브맵 좌표·도착시간 추정)이 성립한다.
+      expect(resolveDisplayStationName('서울'), '서울역');
     });
 
     test('등록되지 않은 API명은 그대로 반환한다', () {
@@ -89,6 +98,15 @@ void main() {
 
     test('인바운드 전용 표기 응암(하선-종착)도 응암으로 정리한다', () {
       expect(resolveDisplayInText('1분 후 (응암(하선-종착))'), '1분 후 (응암)');
+    });
+
+    test('다른 역명의 접두사인 "서울"은 자유텍스트에서 치환하지 않는다', () {
+      // "서울" 을 부분 치환하면 서울대입구·서울숲 등이 "서울역대입구"로 오염된다.
+      // 전체 문자열이 역명인 필드는 resolveDisplayStationName 이 정확히 복원하므로,
+      // 자유텍스트에서는 API 표기("서울")가 그대로 남는 편을 택했다.
+      expect(resolveDisplayInText('성수행 - 서울대입구방면'), '성수행 - 서울대입구방면');
+      expect(resolveDisplayInText('왕십리행 - 서울숲방면'), '왕십리행 - 서울숲방면');
+      expect(resolveDisplayInText('서울 도착'), '서울 도착');
     });
 
     test('치환 대상이 없는 텍스트/빈 문자열은 그대로 둔다', () {
@@ -158,6 +176,37 @@ void main() {
             isNot(contains(apiName)),
             reason: 'API 등록명 "$apiName" 이 실제 역 표시명과 충돌 — 역치환 오염 위험',
           );
+        }
+      });
+
+      test('다른 역 표시명의 부분 문자열인 API 표기는 자유텍스트를 오염시키지 않는다', () {
+        // 치환 후보가 다른 역 이름의 일부이면(예: "서울" ⊂ "서울대입구")
+        // resolveDisplayInText 가 없는 역명을 만들어낸다. 그런 후보는
+        // _textReplacementExclusions 로 제외해야 한다.
+        //
+        // 후보는 아웃바운드 맵의 값 + 인바운드 전용 표기를 모두 포함한다
+        // (textReplacementCandidates) — 인바운드 전용 표기도 같은 치환 경로를 타므로
+        // 함께 검사하지 않으면 가드를 조용히 우회한다.
+        //
+        // 단, 치환 맵의 **키(표시명)** 는 피해자 후보에서 뺀다 — 키는 API 가 보내지
+        // 않는 이름이고("관악산(서울대)" 는 API 상 늘 "관악산"), 왕복 항등 테스트가
+        // 이미 지키고 있다. 이 전제가 깨지는 노선이 나오면 여기부터 재검토할 것.
+        for (final apiName in textReplacementCandidates) {
+          final victims = displayNames.where(
+            (n) =>
+                n != apiName &&
+                n.contains(apiName) &&
+                !arrivalApiStationNameOverrides.containsKey(n),
+          );
+          for (final victim in victims) {
+            expect(
+              resolveDisplayInText('$victim행 - $victim방면'),
+              '$victim행 - $victim방면',
+              reason:
+                  'API 표기 "$apiName" 이 다른 역 "$victim" 안에서 부분 치환됨 — '
+                  '_textReplacementExclusions 에 추가 필요',
+            );
+          }
         }
       });
     });

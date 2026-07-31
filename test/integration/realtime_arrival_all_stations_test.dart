@@ -19,6 +19,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:seoul_subway/core/constants/api_constants.dart';
 import 'package:seoul_subway/data/remote/dto/arrival_info_dto.dart';
 
 /// API 호출 간 대기 시간 (서버 부하 방지)
@@ -96,8 +97,9 @@ void main() {
         final batch = uniqueStationNames.sublist(batchStart, batchEnd);
 
         final futures = batch.map((stationName) async {
-          final url =
-              'http://swopenapi.seoul.go.kr/api/subway/$apiKey/json/realtimeStationArrival/0/20/$stationName';
+          // 앱과 동일한 URL 빌더를 쓴다 — 행 수 상한이 드리프트하지 않도록.
+          // apiKey 는 skipReason 가드로 non-null 이 보장된다(아래 dio! 와 동일).
+          final url = ApiConstants.realtimeArrivalUrl(apiKey!, stationName);
 
           try {
             final response = await dio!.get<String>(url);
