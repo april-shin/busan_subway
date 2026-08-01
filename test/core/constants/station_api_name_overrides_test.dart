@@ -34,10 +34,11 @@ void main() {
       expect(resolveArrivalApiStationName('응암'), '응암순환(상선)');
     });
 
-    test('서울역은 다수 노선의 등록명 "서울"로 질의한다', () {
-      // 1·4·경의중앙·공항철도는 "서울", GTX-A만 "서울역"으로 등록돼 있다.
-      // 표시명 그대로 질의하면 GTX-A만 잡히고 4개 노선이 통째로 누락된다.
+    test('노선별로 등록명이 갈린 역은 주 질의명을 반환한다', () {
+      // 서울역: 1·4·경의중앙·공항철도="서울", GTX-A="서울역"
       expect(resolveArrivalApiStationName('서울역'), '서울');
+      // 올림픽공원: 5호선="올림픽공원(한국체대)", 9호선="올림픽공원"
+      expect(resolveArrivalApiStationName('올림픽공원'), '올림픽공원(한국체대)');
     });
 
     test('치환 대상이 아닌 역은 표시명을 그대로 반환한다', () {
@@ -48,6 +49,57 @@ void main() {
 
     test('빈 문자열은 그대로 반환한다', () {
       expect(resolveArrivalApiStationName(''), '');
+    });
+  });
+
+  group('resolveArrivalApiStationNames (복수 질의명)', () {
+    test('노선별로 갈린 역은 등록명 전체를 반환한다', () {
+      expect(resolveArrivalApiStationNames('서울역'), ['서울', '서울역']);
+      expect(
+        resolveArrivalApiStationNames('올림픽공원'),
+        ['올림픽공원(한국체대)', '올림픽공원'],
+      );
+    });
+
+    test('갈리지 않은 역은 주 질의명 한 개만 반환한다', () {
+      expect(resolveArrivalApiStationNames('강남'), ['강남']);
+      expect(resolveArrivalApiStationNames('오목교'), ['오목교(목동운동장앞)']);
+      expect(resolveArrivalApiStationNames(''), ['']);
+    });
+
+    test('첫 원소는 항상 주 질의명이다', () {
+      // 주 질의는 실패 시 예외를 던져 캐시 폴백을 태우므로, 단일 질의명 경로와
+      // 반드시 일치해야 한다.
+      for (final display in arrivalApiSplitRegistrationNames.keys) {
+        expect(
+          resolveArrivalApiStationNames(display).first,
+          resolveArrivalApiStationName(display),
+          reason: '$display 의 주 질의명이 단일 질의명과 다름',
+        );
+      }
+    });
+
+    test('갈린 등록명은 모두 인바운드로 표시명에 되돌아온다', () {
+      // 하나라도 복원되지 않으면 그 노선 열차의 stations.json 매칭이 깨져
+      // 라이브맵 좌표 조회·도착시간 추정이 실패한다.
+      arrivalApiSplitRegistrationNames.forEach((display, apiNames) {
+        for (final apiName in apiNames) {
+          expect(
+            resolveDisplayStationName(apiName),
+            display,
+            reason: '"$apiName" 이 표시명 "$display" 로 복원되지 않음',
+          );
+        }
+      });
+    });
+
+    test('갈린 등록명 목록은 2개 이상이고 중복이 없다', () {
+      arrivalApiSplitRegistrationNames.forEach((display, apiNames) {
+        expect(apiNames.length, greaterThanOrEqualTo(2),
+            reason: '$display 는 갈린 역이 아니므로 등록 불필요');
+        expect(apiNames.toSet().length, apiNames.length,
+            reason: '$display 의 등록명에 중복 있음 — 같은 질의를 두 번 보냄');
+      });
     });
   });
 
@@ -155,6 +207,16 @@ void main() {
         displayNames = (json.decode(raw) as List)
             .map((s) => (s as Map<String, dynamic>)['name'] as String)
             .toSet();
+      });
+
+      test('갈린 역 키도 stations.json 에 실존하는 표시명이다', () {
+        for (final key in arrivalApiSplitRegistrationNames.keys) {
+          expect(
+            displayNames,
+            contains(key),
+            reason: '"$key" 가 stations.json 에 없음 — 데이터 드리프트 의심',
+          );
+        }
       });
 
       test('모든 키는 stations.json 에 실존하는 표시명이다', () {

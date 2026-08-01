@@ -50,7 +50,7 @@ void main() {
     test('returns API data when online', () async {
       when(() => mockNetwork.isConnected).thenAnswer((_) async => true);
       when(() => mockApi.getRealtimeArrival('강남'))
-          .thenAnswer((_) async => testDtos);
+          .thenAnswer((_) async => (arrivals: testDtos, isPartial: false));
       when(() => mockCache.cacheData(any(), any()))
           .thenAnswer((_) async {});
 
@@ -60,6 +60,21 @@ void main() {
       expect(result.first.stationName, '강남');
       expect(result.first.direction, '상행');
       verify(() => mockCache.cacheData(any(), any())).called(1);
+    });
+
+    test('부분 결과는 화면에 보여주되 캐시에 저장하지 않는다', () async {
+      // 등록명이 노선별로 갈린 역에서 일부 질의만 실패한 경우. 노선이 빠진 스냅샷을
+      // 저장하면 이후 전체 실패 시 폴백 화면까지 불완전해진다.
+      when(() => mockNetwork.isConnected).thenAnswer((_) async => true);
+      when(() => mockApi.getRealtimeArrival('서울역'))
+          .thenAnswer((_) async => (arrivals: testDtos, isPartial: true));
+      when(() => mockCache.cacheData(any(), any()))
+          .thenAnswer((_) async {});
+
+      final result = await repository.getArrivalInfo('서울역');
+
+      expect(result.length, 1, reason: '부분 결과라도 화면에는 보여준다');
+      verifyNever(() => mockCache.cacheData(any(), any()));
     });
 
     test('falls back to cache when API fails', () async {
