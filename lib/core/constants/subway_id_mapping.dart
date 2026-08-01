@@ -30,3 +30,32 @@ const subwayIdToLineId = {
   '1093': '서해',
   '1094': '신림',
 };
+
+/// 앱 lineId → 실시간 열차 위치 API(`realtimePosition`)의 노선명 파라미터.
+///
+/// 도착정보 API 는 역명으로 조회하지만 위치 API 는 **노선명**으로 조회하며,
+/// 표기 규칙이 노선마다 다르다(2026-07-31 전 노선 실측):
+/// - 숫자 노선: `1호선` … `9호선`
+/// - 광역·경전철: `수인분당선`·`경의중앙선`·`경춘선`·`경강선`·`우이신설선`·`서해선`·`신림선`
+/// - 접미사 없음: `공항철도`, `GTX-A`
+/// - 신분당선은 앱 lineId 가 `SB` 라 직접 대응이 필요하다.
+///
+/// 반환값이 null 이면 위치 API 로 조회할 수 없는 노선(도착 API 미제공 노선 등)이다.
+String? positionApiLineName(String lineId) {
+  if (lineId.isEmpty) return null;
+  // 가상 급행 노선(`5E` 등)은 실제 노선명으로 정규화한다.
+  final base = lineId.endsWith('E') || lineId.endsWith('M')
+      ? lineId.substring(0, lineId.length - 1)
+      : lineId;
+  if (!subwayIdToLineId.containsValue(base)) return null;
+  if (RegExp(r'^[1-9]$').hasMatch(base)) return '$base호선';
+  switch (base) {
+    case 'SB':
+      return '신분당선';
+    case '공항철도':
+    case 'GTX-A':
+      return base;
+    default:
+      return '$base선';
+  }
+}
