@@ -950,6 +950,20 @@
     ]
   },
   {
+    "id": "1715",
+    "name": "금정",
+    "lineId": "1",
+    "latitude": 37.3717,
+    "longitude": 126.9412,
+    "svgX": 816.0,
+    "svgY": 1352.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4"
+    ]
+  },
+  {
     "id": "172",
     "name": "군포",
     "lineId": "1",
@@ -3090,8 +3104,8 @@
     "svgY": 1352.0,
     "isTransfer": true,
     "transferLines": [
-      "4",
-      "수인분당"
+      "1",
+      "4"
     ]
   },
   {

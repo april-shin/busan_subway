@@ -549,11 +549,19 @@
   },
   {
     "fromStationId": "171",
+    "toStationId": "1715",
+    "lineId": "1",
+    "travelTimeSeconds": 120,
+    "isTransfer": false,
+    "expressTimeSeconds": 90
+  },
+  {
+    "fromStationId": "1715",
     "toStationId": "172",
     "lineId": "1",
-    "travelTimeSeconds": 360,
+    "travelTimeSeconds": 180,
     "isTransfer": false,
-    "expressTimeSeconds": 240
+    "expressTimeSeconds": 120
   },
   {
     "fromStationId": "172",

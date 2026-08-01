@@ -919,11 +919,18 @@
     {
       "lineId": "1",
       "fromStationId": "170",
-      "toStationId": "172",
-      "seconds": 378,
+      "toStationId": "1715",
+      "seconds": 210,
       "skippedStationIds": [
         "171"
       ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "1715",
+      "toStationId": "172",
+      "seconds": 126,
+      "skippedStationIds": []
     },
     {
       "lineId": "1",

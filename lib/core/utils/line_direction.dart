@@ -10,6 +10,7 @@ import '../../domain/entities/connection.dart';
 ///
 /// 노선별 분기:
 /// - 일반 노선: ID 증가 = 하행
+/// - 1호선: 뒤늦게 추가된 역(금정 `1715`)의 rank 보정
 /// - 2호선 순환: 인접 역 ID 쌍 기준 + 순환 경계(201↔243) 반전
 /// - 4호선: 진접선(449-452) 특수 처리
 /// - 9호선/공항철도: 서울 API 라벨 기준 규칙 반전
@@ -30,6 +31,10 @@ bool isDownBetween(String fromId, String toId, String lineId) {
   final baseId = lineId.endsWith('E')
       ? lineId.substring(0, lineId.length - 1)
       : lineId;
+
+  if (baseId == '1') {
+    return _isLine1Down(fromNum, toNum);
+  }
 
   if (baseId == '2') {
     return _isLine2DownBetween(fromNum, toNum);
@@ -57,6 +62,24 @@ bool isDownBetween(String fromId, String toId, String lineId) {
   // 일반 노선: ID 증가 = 하행
   return toNum > fromNum;
 }
+
+/// 1호선 역 ID 는 101~199 가 빈틈없이 소진돼, 뒤늦게 데이터가 보강된 역은
+/// 물리 순서에 맞는 정수 번호를 받을 수 없다. 그런 역은 "소수점 번호"를 뜻하는
+/// ID(예: 금정 = 명학 171 과 군포 172 사이 → `1715` = 171.5)를 부여하고, 방향
+/// 판정에서만 실제 rank 로 환산해 "ID 증가 = 하행" 규칙을 유지한다.
+///
+/// 광명 지선(`1A1` → rank 1)은 이 표에 넣지 않는다. 금천구청(166)에서 분기하는
+/// 단일역 dead-end 이고, rank 를 바꾸면 이번 변경과 무관한 기존 동작이 함께
+/// 바뀌기 때문이다. `1A1` 의 방향 판정은 현재 실제로 뒤집혀 있다
+/// (`isDownBetween('1A1','166','1')` = 하행) — 선재 버그이므로 별건으로 다룬다.
+const _line1Ranks = <int, double>{
+  1715: 171.5, // 금정 (1호선 경부선, 명학~군포)
+};
+
+/// 1호선 방향 결정. rank 보정 후 ID(rank) 증가 = 하행.
+bool _isLine1Down(int fromNum, int toNum) =>
+    (_line1Ranks[toNum] ?? toNum.toDouble()) >
+    (_line1Ranks[fromNum] ?? fromNum.toDouble());
 
 /// 성수지선 역 번호 (성수 211 ↔ 용답 244 ↔ 신답 245 ↔ 용두 246 ↔ 신설동 250).
 /// 본선 순환과 상/하행 극성이 반대라 전용 분기가 필요하다. 분기 소속 판별에는
@@ -168,6 +191,12 @@ String? findPreviousStationId({
 
   // 분기: 숫자 ID 차이가 가장 작은 후보 선택 (가장 인접한 물리 역).
   // 숫자 추출 실패 후보는 후순위로 밀린다.
+  //
+  //
+  // 주의: 거리 계산은 [_line1Ranks] 같은 rank 보정을 적용하지 않는다. 금정(1715)
+  // 주변에는 분기가 없어 후보가 둘 이상 나오지 않으므로 현재는 도달 불가한
+  // 경로지만, 1호선 분기 구간에 rank 방식 ID 를 추가하면 그 역이 항상 후순위로
+  // 밀린다. 그때는 여기도 rank 환산으로 바꿔야 한다.
   final currentNum = _parseNumericId(currentId);
   matches.sort((a, b) {
     final aDist = _idDistance(a, currentNum);
