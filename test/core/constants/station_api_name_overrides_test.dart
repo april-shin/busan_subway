@@ -152,13 +152,43 @@ void main() {
       expect(resolveDisplayInText('1분 후 (응암(하선-종착))'), '1분 후 (응암)');
     });
 
-    test('다른 역명의 접두사인 "서울"은 자유텍스트에서 치환하지 않는다', () {
-      // "서울" 을 부분 치환하면 서울대입구·서울숲 등이 "서울역대입구"로 오염된다.
-      // 전체 문자열이 역명인 필드는 resolveDisplayStationName 이 정확히 복원하므로,
-      // 자유텍스트에서는 API 표기("서울")가 그대로 남는 편을 택했다.
-      expect(resolveDisplayInText('성수행 - 서울대입구방면'), '성수행 - 서울대입구방면');
-      expect(resolveDisplayInText('왕십리행 - 서울숲방면'), '왕십리행 - 서울숲방면');
-      expect(resolveDisplayInText('서울 도착'), '서울 도착');
+    group('"서울"은 경계가 맞을 때만 치환한다', () {
+      // "서울" 은 서울대입구·서울숲·서울대벤처타운·서울지방병무청의 접두사라 무조건
+      // 치환하면 "서울역대입구"처럼 없는 역명이 된다. 2026-08-01 실측으로 두 문맥이
+      // 서로소임을 확인해(역 "서울" 뒤엔 공백·끝·"행"·"방면", 다른 역은 대/숲/지/역)
+      // 뒤따르는 문자로 구분한다.
+      test('역 "서울"을 가리키는 문맥은 "서울역"으로 되돌린다', () {
+        // arvlMsg2 — 공백 경계
+        expect(resolveDisplayInText('서울 도착'), '서울역 도착');
+        expect(resolveDisplayInText('서울 진입'), '서울역 진입');
+        expect(resolveDisplayInText('서울 출발'), '서울역 출발');
+        // trainLineNm — "행"·"방면" 경계 (공항철도·경의중앙 실측 문자열)
+        expect(resolveDisplayInText('서울행 - 서울방면'), '서울역행 - 서울역방면');
+        expect(resolveDisplayInText('덕소행 - 서울방면'), '덕소행 - 서울역방면');
+        expect(
+          resolveDisplayInText('서울행 - 서울방면 (급행)'),
+          '서울역행 - 서울역방면 (급행)',
+        );
+        // 문자열 끝 경계
+        expect(resolveDisplayInText('서울'), '서울역');
+      });
+
+      test('"서울"로 시작하는 다른 역명은 건드리지 않는다', () {
+        expect(resolveDisplayInText('성수행 - 서울대입구방면'), '성수행 - 서울대입구방면');
+        expect(resolveDisplayInText('왕십리행 - 서울숲방면'), '왕십리행 - 서울숲방면');
+        expect(resolveDisplayInText('서울숲 도착'), '서울숲 도착');
+        expect(resolveDisplayInText('서울대벤처타운'), '서울대벤처타운');
+        expect(resolveDisplayInText('서울지방병무청 진입'), '서울지방병무청 진입');
+        // 이미 표시명인 "서울역"에 "역"이 덧붙지 않아야 한다(이중 치환 방지).
+        expect(resolveDisplayInText('서울역 도착'), '서울역 도착');
+        expect(resolveDisplayInText('서울역행 - 서울역방면'), '서울역행 - 서울역방면');
+      });
+
+      test('다른 치환이 만든 "서울대"에 연쇄 오염이 없다', () {
+        // "관악산" → "관악산(서울대)" 치환 결과 안에 "서울"이 생기는데,
+        // 뒤가 "대"라 경계에 걸리지 않아야 한다.
+        expect(resolveDisplayInText('관악산행 - 관악산방면'), '관악산(서울대)행 - 관악산(서울대)방면');
+      });
     });
 
     test('치환 대상이 없는 텍스트/빈 문자열은 그대로 둔다', () {
@@ -244,7 +274,7 @@ void main() {
       test('다른 역 표시명의 부분 문자열인 API 표기는 자유텍스트를 오염시키지 않는다', () {
         // 치환 후보가 다른 역 이름의 일부이면(예: "서울" ⊂ "서울대입구")
         // resolveDisplayInText 가 없는 역명을 만들어낸다. 그런 후보는
-        // _textReplacementExclusions 로 제외해야 한다.
+        // _boundedTextReplacementSuffixes 로 경계 규칙을 걸어야 한다.
         //
         // 후보는 아웃바운드 맵의 값 + 인바운드 전용 표기를 모두 포함한다
         // (textReplacementCandidates) — 인바운드 전용 표기도 같은 치환 경로를 타므로
@@ -266,7 +296,7 @@ void main() {
               '$victim행 - $victim방면',
               reason:
                   'API 표기 "$apiName" 이 다른 역 "$victim" 안에서 부분 치환됨 — '
-                  '_textReplacementExclusions 에 추가 필요',
+                  '_boundedTextReplacementSuffixes 에 경계 규칙 추가 필요',
             );
           }
         }

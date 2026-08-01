@@ -34,7 +34,8 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 ///      이름의 **타 노선 별개 역**(동명이역)이 없는지, (c) API 등록명(값)이 다른 역의
 ///      표시명과 충돌하지 않는지, (d) API 등록명(값)이 **다른 역 표시명의 부분 문자열**은
 ///      아닌지 — 맞다면 [resolveDisplayInText]가 자유텍스트를 오염시키므로
-///      ("서울" ⊂ "서울대입구") [_textReplacementExclusions]에도 등록할 것.
+///      ("서울" ⊂ "서울대입구") [_boundedTextReplacementSuffixes]에 경계 규칙을
+///      등록할 것(뒤따르는 문맥이 서로소인지 실측 필요). 서로소가 아니면 치환 포기.
 ///      → (a)·(c)·(d) 및 값 유일성·이중치환 방지는 `station_api_name_overrides_test.dart`가
 ///      자동 검증한다(추가 후 테스트가 깨지면 위반 의심). **(b) 동명이역 부재는 자동
 ///      검증하지 않으므로 수동 확인이 필수** — 이름 기반(노선 무관) 치환이라 동명이역이
@@ -77,10 +78,14 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 ///     `서울`·`서울역` 두 이름으로 조회하고 결과를 합치므로 **5개 노선이 모두 나온다.**
 ///   * **인바운드:** 역맵([_displayNameByApiStationName])이 이 맵에서 자동 생성되므로
 ///     응답의 `statnNm`·`arvlMsg3`(="서울")는 표시명 `서울역`으로 복원된다 — 별도 작업 불필요.
-///   * **자유텍스트 치환에서는 제외:** `서울`은 `서울대입구`·`서울숲`·`서울대벤처타운`·
-///     `서울지방병무청`의 접두사라 [resolveDisplayInText]가 부분 치환하면
+///   * **자유텍스트는 경계 조건부 치환:** `서울`은 `서울대입구`·`서울숲`·`서울대벤처타운`·
+///     `서울지방병무청`의 접두사라 [resolveDisplayInText]가 무조건 부분 치환하면
 ///     "서울대입구방면" → "서울역대입구방면"으로 오염된다. 값이 **다른 역 표시명의 부분
-///     문자열**인 최초 사례라 [_textReplacementExclusions]로 막았다.
+///     문자열**인 최초 사례. 처음에는 자유텍스트에서 통째로 뺐다가, 2026-08-01 실측으로
+///     두 문맥이 서로소임을 확인해 [_boundedTextReplacementSuffixes] 경계 규칙으로
+///     바꿨다 — API 가 역 `서울`을 가리킬 때만 뒤에 공백·문자열끝·`행`·`방면`이 오고,
+///     다른 역 이름에서는 `대`·`숲`·`지`·`역`이 온다. 덕분에 "서울 진입"은
+///     "서울역 진입"으로 살리면서 "서울대입구방면"은 건드리지 않는다.
 /// - **해결(2026-07-31):** `올림픽공원` — 서울역과 같은 노선별 등록명 분리 사례. 5호선은
 ///   `올림픽공원(한국체대)`(부역명 병기), 9호선은 `올림픽공원`(본역명)으로 등록돼 있어
 ///   표시명 그대로 질의하면 **9호선 4건만 잡히고 5호선이 통째로 누락**됐다(제보 없이
@@ -138,8 +143,9 @@ const Map<String, String> arrivalApiStationNameOverrides = {
   '남한산성입구': '남한산성입구(성남법원,검찰청)',
   '몽촌토성': '몽촌토성(평화의문)',
   // 1·4·경의중앙·공항철도 공용(동일 환승역) — 노선별로 등록명이 갈리는 첫 사례.
-  //   위 4개 노선은 "서울", GTX-A 만 "서울역" 으로 등록돼 있어 다수인 "서울" 을 택했다
-  //   (GTX-A 도착정보는 대신 빠짐 — 위 "조사 이력" 트레이드오프 참조).
+  //   위 4개 노선은 "서울", GTX-A 만 "서울역" 으로 등록돼 있다. 여기 값은 인바운드
+  //   복원("서울"→"서울역")용이고, 조회는 arrivalApiSplitRegistrationNames 가 두 이름
+  //   모두 태워 5개 노선을 전부 가져온다.
   '서울역': '서울',
   // 5·7호선 공용(동일 환승역)
   '군자': '군자(능동)',
@@ -222,41 +228,53 @@ const Map<String, String> _inboundOnlyTextReplacements = {
   '응암(하선-종착)': '응암',
 };
 
-/// 자유텍스트 부분 치환([resolveDisplayInText])에서 **제외**할 API 등록명.
+/// 자유텍스트 치환([resolveDisplayInText])을 **경계가 맞을 때만** 수행할 API 등록명과,
+/// 그 이름이 실제로 그 역을 가리킬 때 **뒤따르는 문맥**(정규식 조각).
 ///
-/// 여기 있는 이름은 **다른 역 표시명의 부분 문자열**이라, 텍스트 어디서든 치환하면
-/// 엉뚱한 역명을 만들어낸다. 전체 문자열이 곧 역명인 필드(`statnNm`·`bstatnNm`·
-/// `arvlMsg3`)는 [resolveDisplayStationName]이 정확히 복원하므로, 제외해도 손실은
-/// 방면 라벨·도착 메시지에 "서울 도착"처럼 API 표기가 남는 표시상의 문제뿐이다.
-const Set<String> _textReplacementExclusions = {
-  // "서울대입구"·"서울숲"·"서울대벤처타운"·"서울지방병무청"의 접두사.
-  //   치환하면 "서울대입구방면" → "서울역대입구방면"으로 오염된다.
-  '서울',
+/// 여기 있는 이름은 **다른 역 표시명의 부분 문자열**이라 무조건 치환하면 엉뚱한 역명을
+/// 만들어낸다. 그렇다고 통째로 빼면 방면 라벨·도착 메시지에 API 표기가 그대로 남는다.
+/// 두 문맥이 서로소임을 실측으로 확인한 경우, 뒤따르는 문자로 구분해 안전하게 치환한다.
+const Map<String, String> _boundedTextReplacementSuffixes = {
+  // '서울' ⊂ 서울대입구 · 서울숲 · 서울대벤처타운 · 서울지방병무청 · 관악산(서울대).
+  //   무조건 치환하면 "서울대입구방면" → "서울역대입구방면" 으로 오염된다.
+  //
+  //   2026-08-01 실측 — 두 문맥이 서로소다:
+  //     API 가 역 "서울"을 가리킬 때 뒤: 공백("서울 진입")·문자열 끝(statnNm·bstatnNm·
+  //       arvlMsg3)·"행"("서울행")·"방면"("서울방면")
+  //     다른 역 이름에서 "서울" 뒤: 대 · 숲 · 지 · 역
+  //   `stations.json` 653개 역명 중 "서울" 뒤에 공백이 오는 이름은 없다.
+  '서울': r'[ 행]|방면|$',
 };
 
-/// 자유텍스트 치환 **후보** API 표기 전체(제외 적용 전) — 양방향 맵 값 + 인바운드 전용.
+/// [_boundedTextReplacementSuffixes]를 "이름 + 뒤따르는 문맥" 전방탐색 패턴으로 컴파일.
+final Map<String, RegExp> _boundedTextPatterns = {
+  for (final e in _boundedTextReplacementSuffixes.entries)
+    e.key: RegExp('${RegExp.escape(e.key)}(?=${e.value})'),
+};
+
+/// 자유텍스트 치환 **후보** API 표기 전체 — 양방향 맵 값 + 인바운드 전용.
 ///
-/// 테스트가 "다른 역 표시명의 부분 문자열인 후보가 [_textReplacementExclusions]에
-/// 빠짐없이 등록됐는지"를 전수 검사하려면 두 소스를 모두 봐야 하므로 공개한다.
+/// 테스트가 "다른 역 표시명의 부분 문자열인 후보가 경계 규칙 없이 무조건 치환되고
+/// 있지 않은지"를 전수 검사하려면 두 소스를 모두 봐야 하므로 공개한다.
 @visibleForTesting
 final List<String> textReplacementCandidates = <String>[
   ..._displayNameByApiStationName.keys,
   ..._inboundOnlyTextReplacements.keys,
 ];
 
-/// 자유텍스트에서 실제로 치환할 API 표기를 긴 것부터 정렬 — 부분 문자열 겹침 방지.
-/// [_textReplacementExclusions]에 든 이름은 뺀다.
+/// 무조건 치환할 API 표기를 긴 것부터 정렬 — 부분 문자열 겹침 방지.
+/// 경계 규칙이 붙은 이름([_boundedTextReplacementSuffixes])은 여기서 빼고 따로 처리한다.
 final List<String> _apiNamesByLengthDesc = textReplacementCandidates
-    .where((n) => !_textReplacementExclusions.contains(n))
+    .where((n) => !_boundedTextReplacementSuffixes.containsKey(n))
     .toList()
   ..sort((a, b) => b.length.compareTo(a.length));
 
-/// 자유텍스트 치환용 통합 역맵(API 표기 → 표시명). 제외 대상은 [_apiNamesByLengthDesc]
-/// 에서 이미 걸러지므로 여기서도 빼 죽은 항목이 남지 않게 한다.
+/// 자유텍스트 치환용 통합 역맵(API 표기 → 표시명). 경계 규칙이 붙은 이름도 치환 대상이라
+/// (경계가 맞을 때) 여기 남겨 둔다.
 final Map<String, String> _textReplacements = {
   ..._displayNameByApiStationName,
   ..._inboundOnlyTextReplacements,
-}..removeWhere((k, _) => _textReplacementExclusions.contains(k));
+};
 
 /// 자유 텍스트(방면 라벨 `trainLineNm`·도착 메시지 `arvlMsg2` 등)에 **부분 문자열로**
 /// 섞여 오는 API 등록명을 표시용 역명으로 되돌린다(인바운드, 표시 전용).
@@ -264,14 +282,25 @@ final Map<String, String> _textReplacements = {
 /// 예: "응암순환(상선)행 - 응암순환(상선)방면" → "응암행 - 응암방면",
 ///     "4분 후 (증산(명지대앞))" → "4분 후 (증산)".
 /// [resolveDisplayStationName]은 문자열 전체가 역명일 때만 동작하므로, 역명이
-/// 다른 텍스트에 끼어 오는 경우를 위해 별도 제공한다. 단, 다른 역명의 부분 문자열인
-/// API명([_textReplacementExclusions], 예: "서울")은 오염 방지를 위해 치환하지 않는다.
+/// 다른 텍스트에 끼어 오는 경우를 위해 별도 제공한다. 다른 역명의 부분 문자열인
+/// API명(예: "서울" ⊂ "서울대입구")은 [_boundedTextReplacementSuffixes]의 경계 규칙에
+/// 맞을 때만 치환해 오염을 막는다 — "서울 진입"→"서울역 진입"은 바꾸고
+/// "서울대입구방면"은 그대로 둔다.
 /// 시간·역수 파싱
 /// (`parseTimeFromMessage`/`parseStationCount`)은 역명을 사용하지 않으므로 이
 /// 정규화는 파싱 결과에 영향을 주지 않는다(표시 문자열만 정리).
 String resolveDisplayInText(String text) {
   if (text.isEmpty) return text;
   var out = text;
+
+  // 경계 조건부 치환을 먼저 — 경계 문맥은 **원본 API 텍스트** 기준으로 실측했으므로,
+  // 다른 치환이 만들어낸 문자열 위에서 판정하지 않는다.
+  _boundedTextPatterns.forEach((apiName, pattern) {
+    if (out.contains(apiName)) {
+      out = out.replaceAll(pattern, _textReplacements[apiName]!);
+    }
+  });
+
   for (final apiName in _apiNamesByLengthDesc) {
     if (out.contains(apiName)) {
       out = out.replaceAll(apiName, _textReplacements[apiName]!);
