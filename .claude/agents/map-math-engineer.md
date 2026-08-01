@@ -21,12 +21,14 @@ model: sonnet
 
 `tool/build_map_html.dart` 또는 `live_train_provider.dart`를 건드리기 전에 **반드시 CLAUDE.md의 "⛔ 실시간 열차 애니메이션 4원칙" 섹션을 먼저 읽는다.** 이 4원칙은 어떠한 일반 수정·버그 수정으로도 깨뜨릴 수 없으며, 원칙 자체를 바꿔야 한다고 판단되면 구현을 진행하지 말고 사용자 승인을 먼저 구해야 한다.
 
-1. **단조 감소 카운트다운** — `realRemaining`은 절대 증가하지 않는다. `recptnDt` 기반 실시간 계산 + JS 단조 감소 clamp (`baseArrival`/`baseReceivedAt`).
+1. **열차는 절대 뒤로 가지 않는다 (경로상 단조 전진)** — 말풍선 숫자는 API 원본 그대로라 재조회 시 늘어날 수 있다(숫자 clamp·`trainSlotMemory` 는 제거됨, **재도입 금지**). 보장 대상은 아이콘의 **경로상 진행도**다(화면 픽셀상 후퇴 0 을 뜻하진 않는다 — catch-up 은 2D 직선 보간). 두 층으로 구현한다: (a) 위치 역산 입력은 표시용과 분리된 **기준쌍**(`posBaseArrival`/`posBaseReceivedAt`)을 쓰고, `lastRawArrival` 과 비교해 **API 원본 값이 바뀐 refresh 에서만** 보정한다 — 값이 그대로인데(recptnDt 만 갱신) 보정하면 열차가 무기한 정지하고, 반대로 늘어난 값을 무조건 무시하면 아이콘이 실제보다 앞서 달린다. (b) "경로 끝까지 남은 거리"(`minDistToEnd`) backstop 으로 시간과 무관한 후퇴(현재역 후퇴·재스냅)까지 차단, 끝점(`pathEndKey`) 변경 시 리셋. rAF 를 타지 않는 분기도 상태를 직접 다뤄야 한다 — 단일 점 path 는 **실제 도착(`arrivalSeconds<=0`)일 때만** 최전진 고정(양수에도 고정하면 '진입' 오보고 한 번에 열차가 목표역에 영구 고정), 데이터 불일치 분기는 아이콘 미이동.
 2. **매 frame 역산 위치 결정** — 화면 위치는 뒤에서부터 남은시간을 역산(`estimateTrainPosition`)해서 정한다. **`path[0]→path[last]` 시간 비례로 전방 보간하지 않는다.** (아래 "핵심 수학 영역 #2"는 참고용 개념 설명일 뿐, 실제 프레임별 위치 계산에는 사용 금지.)
 3. **현재역 기준 3-way 클램프** — 열차는 화면상 현재역↔다음역 한 구간 안에서만 움직인다 (`stationIndices` 매핑 필요).
 4. **열차는 순간이동하지 않는다 (catch-up)** — target이 갑자기 이동해도 현재 위치에서 매 프레임 부드럽게 다가간다. 거리 기반 반감기: 가까우면(≤30px) 3초(지터 흡수), 멀면(>30px) 0.5초(빠른 따라잡기), 0.5px 이내 스냅 종료 (`HALF_LIFE_NEAR_MS`/`HALF_LIFE_FAR_MS`/`FAST_DIST_THRESHOLD`/`SNAP_PX`).
 
-구현 위치: `tool/build_map_html.dart`의 `estimateTrainPosition`/`startTrainAnimation`/`showTrains`/`expandPathWithSnap`, `live_train_provider.dart`의 `receivedAtEpochMs` 전달. 회귀 테스트: `test/core/utils/estimate_train_position_test.dart` — 이 테스트가 깨지면 원칙 위반을 먼저 의심한다.
+적용 순서(한 프레임): 원칙 2(역산) → 원칙 3(3-way 클램프) → 원칙 1(단조 전진 가드) → 원칙 4(catch-up). 순서를 바꾸면 원칙끼리 서로를 무력화한다.
+
+구현 위치: `tool/build_map_html.dart`의 `estimateTrainPosition`/`startTrainAnimation`(`cumLen`/`pathEndKey`/`pointAtLength`)/`showTrains`/`expandPathWithSnap`, `live_train_provider.dart`의 `receivedAtEpochMs` 전달. 회귀 테스트: 원칙 1 `test/core/utils/train_forward_guard_test.dart`(Dart 미러 `lib/core/utils/train_forward_guard.dart`), 원칙 2 `test/core/utils/estimate_train_position_test.dart`, 생성 JS 형태 `test/tool/build_map_html_test.dart` — 깨지면 원칙 위반을 먼저 의심한다. JS 를 고치면 Dart 미러도 함께 고칠 것.
 
 ## 작업 원칙
 

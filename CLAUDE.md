@@ -6,11 +6,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 지도 위 실시간 열차 애니메이션은 아래 4가지 원칙으로 고정되었다. **어떠한 일반 수정이나 버그 수정으로도 이 원칙을 깨뜨릴 수 없다.** 새로운 이슈가 보고되더라도 먼저 "현재 원칙 위반이 아닌지" 확인하고, 원칙을 유지하는 범위 안에서 수정해야 한다. 원칙을 바꿔야 한다고 판단되면 **반드시 사용자 승인을 먼저 구한다.**
 
-### 원칙 1 — 단조 감소 카운트다운
-API 재조회 시 디버그 "초" 및 내부 `realRemaining` 은 **절대 증가하지 않는다.**
-- 기본: API 응답의 `recptnDt`(등록일시)와 현재 시각의 차로 실시간 계산. `realRemaining = arrivalSeconds − (now − recptnDt)`
-- 보강: API 가 `arvlMsg2` 라운딩 등으로 동일 값을 반복 반환해도 원복하지 않도록 **JS `showTrains` 에서 단조 감소 clamp** 를 강제한다. 이전 refresh 기반 예상 `realRemaining` 보다 새 값이 크면 이전 값으로 대체.
-- 구현 위치: `tool/build_map_html.dart` 의 `showTrains` (`baseArrival`/`baseReceivedAt` 상태 사용), `lib/features/subway_map/presentation/providers/live_train_provider.dart` 의 `receivedAtEpochMs` 전달.
+### 원칙 1 — 열차는 절대 뒤로 가지 않는다 (위치 단조 전진)
+화면상 열차 아이콘은 경로를 따라 **앞으로만 이동한다.** API 재조회로 남은시간이 늘어나든, "현재역" 정보가 뒤로 흔들리든, 아이콘이 뒤로 물러나는 일은 없다.
+**보장 범위**: "경로(`pathToTarget`) 위에서의 진행도"가 뒤로 가지 않는다는 뜻이다. 화면 픽셀상 후퇴가 물리적으로 0 이라는 뜻은 아니다 — catch-up(원칙 4)은 경로가 아닌 2D 직선 보간이라 급커브에서는 시각적 후퇴가 남을 수 있다.
+
+**(a) 숫자는 보장 대상이 아니다.** 말풍선의 남은시간은 API 원본을 그대로 쓴다 — `realRemaining = arrivalSeconds − (now − recptnDt)`. 재조회로 값이 늘어나면 **늘어난 대로 표시한다.** 과거의 단조 감소 clamp·`trainSlotMemory` 보조키 장치는 제거됐고, **다시 도입하지 말 것.**
+- 숫자 도메인(말풍선, 도착/silent 제거 판정, z-order 정렬)은 전부 API 원본 기준으로 통일한다.
+- 예외 1: `remainingFromReceivedAt` 의 경과시간 0 하한(미래 `recptnDt` 방어).
+- 예외 2: API 가 `barvlDt` 를 주지 않는 열차는 `live_train_provider.dart` 의 `estimateCache` 가 최초 추정값·추정 시각을 재사용하므로 사실상 단조 감소한다.
+
+**(b) 위치 역산 입력은 stale 응답을 걸러낸다.** 표시용과 분리된 **위치 전용 기준쌍**(`posBaseArrival`/`posBaseReceivedAt`)을 두고, 직전 응답의 원본값(`lastRawArrival`)과 비교해 **API 원본 값이 실제로 바뀐 refresh 에서만** 기준쌍을 보정한다.
+- 값이 그대로면(= `recptnDt` 만 갱신된 반복 보고. 신분당선 등 `arvlMsg2` 라운딩) 이전 쌍을 유지한다. 여기서 갱신하면 남은시간이 매 cycle 원복돼 **열차가 무기한 정지**한다.
+- 값이 바뀌었으면 새 측정치이므로 **그대로 채택한다** — 실제 지연으로 남은시간이 늘어난 경우까지 무시하면 아이콘이 실제보다 앞서 달린다. 채택 결과 목표가 뒤로 가더라도 아이콘은 (c) 백스톱이 붙잡으므로 뒤로 가지 않는다(멈췄다가 재개).
+- 대안으로 검토했다가 버린 방식: ① "min 값 기억" — 반복 보고 시 min 이 "직전 값 − refresh 주기"에 고정돼 정지. ② "더 늦은 도착이면 무조건 무시" — 정지는 없지만 실제 지연을 반영 못 해 아이콘이 앞서 달린다.
+
+**(c) 경로상 단조 전진 backstop.** 시간과 무관한 후퇴(현재역 후퇴, 경로 재스냅)까지 막는 2차 방어선.
+- 전진 척도는 **"경로 끝까지 남은 거리(px)"**. `pathToTarget` 의 앞부분은 refresh 마다 늘거나(`expandPathBackward`) 줄지만(역 통과) 끝점(목표역)은 고정이므로, 끝에서부터 잰 거리만이 refresh 간 비교 가능하다.
+- 원칙 2·3 을 거쳐 나온 target 의 `distToEnd` 가 최소값(`minDistToEnd`)보다 크면 **그 target 을 버리고 최전진 지점에 붙잡아 둔다** (= 뒤로 가는 대신 멈춰 기다린다). NaN 이 들어오면 기억을 오염시키지 않고 최전진 지점만 유지.
+- 경로 끝점 좌표(`pathEndKey`)가 바뀌면 다른 경로이므로 기억을 리셋한다. **같은 노선·방향에서 출발역만 바꾸면 `scopeKey` 는 그대로이므로 이 리셋이 유일한 탈출구다.** (리셋 시에는 후퇴가 허용된다 — 의도된 예외)
+- rAF 를 타지 않는 분기도 전진 상태를 직접 다뤄야 한다. 단일 점 path 는 **실제 도착(`arrivalSeconds<=0`)일 때만** 최전진으로 고정한다 — 양수에도 고정하면 '진입' 오보고 한 번으로 그 열차가 목표역에 **영구 고정**된다(끝점이 같아 `pathEndKey` 리셋도 안 타 회복 경로가 없다). 데이터 불일치 분기는 아이콘을 **움직이지 않는다** (`path[0]` 은 경로의 맨 뒤라 고정하면 후퇴가 된다).
+
+**한계 1 — 위치가 표시 숫자보다 앞설 수 있다.** stale 반복이 이어지는 동안 위치 기준쌍은 낡은 채 유지되므로, 아이콘은 말풍선 숫자보다 "stale 지속시간"만큼 앞서 간다. 원칙 3 클램프가 상한을 걸어 오차는 **최대 한 구간**이지만, stale streak 이 길면 아이콘이 다음역에 먼저 도착해 멈춘 채 말풍선만 카운트다운하는 그림이 된다(도착 이펙트는 표시용 `realRemaining` 기준이라 발동하지 않는다). 과거 "도착역 붙박이 열차" 증상과 겉모습이 같으니 제보를 받으면 이 경우인지 먼저 구분할 것.
+
+**한계 2**: 전진 기억은 `activeTrains[trainNo]` 에 붙어 있어, 열차 식별이 흔들리면 아이콘과 함께 초기화된다. `arrival_info_dto.dart` 의 `btrainNo`→`ordkey` 폴백은 빈 `trainNo` 만 막을 뿐 **지속성을 보장하지 않는다** — `ordkey` 에는 도착 순번이 섞여 있어 앞선 열차가 도착하면 값이 바뀔 수 있다. 그런 노선에서는 보장이 리셋된다.
+
+- 구현 위치: `tool/build_map_html.dart` 의 `startTrainAnimation` (`posBaseArrival`/`posBaseReceivedAt` 기준쌍 선택, `cumLen`/`pathTotalLen`/`pathEndKey`/`pointAtLength` + `step()` 의 단조 전진 가드), `lib/features/subway_map/presentation/providers/live_train_provider.dart` 의 `receivedAtEpochMs` 전달(기준 시각이 틀리면 역산 위치가 틀린다).
+- 회귀 테스트: `test/core/utils/train_forward_guard_test.dart` (동작 — Dart 미러 `lib/core/utils/train_forward_guard.dart`), `test/tool/build_map_html_test.dart` (생성 JS 형태).
 
 ### 원칙 2 — 매 frame 남은시간 역산으로 위치 결정
 화면상 열차 위치는 **매 frame 뒤에서부터 남은시간을 역산**하여 결정한다. 전방 보간 (path[0]→path[last] 시간 비례) 금지.
@@ -20,6 +41,7 @@ API 재조회 시 디버그 "초" 및 내부 `realRemaining` 은 **절대 증가
 
 ### 원칙 3 — 현재역 기준 3-way 클램프
 `arvlMsg3`("현재역") 이 A 인 열차는 **화면상 A↔B(다음역) 한 구간 안에서만** 움직인다. 역산이 B-C 세그먼트를 가리켜도 B(다음역)에 클램프, A 이전 세그먼트를 가리키면 A(현재역)에 클램프.
+- **단, 원칙 1 가드가 이 상한을 override 할 수 있다.** `arvlMsg3` 가 뒤로 흔들리면 클램프 결과가 후퇴하는데, 가드가 그 target 을 폐기하므로 열차는 새 "다음역"보다 앞에 머문다. 적용 순서(3 → 1)에 따른 의도된 동작이다.
 - `currentStationIndex` 는 원본 `pathToTarget` 의 "현재역" index. SVG 곡선 스냅(`expandPathWithSnap`)으로 path 가 세분화되면 `stationIndices` 매핑으로 **확장 path 상 역 위치**로 변환해 3-way 분기.
 - 구현 위치: `tool/build_map_html.dart` 의 `expandPathWithSnap.stationIndices` + `startTrainAnimation.step()` 의 3-way 분기.
 
@@ -34,10 +56,15 @@ API 갱신으로 열차의 목표 위치(target)가 갑자기 바뀌어도, 아�
 - 도착 이펙트는 따라잡기(`catchingUp`)가 끝난 뒤에만 발동.
 - 구현 위치: `tool/build_map_html.dart` 의 `startTrainAnimation.step()` (`HALF_LIFE_NEAR_MS`/`HALF_LIFE_FAR_MS`/`FAST_DIST_THRESHOLD`/`SNAP_PX`).
 
+### 원칙 적용 순서 (step() 한 프레임)
+`realRemaining` 계산 → **원칙 2**(역산으로 target 후보) → **원칙 3**(현재역↔다음역 클램프) → **원칙 1**(단조 전진 가드 — 뒤로 가는 target 이면 최전진 지점으로 대체) → **원칙 4**(currentPos 를 target 으로 부드럽게 catch-up) → transform 적용.
+순서를 바꾸면 원칙이 서로를 무력화한다 (예: 원칙 1 가드를 원칙 3 앞에 두면 클램프가 가드를 되돌린다).
+
 ### 수정 시 절차
 - `tool/build_map_html.dart` 또는 `lib/features/subway_map/presentation/providers/live_train_provider.dart` 편집 시 **해당 파일 상단의 4원칙 보호 주석 반드시 확인**.
 - `assets/html/map.html` 직접 수정 금지 — `tool/build_map_html.dart` 가 유일 소스. 생성은 `dart run tool/build_map_html.dart`.
-- 4원칙 관련 회귀 테스트(`test/core/utils/estimate_train_position_test.dart` 등)가 깨지면 **원칙 위반 가능성을 먼저 의심**한다.
+- 4원칙 관련 회귀 테스트가 깨지면 **원칙 위반 가능성을 먼저 의심**한다 — 원칙 1: `test/core/utils/train_forward_guard_test.dart`, 원칙 2: `test/core/utils/estimate_train_position_test.dart`, 생성 JS 형태: `test/tool/build_map_html_test.dart`.
+- JS 애니메이션 로직은 WebView 안이라 단위 테스트가 불가능하므로 `lib/core/utils/{estimate_train_position,train_forward_guard}.dart` 에 **Dart 미러**를 두고 테스트한다(앱 런타임 미사용). JS 를 고치면 미러도 함께 고칠 것.
 
 ## 작업 워크플로우 (필수)
 
@@ -307,4 +334,7 @@ Expanded → WebViewWidget (전체 화면)
 | 2026-04-19 | 요구사항 리뷰에 "버그 수정 회귀 검증 (6단계)" 추가: 판별 기준·회귀 위험 영역·대조군 시나리오 매트릭스, 출력 형식에 회귀 검증 섹션과 회귀 위험 등급 추가 | agents/subway-requirements-reviewer.md, skills/subway-requirements-review/SKILL.md | 버그 수정 시 기존 기능을 변경하지 않은 채로 버그만 수정했는지 확인 필요 피드백 |
 | 2026-04-20 | 에이전트별 모델 차등 배치: 판단 계층(flutter-architect, subway-code-reviewer, subway-requirements-reviewer) opus 유지, 구현 계층(map-math-engineer, graph-algorithm-engineer, realtime-data-engineer, flutter-qa-engineer)을 sonnet으로 전환. 오케스트레이터 호출 예시에서 하드코딩된 model 파라미터 제거 (frontmatter 기반). CLAUDE.md에 모델 배치표 추가 | agents/*, skills/subway-app-orchestrator/SKILL.md, CLAUDE.md | 에이전트·스킬별 적절한 모델로 토큰 사용량 최적화 요청 (약 45% 비용 절감 기대) |
 | 2026-07-05 | 하네스 재점검(운영 감사): (1) map-math-engineer.md·subway-map-math SKILL.md에 4원칙 누락 발견 및 추가 — 특히 subway-map-math의 기존 "경로 보간" 예시가 원칙 2(전방 보간 금지)를 정면 위반하는 내용이라 estimateTrainPosition 역산 방식으로 전면 수정. (2) realtime-data-engineer.md·realtime-tracking SKILL.md에 원칙 1(receivedAtEpochMs 계약) 추가. (3) subway-code-reviewer.md·subway-code-review SKILL.md 체크리스트에 4원칙 위반 최우선 확인 항목 추가. (4) flutter-qa-engineer.md·subway-testing SKILL.md에 estimate_train_position_test.dart를 4원칙 회귀 가드로 명시. (5) map-math-engineer.md/realtime-data-engineer.md/realtime-tracking SKILL.md의 `lib/features/subway_map/{widgets,providers}/...` 경로를 실제 경로 `lib/features/subway_map/presentation/{widgets,providers}/...`로 수정. (6) subway-app-orchestrator SKILL.md의 프로젝트 루트 예시 경로가 구 경로(`/Users/april/Idea/seoul_subway`)로 남아있던 것을 현재 경로로 수정, 모델 승격 기준에 "4원칙 자체 변경은 사용자 승인 사안(모델 승격 아님)" 명시 | agents/map-math-engineer.md, agents/realtime-data-engineer.md, agents/subway-code-reviewer.md, agents/flutter-qa-engineer.md, skills/subway-map-math/SKILL.md, skills/realtime-tracking/SKILL.md, skills/subway-code-review/SKILL.md, skills/subway-testing/SKILL.md, skills/subway-app-orchestrator/SKILL.md | "하네스를 재점검해줘" 요청에 따른 Phase 7-5 운영 감사 — CLAUDE.md 최상위 정책(4원칙)이 정작 이를 구현하는 map/realtime 에이전트·스킬 문서에는 반영되지 않았고, 스킬 예시가 금지된 알고리즘을 가르치고 있었으며, 경로 리팩토링(presentation/ 계층 도입)과 프로젝트 이전(Idea→StudioProjects) 이후 문서가 갱신되지 않은 드리프트 발견 |
+| 2026-07-31 | 2차 리뷰 반영: (1) 단일 점 path 분기가 `arrivalSeconds` 양수에도 `minDistToEnd=0` 을 박아 '진입' 오보고 한 번으로 열차가 목표역에 **영구 고정**되던 신규 회귀 수정 — 실제 도착(`<=0`)일 때만 고정. (2) 같은 분기의 `lastRawArrival` 을 `posBaseArrival` 과 같은 0 으로 정렬(어긋나면 다음 refresh 가 stale 오판으로 `posRemaining=0` 을 물려받음). (3) 조기 continue 분기가 `lastRawArrival` 을 갱신하지 않는 이유를 주석화. (4) Dart 미러의 미사용 `nowMs` 파라미터 제거·JS 와의 미세 divergence 3건 주석화. (5) CLAUDE.md 에 "위치가 표시 숫자보다 앞설 수 있다" 한계 추가 | CLAUDE.md, tool/build_map_html.dart, assets/html/map.html(재생성), lib/core/utils/train_forward_guard.dart, test/core/utils/train_forward_guard_test.dart, test/tool/build_map_html_test.dart | subway-code-reviewer + subway-requirements-reviewer 2차 병렬 리뷰에서 MEDIUM 2건(동일 결함) 검출 |
+| 2026-07-31 | 원칙 1 재정의 후속 리뷰 반영: (1) 위치 역산 입력을 표시용과 분리된 **기준쌍**(`posBaseArrival`/`posBaseReceivedAt`)으로 분리하고, `lastRawArrival` 비교로 **API 원본 값이 바뀐 refresh 에서만** 보정하도록 함(사용자 제안) — 초기 구현(가드 단독)은 API 가 같은 `arrivalSeconds` 를 `recptnDt` 만 갱신해 반복 보고하는 노선에서 열차가 무기한 정지하는 결함이 있었고, 중간안(더 늦은 도착이면 무조건 무시)은 실제 지연을 반영하지 못해 아이콘이 앞서 달리는 문제가 있었음. (2) `segDurations` 불일치 분기의 `path[0]`(경로 맨 뒤) 고정 제거 — 후퇴 순간이동이었음. (3) 단일 점 path 분기에서 `currentPos`/`minDistToEnd`/`pathEndKey`/`posBase*` 동기화 — stale `currentPos` 로 인한 후퇴 차단. (4) `distToEnd` NaN 방어. (5) 원칙 3 본문에 "원칙 1 가드가 상한을 override 할 수 있다" 명시, 원칙 1에 보장 범위(경로상 진행도)·`estimateCache` 예외·`ordkey` 폴백 한계 명시. (6) Dart 미러 `lib/core/utils/train_forward_guard.dart` + 동작 회귀 테스트 신설 | CLAUDE.md, tool/build_map_html.dart, assets/html/map.html(재생성), lib/core/utils/train_forward_guard.dart(신규), test/core/utils/train_forward_guard_test.dart(신규), test/tool/build_map_html_test.dart, agents/map-math-engineer.md, skills/subway-map-math/SKILL.md, skills/subway-testing/SKILL.md | subway-code-reviewer + subway-requirements-reviewer 병렬 리뷰에서 HIGH 3건 검출 |
+| 2026-07-31 | **원칙 1 재정의(사용자 지시)**: "단조 감소 카운트다운" → "열차는 절대 뒤로 가지 않는다(위치 단조 전진)". 남은시간 숫자는 API 원본을 그대로 표시(재조회 시 증가 허용)하고, 대신 아이콘의 경로상 위치를 "경로 끝까지 남은 거리(`minDistToEnd`)" 기준으로 단조 전진 강제. JS 에서 단조 감소 clamp·`trainSlotMemory` 보조키·slotOccupancy·TTL sweep(약 100줄) 전면 제거, `startTrainAnimation` 에 `cumLen`/`pathEndKey`/`pointAtLength` + step() 단조 전진 가드 추가. CLAUDE.md 에 "원칙 적용 순서(2→3→1→4)" 섹션 신설 | CLAUDE.md, tool/build_map_html.dart, assets/html/map.html(재생성), lib/features/subway_map/presentation/providers/live_train_provider.dart(주석), lib/data/remote/dto/arrival_info_dto.dart(주석), test/data/remote/arrival_info_dto_test.dart(주석), agents/map-math-engineer.md, agents/realtime-data-engineer.md, agents/subway-code-reviewer.md, skills/subway-map-math/SKILL.md, skills/realtime-tracking/SKILL.md, skills/subway-code-review/SKILL.md, skills/subway-testing/SKILL.md | 사용자 요청: "남은 숫자는 API 재조회시 뒤로갈수있지만, 열차는 절대로 뒤로가지 않길 바라" — 숫자를 붙잡아 위치를 간접 보장하던 구조에서, 위치를 직접 보장하는 구조로 전환 |
 | 2026-07-22 | 원칙 4 문서 현행화(사용자 승인): 코드에 존재하지 않는 `JUMP_THRESHOLD_PX=20` 파라미터와 "stationChanged/headMoved>8px 시 currentPos=null 리셋" 예외 조항을 삭제하고, 실제 구현인 거리 기반 이중 반감기(≤30px→3초, >30px→0.5초, 0.5px 스냅, deltaMs 상한 100ms)로 기술을 교체. 섹션 제목을 "열차는 순간이동하지 않는다"로 평문화 | CLAUDE.md, tool/build_map_html.dart(헤더 주석), agents/map-math-engineer.md, skills/subway-map-math/SKILL.md | build_map_html.dart 전체 리뷰 중 원칙 4 문서-코드 드리프트 발견(HIGH). 코드는 원칙 의도를 충족하므로 문서를 코드에 맞춰 갱신 — 사용자 승인 완료 |

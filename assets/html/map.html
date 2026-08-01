@@ -959,11 +959,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   var liveTrainsGroup = document.getElementById('live-trains');
   var activeTrains = {};
   var arrivedTrains = {};
-  // [원칙 1 보강] 보조키 기반 단조 감소 메모리.
-  // trainNo 가 흔들리는 노선(신분당선 등 btrainNo 미제공) 에서도 단조 감소 clamp 가
-  // 작동하도록 (lineId|direction|destination|currentStation) 슬롯별로 마지막 prev
-  // 정보를 60초 TTL 로 보존한다. activeTrains[trainNo] 매칭 miss 시에만 보조 매칭 사용.
-  var trainSlotMemory = {};
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
   var trainLayer = document.getElementById('train-layer');
@@ -1981,9 +1976,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // 도착 말풍선 (2줄: "{행선}행" / "N초 후 도착")
   // ============================================================
   // [원칙 1 준수] 카운트다운 줄은 오직 startTrainAnimation.step() 이 계산하는
-  // realRemaining(단조 감소) 만을 입력으로 받는다. 이 파일 어디에도 별도의
-  // 카운트다운 변수를 신설하지 않는다 — 기존 setInterval 의
-  // `lastArrivalSeconds - elapsed` 방식과 절대 혼용하지 않는다.
+  // realRemaining 만을 입력으로 받는다. 이 파일 어디에도 별도의 카운트다운
+  // 변수를 신설하지 않는다 — 기존 setInterval 의 `lastArrivalSeconds - elapsed`
+  // 방식과 절대 혼용하지 않는다. (숫자 자체는 API 재조회로 늘어날 수 있다.
+  // 뒤로 가지 않아야 하는 것은 아이콘의 위치이지 숫자가 아니다.)
   var BUBBLE_KO_CHAR_W = 9;      // 한글/CJK 전각 1자 근사 너비(px, font-size 9 기준)
   var BUBBLE_NARROW_CHAR_W = 4.5; // 숫자·공백·영문·괄호 등 반각 1자 근사 너비(px)
   var BUBBLE_PADDING = 8;       // 좌우 여백 합계(최장 문구도 배경 내 수용)
@@ -2022,14 +2018,17 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
   }
 
-  // [원칙 1] 기준 시각(receivedAt = API recptnDt) 대비 남은시간.
+  // 기준 시각(receivedAt = API recptnDt) 대비 남은시간.
   //
   // 경과시간에 0 하한을 둔다. 일부 노선(신분당선 등)은 recptnDt 를 실제보다 수 분
   // 앞선 시각으로 보내는데, 그대로 빼면 경과가 음수가 되어 남은시간이 **부풀어**
   // 오른다. 특히 arrivalSeconds=0("그 역에 있음" 상태)이 양수 카운트다운으로
   // 둔갑해, 이미 도착역에 있는 열차가 "N초 후 도착" 말풍선을 단 채 그 역에
-  // 붙박이로 남는다. 하한을 두어도 남은시간은 시간이 지날수록 줄어들기만 하므로
-  // 단조 감소(원칙 1)는 그대로 유지된다.
+  // 붙박이로 남는다.
+  //
+  // 같은 (baseArrival, receivedAt) 쌍 안에서는 시간이 지날수록 줄어들기만 한다.
+  // 값 자체는 API 재조회로 새 쌍이 오면 늘어날 수 있으며, 이는 원칙 1 이 허용한다
+  // (뒤로 가면 안 되는 것은 아이콘의 위치).
   // Dart 측 동일 규칙: arrival_card.dart 의 `_liveSeconds`,
   // enrich_arrival_info.dart 의 elapsed 하한.
   function remainingFromReceivedAt(baseArrival, receivedAtMs, nowMs) {
@@ -2037,7 +2036,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     return Math.max(0, (baseArrival || 0) - elapsed);
   }
 
-  // realRemaining(초, 단조 감소) → 표시 문구.
+  // realRemaining(초) → 표시 문구.
   function formatArrivalBubbleText(remainingSeconds) {
     var sec = Math.ceil(remainingSeconds);
     // 10초 미만(9초 이하)은 "곧 도착"으로 표시. 10초부터 "N초 후 도착".
@@ -2501,12 +2500,33 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     if (!path || path.length < 2) {
       if (path && path.length === 1) {
         // 단일 점 path = "현재역 == 출발역" 케이스 (예: arvlMsg2='진입'/'도착').
-        // 좌표는 출발역에 고정. 도착 이펙트는 arrivalSeconds<=0 일 때만 발동 —
+        //
+        // [원칙 1] 이 분기는 rAF 를 타지 않으므로 전진 상태를 직접 다뤄야 하는데,
+        // **실제 도착(arrivalSeconds<=0)일 때만** 최전진(distToEnd=0)으로 고정한다.
+        // 양수인데도 고정하면 API 가 '진입'을 한 번만 오보고해도 minDistToEnd=0 이
+        // 박혀, 다음 refresh 에 정상 다구간 경로가 와도(끝점이 같아 pathEndKey
+        // 리셋도 안 탄다) 가드가 모든 target 을 기각해 열차가 목표역에 **영구
+        // 고정**된다. 아이콘을 그대로 두면 후퇴도 없고 영구 고정도 없다.
+        var singlePointArrived = (trainData.arrivalSeconds || 0) <= 0;
+        if (singlePointArrived) {
+          trainState.element.setAttribute('transform',
+            'translate(' + path[0].x + ',' + path[0].y + ')');
+          trainState.currentPos = { x: path[0].x, y: path[0].y };
+          trainState.pathEndKey =
+            Math.round(path[0].x) + ',' + Math.round(path[0].y);
+          trainState.minDistToEnd = 0;
+          // posBase 쌍과 lastRawArrival 은 항상 같은 값에서 유도돼야 한다
+          // (어긋나면 다음 refresh 가 stale 로 오판해 posRemaining=0 을 물려받는다).
+          trainState.posBaseArrival = 0;
+          trainState.posBaseReceivedAt = Date.now();
+          trainState.lastRawArrival = 0;
+          trainState.catchingUp = false;
+        }
         // 양수면 아직 도착 전이므로 이펙트 없이 그 자리에 머물러 표시한다
         // (그대로 사라지면 사용자가 '열차 누락'으로 오인 — 5호선 양평/영등포 등
-        // 짧은 잔여시간 train 이 화면에서 사라지던 회귀를 차단).
-        trainState.element.setAttribute('transform',
-          'translate(' + path[0].x + ',' + path[0].y + ')');
+        // 짧은 잔여시간 train 이 화면에서 사라지던 회귀를 차단). 신규 열차는
+        // createTrainIcon 이 이미 fromSvgX/Y(= 이 단일 점)에 그려 뒀다.
+        //
         // rAF 루프(step)를 타지 않는 경로이므로 말풍선을 1회만 표시한다.
         // arrivalSeconds<=0 이면 formatArrivalBubbleText 가 "곧 도착"을 반환.
         // 2줄(행선/카운트다운) 모두 세팅 — refresh 로 재호출될 수 있으므로
@@ -2516,7 +2536,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         updateArrivalBubbleText(trainState.element,
           formatArrivalBubbleText(trainData.arrivalSeconds || 0));
         trainState.lastShownSec = singlePointSec;
-        if ((trainData.arrivalSeconds || 0) <= 0) {
+        if (singlePointArrived) {
           playArrivalEffect(trainState, trainData.trainNo);
         }
       }
@@ -2525,16 +2545,83 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
     var segDurations = _snap.durations;
     if (!segDurations || segDurations.length !== path.length - 1) {
-      // 데이터 불일치 — path[0] 에 고정 (이펙트 없이 return)
-      trainState.element.setAttribute('transform',
-        'translate(' + path[0].x + ',' + path[0].y + ')');
+      // 데이터 불일치 — 아이콘을 **움직이지 않고** 그대로 둔다 (이펙트 없이 return).
+      // [원칙 1] 과거엔 path[0] 으로 고정했으나 path[0] 은 경로의 맨 뒤(시작점)라
+      // 전진해 있던 열차가 뒤로 순간이동했다. 뒤로 보내느니 그 자리에 두는 것이
+      // 원칙에 맞다. 신규 열차라면 createTrainIcon 이 이미 초기 좌표를 세팅해 뒀다.
       return;
     }
 
-    // [원칙 1] recptnDt 기준 매 frame 실시간 남은시간 계산을 위한 베이스.
+    // recptnDt 기준 매 frame 실시간 남은시간 계산을 위한 베이스(표시용).
     var receivedAt = (trainData.receivedAtEpochMs != null)
       ? trainData.receivedAtEpochMs : Date.now();
     var baseArrival = trainData.arrivalSeconds || 0;
+
+    // [원칙 1] 단조 전진 가드 준비 — "경로 끝까지 남은 거리(px)".
+    //
+    // path 의 앞부분은 refresh 마다 늘거나(expandPathBackward) 줄지만(역 통과),
+    // 끝점은 목표역으로 고정이다. 따라서 refresh 사이에 비교 가능한 유일한
+    // 전진 척도는 **끝에서부터 잰 거리**다. 이 값이 이전 최소값보다 커지는
+    // target(= 뒤로 가는 target)은 채택하지 않고 최전진 지점에 붙잡아 둔다.
+    //
+    // 누적 길이 테이블은 refresh 당 1회만 만들면 되므로 step() 밖에서 계산한다.
+    var cumLen = [0];
+    for (var ci = 1; ci < path.length; ci++) {
+      var cdx = path[ci].x - path[ci - 1].x;
+      var cdy = path[ci].y - path[ci - 1].y;
+      cumLen.push(cumLen[ci - 1] + Math.sqrt(cdx * cdx + cdy * cdy));
+    }
+    var pathTotalLen = cumLen[cumLen.length - 1];
+
+    // 끝점(목표역) 좌표가 바뀌면 다른 경로 = 전진 기억이 무의미하므로 리셋한다.
+    // (경로 스코프 변경 시 열차는 대부분 제거되지만, 같은 trainNo 가 살아남는
+    //  경우를 대비한 방어. 소수점 흔들림은 반올림으로 흡수.)
+    var _endPt = path[path.length - 1];
+    var pathEndKey = Math.round(_endPt.x) + ',' + Math.round(_endPt.y);
+    if (trainState.pathEndKey !== pathEndKey) {
+      trainState.pathEndKey = pathEndKey;
+      trainState.minDistToEnd = null;
+      trainState.posBaseArrival = null;
+      trainState.posBaseReceivedAt = null;
+      trainState.lastRawArrival = null;
+    }
+
+    // [원칙 1] **위치 역산용 기준쌍은 표시용과 따로 둔다.**
+    //
+    // 갱신 규칙: 직전 응답의 원본 남은시간(lastRawArrival)을 기억해 두고,
+    // **API 원본 값이 실제로 바뀌었을 때만** 기준쌍을 새 값으로 보정한다.
+    //   - 값이 그대로면(= recptnDt 만 갱신된 stale 반복 보고. 신분당선 등
+    //     arvlMsg2 라운딩) 이전 기준쌍을 유지한다. 여기서 갱신해버리면 남은시간이
+    //     매 cycle 원복해 **열차가 무기한 정지**한다.
+    //   - 값이 바뀌었으면 새 측정치이므로 그대로 채택한다. 그 결과 목표 위치가
+    //     뒤로 가더라도 아이콘은 아래 minDistToEnd 백스톱이 붙잡으므로 뒤로 가지
+    //     않는다 (뒤로 가는 대신 멈춰 기다렸다가 재개).
+    //
+    // 표시용 realRemaining 은 이 규칙과 무관하게 언제나 API 원본이다.
+    // 회귀 테스트: test/core/utils/train_forward_guard_test.dart
+    if (trainState.posBaseArrival == null
+        || trainState.lastRawArrival !== baseArrival) {
+      trainState.posBaseArrival = baseArrival;
+      trainState.posBaseReceivedAt = receivedAt;
+    }
+    trainState.lastRawArrival = baseArrival;
+
+    // 경로 시작점부터 len(px) 떨어진 지점의 좌표.
+    function pointAtLength(len) {
+      if (!(len > 0)) return { x: path[0].x, y: path[0].y };
+      if (len >= pathTotalLen) return { x: _endPt.x, y: _endPt.y };
+      for (var pi = 1; pi < cumLen.length; pi++) {
+        if (len <= cumLen[pi]) {
+          var segLen = cumLen[pi] - cumLen[pi - 1];
+          var r = (segLen > 0) ? (len - cumLen[pi - 1]) / segLen : 0;
+          return {
+            x: path[pi - 1].x + (path[pi].x - path[pi - 1].x) * r,
+            y: path[pi - 1].y + (path[pi].y - path[pi - 1].y) * r
+          };
+        }
+      }
+      return { x: _endPt.x, y: _endPt.y };
+    }
 
     // [원칙 3] 역 index → 확장 path 상 index 매핑.
     // `currentStationIndex` 는 원본 pathToTarget 기준 "현재역(arvlMsg3)" 위치.
@@ -2575,14 +2662,14 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     trainState.lastFrameMs = null;
 
     function step() {
-      // [원칙 1] realRemaining = arrivalSeconds - (now - recptnDt)
+      // realRemaining = arrivalSeconds - (now - recptnDt)
       // (미래 recptnDt 방어를 위해 경과시간 0 하한 — remainingFromReceivedAt 주석 참조)
       var realRemaining =
         remainingFromReceivedAt(baseArrival, receivedAt, Date.now());
 
-      // 도착 말풍선: realRemaining(단조 감소, 원칙 1) 을 그대로 정수화해 표시.
-      // 별도 카운트다운 변수를 두지 않고, 정수 초가 바뀔 때만 DOM 을 갱신해
-      // 매 frame(~60fps) textContent 쓰기를 피한다.
+      // 도착 말풍선: realRemaining 을 API 원본 그대로 정수화해 표시(원칙 1 —
+      // 숫자는 재조회로 늘어날 수 있다). 별도 카운트다운 변수를 두지 않고,
+      // 정수 초가 바뀔 때만 DOM 을 갱신해 매 frame(~60fps) textContent 쓰기를 피한다.
       var shownSec = Math.ceil(realRemaining);
       if (trainState.lastShownSec !== shownSec) {
         trainState.lastShownSec = shownSec;
@@ -2590,19 +2677,25 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           formatArrivalBubbleText(realRemaining));
       }
 
-      // [원칙 2] 역산
-      var res = estimateTrainPosition(realRemaining, segDurations);
+      // [원칙 1] 위치 역산 입력은 위에서 고른 **위치용 기준쌍**으로 계산한다.
+      // (말풍선 숫자는 바로 위에서 API 원본 그대로 이미 표시했다.)
+      var posRemaining = remainingFromReceivedAt(
+        trainState.posBaseArrival, trainState.posBaseReceivedAt, Date.now());
+
+      // [원칙 2] 역산 (입력은 위치용 단조 감소 값)
+      var res = estimateTrainPosition(posRemaining, segDurations);
 
       // [원칙 3] 3-way 클램프 (확장 path 상 "역" index 기준).
       // 현재역-다음역 사이 서브세그먼트(curIdx..nextIdx-1) 에서는 정상 보간,
       // 그 외 범위 세그먼트는 현재역/다음역 좌표에 고정.
       var target;
-      if (res.outOfPath) {
+      var targetLen; // 경로 시작점부터 target 까지의 거리(px)
+      if (res.outOfPath || res.segmentIndex < curIdx) {
         target = path[curIdx];
-      } else if (res.segmentIndex < curIdx) {
-        target = path[curIdx];
+        targetLen = cumLen[curIdx];
       } else if (res.segmentIndex >= nextIdx) {
         target = path[nextIdx];
+        targetLen = cumLen[nextIdx];
       } else {
         var p0 = path[res.segmentIndex];
         var p1 = path[res.segmentIndex + 1];
@@ -2610,6 +2703,29 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           x: p0.x + (p1.x - p0.x) * res.progress,
           y: p0.y + (p1.y - p0.y) * res.progress
         };
+        targetLen = cumLen[res.segmentIndex] +
+          (cumLen[res.segmentIndex + 1] - cumLen[res.segmentIndex]) * res.progress;
+      }
+
+      // [원칙 1] 단조 전진 가드 — 열차는 절대 뒤로 가지 않는다.
+      // API 재조회로 남은시간이 늘어나거나(숫자 역행은 허용) 현재역 정보가
+      // 뒤로 흔들려 target 이 후퇴하면, 그 target 을 버리고 지금까지의
+      // 최전진 지점(minDistToEnd)에 붙잡아 둔다. 남은시간이 다시 줄어들어
+      // target 이 최전진 지점을 넘어서면 그때부터 다시 전진한다.
+      // (posRemaining 단조 감소로 대부분의 후퇴는 이미 차단된다. 이 가드는
+      //  현재역 후퇴·경로 재스냅처럼 시간과 무관한 후퇴까지 막는 backstop.)
+      var distToEnd = pathTotalLen - targetLen;
+      if (!isFinite(distToEnd)) {
+        // 퇴화 데이터(segDurations 에 0 → progress=NaN)로 NaN 이 흘러들면
+        // 비교가 항상 false 가 되어 기억이 NaN 으로 오염되고 가드가 조용히 꺼진다.
+        // 기억은 건드리지 않고 최전진 지점만 유지한다.
+        if (trainState.minDistToEnd != null) {
+          target = pointAtLength(pathTotalLen - trainState.minDistToEnd);
+        }
+      } else if (trainState.minDistToEnd != null && distToEnd > trainState.minDistToEnd) {
+        target = pointAtLength(pathTotalLen - trainState.minDistToEnd);
+      } else {
+        trainState.minDistToEnd = distToEnd;
       }
 
       // [원칙 4] currentPos → target 지수 감쇠 보간.
@@ -2667,13 +2783,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
   function playArrivalEffect(trainState, trainNo) {
     arrivedTrains[trainNo] = true;
-    // [원칙 1 보강] 도착한 trainNo 의 슬롯 메모리만 정리.
-    // 같은 슬롯에 매 refresh 다른 trainNo 가 들어오는 노선(신분당선 등)에서
-    // 무조건 slotKey 를 지우면 새 train 의 prev 정보까지 잃어 단조 감소가 깨짐.
-    // 따라서 메모리의 trainNo 가 자기 자신과 일치할 때만 삭제.
-    for (var k in trainSlotMemory) {
-      if (trainSlotMemory[k].trainNo === trainNo) delete trainSlotMemory[k];
-    }
     var el = trainState.element;
     var currentTransform = el.getAttribute('transform') || '';
 
@@ -2727,14 +2836,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     if (trainState.element && trainState.element.parentNode) {
       trainState.element.parentNode.removeChild(trainState.element);
     }
-    // [원칙 1 보강] 슬롯 메모리의 trainNo 가 자기 자신일 때만 삭제. 같은 슬롯에
-    // 이미 새 trainNo 가 등록돼 있으면(신분당선처럼 매 refresh trainNo 가 흔들림)
-    // 그 prev 정보를 지워선 안 된다 — 다음 cycle 의 fallback clamp 가 무력화됨.
-    if (trainState.slotKey
-        && trainSlotMemory[trainState.slotKey]
-        && trainSlotMemory[trainState.slotKey].trainNo === trainNo) {
-      delete trainSlotMemory[trainState.slotKey];
-    }
     delete activeTrains[trainNo];
   }
 
@@ -2746,6 +2847,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // 앞서 있다" 가 성립한다. 남은시간은 두 열차 모두 같은 속도로 줄어들어 상대
   // 순서가 refresh 사이에 뒤집히지 않으므로, 매 frame 이 아니라 showTrains
   // (API 갱신) 시점에만 정렬해도 충분하다.
+  //
+  // 한계: 정렬 기준은 **표시용 원본 숫자**다(원칙 1 — 숫자 도메인은 API 원본).
+  // 원칙 1 가드가 발동해 열차가 붙잡혀 있는 동안에는 "숫자 순서 ≠ 화면상 순서"
+  // 가 될 수 있다. z-order 만의 문제라 위치 정확도에는 영향이 없다.
   function reorderTrainsByRemaining() {
     var nowMs = Date.now();
     var items = [];
@@ -2767,26 +2872,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
   }
 
-  // [원칙 1 보강] 슬롯 보조키: trainNo 가 흔들려도 같은 노선/방향/행선/현재역
-  // 조합이면 단조 감소를 강제하기 위한 식별자.
-  function makeSlotKey(t) {
-    return (t.lineId || '') + '|' + (t.direction || '') + '|' +
-           (t.destination || '') + '|' + (t.currentStation || '');
-  }
-
-  // 슬롯 메모리에 현재 t 의 baseArrival/baseReceivedAt 을 기록한다.
-  // clamp 적용 후 호출해 다음 refresh 의 prev 비교에 쓰인다.
-  function rememberSlot(t, nowMs) {
-    var k = makeSlotKey(t);
-    if (k === '|||') return; // 빈 보조키 방어
-    trainSlotMemory[k] = {
-      trainNo: t.trainNo,
-      baseArrival: (t.arrivalSeconds != null) ? t.arrivalSeconds : 0,
-      baseReceivedAt: t.receivedAtEpochMs || nowMs,
-      lastSeenMs: nowMs
-    };
-  }
-
   window.showTrains = function(trainsJson, routeScopeKey) {
     var trains = JSON.parse(trainsJson);
     // 이 payload 가 속한 활성 경로 스코프('{lineId}|down' 등). Flutter 가
@@ -2795,19 +2880,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // grace 없이 즉시 제거해야 한다(아래 toRemove 루프 (B) 참조).
     var scopeKey = (typeof routeScopeKey === 'string') ? routeScopeKey : '';
     var newTrainIds = {};
-
-    // [원칙 1 보강] 보조키 fallback 충돌 검사용 사전 점유 카운트.
-    // 같은 슬롯에 동시에 존재하는 train(기존 + 신규) 의 총 수를 센다. 점유가 1 일
-    // 때만 trainSlotMemory 의 prev 정보를 신규 train 에 적용 — 동일 슬롯에 기존
-    // train + 신규 train 이 공존하는 비정상 상황(잘못된 prev 인계 위험)에서도
-    // fallback 을 비활성화해 안전 측 동작.
-    var slotOccupancy = {};
-    for (var pi = 0; pi < trains.length; pi++) {
-      var pt = trains[pi];
-      if (arrivedTrains[pt.trainNo]) continue;
-      var pk = makeSlotKey(pt);
-      slotOccupancy[pk] = (slotOccupancy[pk] || 0) + 1;
-    }
 
     for (var i = 0; i < trains.length; i++) {
       var t = trains[i];
@@ -2822,22 +2894,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         // 같은 열차가 새 스코프에 그대로 포함되는 경우도 정상 처리).
         existing.scopeKey = scopeKey;
 
-        // [원칙 1 보강] 단조 감소 강제 clamp.
-        // API 가 arvlMsg2 라운딩 등으로 arrivalSeconds 를 동일 값으로 반복 반환하면
-        // recptnDt 만 갱신되어 realRemaining 이 원복된다. 이전 refresh 기반 예상
-        // realRemaining 보다 새 값이 크면 이전 값으로 clamp.
-        if (existing.baseArrival != null && existing.baseReceivedAt != null) {
-          var prevReal = remainingFromReceivedAt(
-            existing.baseArrival, existing.baseReceivedAt, nowMs);
-          var newReceivedAt = (t.receivedAtEpochMs != null)
-            ? t.receivedAtEpochMs : nowMs;
-          var newReal = remainingFromReceivedAt(
-            t.arrivalSeconds, newReceivedAt, nowMs);
-          if (newReal > prevReal + 2) { // 2초 오차 허용 (네트워크 지터)
-            t.arrivalSeconds = Math.round(prevReal);
-            t.receivedAtEpochMs = nowMs;
-          }
-        }
+        // [원칙 1] 남은시간(숫자)은 API 원본을 그대로 쓴다 — 재조회로 늘어나도
+        // 보정하지 않는다. 열차가 뒤로 가지 않는 것은 startTrainAnimation 의
+        // 단조 전진 가드(minDistToEnd)가 위치 레벨에서 보장한다.
 
         // 도착 임박 열차는 기존 애니메이션 유지 (15초 갱신에서 끊김 방지)
         // 단, 이미 도착역에 있는 열차(pathToTarget 1점)는 즉시 도착 처리
@@ -2853,8 +2912,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           updateArrivalBubbleDestination(existing.element, t.destination);
           applyTrainGhostState(existing, t);
           updateTrainDebugInfo(existing.element, t);
-          existing.slotKey = makeSlotKey(t);
-          rememberSlot(t, nowMs);
+          // 여기서 existing.lastRawArrival 을 갱신하지 않는 것은 의도적이다.
+          // 이 분기는 startTrainAnimation 을 부르지 않아 위치 기준쌍도 그대로인데,
+          // lastRawArrival 만 앞서 갱신하면 다음 refresh 가 같은 값을 stale 로
+          // 오판해 (낡은 쌍을 물고) 보정 기회를 놓친다. 짝을 맞춰 함께 둔다.
           continue;
         }
         // [jitter grace] train 이 다시 보고됨 → 누락 카운트 리셋.
@@ -2865,38 +2926,13 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         existing.lastUpdateTime = nowMs;
         existing.baseArrival = t.arrivalSeconds;
         existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
-        existing.slotKey = makeSlotKey(t);
         updateArrivalBubbleDestination(existing.element, t.destination);
         applyTrainGhostState(existing, t);
         // [디버그용] 기존 열차의 디버그 정보 갱신
         updateTrainDebugInfo(existing.element, t);
         startTrainAnimation(existing, t);
-        rememberSlot(t, nowMs);
       } else {
         var nowMs2 = Date.now();
-
-        // [원칙 1 보강] 보조키 fallback clamp.
-        // trainNo 가 흔들려 activeTrains miss 가 났더라도, 같은 슬롯
-        // (lineId|direction|destination|currentStation) 의 prev 정보가 60초 이내이고
-        // 신규 train 충돌이 없으면 단조 감소를 강제한다. 신분당선 등 btrainNo
-        // 미제공 노선의 카운트다운 역행을 차단.
-        var slotKey = makeSlotKey(t);
-        var slotMem = trainSlotMemory[slotKey];
-        if (slotMem != null
-            && slotOccupancy[slotKey] === 1
-            && (nowMs2 - slotMem.lastSeenMs) < 60000) {
-          var prevReal = remainingFromReceivedAt(
-            slotMem.baseArrival, slotMem.baseReceivedAt, nowMs2);
-          var newReceivedAt2 = (t.receivedAtEpochMs != null)
-            ? t.receivedAtEpochMs : nowMs2;
-          var newReal2 = remainingFromReceivedAt(
-            t.arrivalSeconds, newReceivedAt2, nowMs2);
-          if (newReal2 > prevReal + 2) {
-            t.arrivalSeconds = Math.round(prevReal);
-            t.receivedAtEpochMs = nowMs2;
-          }
-        }
-
         var g = createTrainIcon(t, color);
         liveTrainsGroup.appendChild(g);
         activeTrains[t.trainNo] = {
@@ -2905,16 +2941,12 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
           lastUpdateTime: nowMs2,
           baseArrival: t.arrivalSeconds,
           baseReceivedAt: t.receivedAtEpochMs || nowMs2,
-          // [원칙 1 보강] playArrivalEffect 시 이 trainNo 가 차지한 슬롯 메모리를
-          // trainNo 매칭이 흔들려도 정확히 정리하기 위한 보조키 저장.
-          slotKey: slotKey,
           // 이 열차가 속한 활성 경로 스코프. 스코프가 바뀌면 즉시 제거된다.
           scopeKey: scopeKey,
           // 유령(중간 종착) 여부에 따른 기본 투명도. 도착 이펙트가 곱셈 기준으로 쓴다.
           baseOpacity: trainBaseOpacity(t)
         };
         startTrainAnimation(activeTrains[t.trainNo], t);
-        rememberSlot(t, nowMs2);
       }
     }
 
@@ -2990,16 +3022,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       if (!trainNoSet[id] && !activeTrains[id]) delete arrivedTrains[id];
     }
 
-    // [원칙 1 보강] 60초 이상 미관측 슬롯 메모리 sweep.
-    // 도착했거나 운행 종료된 슬롯의 prev 가 잔류해 새 열차 clamp 에 잘못 적용되는
-    // 상황 방지. activeTrains 와 분리되어 있으므로 별도 TTL 로 만료.
-    var sweepNow = Date.now();
-    for (var sk in trainSlotMemory) {
-      if (sweepNow - trainSlotMemory[sk].lastSeenMs > 60000) {
-        delete trainSlotMemory[sk];
-      }
-    }
-
     // 신규 추가·제거가 끝난 뒤 겹침 우선순위 재정렬 (앞선 열차가 위).
     reorderTrainsByRemaining();
   };
@@ -3010,7 +3032,6 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     }
     activeTrains = {};
     arrivedTrains = {};
-    trainSlotMemory = {};
     liveTrainsGroup.replaceChildren();
   };
 

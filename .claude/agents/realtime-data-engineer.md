@@ -19,9 +19,11 @@ model: sonnet
 
 ## ⛔ 실시간 열차 애니메이션 4원칙 중 원칙 1 — 최상위 정책 (CLAUDE.md)
 
-`live_train_provider.dart`가 `receivedAtEpochMs`를 만들어 JS로 넘기는 부분은 CLAUDE.md의 "실시간 열차 애니메이션 4원칙" 중 **원칙 1 (단조 감소 카운트다운)**의 절반을 담당한다. 이 필드를 건드리기 전 반드시 CLAUDE.md 해당 섹션을 먼저 읽는다.
+`live_train_provider.dart`가 `receivedAtEpochMs`를 만들어 JS로 넘기는 부분은 CLAUDE.md의 "실시간 열차 애니메이션 4원칙" 중 **원칙 1 (열차는 절대 뒤로 가지 않는다)**의 절반을 담당한다. 이 필드를 건드리기 전 반드시 CLAUDE.md 해당 섹션을 먼저 읽는다.
 
-- API가 `recptnDt`(등록일시)를 갱신하지 않고 동일 `arvlMsg2`를 반복 반환해도, `realRemaining`이 이전 refresh 기반 예상치보다 커지면 안 된다 — JS 쪽 clamp(`baseArrival`/`baseReceivedAt`)와 짝을 이루는 계약이므로, `receivedAtEpochMs`를 임의로 재계산하거나 누락시키지 않는다.
+- 숫자(`realRemaining`)는 API 원본 그대로다 — 재조회로 늘어나도 **Dart 에서 보정하지 않는다.** 옛 단조 감소 clamp 는 제거됐고, 뒤로 가지 않아야 하는 것은 JS 가 그리는 **아이콘 위치**다.
+- 다만 `(arrivalSeconds, receivedAtEpochMs)` 쌍이 어긋나면 JS 의 위치 역산이 틀어져 단조 전진 가드가 엉뚱한 지점에 열차를 붙잡아 둔다 — `receivedAtEpochMs`를 임의로 재계산하거나 누락시키지 않는다. Dart 에서 elapsed 를 선차감하는 것도 여전히 금지(JS 이중 차감).
+- `trainNo`(btrainNo→ordkey 폴백)가 흔들리면 JS 의 열차 식별과 전진 기억이 매 refresh 초기화된다 — 이 폴백도 원칙 1의 전제다.
 - 이 계약을 변경해야 한다고 판단되면 구현하지 말고 사용자 승인을 먼저 구한다.
 - 회귀 테스트: `test/core/utils/estimate_train_position_test.dart` 등이 깨지면 원칙 위반을 먼저 의심한다.
 
@@ -31,7 +33,7 @@ model: sonnet
 2. **데이터 신뢰도**: 실시간 > 시간표 > 추정값 순으로 우선순위를 둔다.
 3. **네트워크 효율**: 불필요한 API 호출을 피한다. 15초 새로고침 주기를 준수한다.
 4. **환경변수 보안**: API 키는 `.env`에서만 로드한다. 하드코딩 절대 금지.
-5. **단조 감소 계약 준수**: `receivedAtEpochMs` 관련 변경은 위 4원칙 원칙 1을 최우선으로 지킨다.
+5. **기준 시각 계약 준수**: `receivedAtEpochMs`/`trainNo` 관련 변경은 위 4원칙 원칙 1을 최우선으로 지킨다.
 
 ## 프로젝트 컨텍스트
 

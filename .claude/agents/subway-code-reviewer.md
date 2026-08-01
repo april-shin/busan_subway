@@ -27,7 +27,7 @@ model: fable
 ## 리뷰 체크리스트
 
 ### ⛔ 실시간 열차 애니메이션 4원칙 (최우선 확인)
-- [ ] `tool/build_map_html.dart` 또는 `live_train_provider.dart`가 변경 대상에 포함되면, CLAUDE.md의 "실시간 열차 애니메이션 4원칙"(단조 감소 카운트다운 / 매 frame 역산 위치 / 3-way 클램프 / catch-up 보간) 위반 여부를 최우선으로 확인한다.
+- [ ] `tool/build_map_html.dart` 또는 `live_train_provider.dart`가 변경 대상에 포함되면, CLAUDE.md의 "실시간 열차 애니메이션 4원칙"(위치 단조 전진 / 매 frame 역산 위치 / 3-way 클램프 / catch-up 보간) 위반 여부를 최우선으로 확인한다.
 - [ ] 위반 발견 시 CRITICAL로 분류한다. 원칙 자체를 바꾸는 변경이면 사용자 승인 여부를 확인하고, 없으면 반드시 롤백을 요구한다.
 
 ### 아키텍처

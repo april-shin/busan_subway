@@ -11,12 +11,14 @@ description: "서울 지하철 지도의 SVG 렌더링, 좌표 변환, 줌/팬 �
 
 `tool/build_map_html.dart`(HTML 생성 유일 소스) 또는 `live_train_provider.dart`를 수정하기 전, **CLAUDE.md의 "실시간 열차 애니메이션 4원칙" 섹션을 먼저 읽는다.** 이 4원칙은 일반 수정·버그 수정으로 깨뜨릴 수 없고, 원칙 자체를 바꾸려면 사용자 승인이 필요하다.
 
-1. **단조 감소 카운트다운**: `realRemaining = arrivalSeconds − (now − recptnDt)`, JS에서 이전 refresh 기반 예상값보다 커지면 clamp.
+1. **열차는 절대 뒤로 가지 않는다 (경로상 단조 전진)**: 표시용 숫자(`realRemaining`)는 API 원본 그대로 — 재조회로 늘어나도 보정하지 않는다(옛 clamp·`trainSlotMemory` 재도입 금지). 위치는 두 층으로 지킨다 — (a) 역산 입력은 표시용과 분리된 기준쌍(`posBaseArrival`/`posBaseReceivedAt`)을 쓰되 **API 원본 값이 바뀐 refresh 에서만** 보정(값이 그대로면 stale 반복 보고 → 유지, 갱신하면 열차 정지), (b) target 의 `distToEnd`(경로 끝까지 남은 px)가 `minDistToEnd` 보다 크면 `pointAtLength(pathTotalLen − minDistToEnd)` 에 고정. `pathEndKey` 변경 시 둘 다 리셋. 동작 회귀 테스트는 Dart 미러 `test/core/utils/train_forward_guard_test.dart`.
 2. **매 frame 역산 위치 결정**: `estimateTrainPosition(remaining, segTravel)`이 **뒤에서부터** 세그먼트 주행시간을 차감하며 위치를 찾는다. 아래 "경로 보간" 섹션의 LERP은 좌표 계산용이며, **progress를 구하는 방법이 아니다** — `path[0]`에서 경과시간 비례로 전방 계산하는 방식은 원칙 2 위반이므로 사용 금지.
 3. **현재역 기준 3-way 클램프**: `arvlMsg3`(현재역) 기준 현재역↔다음역 한 구간 밖으로 못 나간다. `expandPathWithSnap`의 `stationIndices` 매핑으로 확장 path 상 위치를 재계산해야 한다.
 4. **열차는 순간이동하지 않는다 (catch-up)**: target이 이동해도 현재 위치에서 매 프레임 지수 감쇠(`factor = 0.5^(deltaMs/halfLife)`)로 다가간다. 반감기는 거리 기반 — 가까우면(≤30px) `HALF_LIFE_NEAR_MS=3000`(지터 흡수), 멀면(>30px) `HALF_LIFE_FAR_MS=500`(빠른 따라잡기), `SNAP_PX=0.5` 이내면 스냅 종료. deltaMs 상한 100ms.
 
-회귀 테스트: `test/core/utils/estimate_train_position_test.dart` 등이 깨지면 원칙 위반을 먼저 의심한다.
+적용 순서(한 프레임): 원칙 2(역산) → 원칙 3(3-way 클램프) → 원칙 1(단조 전진 가드) → 원칙 4(catch-up) → transform.
+
+회귀 테스트: 원칙 1 `test/core/utils/train_forward_guard_test.dart`, 원칙 2 `test/core/utils/estimate_train_position_test.dart`, 생성 JS 형태 `test/tool/build_map_html_test.dart`. 깨지면 원칙 위반을 먼저 의심한다. JS 애니메이션 로직은 WebView 안이라 단위 테스트가 불가능하므로 `lib/core/utils/` 의 **Dart 미러**로 검증한다 — JS 를 고치면 미러도 함께 고칠 것.
 
 ## 좌표계
 
@@ -79,7 +81,7 @@ segmentDurations: [d₀, d₁, ..., dₙ₋₁]              // 각 구간 소�
 
 ### 위치 결정 — 뒤에서부터 역산 (원칙 2, `estimateTrainPosition`)
 ```javascript
-// remaining: realRemaining (단조 감소, 원칙 1)
+// remaining: realRemaining (API 원본 기반 — 재조회 시 늘어날 수 있음)
 // segTravel: segmentDurations
 // 뒤에서부터 각 세그먼트 시간을 차감하며 매칭되는 세그먼트를 찾는다
 function estimateTrainPosition(remaining, segTravel) {
@@ -110,6 +112,37 @@ currentY = lerp(path[i].y, path[i+1].y, progress)
 
 ### 3-way 클램프 (원칙 3)
 `estimateTrainPosition`의 결과가 `arvlMsg3`(현재역) 이전 세그먼트를 가리키면 현재역에, 다음역 이후를 가리키면 다음역에 클램프한다. 화면상 열차는 항상 현재역↔다음역 한 구간 안에서만 움직인다.
+
+### 단조 전진 (원칙 1) — 2층 구조
+
+**1층: 위치 역산 입력의 stale 필터** (refresh 당 1회, `startTrainAnimation` 진입부)
+```javascript
+// 표시용(realRemaining)과 분리된 위치 전용 기준쌍.
+// API 원본 값이 **바뀐 refresh 에서만** 보정한다.
+if (trainState.posBaseArrival == null
+    || trainState.lastRawArrival !== baseArrival) {
+  trainState.posBaseArrival = baseArrival;
+  trainState.posBaseReceivedAt = receivedAt;
+}
+trainState.lastRawArrival = baseArrival;
+```
+⚠ 값이 그대로인데(= `recptnDt` 만 갱신된 stale 반복 보고) 기준쌍을 갱신하면 남은시간이 매 cycle 원복돼 **열차가 정지한다.** 반대로 "더 늦은 도착이면 무조건 무시"로 만들면 실제 지연을 반영하지 못해 아이콘이 실제보다 앞서 달린다. 값이 바뀌면 채택하고, 뒤로 가는 것은 2층 백스톱에 맡긴다.
+
+**2층: 경로상 backstop** — 3-way 클램프 **다음**. 경로 앞부분은 refresh 마다 늘고 줄지만 끝점(목표역)은 고정이므로, 전진량은 **끝에서부터 잰 거리**로만 비교한다:
+```javascript
+// cumLen: path 누적 길이 테이블(refresh 당 1회 계산), pathTotalLen = cumLen[last]
+var distToEnd = pathTotalLen - targetLen;   // targetLen = 3-way 클램프 후 target 의 시작점 기준 거리
+if (!isFinite(distToEnd)) {                 // 퇴화 데이터로 기억이 NaN 오염되는 것 방지
+  if (trainState.minDistToEnd != null) target = pointAtLength(pathTotalLen - trainState.minDistToEnd);
+} else if (trainState.minDistToEnd != null && distToEnd > trainState.minDistToEnd) {
+  target = pointAtLength(pathTotalLen - trainState.minDistToEnd); // 뒤로 가는 target 폐기
+} else {
+  trainState.minDistToEnd = distToEnd;      // 전진했을 때만 기억 갱신
+}
+```
+시간과 무관한 후퇴(현재역 후퇴·경로 재스냅)에서 열차는 뒤로 가는 대신 **그 자리에 멈춰** 기다리다가, target 이 최전진 지점을 다시 넘어서면 전진을 재개한다. `pathEndKey`(끝점 좌표) 변경 시 1·2층 상태를 모두 리셋한다.
+
+⚠ `minDistToEnd = 0`(최전진 확정)은 **실제 도착일 때만** 기록할 것. 단일 점 path('진입'/'도착')에서 `arrivalSeconds` 가 양수인데도 0 을 박으면, 끝점이 같아 `pathEndKey` 리셋도 타지 않으므로 그 열차는 목표역에 **영구 고정**된다.
 
 ### 도착 판정
 `arrivalCode`/`positionStatus`는 초기 표시값 힌트일 뿐이며, 매 frame 위치는 여전히 `estimateTrainPosition(realRemaining, ...)`로 결정한다. 도착 이펙트는 catch-up 보간(원칙 4) 완료 후에만 발동한다.
