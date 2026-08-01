@@ -7,6 +7,17 @@ class ApiConstants {
   static String realtimeArrivalUrl(String apiKey, String stationName) =>
       '$subwayBaseUrl/$apiKey/json/realtimeStationArrival/0/20/$stationName';
 
+  /// 노선별 실시간 열차 위치 API.
+  ///
+  /// 도착정보 API 가 특정 (역, 노선) 을 아예 제공하지 않는 경우의 폴백 경로다.
+  /// 예) 5호선 천호 — 등록명 `천호(풍납토성)` 로 조회하면 8호선만 응답하고,
+  /// 전체역 일괄 조회(`.../ALL`)에도 5호선 천호(`1005000547`)가 없다(2026-07-31 실측).
+  /// 이 API 는 역이 아니라 **노선** 단위로 전 열차를 돌려주므로 그 공백을 우회한다.
+  ///
+  /// 한 노선의 재차 열차는 60대 이하라 100건이면 전량을 덮는다(5호선 실측 53대).
+  static String realtimePositionUrl(String apiKey, String lineApiName) =>
+      '$subwayBaseUrl/$apiKey/json/realtimePosition/0/100/$lineApiName';
+
   // 캐시 TTL 은 refreshInterval 이하로 유지해야 한다.
   // 초과하면 refresh 때 캐시 응답만 재사용되어 실제 API 호출이 일어나지 않는다.
   // 서울 열린데이터 일일 호출 한도(1,000건/일) 절약을 위해 15초 주기로 운영한다.

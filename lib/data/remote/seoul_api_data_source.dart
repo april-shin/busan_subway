@@ -6,12 +6,86 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/station_api_name_overrides.dart';
 import '../../core/network/api_client.dart';
+import '../../core/constants/subway_id_mapping.dart';
 import 'dto/arrival_info_dto.dart';
+import 'dto/train_position_dto.dart';
 
 class SeoulApiDataSource {
   final ApiClient _apiClient;
 
   SeoulApiDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
+
+  String _requireApiKey() {
+    final apiKey = dotenv.env['SEOUL_SUBWAY_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty || apiKey == 'your_api_key_here') {
+      developer.log(
+        'API 키 오류: SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다',
+        name: 'SeoulApiDataSource',
+        level: 1000,
+      );
+      throw Exception('SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다');
+    }
+    return apiKey;
+  }
+
+  /// 노선별 실시간 열차 위치를 조회한다.
+  ///
+  /// **엔드포인트:**
+  /// `http://swopenapi.seoul.go.kr/api/subway/{apiKey}/json/realtimePosition/0/100/{노선명}`
+  ///
+  /// 도착정보 API 가 특정 (역, 노선) 을 제공하지 않을 때의 폴백 경로다
+  /// (예: 5호선 천호). 응답 필드는 [TrainPositionDto] 주석 참조.
+  ///
+  /// 위치 API 로 조회할 수 없는 노선(도착 API 미제공 노선 등)이면 빈 목록을
+  /// 반환한다 — 폴백은 없으면 없는 대로 동작해야 하므로 예외를 던지지 않는다.
+  Future<List<TrainPositionDto>> getRealtimePosition(String lineId) async {
+    final lineApiName = positionApiLineName(lineId);
+    if (lineApiName == null) {
+      developer.log(
+        '위치 API 미지원 노선: lineId=$lineId',
+        name: 'SeoulApiDataSource',
+      );
+      return [];
+    }
+
+    final url = ApiConstants.realtimePositionUrl(_requireApiKey(), lineApiName);
+
+    developer.log(
+      '실시간 열차위치 요청: 노선=$lineId (API명=$lineApiName)',
+      name: 'SeoulApiDataSource',
+    );
+
+    try {
+      final response = await _apiClient.get<String>(url);
+      final data = json.decode(response.data!) as Map<String, dynamic>;
+
+      final list = data['realtimePositionList'];
+      if (list == null) {
+        developer.log(
+          '열차위치 없음: 노선=$lineId',
+          name: 'SeoulApiDataSource',
+        );
+        return [];
+      }
+
+      final result = (list as List<dynamic>)
+          .map((e) => TrainPositionDto.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      developer.log(
+        '실시간 열차위치 조회 성공: 노선=$lineId, 열차 수=${result.length}',
+        name: 'SeoulApiDataSource',
+      );
+      return result;
+    } catch (e) {
+      developer.log(
+        '실시간 열차위치 조회 실패: 노선=$lineId',
+        name: 'SeoulApiDataSource',
+        error: e,
+      );
+      rethrow;
+    }
+  }
 
   /// 서울 열린데이터 실시간 지하철 도착정보 API를 호출한다.
   ///
@@ -37,15 +111,7 @@ class SeoulApiDataSource {
   /// | `ordkey` | String | 정렬 키 (열차 고유 식별) |
   /// | `lstcarAt` | String | 막차 여부 (`"0"`: 일반, `"1"`: 막차) |
   Future<List<ArrivalInfoDto>> getRealtimeArrival(String stationName) async {
-    final apiKey = dotenv.env['SEOUL_SUBWAY_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty || apiKey == 'your_api_key_here') {
-      developer.log(
-        'API 키 오류: SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다',
-        name: 'SeoulApiDataSource',
-        level: 1000,
-      );
-      throw Exception('SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다');
-    }
+    final apiKey = _requireApiKey();
 
     // 일부 역은 부역명이 포함된 정식 등록명으로만 조회된다(예: "남한산성입구" →
     // "남한산성입구(성남법원,검찰청)"). 질의명만 API 등록명으로 치환하고, 캐시 키·

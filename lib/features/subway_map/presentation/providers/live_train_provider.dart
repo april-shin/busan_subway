@@ -233,6 +233,42 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   );
   ref.read(_lastEnrichedArrivalsProvider.notifier).state = enrichedArrivals;
 
+  // 도착정보 API 가 이 역의 **해당 노선**을 아예 제공하지 않으면 열차위치 API 로
+  // 폴백한다. 예) 5호선 천호 — 등록명 `천호(풍납토성)` 로 조회하면 8호선만 오고
+  // 전체역 일괄 조회에도 5호선 엔트리가 없다(2026-07-31 실측). 이 경우 지도가
+  // 통째로 비어 버리므로, 노선 단위로 전 열차를 주는 위치 API 에서 대상역을
+  // 향하는 열차만 추려 쓴다. 잔여초는 추정값이다.
+  //
+  // 조건이 "도착정보 0건"이 아니라 "해당 노선 0건"인 이유: 천호처럼 다른 노선은
+  // 정상 응답하는 환승역에서는 전체 건수가 0 이 아니어서 그 조건으로는 폴백이
+  // 걸리지 않는다.
+  var arrivalsForMap = enrichedArrivals;
+  final hasLineArrival = enrichedArrivals.any(
+    (a) => subwayIdToLineId[a.subwayId] == routeFilter.lineId,
+  );
+  if (!hasLineArrival) {
+    try {
+      arrivalsForMap = await ref
+          .watch(arrivalRepositoryProvider)
+          .getTrainPositionArrivals(
+            lineId: routeFilter.lineId,
+            targetStationName: departureStationName,
+            stations: stations,
+            connections: connections,
+          );
+      if (kDebugMode && arrivalsForMap.isNotEmpty) {
+        debugPrint(
+          '위치 API 폴백: $departureStationName ${routeFilter.lineId}호선 '
+          '${arrivalsForMap.length}대',
+        );
+      }
+    } catch (e) {
+      // 폴백 실패는 치명적이지 않다 — 열차 없이 지도만 그린다.
+      if (kDebugMode) debugPrint('위치 API 폴백 실패: $e');
+      arrivalsForMap = const [];
+    }
+  }
+
   // 역명 → Station 매핑 (SVG 좌표 조회용)
   final stationsByName = <String, List<Station>>{};
   for (final s in stations) {
@@ -277,7 +313,7 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
 
   final result = <LiveTrain>[];
 
-  for (final arrival in enrichedArrivals) {
+  for (final arrival in arrivalsForMap) {
     // subwayId → lineId 변환
     final lineId = subwayIdToLineId[arrival.subwayId];
     if (lineId == null) continue;
