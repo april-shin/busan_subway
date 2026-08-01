@@ -1187,13 +1187,6 @@
   },
   {
     "fromStationId": "308",
-    "toStationId": "309",
-    "lineId": "3",
-    "travelTimeSeconds": 330,
-    "isTransfer": false
-  },
-  {
-    "fromStationId": "309",
     "toStationId": "344",
     "lineId": "3",
     "travelTimeSeconds": 150,
@@ -1201,9 +1194,16 @@
   },
   {
     "fromStationId": "344",
+    "toStationId": "309",
+    "lineId": "3",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "309",
     "toStationId": "310",
     "lineId": "3",
-    "travelTimeSeconds": 330,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {

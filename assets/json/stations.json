@@ -2111,12 +2111,12 @@
     ]
   },
   {
-    "id": "309",
-    "name": "삼송",
+    "id": "344",
+    "name": "원흥",
     "lineId": "3",
-    "latitude": 37.6499,
-    "longitude": 126.8561,
-    "svgX": 576.0,
+    "latitude": 37.645,
+    "longitude": 126.873,
+    "svgX": 536.0,
     "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
@@ -2124,12 +2124,12 @@
     ]
   },
   {
-    "id": "344",
-    "name": "원흥",
+    "id": "309",
+    "name": "삼송",
     "lineId": "3",
-    "latitude": 37.645,
-    "longitude": 126.873,
-    "svgX": 536.0,
+    "latitude": 37.6499,
+    "longitude": 126.8561,
+    "svgX": 576.0,
     "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [

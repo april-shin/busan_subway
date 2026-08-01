@@ -22,8 +22,12 @@
 //   계산하고, 최근 작업(경강선 48351f4, 금정 1호선)은 dwell 을 제외한
 //   `다음역 trainArvlTm − 현재역 trainDptreTm` 을 규약으로 쓴다.
 //   → 이 도구를 그대로 재실행하면 그렇게 넣은 구간이 dwell 이중 가산 값으로
-//     되돌아간다(명학↔금정 120→150, 금정↔군포 180→210). 회귀 가드:
-//     `test/data/geumjeong_transfer_test.dart`, `test/data/gyeonggang_line_test.dart`.
+//     되돌아간다:
+//       1호선 명학↔금정 120→150, 금정↔군포 180→210
+//       3호선 원당↔원흥 150→180, 원흥↔삼송 120→150, 삼송↔지축 150→180
+//       경강선 전 구간
+//     회귀 가드: `test/data/geumjeong_transfer_test.dart`,
+//     `test/data/ilsan_line_order_test.dart`, `test/data/gyeonggang_line_test.dart`.
 //
 // 한계 (급행 데이터 커버리지):
 //   - 이 알고리즘은 "인접 두 역" 쌍에서만 trainno 매칭을 수행한다.
