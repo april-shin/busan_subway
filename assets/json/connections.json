@@ -1963,7 +1963,7 @@
     "fromStationId": "539",
     "toStationId": "550",
     "lineId": "5",
-    "travelTimeSeconds": 120,
+    "travelTimeSeconds": 140,
     "isTransfer": false
   },
   {
