@@ -34,8 +34,50 @@ MANUAL_JSON = ROOT / 'tool' / 'manual_express_stops.json'
 # 기반 수동 매핑으로만 처리한다.
 LINES = ['9', '경춘', '수인분당']
 
-# 수동 매핑도 대상 노선 목록 — 여기엔 1호선 포함.
-MANUAL_LINES = ['1', '9', '경춘', '수인분당']
+# 수동 매핑으로 skip edge 를 **강제 생성**할 노선.
+#
+# 여기에 있는 노선만 `_apply_manual` 이 동작한다. `manual_express_stops.json` 에
+# 항목이 있어도 이 목록에 없으면 강제 생성하지 않는다 — 경춘·수인분당은 정차역
+# 목록을 갖지만 그것을 **필터**로만 쓰기 때문이다(`_STOP_FILTER_LINES` 참조).
+MANUAL_LINES = ['1']
+
+# `manual_express_stops.json` 의 정차역 목록을 "강제 생성" 대신 **Y 편성 시퀀스
+# 필터**로 쓰는 노선.
+#
+# 배경 — 경춘·수인분당은 1호선과 같은 함정에 빠져 있다. data.go.kr 시간표 API 가
+# `etrnYn='Y'` 열차에 대해 **통과역까지 trainDptreTm 을 채워** 주기 때문에, 자동
+# 수집이 전 역을 정차역으로 잡아 `skippedStationIds` 가 전부 빈 인접쌍이 된다.
+# 그 결과 가상 노선 `경춘E`·`수인분당E` 가 완행의 복제본이 되어, 급행/완행 비교
+# 탭이 실질적으로 같은 여정을 둘로 보여주고 있었다(경춘 22/22, 수인분당 55/55 가
+# 통과역 0개였다).
+#
+# 다만 1호선과 달리 **시각 자체는 진짜 급행 시각이다.** 실측 교차검증:
+#   · 편성 수 — 경춘 Y 5편성 = 공표 "평일 상행 2회·하행 3회". 수인분당 Y 는
+#     분당 계열 14 + 수인 계열 8 = 공표 14 + 8.
+#   · 소요시간 — 죽전→수원 Y 중앙값 23분 00초(n=14) = 공표 급행 23분.
+#     같은 구간 N 중앙값 31분 30초(n=205) = 공표 완행 31분.
+#   · 구간 전체 — 청량리→남춘천 Y 4620s vs N 5520s(15분 단축),
+#     왕십리→수원 Y 4650s vs N 5190s(9분 단축).
+# 즉 API 는 급행의 정차 **패턴**만 뭉갰고 시각은 보존했다. 따라서 Y 편성 시퀀스에서
+# 통과역 레코드를 걸러내면, 남은 인접 정차쌍의 시간차가 그대로 **실측** 급행
+# 소요시간이 된다 — 1호선처럼 `0.7 × 완행 합` 으로 근사할 필요가 없다.
+#
+# 정차역 목록의 근거는 `manual_express_stops.json` 의 각 항목 `_comment` 참조.
+_STOP_FILTER_LINES = {'경춘', '수인분당'}
+
+# 노선별 `MIN_FREQUENCY` 예외 — 기본값 3.
+#
+# 기본 3 은 "각 평일 시간표에 같은 trainno 가 1개씩 등장하므로 3편성 이상이면
+# 임시열차가 아닌 정기 운행" 이라는 가정이다. 그런데 경춘선 급행은 **공표
+# 운행횟수 자체가 평일 상행 2회·하행 3회**라서, 상행 전체가 이 문턱에 걸려
+# 통째로 버려진다. 그러면 상행에만 나타나는 남춘천→춘천 이 빠져 `경춘E` 가
+# 종점에 닿지 못한다(춘천행 경로가 남춘천에서 완행으로 갈아타야 한다).
+#
+# 캐시의 Y 편성 수가 공표 횟수와 정확히 일치하므로(상행 2 = K8402·K8404,
+# 하행 3 = K8401·K8403·K8405) 2편성도 정기 운행이 확실하다. 이 노선만 2 로
+# 내린다. 표본이 2개면 중앙값이 큰 값 쪽으로 치우치지만, 위의 완행 상한
+# 클램프가 상한을 잡아 준다.
+_MIN_FREQUENCY = {'경춘': 2}
 
 # 수동 매핑에서 skip edge 의 seconds 를 완행 시간 합에 곱할 비율.
 # 1호선 경인선/경부선 급행은 통상 완행 대비 65~75% 시간으로 운행.
@@ -129,6 +171,26 @@ def parse_sec(s):
         return None
 
 
+def _manual_stop_names(line):
+    """`manual_express_stops.json` 의 해당 노선 전체 정차역 이름 집합(패턴 합집합).
+
+    없으면 None. 한 노선에 여러 급행 패턴이 있을 수 있어(분당선 급행 + 수인선 급행)
+    합집합을 쓴다. 두 패턴은 지리적으로 겹치지 않고 한 편성이 양쪽 레코드를 함께
+    갖는 경우도 없으므로, 합집합으로 걸러도 패턴이 섞이지 않는다.
+    """
+    if not MANUAL_JSON.exists():
+        return None
+    try:
+        data = json.loads(MANUAL_JSON.read_text(encoding='utf-8'))
+    except json.JSONDecodeError:
+        return None
+    routes = data.get(line) or []
+    names = set()
+    for r in routes:
+        names.update(r.get('stops') or [])
+    return names or None
+
+
 def gather_express_stops(line):
     """같은 노선의 모든 시간표 캐시를 읽어 trainno별 정차 순서를 반환.
 
@@ -150,6 +212,13 @@ def gather_express_stops(line):
             for item in items:
                 if item.get('etrnYn') != 'Y':
                     continue
+                # [데이터 오염 방어] fetch_timetables.dart 의 substring 검색이 한
+                # 파일에 이웃 역 레코드를 함께 담는 경우가 있다(예: `수원` 파일에
+                # `수원시청`). 시각을 그대로 쓰는 이상 이 오염은 구간 소요시간을
+                # 직접 틀리게 하므로, stnNm 이 대상 역명과 정확히 일치하는
+                # 레코드만 채택한다. (`compute_travel_times.dart` 와 같은 방어)
+                if item.get('stnNm') != stn_nm:
+                    continue
                 tno = item.get('trainno')
                 t = parse_sec(item.get('trainDptreTm', ''))
                 if not tno or t is None:
@@ -168,6 +237,25 @@ def gather_express_stops(line):
                 deduped.append(item)
             prev = item
         ts[key] = deduped
+
+    # 통과역 레코드 걸러내기 (`_STOP_FILTER_LINES` 참조).
+    #
+    # API 가 통과역에도 시각을 채워 주는 노선은 이 필터 없이는 전 역이 정차역으로
+    # 잡혀 skip edge 가 전부 인접쌍이 된다. 남는 시퀀스의 인접쌍 시간차는 실제
+    # 급행 시각의 차이이므로 그대로 실측값이다.
+    if line in _STOP_FILTER_LINES:
+        allowed = _manual_stop_names(line)
+        if allowed:
+            dropped = 0
+            for key in ts:
+                before = len(ts[key])
+                ts[key] = [x for x in ts[key] if x[0] in allowed]
+                dropped += before - len(ts[key])
+            print(f'  [{line}] 통과역 레코드 {dropped}건 제외 '
+                  f'(정차역 {len(allowed)}개 기준)')
+        else:
+            print(f'  ⚠ [{line}] _STOP_FILTER_LINES 에 있으나 '
+                  f'manual_express_stops.json 에 정차역이 없다 — 필터 미적용')
     return ts
 
 
@@ -229,6 +317,13 @@ def _apply_manual(
 
     Returns: (추가된 edge 수, curated 로 결정된 edge 수).
     """
+    # 정차역 목록을 **필터**로만 쓰는 노선은 강제 생성하지 않는다. 그렇지 않으면
+    # MIN_FREQUENCY 등에 걸려 자동 수집에서 빠진 쌍이 `0.7 × 완행 합` 근사값으로
+    # 되살아나, 실측만 담기로 한 원칙이 조용히 깨진다.
+    # (예: 경춘 남춘천→춘천 은 상행 2편성뿐이라 빈도 미달로 빠지는데, 강제 생성이
+    #  돌면 147s 라는 근거 없는 값이 들어간다.)
+    if line not in MANUAL_LINES:
+        return 0, 0
     if not MANUAL_JSON.exists():
         return 0, 0
     try:
@@ -358,7 +453,7 @@ def main():
 
         # 빈도가 낮은 쌍은 임시 열차/회송 가능성이 높아 제외
         # (각 평일 시간표에 동일 trainno 1개씩만 등장하므로 3 이상 등장 = 정기 운행)
-        MIN_FREQUENCY = 3
+        MIN_FREQUENCY = _MIN_FREQUENCY.get(line, 3)
 
         line_edges = []
         skipped_low_freq = 0
@@ -387,11 +482,25 @@ def main():
             if len(skipped_ids) > 0 and median < min_realistic:
                 skipped_unrealistic += 1
                 continue
+            # 불변식: 같은 구간에서 급행이 완행보다 느릴 수는 없다.
+            # 표본이 적은 인접쌍(경춘 신내→갈매 는 하행 3편성뿐)에서 급행 편성이
+            # 주요역에 오래 정차하면 중앙값이 완행을 넘을 수 있다. 30초 격자
+            # 해상도 안의 오차이므로 완행 값으로 눌러, 급행 탭의 총시간이 완행보다
+            # 길어 보이는 역전을 막는다. `_apply_manual` 과 같은 정책이다.
+            seconds = int(median)
+            local_sum = 0
+            chain = [f_id, *skipped_ids, t_id]
+            tt = _travel_time_lookup(line, conns)
+            for k in range(len(chain) - 1):
+                local_sum += tt.get((chain[k], chain[k + 1]), 0)
+            if local_sum > 0 and seconds > local_sum:
+                clamped.append((line, f_id, t_id, seconds, local_sum))
+                seconds = local_sum
             line_edges.append({
                 'lineId': line,
                 'fromStationId': f_id,
                 'toStationId': t_id,
-                'seconds': int(median),
+                'seconds': seconds,
                 'skippedStationIds': skipped_ids,
             })
 

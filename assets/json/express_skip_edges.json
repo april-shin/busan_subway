@@ -273,42 +273,64 @@
     {
       "lineId": "경춘",
       "fromStationId": "C02",
-      "toStationId": "C03",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "경춘",
-      "fromStationId": "C03",
       "toStationId": "C04",
-      "seconds": 150,
-      "skippedStationIds": []
+      "seconds": 300,
+      "skippedStationIds": [
+        "C03"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C04",
-      "toStationId": "C05",
-      "seconds": 90,
-      "skippedStationIds": []
+      "toStationId": "C02",
+      "seconds": 300,
+      "skippedStationIds": [
+        "C03"
+      ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C05",
+      "fromStationId": "C04",
       "toStationId": "C06",
-      "seconds": 120,
-      "skippedStationIds": []
+      "seconds": 210,
+      "skippedStationIds": [
+        "C05"
+      ]
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C06",
+      "toStationId": "C04",
+      "seconds": 240,
+      "skippedStationIds": [
+        "C05"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C06",
       "toStationId": "C07",
-      "seconds": 240,
+      "seconds": 210,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C07",
+      "toStationId": "C06",
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C07",
       "toStationId": "C08",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C08",
+      "toStationId": "C07",
       "seconds": 120,
       "skippedStationIds": []
     },
@@ -322,6 +344,13 @@
     {
       "lineId": "경춘",
       "fromStationId": "C09",
+      "toStationId": "C08",
+      "seconds": 150,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C09",
       "toStationId": "C10",
       "seconds": 210,
       "skippedStationIds": []
@@ -329,92 +358,125 @@
     {
       "lineId": "경춘",
       "fromStationId": "C10",
-      "toStationId": "C11",
-      "seconds": 180,
+      "toStationId": "C09",
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C11",
+      "fromStationId": "C10",
       "toStationId": "C12",
-      "seconds": 210,
-      "skippedStationIds": []
+      "seconds": 390,
+      "skippedStationIds": [
+        "C11"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C12",
-      "toStationId": "C13",
-      "seconds": 180,
-      "skippedStationIds": []
+      "toStationId": "C10",
+      "seconds": 390,
+      "skippedStationIds": [
+        "C11"
+      ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C13",
+      "fromStationId": "C12",
       "toStationId": "C14",
-      "seconds": 120,
-      "skippedStationIds": []
+      "seconds": 300,
+      "skippedStationIds": [
+        "C13"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C14",
-      "toStationId": "C15",
-      "seconds": 330,
-      "skippedStationIds": []
+      "toStationId": "C12",
+      "seconds": 300,
+      "skippedStationIds": [
+        "C13"
+      ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C15",
+      "fromStationId": "C14",
       "toStationId": "C16",
-      "seconds": 360,
-      "skippedStationIds": []
+      "seconds": 690,
+      "skippedStationIds": [
+        "C15"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C16",
-      "toStationId": "C17",
-      "seconds": 210,
-      "skippedStationIds": []
+      "toStationId": "C14",
+      "seconds": 690,
+      "skippedStationIds": [
+        "C15"
+      ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C17",
+      "fromStationId": "C16",
       "toStationId": "C18",
-      "seconds": 330,
-      "skippedStationIds": []
+      "seconds": 540,
+      "skippedStationIds": [
+        "C17"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C18",
-      "toStationId": "C19",
-      "seconds": 210,
-      "skippedStationIds": []
+      "toStationId": "C16",
+      "seconds": 540,
+      "skippedStationIds": [
+        "C17"
+      ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C19",
-      "toStationId": "C20",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "경춘",
-      "fromStationId": "C20",
+      "fromStationId": "C18",
       "toStationId": "C21",
-      "seconds": 270,
-      "skippedStationIds": []
+      "seconds": 630,
+      "skippedStationIds": [
+        "C19",
+        "C20"
+      ]
     },
     {
       "lineId": "경춘",
       "fromStationId": "C21",
-      "toStationId": "C22",
-      "seconds": 330,
-      "skippedStationIds": []
+      "toStationId": "C18",
+      "seconds": 630,
+      "skippedStationIds": [
+        "C20",
+        "C19"
+      ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C22",
+      "fromStationId": "C21",
       "toStationId": "C23",
-      "seconds": 300,
+      "seconds": 630,
+      "skippedStationIds": [
+        "C22"
+      ]
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C23",
+      "toStationId": "C21",
+      "seconds": 630,
+      "skippedStationIds": [
+        "C22"
+      ]
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C24",
+      "toStationId": "C23",
+      "seconds": 210,
       "skippedStationIds": []
     }
   ],
@@ -436,7 +498,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B04",
+      "toStationId": "B03",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B04",
       "toStationId": "B05",
+      "seconds": 150,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B05",
+      "toStationId": "B04",
       "seconds": 150,
       "skippedStationIds": []
     },
@@ -450,7 +526,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B06",
+      "toStationId": "B05",
+      "seconds": 90,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B06",
       "toStationId": "B07",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B07",
+      "toStationId": "B06",
       "seconds": 120,
       "skippedStationIds": []
     },
@@ -464,7 +554,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B08",
+      "toStationId": "B07",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B08",
       "toStationId": "B09",
+      "seconds": 90,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B09",
+      "toStationId": "B08",
       "seconds": 90,
       "skippedStationIds": []
     },
@@ -478,7 +582,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B10",
+      "toStationId": "B09",
+      "seconds": 90,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B10",
       "toStationId": "B11",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B11",
+      "toStationId": "B10",
       "seconds": 120,
       "skippedStationIds": []
     },
@@ -492,7 +610,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B12",
+      "toStationId": "B11",
+      "seconds": 90,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B12",
       "toStationId": "B13",
+      "seconds": 240,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B13",
+      "toStationId": "B12",
       "seconds": 240,
       "skippedStationIds": []
     },
@@ -506,7 +638,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B14",
+      "toStationId": "B13",
+      "seconds": 240,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B14",
       "toStationId": "B15",
+      "seconds": 180,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B15",
+      "toStationId": "B14",
       "seconds": 180,
       "skippedStationIds": []
     },
@@ -520,7 +666,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B16",
+      "toStationId": "B15",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B16",
       "toStationId": "B17",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B17",
+      "toStationId": "B16",
       "seconds": 120,
       "skippedStationIds": []
     },
@@ -534,7 +694,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B18",
+      "toStationId": "B17",
+      "seconds": 180,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B18",
       "toStationId": "B19",
+      "seconds": 150,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B19",
+      "toStationId": "B18",
       "seconds": 150,
       "skippedStationIds": []
     },
@@ -548,7 +722,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B20",
+      "toStationId": "B19",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B20",
       "toStationId": "B21",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B21",
+      "toStationId": "B20",
       "seconds": 120,
       "skippedStationIds": []
     },
@@ -562,7 +750,21 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B22",
+      "toStationId": "B21",
+      "seconds": 150,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B22",
       "toStationId": "B23",
+      "seconds": 150,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B23",
+      "toStationId": "B22",
       "seconds": 150,
       "skippedStationIds": []
     },
@@ -576,6 +778,13 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B24",
+      "toStationId": "B23",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B24",
       "toStationId": "B25",
       "seconds": 210,
       "skippedStationIds": []
@@ -583,86 +792,89 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B25",
-      "toStationId": "B26",
-      "seconds": 90,
+      "toStationId": "B24",
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B26",
-      "toStationId": "B27",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B27",
-      "toStationId": "B28",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B28",
+      "fromStationId": "B25",
       "toStationId": "B29",
-      "seconds": 120,
-      "skippedStationIds": []
+      "seconds": 390,
+      "skippedStationIds": [
+        "B26",
+        "B27",
+        "B28"
+      ]
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B29",
-      "toStationId": "B30",
-      "seconds": 120,
-      "skippedStationIds": []
+      "toStationId": "B25",
+      "seconds": 360,
+      "skippedStationIds": [
+        "B28",
+        "B27",
+        "B26"
+      ]
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B30",
-      "toStationId": "B31",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B31",
-      "toStationId": "B32",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B32",
+      "fromStationId": "B29",
       "toStationId": "B33",
-      "seconds": 150,
-      "skippedStationIds": []
+      "seconds": 480,
+      "skippedStationIds": [
+        "B30",
+        "B31",
+        "B32"
+      ]
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B33",
-      "toStationId": "B34",
-      "seconds": 120,
-      "skippedStationIds": []
+      "toStationId": "B29",
+      "seconds": 480,
+      "skippedStationIds": [
+        "B32",
+        "B31",
+        "B30"
+      ]
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B34",
+      "fromStationId": "B33",
       "toStationId": "B35",
-      "seconds": 150,
-      "skippedStationIds": []
+      "seconds": 270,
+      "skippedStationIds": [
+        "B34"
+      ]
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B36",
-      "toStationId": "B35",
-      "seconds": 150,
-      "skippedStationIds": []
+      "fromStationId": "B35",
+      "toStationId": "B33",
+      "seconds": 270,
+      "skippedStationIds": [
+        "B34"
+      ]
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B35",
+      "toStationId": "B37",
+      "seconds": 210,
+      "skippedStationIds": [
+        "B36"
+      ]
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B37",
-      "toStationId": "B36",
-      "seconds": 120,
-      "skippedStationIds": []
+      "toStationId": "B35",
+      "seconds": 270,
+      "skippedStationIds": [
+        "B36"
+      ]
     },
     {
       "lineId": "수인분당",
@@ -674,128 +886,81 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B50",
-      "toStationId": "B51",
+      "toStationId": "B53",
+      "seconds": 330,
+      "skippedStationIds": [
+        "B51",
+        "B52"
+      ]
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B53",
+      "toStationId": "B58",
       "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B51",
-      "toStationId": "B52",
-      "seconds": 90,
-      "skippedStationIds": []
+      "fromStationId": "B54",
+      "toStationId": "B61",
+      "seconds": 300,
+      "skippedStationIds": [
+        "B62"
+      ]
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B52",
+      "fromStationId": "B57",
+      "toStationId": "B54",
+      "seconds": 300,
+      "skippedStationIds": [
+        "B56",
+        "B55"
+      ]
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B58",
       "toStationId": "B53",
       "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B54",
-      "toStationId": "B55",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B54",
-      "toStationId": "B62",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B55",
-      "toStationId": "B54",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B55",
-      "toStationId": "B56",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B56",
-      "toStationId": "B55",
-      "seconds": 90,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B57",
-      "toStationId": "B56",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
       "fromStationId": "B58",
-      "toStationId": "B59",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B59",
-      "toStationId": "B60",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B60",
-      "toStationId": "B59",
-      "seconds": 60,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B60",
       "toStationId": "K266",
-      "seconds": 120,
-      "skippedStationIds": []
+      "seconds": 240,
+      "skippedStationIds": [
+        "B59",
+        "B60"
+      ]
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B61",
-      "toStationId": "B62",
-      "seconds": 150,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B61",
-      "toStationId": "K266",
-      "seconds": 120,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "수인분당",
-      "fromStationId": "B62",
       "toStationId": "B54",
-      "seconds": 150,
-      "skippedStationIds": []
+      "seconds": 300,
+      "skippedStationIds": [
+        "B62"
+      ]
     },
     {
       "lineId": "수인분당",
-      "fromStationId": "B62",
-      "toStationId": "B61",
-      "seconds": 210,
+      "fromStationId": "B61",
+      "toStationId": "K266",
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "K266",
-      "toStationId": "B60",
-      "seconds": 60,
-      "skippedStationIds": []
+      "toStationId": "B58",
+      "seconds": 240,
+      "skippedStationIds": [
+        "B60",
+        "B59"
+      ]
     },
     {
       "lineId": "수인분당",

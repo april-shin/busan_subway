@@ -191,22 +191,61 @@ void main() {
       }
     });
 
-    test('실재하지 않는 급행 skip edge 가 없다', () {
-      // 수인분당선은 getTrainSch 캐시상 `etrnYn='Y'` 편성도 이 구간 전 역에
-      // 레코드를 갖는다 — 즉 통과역이 없다. skippedStationIds 가 비어 있지 않은
-      // edge 는 잘못된 인접(또는 캐시 누락)에서 나온 유령이다.
+    test('잘못된 순서에서 나온 유령 급행 skip edge 가 없다', () {
+      // 종전 유령: 남동인더스파크↔연수 가 호구포·인천논현·원인재 3역을 통과한다고
+      // 주장했다. 잘못된 인접 위를 BFS 한 산물이며, 실제로는 그 사이에 원인재가
+      // 있고 수인선 급행은 원인재에 **정차**한다.
+      //
+      // 역 ID 를 하드코딩하지 않는다 — 이 버그의 수정 자체가 ID 재배정이었고
+      // (인천논현 B60→B58, 남동인더스파크 B58→B60), 박아 두면 다음 재배정에
+      // 조용히 무의미해진다. 역명으로 조회한다.
+      final nameToId = {for (final e in byId.entries) e.value.name: e.key};
+      final nam = nameToId['남동인더스파크'];
+      final yeonsu = nameToId['연수'];
+      expect(nam, isNotNull);
+      expect(yeonsu, isNotNull);
       final phantom = suinExpress
-          .where((e) => e.skippedStationIds.isNotEmpty)
+          .where((e) =>
+              (e.fromStationId == nam && e.toStationId == yeonsu) ||
+              (e.fromStationId == yeonsu && e.toStationId == nam))
           .map((e) => '${e.fromStationId}→${e.toStationId}'
               '(${e.skippedStationIds.join(",")})')
           .toList();
       expect(
         phantom,
         isEmpty,
-        reason: '수인분당선에는 통과역이 있는 급행 skip edge 가 없어야 한다. '
-            '종전에는 남동인더스파크→연수(240s)·연수→남동인더스파크(180s)가 있었다. '
+        reason: '남동인더스파크↔연수 직결 급행은 존재하지 않는다(사이에 원인재 정차). '
             'python3 tool/extract_express_skip_edges.py 로 재생성할 것.',
       );
+    });
+
+    test('급행이 통과한다고 표시된 역은 실제 수인선 급행 통과역뿐이다', () {
+      // 2026-08 이후 수인분당선 급행은 실제 정차 패턴으로 모델링된다
+      // (`tool/manual_express_stops.json` 의 "수인선 급행" = 오이도·소래포구·
+      // 인천논현·원인재·연수·인하대·인천, "분당선 급행" = 왕십리~죽전 전역 정차 +
+      // 기흥·망포·수원시청·수원·고색).
+      //
+      // 특히 **원인재는 통과역이 아니라 정차역**이다 — 종전에는 시간표 캐시가
+      // 아예 없어 통과로 오인됐다. 원인재가 skippedStationIds 에 들어가면
+      // `data/timetables/수인분당_원인재_*.json` 이 다시 비었거나 정차역 목록이
+      // 깨진 것이다. (역 ID 대신 역명으로 검사 — 위 테스트와 같은 이유.)
+      const passableNames = <String>{
+        // 수인선 급행 통과
+        '달월', '월곶', '호구포', '남동인더스파크', '송도', '숭의', '신포',
+        // 분당선 급행 통과 (죽전 이남)
+        '보정', '구성', '신갈', '상갈', '청명', '영통', '매탄권선', '매교',
+      };
+      final unexpected = <String>[];
+      for (final e in suinExpress) {
+        for (final s in e.skippedStationIds) {
+          final name = byId[s]?.name ?? s;
+          if (!passableNames.contains(name)) {
+            unexpected.add('${byId[e.fromStationId]?.name}→'
+                '${byId[e.toStationId]?.name} 가 $name($s) 을 통과한다고 표시');
+          }
+        }
+      }
+      expect(unexpected, isEmpty, reason: unexpected.join(' / '));
     });
   });
 }
