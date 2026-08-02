@@ -1278,6 +1278,19 @@
     ]
   },
   {
+    "id": "196",
+    "name": "탕정",
+    "lineId": "1",
+    "latitude": 36.7779,
+    "longitude": 127.0437,
+    "svgX": 1960.0,
+    "svgY": 1496.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
     "id": "197",
     "name": "배방",
     "lineId": "1",
@@ -1297,19 +1310,6 @@
     "latitude": 36.7836,
     "longitude": 126.9717,
     "svgX": 2088.0,
-    "svgY": 1496.0,
-    "isTransfer": false,
-    "transferLines": [
-      "1"
-    ]
-  },
-  {
-    "id": "196",
-    "name": "탕정",
-    "lineId": "1",
-    "latitude": 36.7779,
-    "longitude": 127.0437,
-    "svgX": 1960.0,
     "svgY": 1496.0,
     "isTransfer": false,
     "transferLines": [
@@ -8460,12 +8460,12 @@
     ]
   },
   {
-    "id": "B60",
-    "name": "남동인더스파크",
+    "id": "B58",
+    "name": "인천논현",
     "lineId": "수인분당",
-    "latitude": 37.387,
-    "longitude": 126.7325,
-    "svgX": 448.0,
+    "latitude": 37.3941,
+    "longitude": 126.7254,
+    "svgX": 320.0,
     "svgY": 1416.0,
     "isTransfer": false,
     "transferLines": [
@@ -8486,17 +8486,32 @@
     ]
   },
   {
-    "id": "B58",
-    "name": "인천논현",
+    "id": "B60",
+    "name": "남동인더스파크",
     "lineId": "수인분당",
-    "latitude": 37.3941,
-    "longitude": 126.7254,
-    "svgX": 320.0,
+    "latitude": 37.387,
+    "longitude": 126.7325,
+    "svgX": 448.0,
     "svgY": 1416.0,
     "isTransfer": false,
     "transferLines": [
       "수인분당"
     ]
+  },
+  {
+    "id": "K266",
+    "name": "원인재",
+    "lineId": "수인분당",
+    "latitude": 37.408,
+    "longitude": 126.683,
+    "svgX": 504.0,
+    "svgY": 1344.0,
+    "isTransfer": true,
+    "transferLines": [
+      "인천1",
+      "수인분당"
+    ],
+    "labelDirection": 0
   },
   {
     "id": "B61",
@@ -10352,21 +10367,6 @@
     "transferLines": [
       "GTX-A"
     ]
-  },
-  {
-    "id": "K266",
-    "name": "원인재",
-    "lineId": "수인분당",
-    "latitude": 37.408,
-    "longitude": 126.683,
-    "svgX": 504.0,
-    "svgY": 1344.0,
-    "isTransfer": true,
-    "transferLines": [
-      "인천1",
-      "수인분당"
-    ],
-    "labelDirection": 0
   },
   {
     "id": "250",

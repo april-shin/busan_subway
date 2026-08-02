@@ -5281,13 +5281,15 @@
     "fromStationId": "B60",
     "toStationId": "K266",
     "lineId": "수인분당",
-    "travelTimeSeconds": 120
+    "travelTimeSeconds": 120,
+    "isTransfer": false
   },
   {
     "fromStationId": "K266",
     "toStationId": "B61",
     "lineId": "수인분당",
-    "travelTimeSeconds": 120
+    "travelTimeSeconds": 120,
+    "isTransfer": false
   },
   {
     "fromStationId": "246",
