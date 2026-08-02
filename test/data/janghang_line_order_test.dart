@@ -53,6 +53,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Map<String, Station> byId;
+  late List<String> line1FileOrder;
+  late List<String> line1LineIds;
   late Map<String, Connection> line1Local;
 
   setUpAll(() async {
@@ -61,6 +63,13 @@ void main() {
       for (final s in stations)
         if (s.lineId == '1') s.id: s,
     };
+    line1FileOrder = [
+      for (final s in stations)
+        if (s.lineId == '1') s.id,
+    ];
+    line1LineIds = (await LocalDataSource().loadLines())
+        .firstWhere((l) => l.id == '1')
+        .stationIds;
 
     final raw = await rootBundle.loadString('assets/json/connections.json');
     line1Local = {};
@@ -97,6 +106,30 @@ void main() {
         );
         prev = x;
       }
+    });
+
+    test('stations.json 배열 순서도 물리 순서와 같다', () {
+      // ⚠ 이 축이 따로 필요한 이유: 이 버그의 수정 방식이 "이름·좌표는 그대로 두고
+      // `id` 만 제자리 교체"였기 때문이다(86b313e, 수인선 bab3788 도 같다). 그러면
+      // 위의 'ID 배정' 축은 통과하지만 **배열 위치는 뒤집힌 채로 남는다.**
+      // 역 선택 화면(`station_picker_screen.dart`)은 검색어가 없을 때
+      // `stations.json` 파일 순서를 그대로 그리므로(정렬하지 않는다) 여기가
+      // 어긋나면 목록에서 배방이 탕정보다 먼저 나온다.
+      final expected = [for (final (id, _) in _janghangOrder) id];
+      final start = line1FileOrder.indexOf('192');
+      expect(
+        line1FileOrder.sublist(start, start + expected.length),
+        expected,
+      );
+    });
+
+    test('lines.json 역 순서도 물리 순서와 같다', () {
+      final expected = [for (final (id, _) in _janghangOrder) id];
+      final start = line1LineIds.indexOf('192');
+      expect(
+        line1LineIds.sublist(start, start + expected.length),
+        expected,
+      );
     });
 
     test('실재하지 않는 인접이 없다 (역명 기준)', () {

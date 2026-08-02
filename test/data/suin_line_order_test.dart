@@ -30,6 +30,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:seoul_subway/core/utils/same_station.dart';
 import 'package:seoul_subway/data/local/local_data_source.dart';
 import 'package:seoul_subway/domain/entities/connection.dart';
 import 'package:seoul_subway/domain/entities/express_skip_edge.dart';
@@ -60,11 +61,22 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Map<String, Station> byId;
+  late List<Station> allStations;
+  late List<String> suinFileOrder;
+  late List<String> suinLineIds;
   late Map<String, Connection> suinLocal;
   late List<ExpressSkipEdge> suinExpress;
 
   setUpAll(() async {
     final stations = await LocalDataSource().loadStations();
+    allStations = stations;
+    suinFileOrder = [
+      for (final s in stations)
+        if (s.lineId == '수인분당') s.id,
+    ];
+    suinLineIds = (await LocalDataSource().loadLines())
+        .firstWhere((l) => l.id == '수인분당')
+        .stationIds;
     byId = {
       for (final s in stations)
         if (s.lineId == '수인분당') s.id: s,
@@ -116,6 +128,47 @@ void main() {
         );
         prev = s.svgX;
       }
+    });
+
+    test('stations.json 배열 순서도 물리 순서와 같다', () {
+      // ⚠ 이 축이 따로 필요한 이유: 이 버그의 수정 방식이 "이름·좌표는 그대로 두고
+      // `id` 만 제자리 교체"였기 때문이다(bab3788, 장항선 86b313e 도 같다). 그러면
+      // 위의 'ID 배정' 축은 통과하지만 **배열 위치는 뒤집힌 채로 남는다.**
+      // 역 선택 화면(`station_picker_screen.dart`)은 검색어가 없을 때
+      // `stations.json` 파일 순서를 그대로 그리고(정렬하지 않는다),
+      // `uniqueStationsByLocation` 도 순서를 보존하므로 여기가 어긋나면 목록에서
+      // 남동인더스파크가 인천논현보다 먼저 나온다.
+      final start = suinFileOrder.indexOf('B53');
+      expect(
+        suinFileOrder.sublist(start, start + 6),
+        ['B53', 'B58', 'B59', 'B60', 'K266', 'B61'],
+      );
+    });
+
+    test('lines.json 역 순서도 물리 순서와 같다', () {
+      // 원인재(K266)만 구 수인선 코드를 유지해 목록 맨 끝에 붙어 있었다.
+      final start = suinLineIds.indexOf('B53');
+      expect(
+        suinLineIds.sublist(start, start + 6),
+        ['B53', 'B58', 'B59', 'B60', 'K266', 'B61'],
+      );
+    });
+
+    test('원인재 대표 레코드는 수인분당 K266 이다 (역 선택 화면 표시 위치)', () {
+      // 원인재는 인천1(I24)·수인분당(K266) 두 레코드로 존재하고,
+      // `uniqueStationsByLocation` 은 **파일에서 먼저 나오는 쪽**을 대표로 남긴다.
+      // 수인분당 블록이 인천1 블록보다 앞서므로 대표는 K266 이며, 목록에서
+      // 원인재는 남동인더스파크와 연수 사이에 그려진다.
+      // K266 이 파일 맨 끝에 있던 동안에는 대표가 I24 라서 인천1 블록
+      // (신연수↔동춘 사이)에 그려졌다 — 이 테스트가 그 회귀를 잡는다.
+      final unique = uniqueStationsByLocation(allStations);
+      final wonincjae = unique.where((s) => s.name == '원인재').toList();
+      expect(wonincjae.map((s) => s.id), ['K266'],
+          reason: '원인재는 한 항목으로 합쳐지고 대표는 수인분당 K266 이어야 한다');
+
+      final names = [for (final s in unique) s.name];
+      final i = names.indexOf('원인재');
+      expect([names[i - 1], names[i + 1]], ['남동인더스파크', '연수']);
     });
 
     test('실재하지 않는 인접이 없다 (역명 기준)', () {
