@@ -125,12 +125,14 @@ void main() {
     final myeonghak = edge('171', _geumjeong1);
     expect(myeonghak, isNotNull, reason: '명학↔금정 연결이 없다');
     expect(myeonghak!.travelTimeSeconds, 120);
-    expect(myeonghak.expressTimeSeconds, 90);
+    // 1호선 `expressTimeSeconds` 는 전 구간 제거됐다(커밋 86b313e). etrnYn 오신뢰
+    // 에서 나온 값이라, 급행은 가상 노선 `1E` 의 skip edge 가 단독으로 담당한다.
+    expect(myeonghak.expressTimeSeconds, isNull);
 
     final gunpo = edge(_geumjeong1, '172');
     expect(gunpo, isNotNull, reason: '금정↔군포 연결이 없다');
     expect(gunpo!.travelTimeSeconds, 180);
-    expect(gunpo.expressTimeSeconds, 120);
+    expect(gunpo.expressTimeSeconds, isNull);
 
     // lines.json 의 역 순서에도 반영되어야 UI 노선도 순서가 맞는다.
     final line1Ids = (lines.firstWhere((l) => l['id'] == '1')['stationIds']
@@ -198,9 +200,9 @@ void main() {
 
   test('경부선 → 안산선 경로가 금정 환승 1회로 계산된다', () async {
     // 명학은 금정 바로 북쪽 인접역이라 급행·모드전환이 끼어들지 않아
-    // `transferCount == 1` 을 정확히 고정할 수 있는 유일한 조합이다.
-    // (수원 등 남부 역은 급행 승차 때문에 `1M` 모드전환 세그먼트가 하나 더
-    //  붙어 transferCount 가 2가 된다 — 아래 별도 테스트에서 다룬다.)
+    // `transferCount == 1` 을 정확히 고정할 수 있는 조합이다.
+    // (수원 등 남부 역은 급행을 타게 되고 금정이 급행 통과역이라 모드전환까지
+    //  끼어들어 환승이 3회가 된다 — 아래 별도 테스트에서 다룬다.)
     final route = await SearchRoute(
       stationRepository:
           StationRepositoryImpl(localDataSource: LocalDataSource()),
@@ -248,8 +250,18 @@ void main() {
       route.segments.where((s) => baseLineId(s.lineId) == '4').length,
       1,
     );
-    // 급행 모드전환(`1M`)이 세그먼트로 잡혀 transferCount 는 2까지 나온다.
-    expect(route.transferCount, lessThanOrEqualTo(2));
+    // 4호선 앞은 전부 1호선 계열(완행 `1`/급행 `1E`/모드전환 `1M`)이다.
+    expect(
+      route.segments
+          .take(route.segments.length - 1)
+          .every((s) => baseLineId(s.lineId) == '1' || s.lineId == '1M'),
+      isTrue,
+    );
+    // 금정은 급행 통과역이라 급행으로 바로 내릴 수 없다. 실제 경로는
+    // `1M(모드전환) → 1E 급행 수원→군포 → 완행 군포→금정 → 4호선` 으로
+    // 세그먼트가 4개(환승 3회)까지 늘어난다. 우회 회귀의 가드는 위의
+    // "금정에서 갈아탄다" 어서션이므로 여기서는 상한만 둔다.
+    expect(route.transferCount, lessThanOrEqualTo(3));
     // 우회 경로(사당 경유)는 1시간을 넘었다.
     expect(route.totalTimeSeconds, lessThan(2400));
   });
@@ -266,8 +278,8 @@ void main() {
     );
     expect(graph.getNodeIdsForStation('금정').toSet(),
         containsAll({'${_geumjeong1}_1', '${_geumjeong4}_4'}));
-    // 급행 정차역이므로 가상 급행 노드도 생성돼야 한다.
-    expect(graph.containsNode('${_geumjeong1}_1E'), isTrue);
+    // 금정은 경부선 급행 통과역이라 가상 급행 노드는 만들어지지 않는다.
+    expect(graph.containsNode('${_geumjeong1}_1E'), isFalse);
   });
 
   test('1호선 금정은 역별 시간표가 없어 배차간격 폴백으로 계산된다 (알려진 공백)', () async {
@@ -288,24 +300,33 @@ void main() {
         reason: '금정 시간표가 채워졌다면 이 테스트를 삭제하라');
   });
 
-  test('급행 정차역 금정이 경부선 급행 skip edge 에 반영되어 있다', () async {
-    // getTrainSch 실측: etrnYn=Y 전 편성이 금정에 정차(dwell 30s), 명학·군포는 통과.
+  test('금정은 경부선 급행 통과역이라 skip edge 가 함께 건너뛴다', () async {
+    // 급행 정차 판별의 유일한 유효 신호는 "통과역엔 레코드 자체가 없다" 다
+    // (커밋 86b313e). 실제 급행 3편성 K1902·K1904(상행)·K1945(하행) 기준으로
+    // `data/timetables/1_금정_{상행,하행}.json` 에는 이 편성 레코드가 하나도
+    // 없다 — 명학·당정·구로와 같은 통과역이다. 대조로 군포·안양·의왕·금천구청은
+    // 세 편성 모두 레코드를 갖는다.
+    //
+    // ⚠ `trainArvlTm` 채움 여부는 급행 지표가 **아니다**. 금정은 etrnYn=Y 268편
+    // 전부 채워져 있어 정차역처럼 보이지만, 같은 지표로 정차역 세마·진위가
+    // 0.4% 이고 통과역 명학·당정도 0.4% 다.
     final edges = await StationRepositoryImpl(localDataSource: LocalDataSource())
         .getExpressSkipEdges();
     final line1 = edges.where((e) => e.lineId == '1').toList();
 
+    // 금정은 급행 정차역이 아니므로 skip edge 의 끝점이 될 수 없다.
     expect(
-      line1.where((e) => e.fromStationId == '170' && e.toStationId == '172'),
+      line1.where((e) =>
+          e.fromStationId == _geumjeong1 || e.toStationId == _geumjeong1),
       isEmpty,
-      reason: '안양↔군포 직통 급행 edge 는 금정 정차를 무시한다',
+      reason: '금정은 급행 정차역이 아니다',
     );
 
-    final toGeumjeong = line1.singleWhere(
-        (e) => e.fromStationId == '170' && e.toStationId == _geumjeong1);
-    expect(toGeumjeong.skippedStationIds, ['171'], reason: '명학은 급행 통과');
-
-    final fromGeumjeong = line1.singleWhere(
-        (e) => e.fromStationId == _geumjeong1 && e.toStationId == '172');
-    expect(fromGeumjeong.skippedStationIds, isEmpty);
+    // 안양(170) → 군포(172) 급행이 명학과 금정을 함께 건너뛴다. 금정을
+    // `skippedStationIds` 에 넣지 않으면 지도 급행 하이라이트가 끊긴다
+    // (`subway_map_viewer.dart` 의 `_expressSkippedIndex`).
+    final anyangToGunpo = line1.singleWhere(
+        (e) => e.fromStationId == '170' && e.toStationId == '172');
+    expect(anyangToGunpo.skippedStationIds, ['171', _geumjeong1]);
   });
 }

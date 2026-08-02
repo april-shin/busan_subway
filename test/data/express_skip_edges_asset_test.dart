@@ -1,0 +1,213 @@
+// `assets/json/express_skip_edges.json` 산출물 드리프트 회귀 가드.
+//
+// 배경: 이 파일은 `tool/extract_express_skip_edges.py` 의 산출물인데, 과거
+// 생성기 출력과 어긋난 채로 커밋돼 있었다(1호선 오산→평택 `861`, 재생성하면
+// `798`). `861` 은 connections.json 의 해당 구간 완행 시간이 수기 갱신되기 전
+// 값에 0.7 을 곱한 산출물로, 아무도 알아채지 못한 채 남아 재생성 불가 상태를
+// 만들었다. 정답은 생성기의 `_CURATED_MANUAL_SECONDS` 로 옮겼지만, 그것만으로는
+// **반대 방향(산출물을 다시 손으로 패치)** 을 막지 못한다. 이 테스트가 그 방어선이다.
+//
+// 잡는 것:
+//   1) 실측 고정값이 붙은 1호선 경부선 급행 edge 의 값 자체 (수기 패치 감지)
+//   2) 정차 패턴 — 급행이 실제로 통과하는 역만 skippedStationIds 에 들어가는지
+//   3) 물리 불변식 — 급행 소요시간이 같은 구간 완행 합을 넘지 않는지
+//
+// 값의 근거는 `tool/extract_express_skip_edges.py` 의 `_CURATED_MANUAL_SECONDS`
+// 주석 참조 (getTrainSch 캐시의 급행 편성 K1902·K1904·K1945 실측).
+//
+// ⚠ pin 범위는 **경부선 24개 edge 뿐**이다. 나머지 경인선 10개(영등포→구로,
+// 구로→부천, 부천→송내, 송내→부평, 부평→백운, 백운→동암, 동암→간석,
+// 간석→주안, 주안→제물포, 제물포→동인천)는 실측이 아니라 `0.7 × 완행 합`
+// 근사값이라 일부러 고정하지 않는다 — connections.json 의 완행 시간이 정상
+// 갱신될 때 함께 따라가야 하기 때문이다. 경인선은 이 캐시로 정차 패턴 검증이
+// 불가하다(전 편성이 전 역 레코드 보유). 물리 불변식 검사만 적용된다.
+// 급행 데이터를 의도적으로 바꿀 때는 생성기를 고쳐 재생성한 뒤 이 표도 갱신할 것 —
+// 이 파일만 고치면 다음 재생성에 되돌아간다.
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:seoul_subway/data/local/local_data_source.dart';
+import 'package:seoul_subway/domain/entities/connection.dart';
+import 'package:seoul_subway/domain/entities/express_skip_edge.dart';
+
+/// 1호선 경부선 급행의 실측 고정 구간 — `from → to : seconds`.
+///
+/// 수원→세류(210)·평택→성환(420)은 실측 중앙값(240·450)이 완행 합을 넘어
+/// 생성기의 "급행은 완행보다 느릴 수 없다" 상한에 걸린 결과값이다.
+const _gyeongbuExpress = <(String, String, int)>[
+  ('134', '136', 270), // 서울역→용산 (남영 통과)
+  ('136', '137', 150), // 용산→노량진
+  ('137', '140', 240), // 노량진→영등포 (대방·신길 통과)
+  ('140', '166', 540), // 영등포→금천구청 (신도림·구로 통과)
+  ('166', '170', 360), // 금천구청→안양 (독산·관악·석수 통과)
+  ('170', '172', 360), // 안양→군포 (명학 통과)
+  ('172', '174', 240), // 군포→의왕 (당정 통과)
+  ('174', '175', 210), // 의왕→성균관대
+  ('175', '176', 180), // 성균관대→화서
+  ('176', '177', 120), // 화서→수원
+  ('177', '178', 210), // 수원→세류 (완행 상한 적용)
+  ('178', '179', 210), // 세류→병점
+  ('179', '181', 180), // 병점→세마
+  ('181', '182', 150), // 세마→오산대
+  ('182', '183', 150), // 오산대→오산
+  ('183', '184', 210), // 오산→진위
+  ('184', '185', 150), // 진위→송탄
+  ('185', '186', 120), // 송탄→서정리
+  ('186', '187', 210), // 서정리→평택지제
+  ('187', '188', 210), // 평택지제→평택
+  ('188', '189', 420), // 평택→성환 (완행 상한 적용)
+  ('189', '190', 240), // 성환→직산
+  ('190', '191', 210), // 직산→두정
+  ('191', '192', 240), // 두정→천안
+];
+
+/// 경부선 급행이 실제로 통과하는 역 (getTrainSch 실측 — 이 11개가 전부다).
+const _gyeongbuSkipped = <String>{
+  '135', // 남영
+  '138', // 대방
+  '139', // 신길
+  '141', // 신도림
+  '142', // 구로
+  '167', // 독산
+  '168', // 관악
+  '169', // 석수
+  '171', // 명학
+  // 금정 — 1호선 노드가 신설되면서 통과역 목록에 합류했다(같은 실측 기준:
+  // 급행 3편성 K1902·K1904·K1945 레코드가 `data/timetables/1_금정_*.json` 에
+  // 하나도 없다). 이 매핑을 만든 시점엔 1호선 금정 레코드가 없어 빠져 있었다.
+  '1715', // 금정
+  '173', // 당정
+};
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late List<ExpressSkipEdge> line1Edges;
+  late Map<String, Connection> line1Local;
+
+  setUpAll(() async {
+    final source = LocalDataSource();
+    line1Edges = (await source.loadExpressSkipEdges())
+        .where((e) => e.lineId == '1')
+        .toList();
+
+    // 1호선 완행 connection — 양방향 조회용 (`from|to` 키).
+    final raw = await rootBundle.loadString('assets/json/connections.json');
+    line1Local = {};
+    for (final json in jsonDecode(raw) as List<dynamic>) {
+      final c = Connection.fromJson(json as Map<String, dynamic>);
+      if (c.lineId != '1' || c.isTransfer) continue;
+      line1Local['${c.fromStationId}|${c.toStationId}'] = c;
+      line1Local['${c.toStationId}|${c.fromStationId}'] = c;
+    }
+  });
+
+  ExpressSkipEdge? find(String from, String to) {
+    for (final e in line1Edges) {
+      if (e.fromStationId == from && e.toStationId == to) return e;
+      if (e.fromStationId == to && e.toStationId == from) return e;
+    }
+    return null;
+  }
+
+  group('express_skip_edges.json — 1호선 경부선 급행 실측값 고정', () {
+    for (final (from, to, seconds) in _gyeongbuExpress) {
+      test('$from → $to 는 $seconds초', () {
+        final edge = find(from, to);
+        expect(
+          edge,
+          isNotNull,
+          reason: '$from→$to 급행 edge 가 사라졌다. '
+              'tool/manual_express_stops.json 의 경부선 stops 를 확인할 것.',
+        );
+        expect(
+          edge!.seconds,
+          seconds,
+          reason: '실측 고정값과 다르다. assets/json 을 손으로 고쳤다면 되돌리고, '
+              'tool/extract_express_skip_edges.py 의 _CURATED_MANUAL_SECONDS 를 '
+              '고친 뒤 재생성할 것.',
+        );
+      });
+    }
+
+    test('오산→평택 직결 edge 는 존재하지 않는다 (급행도 4개 역 모두 정차)', () {
+      // 과거 `861`(그리고 재생성 시 `798`) 이 붙어 있던 허구의 skip edge.
+      // getTrainSch 실측상 급행 3편성 모두 진위·송탄·서정리·평택지제에 정차한다.
+      expect(find('183', '188'), isNull);
+    });
+  });
+
+  group('express_skip_edges.json — 정차 패턴·물리 불변식', () {
+    test('경부선 급행 통과역은 실측 10개역뿐이다', () {
+      final skipped = <String>{};
+      for (final (from, to, _) in _gyeongbuExpress) {
+        final edge = find(from, to);
+        expect(edge, isNotNull, reason: '$from→$to 급행 edge 가 없다');
+        skipped.addAll(edge!.skippedStationIds);
+      }
+      expect(skipped, _gyeongbuSkipped);
+    });
+
+    test('군포·금천구청은 급행 정차역이다 (통과역으로 분류되지 않는다)', () {
+      // 군포: `trainArvlTm` 채움률 4.6% 를 근거로 통과역으로 오인됐던 역.
+      // 금천구청: 종전 매핑에서 통과역으로 잘못 분류돼 있던 역.
+      for (final edge in line1Edges) {
+        final where = '${edge.fromStationId}→${edge.toStationId}';
+        expect(
+          edge.skippedStationIds,
+          isNot(contains('172')),
+          reason: '$where 가 군포(172)를 통과역으로 분류했다',
+        );
+        expect(
+          edge.skippedStationIds,
+          isNot(contains('166')),
+          reason: '$where 가 금천구청(166)을 통과역으로 분류했다',
+        );
+      }
+    });
+
+    test('1호선 급행의 유일 소스는 skip edges — connections 에 급행 시간이 없다', () {
+      // 과거 `connections.json` 의 1호선 edge 93개에 `expressTimeSeconds` 가
+      // 붙어 있었다. 이 값은 `etrnYn='Y'` 중앙값인데 1호선에서 그 플래그는
+      // 급행 지표가 아니라(경부 Y 편성 50개 중 47개가 사실상 완행, 경인선은
+      // 전부) 68개가 급행 미운행 구간에 붙고 36개는 완행보다 빠르다고
+      // 표시하는 상태였다. 급행/완행 병립 모델을 없애 드리프트 발생원을
+      // 제거했다 — 되살아나면 `tool/compute_travel_times.dart` 의
+      // `_expressUnreliableLines` 가 풀린 것이다.
+      final withExpress = line1Local.values
+          .where((c) => c.expressTimeSeconds != null)
+          .map((c) => '${c.fromStationId}→${c.toStationId}')
+          .toSet();
+      expect(withExpress, isEmpty);
+    });
+
+    test('모든 1호선 급행 edge 는 같은 구간 완행 합을 넘지 않는다', () {
+      for (final edge in line1Edges) {
+        final chain = [
+          edge.fromStationId,
+          ...edge.skippedStationIds,
+          edge.toStationId,
+        ];
+        var localSum = 0;
+        for (var i = 0; i < chain.length - 1; i++) {
+          final c = line1Local['${chain[i]}|${chain[i + 1]}'];
+          expect(
+            c,
+            isNotNull,
+            reason: 'skippedStationIds 가 완행 경로와 어긋난다: '
+                '${edge.fromStationId}→${edge.toStationId} '
+                '(${chain[i]}→${chain[i + 1]} 연결 없음)',
+          );
+          localSum += c!.travelTimeSeconds;
+        }
+        expect(
+          edge.seconds,
+          lessThanOrEqualTo(localSum),
+          reason: '급행이 완행보다 느리다: '
+              '${edge.fromStationId}→${edge.toStationId}',
+        );
+      }
+    });
+  });
+}

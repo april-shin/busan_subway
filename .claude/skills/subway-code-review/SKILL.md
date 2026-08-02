@@ -10,7 +10,7 @@ description: "서울 지하철 앱 코드의 품질, 아키텍처 준수, 불변
 ## 리뷰 체크리스트
 
 ### ⛔ 실시간 열차 애니메이션 4원칙 (최우선, 해당 파일 변경 시)
-- [ ] `tool/build_map_html.dart` / `live_train_provider.dart` 변경 시 CLAUDE.md "실시간 열차 애니메이션 4원칙" 위반 여부 확인: 단조 감소 카운트다운, 매 frame 역산 위치(전방 보간 금지), 현재역 기준 3-way 클램프, refresh 시 catch-up 보간(순간이동 금지)
+- [ ] `tool/build_map_html.dart` / `live_train_provider.dart` 변경 시 CLAUDE.md "실시간 열차 애니메이션 4원칙" 위반 여부 확인: 위치 단조 전진(뒤로 가는 target 폐기 — `minDistToEnd`; 숫자 clamp 재도입 금지), 매 frame 역산 위치(전방 보간 금지), 현재역 기준 3-way 클램프, refresh 시 catch-up 보간(순간이동 금지)
 - [ ] 위반은 무조건 CRITICAL. 원칙 자체 변경은 사용자 승인 없이는 반려
 
 ### 아키텍처 준수

@@ -36,9 +36,11 @@
 //     예) 9호선 급행은 김포공항↔마곡나루 직통(공항시장·신방화 스킵). 따라서
 //         김포공항↔공항시장 같은 인접 쌍에는 급행 trainno가 없음.
 //   - 결과적으로 9호선은 expressTimeSeconds가 거의 수집되지 않는다(1건 수준).
-//     1호선·경춘선·수인분당선은 인접 쌍 매칭이 잘 되어 정상 수집됨.
+//     경춘선·수인분당선은 인접 쌍 매칭이 잘 되어 정상 수집됨.
 //   - 후속 개선 아이디어: graph에 "skip-edge"를 추가해 급행 정차역 시퀀스를
 //     별도로 모델링하거나, 공식 시간표 PDF에서 수동 시딩.
+//     → `tool/extract_express_skip_edges.py` + `assets/json/express_skip_edges.json`
+//       으로 실현됨. 1호선은 그쪽이 유일 소스다(아래 참조).
 //
 // 사용법:
 //   dart run tool/compute_travel_times.dart [--line=1] [--dry-run]
@@ -46,6 +48,26 @@
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
+
+/// `expressTimeSeconds` 를 수집하지 않을 노선 — `etrnYn` 이 급행 지표가 아닌 노선.
+///
+/// 1호선: data.go.kr 시간표 API 가 `etrnYn='Y'` 를 실제 급행이 아닌 열차에도
+/// 광범위하게 붙인다. getTrainSch 캐시 실측상 경부 corridor 의 `Y` 편성 약 50개
+/// 중 47개가 전 역에 레코드를 갖는 사실상 완행이고, 경인선은 194편 **전부**가
+/// 그렇다. 그래서 이 도구가 뽑은 1호선 `expressTimeSeconds` 93개는 "급행 시간"이
+/// 아니라 완행 시간에 잡음이 섞인 값이었다:
+///   - 68개가 급행이 아예 운행하지 않는 구간(경원선·경인선·인천/서동탄 지선·
+///     천안 이남)에 붙어 있었고, 그중 36개는 완행보다 빠르다고 표시됐다
+///     (녹양→가능 60s vs 완행 120s 등 물리적으로 불가능한 값).
+///   - 급행이 실제로 다니는 인접 정차쌍 25개 중에서도 14개가 실측과 어긋났다.
+///
+/// 1호선 급행은 `assets/json/express_skip_edges.json`(가상 노선 `1E`) 이 정확히
+/// 모델링하므로 이 필드는 불필요할 뿐 아니라, 두 모델을 계속 동기화해야 하는
+/// 드리프트 발생원이었다. 여기서 수집을 막아 재실행해도 되살아나지 않게 한다.
+///
+/// 판별 근거와 실측 급행 편성(K1902·K1904·K1945)은
+/// `tool/extract_express_skip_edges.py` 의 `_CURATED_MANUAL_SECONDS` 주석 참조.
+const _expressUnreliableLines = {'1'};
 
 void main(List<String> args) async {
   String? onlyLine;
@@ -95,6 +117,12 @@ void main(List<String> args) async {
     print('━━━ 노선 $lid: ${lineConns.length} connections ━━━');
 
     for (final c in lineConns) {
+      // etrnYn 을 믿을 수 없는 노선은 어떤 경로로 빠져나가도 급행 필드를 남기지
+      // 않는다. 아래 조기 continue 들보다 앞에 두어야 stale 값이 잔존하지 않는다.
+      if (_expressUnreliableLines.contains(lid)) {
+        c.remove('expressTimeSeconds');
+      }
+
       final fromId = c['fromStationId'] as String;
       final toId = c['toStationId'] as String;
       final fromName = idToName[fromId];
@@ -148,8 +176,12 @@ void main(List<String> args) async {
           // 0 이하는 동일 시각(이상) 또는 파싱 오류로 간주. 600s 이상은 종착/회차 케이스.
           if (gap <= 0 || gap >= 600) continue;
           final etrn = (m['etrnYn']?.toString() ?? '').trim().toUpperCase();
-          if (etrn == 'Y') {
+          if (etrn == 'Y' && !_expressUnreliableLines.contains(lid)) {
             expressGaps.add(gap);
+          } else if (etrn == 'Y') {
+            // etrnYn 을 믿을 수 없는 노선 — 완행/급행 어느 쪽으로도 집계하지
+            // 않는다. 완행에 섞으면 실제 완행 중앙값이 오염된다.
+            continue;
           } else {
             // 'N' 또는 빈 값 → 완행
             localGaps.add(gap);

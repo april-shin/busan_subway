@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 /// 서울 열린데이터 실시간 도착정보 API(`realtimeStationArrival`) 역명 치환 맵.
 ///
 /// 일부 역은 API가 **부역명(병기역명)이 포함되거나 개명 전인 정식 등록명**으로만
@@ -30,11 +32,18 @@
 ///   3. 정식명을 모르면 `realtimePosition`(노선별 열차 위치) API의 `statnNm`에서 확인.
 ///   4. **추가 전 확인(필수):** (a) 표시명이 `stations.json`에 실존하는지, (b) 같은
 ///      이름의 **타 노선 별개 역**(동명이역)이 없는지, (c) API 등록명(값)이 다른 역의
-///      표시명과 충돌하지 않는지.
-///      → (a)·(c) 및 값 유일성·이중치환 방지는 `station_api_name_overrides_test.dart`가
+///      표시명과 충돌하지 않는지, (d) API 등록명(값)이 **다른 역 표시명의 부분 문자열**은
+///      아닌지 — 맞다면 [resolveDisplayInText]가 자유텍스트를 오염시키므로
+///      ("서울" ⊂ "서울대입구") [_boundedTextReplacementSuffixes]에 경계 규칙을
+///      등록할 것(뒤따르는 문맥이 서로소인지 실측 필요). 서로소가 아니면 치환 포기.
+///      → (a)·(c)·(d) 및 값 유일성·이중치환 방지는 `station_api_name_overrides_test.dart`가
 ///      자동 검증한다(추가 후 테스트가 깨지면 위반 의심). **(b) 동명이역 부재는 자동
 ///      검증하지 않으므로 수동 확인이 필수** — 이름 기반(노선 무관) 치환이라 동명이역이
 ///      있으면 엉뚱한 역 도착정보를 보일 수 있다.
+///   5. 한 역의 등록명이 **노선별로 다를 수 있다**(서울역·올림픽공원). 이 맵은 역명당
+///      하나만 고를 수 있으므로, 이 경우 위 맵에는 주 질의명을 넣고
+///      [arrivalApiSplitRegistrationNames] 에 등록명 전체를 등록해 병합 조회시킨다.
+///      "한 노선이 나오니 등록명은 맞다"고 단정하지 말 것 — 환승역은 노선별로 확인.
 ///
 /// ## 조사 이력 / 미해결
 /// 최초 조사: 2026-07-25. 도착정보 API가 실제 제공하는 전 노선을 전수 스윕해 확인.
@@ -58,6 +67,42 @@
 ///   직접 조회 시 정상 응답(열차 4대). 위 맵에 추가. `응암순환(상선)`은 방면·메시지 텍스트에도
 ///   섞여 오므로 [resolveDisplayInText]로 표시 시 `응암`으로 정리. (realtimePosition 은 별도로
 ///   `응암(하선-종착)`을 쓰며 라이브맵은 `_stripStationAlias`로 복원.)
+/// - **해결(2026-07-31):** `서울역` → API 등록명 `서울`. **한 역의 API 등록명이 노선별로
+///   갈리는 첫 사례** — 1호선(`1001000133`)·4호선(`1004000426`)·경의중앙(`1063080313`)·
+///   공항철도(`1065006501`)는 `서울`로, GTX-A(`1032000351`)만 `서울역`으로 등록돼 있다.
+///   표시명 그대로 질의하면 GTX-A 3건만 잡히고 나머지 4개 노선이 통째로 누락된다
+///   (실측: `서울` 20건 = 1호선 7·4호선 4·공항철도 5·경의중앙 4 / `서울역` 3건 = GTX-A).
+///   * **복수 질의명으로 해결(2026-07-31):** 처음에는 이 맵이 역명 단위(노선 무관)라
+///     질의명을 하나(`서울`)만 골랐고 GTX-A 도착정보가 반대로 빠졌다. 이후
+///     [arrivalApiSplitRegistrationNames] + `SeoulApiDataSource` 병합 조회를 도입해
+///     `서울`·`서울역` 두 이름으로 조회하고 결과를 합치므로 **5개 노선이 모두 나온다.**
+///   * **인바운드:** 역맵([_displayNameByApiStationName])이 이 맵에서 자동 생성되므로
+///     응답의 `statnNm`·`arvlMsg3`(="서울")는 표시명 `서울역`으로 복원된다 — 별도 작업 불필요.
+///   * **자유텍스트는 경계 조건부 치환:** `서울`은 `서울대입구`·`서울숲`·`서울대벤처타운`·
+///     `서울지방병무청`의 접두사라 [resolveDisplayInText]가 무조건 부분 치환하면
+///     "서울대입구방면" → "서울역대입구방면"으로 오염된다. 값이 **다른 역 표시명의 부분
+///     문자열**인 최초 사례. 처음에는 자유텍스트에서 통째로 뺐다가, 2026-08-01 실측으로
+///     두 문맥이 서로소임을 확인해 [_boundedTextReplacementSuffixes] 경계 규칙으로
+///     바꿨다 — API 가 역 `서울`을 가리킬 때만 뒤에 공백·문자열끝·`행`·`방면`이 오고,
+///     다른 역 이름에서는 `대`·`숲`·`지`·`역`이 온다. 덕분에 "서울 진입"은
+///     "서울역 진입"으로 살리면서 "서울대입구방면"은 건드리지 않는다.
+/// - **해결(2026-07-31):** `올림픽공원` — 서울역과 같은 노선별 등록명 분리 사례. 5호선은
+///   `올림픽공원(한국체대)`(부역명 병기), 9호선은 `올림픽공원`(본역명)으로 등록돼 있어
+///   표시명 그대로 질의하면 **9호선 4건만 잡히고 5호선이 통째로 누락**됐다(제보 없이
+///   아래 전수 조사로 발견). 치환 맵 + [arrivalApiSplitRegistrationNames] 양쪽에 등록.
+/// - **전수 조사(2026-07-31):** 일괄 조회 3,176행으로 `statnNm → subwayId` 집합을 만들고
+///   `stations.json` 653개 표시명 각각에 대해 "질의명 하나로 자기 노선을 다 얻는지"를
+///   대조했다. **노선별 등록명이 갈린 역은 서울역·올림픽공원 2건이 전부.** 그 외 누락
+///   (광명·서동탄·별내별가람·오남·진접·운천·임진강)은 유사 등록명이 없어 조회 시점에
+///   열차가 없던 것이고, 천호는 아래 API 미제공 건이다.
+/// - **조사 팁:** 전체역 일괄 조회 `realtimeStationArrival/{start}/{end}/ALL`(페이지당 최대
+///   1000행)은 역명 질의를 우회하므로, 등록명을 모르는 역의 실제 표기를 찾을 때 유용하다.
+///   노선 분리 사례를 찾을 때는 "누락 노선이 **이름이 유사한 다른 등록명** 아래 있는가"로
+///   걸러야 한다 — 필터 없이 보면 같은 노선의 전 역이 후보로 잡혀 쓸모없다.
+/// - **보류(치환 불가):** 5호선 `천호`(`1005000547`)는 일괄 조회 전체 3129행에도 없어
+///   **API 측 데이터 미제공**으로 확정. 어떤 질의명으로도 조회되지 않아 치환으로 해결 불가
+///   (서울시 문의 진행 중). 아래 `천호` 항목은 5·8호선 공용으로 두되, 5호선분이 API 에
+///   없어 실질적으로 8호선 도착정보만 조회된다(`천호(풍납토성)` 응답 = 8호선 4건).
 const Map<String, String> arrivalApiStationNameOverrides = {
   // 1호선
   '평택지제': '지제', // API는 개명 전 역명 "지제"로만 응답(부역명 아님·축약형)
@@ -68,6 +113,9 @@ const Map<String, String> arrivalApiStationNameOverrides = {
   '신정': '신정(은행정)',
   '아차산': '아차산(어린이대공원후문)',
   '오목교': '오목교(목동운동장앞)',
+  // 5·9호선 공용이나 등록명이 노선별로 갈린다 — 5호선은 부역명 병기, 9호선은 본역명.
+  //   두 이름 모두 조회해야 해서 arrivalApiSplitRegistrationNames 에도 등록돼 있다.
+  '올림픽공원': '올림픽공원(한국체대)',
   // 6호선
   '대흥': '대흥(서강대앞)',
   '상월곡': '상월곡(한국과학기술연구원)',
@@ -94,9 +142,15 @@ const Map<String, String> arrivalApiStationNameOverrides = {
   // 8호선
   '남한산성입구': '남한산성입구(성남법원,검찰청)',
   '몽촌토성': '몽촌토성(평화의문)',
+  // 1·4·경의중앙·공항철도 공용(동일 환승역) — 노선별로 등록명이 갈리는 첫 사례.
+  //   위 4개 노선은 "서울", GTX-A 만 "서울역" 으로 등록돼 있다. 여기 값은 인바운드
+  //   복원("서울"→"서울역")용이고, 조회는 arrivalApiSplitRegistrationNames 가 두 이름
+  //   모두 태워 5개 노선을 전부 가져온다.
+  '서울역': '서울',
   // 5·7호선 공용(동일 환승역)
   '군자': '군자(능동)',
-  // 5·8호선 공용(동일 환승역)
+  // 5·8호선 공용(동일 환승역) — 단, 5호선분은 API 미제공이라 실제로는 8호선만 조회된다
+  //   (위 "조사 이력" 보류 항목 참조).
   '천호': '천호(풍납토성)',
   // 우이신설선 — 가운뎃점(·)+공백없음 → 마침표+공백(축약/치환형)
   '4·19민주묘지': '4.19 민주묘지',
@@ -121,6 +175,44 @@ final Map<String, String> _displayNameByApiStationName = {
 String resolveArrivalApiStationName(String displayName) =>
     arrivalApiStationNameOverrides[displayName] ?? displayName;
 
+/// 한 역의 API 등록명이 **노선별로 갈린 역**의 등록명 전체 목록.
+///
+/// 도착정보 API 는 역명 하나로만 조회되는데, 아래 역들은 같은 물리 역인데도 노선에 따라
+/// 서로 다른 이름으로 등록돼 있어 **한 번 조회로는 일부 노선이 통째로 누락된다.**
+/// `SeoulApiDataSource` 가 이 목록의 이름으로 각각 조회한 뒤 결과를 병합한다.
+///
+/// - 질의들은 **대등하다** — 우선순위가 없고, 하나라도 성공하면 합쳐서 보여준다.
+///   다만 **첫 원소는 [resolveArrivalApiStationName] 결과와 일치해야 한다**(테스트 강제).
+///   이 맵과 위 치환 맵이 따로 놀지 않게 묶어 두는 드리프트 가드다.
+/// - 목록의 모든 이름은 인바운드([resolveDisplayStationName])로 표시명에 되돌아와야 한다.
+///   위 치환 맵에 등록된 이름은 역맵으로, 표시명과 같은 이름은 항등으로 성립한다(테스트 강제).
+/// - **구조적 제약:** 인바운드 역맵이 위 치환 맵에서만 생성되므로, 목록에서 표시명과 다른
+///   이름은 **반드시 치환 맵의 값**이어야 한다. 즉 "표시명과 다른 이름이 둘 이상"인 분리
+///   역은 현 구조로 표현할 수 없다(치환 맵이 역명당 값 하나이므로). 그런 역이 나오면
+///   왕복 테스트가 실패하니 조용한 드리프트는 아니고, 그때 구조를 확장하면 된다.
+/// - **비용:** 등록한 역은 새로고침마다 API 를 목록 수만큼 호출한다(서울 열린데이터 일일
+///   한도 1,000건/일). 실제로 노선이 갈린 역만 등록할 것.
+///
+/// 2026-07-31 일괄 조회(`.../ALL`, 3,176행) × `stations.json` 전수 대조로 확정한 2건이
+/// 전부다. 조사 스크립트 요지: 역명별 `statnNm→subwayId` 집합을 만들고, 각 표시명의
+/// 질의 결과에서 빠진 노선이 **이름이 유사한 다른 등록명** 아래 있는지 검사.
+const Map<String, List<String>> arrivalApiSplitRegistrationNames = {
+  // 1·4·경의중앙·공항철도 = "서울" (실측 20건) / GTX-A = "서울역" (3건).
+  '서울역': ['서울', '서울역'],
+  // 5호선 = "올림픽공원(한국체대)" (부역명 병기) / 9호선 = "올림픽공원" (본역명).
+  //   실측 각 4건. 순서는 위 치환 맵 항목과 맞춘 것일 뿐 우선순위 의미는 없다.
+  '올림픽공원': ['올림픽공원(한국체대)', '올림픽공원'],
+};
+
+/// 도착정보 API 질의에 사용할 등록명 **전체**를 반환한다(아웃바운드).
+///
+/// 등록명이 노선별로 갈린 역([arrivalApiSplitRegistrationNames])이면 목록 전체를,
+/// 아니면 [resolveArrivalApiStationName] 결과 한 개짜리 목록을 돌려준다.
+/// 첫 원소는 항상 주 질의명이다.
+List<String> resolveArrivalApiStationNames(String displayName) =>
+    arrivalApiSplitRegistrationNames[displayName] ??
+    <String>[resolveArrivalApiStationName(displayName)];
+
 /// API **응답**의 역명(`arvlMsg3` 등)을 앱 표시용 역명으로 되돌린다(인바운드).
 ///
 /// API 등록명이면 표시명으로 치환하고, 아니면 입력을 그대로 반환한다.
@@ -136,14 +228,49 @@ const Map<String, String> _inboundOnlyTextReplacements = {
   '응암(하선-종착)': '응암',
 };
 
-/// 자유텍스트에서 치환할 API 표기(양방향 맵 값 + 인바운드 전용)를 긴 것부터 정렬 —
-/// 부분 문자열 겹침 방지.
-final List<String> _apiNamesByLengthDesc = <String>[
+/// 자유텍스트 치환([resolveDisplayInText])을 **경계가 맞을 때만** 수행할 API 등록명과,
+/// 그 이름이 실제로 그 역을 가리킬 때 **뒤따르는 문맥**(정규식 조각).
+///
+/// 여기 있는 이름은 **다른 역 표시명의 부분 문자열**이라 무조건 치환하면 엉뚱한 역명을
+/// 만들어낸다. 그렇다고 통째로 빼면 방면 라벨·도착 메시지에 API 표기가 그대로 남는다.
+/// 두 문맥이 서로소임을 실측으로 확인한 경우, 뒤따르는 문자로 구분해 안전하게 치환한다.
+const Map<String, String> _boundedTextReplacementSuffixes = {
+  // '서울' ⊂ 서울대입구 · 서울숲 · 서울대벤처타운 · 서울지방병무청 · 관악산(서울대).
+  //   무조건 치환하면 "서울대입구방면" → "서울역대입구방면" 으로 오염된다.
+  //
+  //   2026-08-01 실측 — 두 문맥이 서로소다:
+  //     API 가 역 "서울"을 가리킬 때 뒤: 공백("서울 진입")·문자열 끝(statnNm·bstatnNm·
+  //       arvlMsg3)·"행"("서울행")·"방면"("서울방면")
+  //     다른 역 이름에서 "서울" 뒤: 대 · 숲 · 지 · 역
+  //   `stations.json` 653개 역명 중 "서울" 뒤에 공백이 오는 이름은 없다.
+  '서울': r'[ 행]|방면|$',
+};
+
+/// [_boundedTextReplacementSuffixes]를 "이름 + 뒤따르는 문맥" 전방탐색 패턴으로 컴파일.
+final Map<String, RegExp> _boundedTextPatterns = {
+  for (final e in _boundedTextReplacementSuffixes.entries)
+    e.key: RegExp('${RegExp.escape(e.key)}(?=${e.value})'),
+};
+
+/// 자유텍스트 치환 **후보** API 표기 전체 — 양방향 맵 값 + 인바운드 전용.
+///
+/// 테스트가 "다른 역 표시명의 부분 문자열인 후보가 경계 규칙 없이 무조건 치환되고
+/// 있지 않은지"를 전수 검사하려면 두 소스를 모두 봐야 하므로 공개한다.
+@visibleForTesting
+final List<String> textReplacementCandidates = <String>[
   ..._displayNameByApiStationName.keys,
   ..._inboundOnlyTextReplacements.keys,
-]..sort((a, b) => b.length.compareTo(a.length));
+];
 
-/// 자유텍스트 치환용 통합 역맵(API 표기 → 표시명).
+/// 무조건 치환할 API 표기를 긴 것부터 정렬 — 부분 문자열 겹침 방지.
+/// 경계 규칙이 붙은 이름([_boundedTextReplacementSuffixes])은 여기서 빼고 따로 처리한다.
+final List<String> _apiNamesByLengthDesc = textReplacementCandidates
+    .where((n) => !_boundedTextReplacementSuffixes.containsKey(n))
+    .toList()
+  ..sort((a, b) => b.length.compareTo(a.length));
+
+/// 자유텍스트 치환용 통합 역맵(API 표기 → 표시명). 경계 규칙이 붙은 이름도 치환 대상이라
+/// (경계가 맞을 때) 여기 남겨 둔다.
 final Map<String, String> _textReplacements = {
   ..._displayNameByApiStationName,
   ..._inboundOnlyTextReplacements,
@@ -155,12 +282,25 @@ final Map<String, String> _textReplacements = {
 /// 예: "응암순환(상선)행 - 응암순환(상선)방면" → "응암행 - 응암방면",
 ///     "4분 후 (증산(명지대앞))" → "4분 후 (증산)".
 /// [resolveDisplayStationName]은 문자열 전체가 역명일 때만 동작하므로, 역명이
-/// 다른 텍스트에 끼어 오는 경우를 위해 별도 제공한다. 시간·역수 파싱
+/// 다른 텍스트에 끼어 오는 경우를 위해 별도 제공한다. 다른 역명의 부분 문자열인
+/// API명(예: "서울" ⊂ "서울대입구")은 [_boundedTextReplacementSuffixes]의 경계 규칙에
+/// 맞을 때만 치환해 오염을 막는다 — "서울 진입"→"서울역 진입"은 바꾸고
+/// "서울대입구방면"은 그대로 둔다.
+/// 시간·역수 파싱
 /// (`parseTimeFromMessage`/`parseStationCount`)은 역명을 사용하지 않으므로 이
 /// 정규화는 파싱 결과에 영향을 주지 않는다(표시 문자열만 정리).
 String resolveDisplayInText(String text) {
   if (text.isEmpty) return text;
   var out = text;
+
+  // 경계 조건부 치환을 먼저 — 경계 문맥은 **원본 API 텍스트** 기준으로 실측했으므로,
+  // 다른 치환이 만들어낸 문자열 위에서 판정하지 않는다.
+  _boundedTextPatterns.forEach((apiName, pattern) {
+    if (out.contains(apiName)) {
+      out = out.replaceAll(pattern, _textReplacements[apiName]!);
+    }
+  });
+
   for (final apiName in _apiNamesByLengthDesc) {
     if (out.contains(apiName)) {
       out = out.replaceAll(apiName, _textReplacements[apiName]!);

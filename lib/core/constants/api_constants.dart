@@ -4,8 +4,28 @@ class ApiConstants {
   static const String subwayBaseUrl =
       'http://swopenapi.seoul.go.kr/api/subway';
 
+  /// 도착정보 1회 질의로 받아올 최대 행 수.
+  ///
+  /// 종전 20 은 4개 노선 환승역에서 실제로 절단됐다 — 2026-07-31 금요일 18:45 실측
+  /// `total`: 서울역 22, 왕십리 21, 공덕 20, 청량리 20 (그 외 주요 환승역은 4~17).
+  /// 한 질의에 5개 노선이 걸리는 역은 없으므로 관측 최대 22 에 여유를 둔 30 으로 잡았다.
+  /// 상한이라 20행 미만인 대다수 역의 응답 크기·캐시 용량에는 영향이 없다.
+  static const int arrivalRowLimit = 30;
+
   static String realtimeArrivalUrl(String apiKey, String stationName) =>
-      '$subwayBaseUrl/$apiKey/json/realtimeStationArrival/0/20/$stationName';
+      '$subwayBaseUrl/$apiKey/json/realtimeStationArrival'
+      '/0/$arrivalRowLimit/$stationName';
+
+  /// 노선별 실시간 열차 위치 API.
+  ///
+  /// 도착정보 API 가 특정 (역, 노선) 을 아예 제공하지 않는 경우의 폴백 경로다.
+  /// 예) 5호선 천호 — 등록명 `천호(풍납토성)` 로 조회하면 8호선만 응답하고,
+  /// 전체역 일괄 조회(`.../ALL`)에도 5호선 천호(`1005000547`)가 없다(2026-07-31 실측).
+  /// 이 API 는 역이 아니라 **노선** 단위로 전 열차를 돌려주므로 그 공백을 우회한다.
+  ///
+  /// 한 노선의 재차 열차는 60대 이하라 100건이면 전량을 덮는다(5호선 실측 53대).
+  static String realtimePositionUrl(String apiKey, String lineApiName) =>
+      '$subwayBaseUrl/$apiKey/json/realtimePosition/0/100/$lineApiName';
 
   // 캐시 TTL 은 refreshInterval 이하로 유지해야 한다.
   // 초과하면 refresh 때 캐시 응답만 재사용되어 실제 API 호출이 일어나지 않는다.

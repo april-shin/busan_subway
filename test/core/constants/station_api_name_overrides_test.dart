@@ -34,14 +34,72 @@ void main() {
       expect(resolveArrivalApiStationName('응암'), '응암순환(상선)');
     });
 
+    test('노선별로 등록명이 갈린 역은 주 질의명을 반환한다', () {
+      // 서울역: 1·4·경의중앙·공항철도="서울", GTX-A="서울역"
+      expect(resolveArrivalApiStationName('서울역'), '서울');
+      // 올림픽공원: 5호선="올림픽공원(한국체대)", 9호선="올림픽공원"
+      expect(resolveArrivalApiStationName('올림픽공원'), '올림픽공원(한국체대)');
+    });
+
     test('치환 대상이 아닌 역은 표시명을 그대로 반환한다', () {
       expect(resolveArrivalApiStationName('강남'), '강남');
-      expect(resolveArrivalApiStationName('서울역'), '서울역');
+      expect(resolveArrivalApiStationName('시청'), '시청');
       expect(resolveArrivalApiStationName('잠실'), '잠실');
     });
 
     test('빈 문자열은 그대로 반환한다', () {
       expect(resolveArrivalApiStationName(''), '');
+    });
+  });
+
+  group('resolveArrivalApiStationNames (복수 질의명)', () {
+    test('노선별로 갈린 역은 등록명 전체를 반환한다', () {
+      expect(resolveArrivalApiStationNames('서울역'), ['서울', '서울역']);
+      expect(
+        resolveArrivalApiStationNames('올림픽공원'),
+        ['올림픽공원(한국체대)', '올림픽공원'],
+      );
+    });
+
+    test('갈리지 않은 역은 주 질의명 한 개만 반환한다', () {
+      expect(resolveArrivalApiStationNames('강남'), ['강남']);
+      expect(resolveArrivalApiStationNames('오목교'), ['오목교(목동운동장앞)']);
+      expect(resolveArrivalApiStationNames(''), ['']);
+    });
+
+    test('첫 원소는 항상 주 질의명이다', () {
+      // 주 질의는 실패 시 예외를 던져 캐시 폴백을 태우므로, 단일 질의명 경로와
+      // 반드시 일치해야 한다.
+      for (final display in arrivalApiSplitRegistrationNames.keys) {
+        expect(
+          resolveArrivalApiStationNames(display).first,
+          resolveArrivalApiStationName(display),
+          reason: '$display 의 주 질의명이 단일 질의명과 다름',
+        );
+      }
+    });
+
+    test('갈린 등록명은 모두 인바운드로 표시명에 되돌아온다', () {
+      // 하나라도 복원되지 않으면 그 노선 열차의 stations.json 매칭이 깨져
+      // 라이브맵 좌표 조회·도착시간 추정이 실패한다.
+      arrivalApiSplitRegistrationNames.forEach((display, apiNames) {
+        for (final apiName in apiNames) {
+          expect(
+            resolveDisplayStationName(apiName),
+            display,
+            reason: '"$apiName" 이 표시명 "$display" 로 복원되지 않음',
+          );
+        }
+      });
+    });
+
+    test('갈린 등록명 목록은 2개 이상이고 중복이 없다', () {
+      arrivalApiSplitRegistrationNames.forEach((display, apiNames) {
+        expect(apiNames.length, greaterThanOrEqualTo(2),
+            reason: '$display 는 갈린 역이 아니므로 등록 불필요');
+        expect(apiNames.toSet().length, apiNames.length,
+            reason: '$display 의 등록명에 중복 있음 — 같은 질의를 두 번 보냄');
+      });
     });
   });
 
@@ -56,6 +114,9 @@ void main() {
       expect(resolveDisplayStationName('응암순환(상선)'), '응암');
       // 부역명 덧붙임형도 역맵으로 복원 가능
       expect(resolveDisplayStationName('오목교(목동운동장앞)'), '오목교');
+      // 서울역: statnNm·arvlMsg3 이 "서울"로 오므로 표시명으로 복원해야
+      // stations.json 매칭(라이브맵 좌표·도착시간 추정)이 성립한다.
+      expect(resolveDisplayStationName('서울'), '서울역');
     });
 
     test('등록되지 않은 API명은 그대로 반환한다', () {
@@ -89,6 +150,45 @@ void main() {
 
     test('인바운드 전용 표기 응암(하선-종착)도 응암으로 정리한다', () {
       expect(resolveDisplayInText('1분 후 (응암(하선-종착))'), '1분 후 (응암)');
+    });
+
+    group('"서울"은 경계가 맞을 때만 치환한다', () {
+      // "서울" 은 서울대입구·서울숲·서울대벤처타운·서울지방병무청의 접두사라 무조건
+      // 치환하면 "서울역대입구"처럼 없는 역명이 된다. 2026-08-01 실측으로 두 문맥이
+      // 서로소임을 확인해(역 "서울" 뒤엔 공백·끝·"행"·"방면", 다른 역은 대/숲/지/역)
+      // 뒤따르는 문자로 구분한다.
+      test('역 "서울"을 가리키는 문맥은 "서울역"으로 되돌린다', () {
+        // arvlMsg2 — 공백 경계
+        expect(resolveDisplayInText('서울 도착'), '서울역 도착');
+        expect(resolveDisplayInText('서울 진입'), '서울역 진입');
+        expect(resolveDisplayInText('서울 출발'), '서울역 출발');
+        // trainLineNm — "행"·"방면" 경계 (공항철도·경의중앙 실측 문자열)
+        expect(resolveDisplayInText('서울행 - 서울방면'), '서울역행 - 서울역방면');
+        expect(resolveDisplayInText('덕소행 - 서울방면'), '덕소행 - 서울역방면');
+        expect(
+          resolveDisplayInText('서울행 - 서울방면 (급행)'),
+          '서울역행 - 서울역방면 (급행)',
+        );
+        // 문자열 끝 경계
+        expect(resolveDisplayInText('서울'), '서울역');
+      });
+
+      test('"서울"로 시작하는 다른 역명은 건드리지 않는다', () {
+        expect(resolveDisplayInText('성수행 - 서울대입구방면'), '성수행 - 서울대입구방면');
+        expect(resolveDisplayInText('왕십리행 - 서울숲방면'), '왕십리행 - 서울숲방면');
+        expect(resolveDisplayInText('서울숲 도착'), '서울숲 도착');
+        expect(resolveDisplayInText('서울대벤처타운'), '서울대벤처타운');
+        expect(resolveDisplayInText('서울지방병무청 진입'), '서울지방병무청 진입');
+        // 이미 표시명인 "서울역"에 "역"이 덧붙지 않아야 한다(이중 치환 방지).
+        expect(resolveDisplayInText('서울역 도착'), '서울역 도착');
+        expect(resolveDisplayInText('서울역행 - 서울역방면'), '서울역행 - 서울역방면');
+      });
+
+      test('다른 치환이 만든 "서울대"에 연쇄 오염이 없다', () {
+        // "관악산" → "관악산(서울대)" 치환 결과 안에 "서울"이 생기는데,
+        // 뒤가 "대"라 경계에 걸리지 않아야 한다.
+        expect(resolveDisplayInText('관악산행 - 관악산방면'), '관악산(서울대)행 - 관악산(서울대)방면');
+      });
     });
 
     test('치환 대상이 없는 텍스트/빈 문자열은 그대로 둔다', () {
@@ -139,6 +239,16 @@ void main() {
             .toSet();
       });
 
+      test('갈린 역 키도 stations.json 에 실존하는 표시명이다', () {
+        for (final key in arrivalApiSplitRegistrationNames.keys) {
+          expect(
+            displayNames,
+            contains(key),
+            reason: '"$key" 가 stations.json 에 없음 — 데이터 드리프트 의심',
+          );
+        }
+      });
+
       test('모든 키는 stations.json 에 실존하는 표시명이다', () {
         for (final key in arrivalApiStationNameOverrides.keys) {
           expect(
@@ -158,6 +268,37 @@ void main() {
             isNot(contains(apiName)),
             reason: 'API 등록명 "$apiName" 이 실제 역 표시명과 충돌 — 역치환 오염 위험',
           );
+        }
+      });
+
+      test('다른 역 표시명의 부분 문자열인 API 표기는 자유텍스트를 오염시키지 않는다', () {
+        // 치환 후보가 다른 역 이름의 일부이면(예: "서울" ⊂ "서울대입구")
+        // resolveDisplayInText 가 없는 역명을 만들어낸다. 그런 후보는
+        // _boundedTextReplacementSuffixes 로 경계 규칙을 걸어야 한다.
+        //
+        // 후보는 아웃바운드 맵의 값 + 인바운드 전용 표기를 모두 포함한다
+        // (textReplacementCandidates) — 인바운드 전용 표기도 같은 치환 경로를 타므로
+        // 함께 검사하지 않으면 가드를 조용히 우회한다.
+        //
+        // 단, 치환 맵의 **키(표시명)** 는 피해자 후보에서 뺀다 — 키는 API 가 보내지
+        // 않는 이름이고("관악산(서울대)" 는 API 상 늘 "관악산"), 왕복 항등 테스트가
+        // 이미 지키고 있다. 이 전제가 깨지는 노선이 나오면 여기부터 재검토할 것.
+        for (final apiName in textReplacementCandidates) {
+          final victims = displayNames.where(
+            (n) =>
+                n != apiName &&
+                n.contains(apiName) &&
+                !arrivalApiStationNameOverrides.containsKey(n),
+          );
+          for (final victim in victims) {
+            expect(
+              resolveDisplayInText('$victim행 - $victim방면'),
+              '$victim행 - $victim방면',
+              reason:
+                  'API 표기 "$apiName" 이 다른 역 "$victim" 안에서 부분 치환됨 — '
+                  '_boundedTextReplacementSuffixes 에 경계 규칙 추가 필요',
+            );
+          }
         }
       });
     });

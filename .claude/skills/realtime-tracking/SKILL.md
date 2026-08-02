@@ -9,7 +9,7 @@ description: "서울 지하철 앱의 실시간 열차 추적, 서울 열린데�
 
 ## ⛔ 실시간 열차 애니메이션 4원칙 중 원칙 1 — 최상위 정책
 
-`live_train_provider.dart`가 넘기는 `receivedAtEpochMs`는 CLAUDE.md "실시간 열차 애니메이션 4원칙"의 **원칙 1(단조 감소 카운트다운)**을 구성하는 계약이다: `realRemaining = arrivalSeconds − (now − recptnDt)`가 API 재조회 시에도 절대 증가하면 안 되고, JS(`tool/build_map_html.dart`)의 clamp 로직과 짝을 이룬다. 이 필드를 수정하기 전 CLAUDE.md 해당 섹션을 먼저 읽고, 원칙 자체를 바꿔야 한다면 사용자 승인을 먼저 구한다.
+`live_train_provider.dart`가 넘기는 `receivedAtEpochMs`는 CLAUDE.md "실시간 열차 애니메이션 4원칙"의 **원칙 1(열차는 절대 뒤로 가지 않는다)**을 구성하는 계약이다. `realRemaining = arrivalSeconds − (now − recptnDt)` 값 자체는 API 재조회로 늘어나도 **보정하지 않는다**(옛 단조 감소 clamp 는 제거됨). 대신 이 쌍이 정확해야 JS(`tool/build_map_html.dart`)가 위치를 바르게 역산하고, 단조 전진 가드(`minDistToEnd`)가 올바른 지점에서 작동한다. 이 필드를 수정하기 전 CLAUDE.md 해당 섹션을 먼저 읽고, 원칙 자체를 바꿔야 한다면 사용자 승인을 먼저 구한다.
 
 ## API 스펙
 
@@ -116,7 +116,7 @@ computeSegmentDepartures(route, allArrivals, schedules)
 
 | 파일 | 역할 |
 |------|------|
-| `lib/features/subway_map/presentation/providers/live_train_provider.dart` | 열차 위치 프로바이더 (`receivedAtEpochMs` 계약 — 원칙 1) |
+| `lib/features/subway_map/presentation/providers/live_train_provider.dart` | 열차 위치 프로바이더 (`receivedAtEpochMs`/`trainNo` 계약 — 원칙 1) |
 | `lib/data/remote/seoul_api_data_source.dart` | API 클라이언트 |
 | `lib/data/repositories/arrival_repository_impl.dart` | API + 캐시 |
 | `lib/data/local/cache_manager.dart` | 캐시 관리 |

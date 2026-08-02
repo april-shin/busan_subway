@@ -1,6 +1,8 @@
 // ⛔ 실시간 열차 애니메이션 4원칙 — 변경 금지 (CLAUDE.md 최상위 정책)
 //   이 프로바이더는 JS 애니메이션에 전달되는 `LiveTrain` 을 생성한다. 아래 두
-//   필드의 "기준 시각" 계약은 4원칙의 원칙 1 (단조 감소 카운트다운) 구현의 핵심이다.
+//   필드의 "기준 시각" 계약은 4원칙의 원칙 1 (열차는 뒤로 가지 않는다) 구현의
+//   핵심이다. 숫자 자체는 재조회로 늘어날 수 있으나, 기준 시각이 틀리면 JS 가
+//   위치를 잘못 역산해 단조 전진 가드가 엉뚱한 지점에 열차를 붙잡아 둔다.
 //   - `arrivalSeconds`: API 원본 또는 추정값 (척도 정차 포함)
 //   - `receivedAtEpochMs`: 해당 값의 기준 시각 (API 는 recptnDt, 추정은 추정 시각)
 //   JS 가 `realRemaining = arrivalSeconds − (now − receivedAtEpochMs)/1000` 으로
@@ -69,8 +71,9 @@ class LiveTrain {
   /// JS 측은 `'급행'`이면 마커에 빨간 "급" 딱지를 그린다.
   final String trainType;
 
-  /// 탑승 구간을 완주하지 못하는 **중간 종착** 열차인지
-  /// ([RouteCoverage.earlyTerminus]). 같은 선로를 달리므로 지도에는 남기되,
+  /// 탑승 구간을 완주하지 못하는 열차인지 — 중간 종착
+  /// ([RouteCoverage.earlyTerminus]) 과 지선 분기([RouteCoverage.diverged]) 둘 다.
+  /// 화면에 그려지는 구간에서는 같은 선로를 달리므로 지도에는 남기되,
   /// JS 측이 투명도를 낮춰 "유령"처럼 그린다.
   final bool isGhost;
 
@@ -232,6 +235,42 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   );
   ref.read(_lastEnrichedArrivalsProvider.notifier).state = enrichedArrivals;
 
+  // 도착정보 API 가 이 역의 **해당 노선**을 아예 제공하지 않으면 열차위치 API 로
+  // 폴백한다. 예) 5호선 천호 — 등록명 `천호(풍납토성)` 로 조회하면 8호선만 오고
+  // 전체역 일괄 조회에도 5호선 엔트리가 없다(2026-07-31 실측). 이 경우 지도가
+  // 통째로 비어 버리므로, 노선 단위로 전 열차를 주는 위치 API 에서 대상역을
+  // 향하는 열차만 추려 쓴다. 잔여초는 추정값이다.
+  //
+  // 조건이 "도착정보 0건"이 아니라 "해당 노선 0건"인 이유: 천호처럼 다른 노선은
+  // 정상 응답하는 환승역에서는 전체 건수가 0 이 아니어서 그 조건으로는 폴백이
+  // 걸리지 않는다.
+  var arrivalsForMap = enrichedArrivals;
+  final hasLineArrival = enrichedArrivals.any(
+    (a) => subwayIdToLineId[a.subwayId] == routeFilter.lineId,
+  );
+  if (!hasLineArrival) {
+    try {
+      arrivalsForMap = await ref
+          .watch(arrivalRepositoryProvider)
+          .getTrainPositionArrivals(
+            lineId: routeFilter.lineId,
+            targetStationName: departureStationName,
+            stations: stations,
+            connections: connections,
+          );
+      if (kDebugMode && arrivalsForMap.isNotEmpty) {
+        debugPrint(
+          '위치 API 폴백: $departureStationName ${routeFilter.lineId}호선 '
+          '${arrivalsForMap.length}대',
+        );
+      }
+    } catch (e) {
+      // 폴백 실패는 치명적이지 않다 — 열차 없이 지도만 그린다.
+      if (kDebugMode) debugPrint('위치 API 폴백 실패: $e');
+      arrivalsForMap = const [];
+    }
+  }
+
   // 역명 → Station 매핑 (SVG 좌표 조회용)
   final stationsByName = <String, List<Station>>{};
   for (final s in stations) {
@@ -276,7 +315,7 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
 
   final result = <LiveTrain>[];
 
-  for (final arrival in enrichedArrivals) {
+  for (final arrival in arrivalsForMap) {
     // subwayId → lineId 변환
     final lineId = subwayIdToLineId[arrival.subwayId];
     if (lineId == null) continue;
@@ -288,17 +327,17 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
 
-    // 구간 완주 판정.
-    //  - 지선 분기(`천호 → 굽은다리` 경로의 5호선 하행 "마천행")는 하차역 쪽
-    //    선로를 아예 타지 않으므로 지도에서 제외한다.
-    //  - 중간 종착(`내방 → 장암` 경로의 7호선 상행 "도봉산행")은 실제로 같은
-    //    선로를 달리는 열차다. 숨기면 지도가 비어 보이므로 남겨두되 유령처럼
-    //    흐리게 그린다(`isGhost` → JS 가 투명도로 반영).
+    // 구간 완주 판정 — 태워주지 못하는 열차도 **지우지 않고** 유령으로 남긴다.
+    //  - 중간 종착(`내방 → 장암` 경로의 7호선 상행 "도봉산행")
+    //  - 지선 분기(`천호 → 굽은다리` 경로의 5호선 하행 "마천행")
+    // 둘 다 열차 아이콘이 그려지는 구간(현재역 → 출발역)에서는 실제로 같은
+    // 선로를 달린다 — 갈라지거나 멈추는 지점은 출발역 **이후**라 화면에 나오지
+    // 않는다. 그래서 위치는 정확하고, 다만 이 경로를 완주하지 못한다는 뜻으로
+    // 흐리게 그린다(`isGhost` → JS 가 투명도로 반영).
+    // 경로 결과의 출발 시각 계산은 이와 별개로 `full` 만 후보로 쓴다.
     var isGhost = false;
     if (branchFilterEnabled && arrival.destination.isNotEmpty) {
-      final coverage = coverageOf(arrival.destination);
-      if (coverage == RouteCoverage.diverged) continue;
-      isGhost = coverage == RouteCoverage.earlyTerminus;
+      isGhost = coverageOf(arrival.destination) != RouteCoverage.full;
     }
 
     // 현재 위치 역명 → stations.json 매칭.

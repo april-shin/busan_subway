@@ -258,8 +258,9 @@ void main() {
     });
 
     // 신분당선 등 일부 노선은 btrainNo 를 빈 문자열로 보낸다. `??` 만 쓰면
-    // 빈 문자열이 그대로 trainNo 가 되어 단조 감소 clamp 의 매칭 키가 깨지므로,
-    // 빈 문자열도 누락으로 간주해 ordkey 로 폴백해야 한다 (원칙 1 보강).
+    // 빈 문자열이 그대로 trainNo 가 되어 JS 의 열차 식별(activeTrains 키)이
+    // 깨지므로, 빈 문자열도 누락으로 간주해 ordkey 로 폴백해야 한다.
+    // (식별이 깨지면 단조 전진 기억까지 매 refresh 초기화된다 — 원칙 1)
     group('trainNo 폴백 (원칙 1 매칭 키 안정화)', () {
       test('btrainNo 비어있고 ordkey 있으면 ordkey 사용', () {
         const dto = ArrivalInfoDto(btrainNo: '', ordkey: '01077강남0');

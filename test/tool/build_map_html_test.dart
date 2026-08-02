@@ -347,11 +347,9 @@ void main() {
       final fnBody = htmlContent.substring(fnStart, fnStart + 300);
       expect(fnBody, contains('Math.max(0, (nowMs - receivedAtMs) / 1000)'));
 
-      // 카운트다운·정렬·단조감소 clamp 가 모두 이 헬퍼를 거쳐야 한다.
-      // (직접 뺄셈이 남아 있으면 그 경로만 다시 부풀어 오른다.)
+      // 카운트다운·정렬·위치 기준쌍 등 남은시간을 쓰는 모든 경로가 이 헬퍼를
+      // 거쳐야 한다. (직접 뺄셈이 남아 있으면 그 경로만 다시 부풀어 오른다.)
       expect(htmlContent, isNot(contains('(Date.now() - receivedAt) / 1000')));
-      expect(htmlContent, isNot(contains('(nowMs - newReceivedAt) / 1000')));
-      expect(htmlContent, isNot(contains('(nowMs2 - newReceivedAt2) / 1000')));
       expect(
         htmlContent,
         isNot(contains('(nowMs - existing.baseReceivedAt) / 1000')),
@@ -362,7 +360,7 @@ void main() {
       );
       expect(
         htmlContent,
-        isNot(contains('(nowMs2 - slotMem.baseReceivedAt) / 1000')),
+        isNot(contains('(_nowSetup - trainState.posBaseReceivedAt) / 1000')),
       );
     });
 
@@ -452,6 +450,142 @@ void main() {
 
       // 도착 페이드아웃은 유령의 흐린 투명도에서 시작해야 한다(곱셈).
       expect(htmlContent, contains('var opacity = (1 - eased) * base;'));
+    });
+
+    // ── 원칙 1 회귀 가드 (CLAUDE.md 최상위 정책) ────────────────────────────
+    // "열차는 절대 뒤로 가지 않는다" — 숫자(realRemaining)는 API 원본 그대로라
+    // 재조회 시 늘어날 수 있고, 보장 대상은 아이콘의 경로상 위치다.
+    //
+    // 아래는 생성 JS 의 **형태**만 지킨다. 실제 동작 검증은 Dart 미러
+    // `test/core/utils/train_forward_guard_test.dart` 가 담당한다.
+
+    test('[원칙 1] 위치 역산 입력은 표시용 숫자와 분리된 기준쌍을 쓴다', () {
+      // 표시용은 API 원본(realRemaining), 위치용은 기준쌍(posBase*).
+      // 기준쌍은 **API 원본 값이 바뀐 refresh 에서만** 보정한다 — 값이 그대로인데
+      // (recptnDt 만 갱신) 보정하면 남은시간이 매 cycle 원복해 열차가 정지한다.
+      expect(
+        htmlContent,
+        contains("if (trainState.posBaseArrival == null\n"
+            "        || trainState.lastRawArrival !== baseArrival) {"),
+      );
+      expect(htmlContent, contains('trainState.lastRawArrival = baseArrival;'));
+      expect(htmlContent, contains('trainState.posBaseArrival = baseArrival;'));
+      expect(htmlContent, contains('trainState.posBaseReceivedAt = receivedAt;'));
+
+      // 매 frame 위치 입력은 반드시 기준쌍에서 나와야 한다.
+      expect(
+        htmlContent,
+        contains('var res = estimateTrainPosition(posRemaining, segDurations);'),
+      );
+      // 말풍선은 여전히 API 원본 기반.
+      expect(htmlContent, contains('formatArrivalBubbleText(realRemaining)'));
+
+      // 끝점이 바뀌면 기준쌍·직전 원본값이 함께 리셋되어야 하고, 그 리셋이
+      // 기준쌍 선택보다 먼저 와야 한다(순서가 바뀌면 posBase 가 null 인 채
+      // step 이 돌거나, stale 판정이 이전 경로의 값을 본다).
+      final resetIdx = htmlContent.indexOf('trainState.posBaseArrival = null;');
+      final selectIdx =
+          htmlContent.indexOf('trainState.posBaseArrival = baseArrival;');
+      expect(resetIdx, greaterThan(0));
+      expect(selectIdx, greaterThan(resetIdx));
+      expect(htmlContent, contains('trainState.lastRawArrival = null;'));
+    });
+
+    test('[원칙 1] rAF 를 타지 않는 분기가 열차를 뒤로 보내지 않는다', () {
+      final fnStart = htmlContent.indexOf('function startTrainAnimation');
+      final fnEnd = htmlContent.indexOf('function playArrivalEffect');
+      expect(fnStart, greaterThan(0));
+      final body = htmlContent.substring(fnStart, fnEnd);
+
+      // (a) segDurations 불일치 분기: path[0](경로 맨 뒤)로 순간이동 금지.
+      expect(
+        body,
+        isNot(contains("// 데이터 불일치 — path[0] 에 고정")),
+        reason: 'path[0] 고정은 경로 뒤쪽으로의 후퇴다',
+      );
+      // 단일 점 분기 1곳에서만 path[0] 으로 이동해야 한다(그건 목표역 = 최전진).
+      expect(
+        "'translate(' + path[0].x + ',' + path[0].y + ')'".allMatches(body).length,
+        1,
+      );
+
+      // (b) 단일 점 분기: rAF 를 타지 않으므로 전진 상태를 직접 동기화하되,
+      //     **실제 도착일 때만** 최전진으로 고정한다. 양수에도 고정하면 '진입'
+      //     오보고 한 번으로 열차가 목표역에 영구 고정된다(끝점이 같아
+      //     pathEndKey 리셋도 안 탄다).
+      expect(body,
+          contains('var singlePointArrived = (trainData.arrivalSeconds || 0) <= 0;'));
+      expect(body, contains('if (singlePointArrived) {'));
+      expect(body, contains('trainState.currentPos = { x: path[0].x, y: path[0].y };'));
+      expect(body, contains('trainState.minDistToEnd = 0;'));
+      // posBase 쌍과 lastRawArrival 은 같은 값(0)에서 유도돼야 한다.
+      expect(body, contains('trainState.posBaseArrival = 0;'));
+      expect(body, contains('trainState.lastRawArrival = 0;'));
+      expect(body,
+          isNot(contains('trainState.lastRawArrival = trainData.arrivalSeconds')));
+
+      // 좌표 이동·도착 이펙트 모두 도착 판정 안에서만 일어나야 한다.
+      final arrivedIdx = body.indexOf('if (singlePointArrived) {');
+      final moveIdx =
+          body.indexOf("'translate(' + path[0].x + ',' + path[0].y + ')'");
+      expect(moveIdx, greaterThan(arrivedIdx));
+    });
+
+    test('[원칙 1] 단조 전진 가드가 존재한다 (경로 끝까지 남은 거리 기준)', () {
+      // 경로 앞부분은 refresh 마다 늘고 줄지만 끝점(목표역)은 고정이므로,
+      // refresh 간 비교 가능한 전진 척도는 "끝에서부터 잰 거리" 뿐이다.
+      expect(htmlContent, contains('var pathTotalLen = cumLen[cumLen.length - 1];'));
+      expect(htmlContent, contains('function pointAtLength(len)'));
+      expect(htmlContent, contains('var distToEnd = pathTotalLen - targetLen;'));
+
+      // 뒤로 가는 target 은 폐기하고 최전진 지점 유지, 전진했을 때만 기억 갱신.
+      expect(
+        htmlContent,
+        contains('if (trainState.minDistToEnd != null && '
+            'distToEnd > trainState.minDistToEnd) {'),
+      );
+      expect(
+        htmlContent,
+        contains('target = pointAtLength(pathTotalLen - trainState.minDistToEnd);'),
+      );
+      expect(htmlContent, contains('trainState.minDistToEnd = distToEnd;'));
+
+      // 경로 끝점이 바뀌면(= 다른 경로) 전진 기억을 리셋해야 한다.
+      expect(htmlContent, contains('if (trainState.pathEndKey !== pathEndKey) {'));
+      expect(htmlContent, contains('trainState.minDistToEnd = null;'));
+    });
+
+    test('[원칙 1] 가드는 3-way 클램프 뒤, catch-up 앞에 놓인다', () {
+      // 적용 순서: 원칙 2(역산) → 원칙 3(클램프) → 원칙 1(가드) → 원칙 4(catch-up).
+      // 순서가 어긋나면 원칙끼리 서로를 무력화한다.
+      final clampIdx = htmlContent.indexOf('var res = estimateTrainPosition(');
+      final guardIdx = htmlContent.indexOf('var distToEnd = pathTotalLen - targetLen;');
+      final catchUpIdx = htmlContent.indexOf('if (!trainState.currentPos) {');
+
+      expect(clampIdx, greaterThan(0));
+      expect(guardIdx, greaterThan(clampIdx));
+      expect(catchUpIdx, greaterThan(guardIdx));
+
+      // 3-way 클램프 분기가 가드보다 먼저 target/targetLen 을 확정해야 한다.
+      final clampBody = htmlContent.substring(clampIdx, guardIdx);
+      expect(clampBody, contains('res.segmentIndex >= nextIdx'));
+      expect(clampBody, contains('targetLen = cumLen[nextIdx];'));
+    });
+
+    test('[원칙 1] 옛 단조 감소 clamp·슬롯 메모리가 재도입되지 않았다', () {
+      // 숫자를 붙잡아 위치를 간접 보장하던 구조는 2026-07-31 제거됐다.
+      // 다시 들어오면 말풍선이 API 와 어긋난 값을 표시하게 된다.
+      expect(htmlContent, isNot(contains('trainSlotMemory')));
+      expect(htmlContent, isNot(contains('makeSlotKey')));
+      expect(htmlContent, isNot(contains('rememberSlot')));
+      expect(htmlContent, isNot(contains('slotOccupancy')));
+      expect(htmlContent, isNot(contains('prevReal')));
+
+      // 말풍선은 API 원본 기반 realRemaining 을 그대로 포맷해야 한다.
+      expect(
+        htmlContent,
+        contains('formatArrivalBubbleText(realRemaining)'),
+      );
     });
   });
 }

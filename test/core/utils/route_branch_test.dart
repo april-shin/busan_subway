@@ -16,8 +16,9 @@ import 'package:seoul_subway/domain/entities/station.dart';
 /// 열차는 그 열차만으로 하차역에 닿지 못한다. `내방 → 장암` 경로의 7호선 상행
 /// "도봉산행"이 대표 사례로, [RouteCoverage.earlyTerminus] 여야 한다.
 ///
-/// 두 값의 구분이 중요한 이유 — 경로 결과의 출발 시각은 `full` 만 쓰지만,
-/// 지도는 `earlyTerminus` 를 유령(흐림)으로 남기고 `diverged` 만 제거한다.
+/// 두 값의 구분이 중요한 이유 — 경로 결과의 출발 시각은 `full` 만 후보로 쓰고,
+/// 지도는 둘 다 유령(흐림)으로 남긴다. 즉 `full` 이냐 아니냐가 화면 동작을
+/// 가르므로, 분기·중간종착을 `full` 로 잘못 판정하지 않는 것이 이 테스트의 핵심이다.
 void main() {
   group('classifyTrainPathCoverage', () {
     test('열차 경로가 탑승 구간을 그대로 포함하면 완주', () {

@@ -631,6 +631,12 @@ void main() {
     testWidgets(
         '정확한 시간표가 없는 탭에서도 적용 중인 시각과 리셋 버튼이 유지되고 '
         '추정치임을 안내한다', (tester) async {
+      // 기준 시각 라벨의 요일 부분은 화면이 시계에서 잡는다 — "지금 출발"
+      // 상태로 시트를 열면 `dayTypeOf(DateTime.now())` 가 그대로 커밋되기
+      // 때문이다(`departure_time_sheet.dart` 의 `_initialDayType`). 하드코딩하면
+      // 주말에만 '주말 08:12 기준' 이 나와 실패하므로 실행 요일로 계산한다.
+      final todayLabel = dayTypeOf(DateTime.now()).label;
+
       // 최단시간=9호선(역별 시간표 있음), 최소환승=시간표 미보유 노선.
       // 실데이터의 급행 미보유 케이스를 합성 픽스처로 재현한다.
       final leastTransfer = RouteResult(
@@ -669,13 +675,7 @@ void main() {
       // 이 탭은 08:12 열차가 없어 배차간격 추정(08:15)이 나온다. 그래도 어떤
       // 시각을 기준으로 잡은 결과인지 보이고 해제도 가능해야 한다
       // (여기서 상태가 사라지면 사용자가 맥락을 잃고 되돌릴 수도 없게 된다).
-      //
-      // 라벨의 요일 접두사는 `dayTypeOf(DateTime.now())` 에서 나오므로 기대값도
-      // 같은 기준으로 만든다. `scheduleWith` 가 평일·주말 **데이터**를 같게 맞춰
-      // 결정성을 확보했지만 라벨 **문자열**은 여전히 요일에 따라 달라진다 —
-      // '평일 …' 로 하드코딩하면 토·일에만 실패한다.
-      final dayLabel = dayTypeOf(DateTime.now()).label;
-      expect(find.text('$dayLabel 08:12 기준'), findsWidgets);
+      expect(find.text('$todayLabel 08:12 기준'), findsWidgets);
       expect(find.text('지금 출발로'), findsWidgets);
       // 고를 수는 없는 탭이므로 진입 힌트는 없다.
       expect(pickerAffordance, findsNothing);
