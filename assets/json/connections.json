@@ -4308,7 +4308,7 @@
     "fromStationId": "B53",
     "toStationId": "B58",
     "lineId": "수인분당",
-    "travelTimeSeconds": 360,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -5281,13 +5281,13 @@
     "fromStationId": "B60",
     "toStationId": "K266",
     "lineId": "수인분당",
-    "travelTimeSeconds": 240
+    "travelTimeSeconds": 120
   },
   {
     "fromStationId": "K266",
     "toStationId": "B61",
     "lineId": "수인분당",
-    "travelTimeSeconds": 240
+    "travelTimeSeconds": 120
   },
   {
     "fromStationId": "246",
