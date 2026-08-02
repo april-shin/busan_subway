@@ -39,7 +39,80 @@ MANUAL_LINES = ['1', '9', '경춘', '수인분당']
 
 # 수동 매핑에서 skip edge 의 seconds 를 완행 시간 합에 곱할 비율.
 # 1호선 경인선/경부선 급행은 통상 완행 대비 65~75% 시간으로 운행.
+#
+# ⚠ 이 비율은 어디까지나 실측이 없을 때의 근사다. 실제 Y/N 비율은 구간마다
+# 0.5~1.0 으로 흩어지며, 특히 skip 역이 0 개인 인접 구간은 급행도 완행과 같은
+# 시간이 걸려 0.7 배가 명백히 틀린다. 실측이 가능한 구간은 아래
+# `_CURATED_MANUAL_SECONDS` 로 고정한다.
 MANUAL_EXPRESS_RATIO = 0.7
+
+# 수동 매핑 skip edge 의 `seconds` 실측 고정값 — 재생성 안전장치.
+#
+# 배경: 과거 `assets/json/express_skip_edges.json` 이 생성기 출력과 어긋난
+# 상태로 커밋돼 있었다(1호선 오산→평택 `861`, 재생성하면 `798`). `861` 은
+# connections.json 의 해당 구간 완행 시간이 수기 갱신되기 전 값(합 1230)에
+# 0.7 을 곱한 산출물이었다. JSON 만 고치면 다음 재생성에 원복되므로, 정답을
+# **생성기 쪽에** 둔다. `tool/build_transfer_times.dart` 의
+# `_nonOfficialCurated` 와 같은 취지.
+#
+# 키 형식: `{lineId}_{fromStationId}_{toStationId}` — 방향 무관(역순도 매칭).
+# 값 출처: `data/timetables/1_*.json` (getTrainSch 캐시) 의 실제 급행 편성
+#   K1902·K1904(상행) / K1945(하행) 3편성 구간 소요시간 중앙값.
+#   척도는 `trainDptreTm` → `trainDptreTm`(출발시각 차) 로, connections.json 의
+#   `travelTimeSeconds`(tool/compute_travel_times.dart 정의)와 같다. 종착역은
+#   출발시각이 없으므로 `trainArvlTm` 으로 폴백한다 — 이 폴백을 빠뜨리면
+#   서울역·천안 인접 구간에서 표본이 1~2개로 줄어 중앙값이 틀어진다.
+#   원본 시각이 30초 격자라 값도 30초 배수다.
+#
+# ⚠ 한계 1 — 표본이 상행 2 + 하행 1 이라 상하행이 갈리는 구간에서는 중앙값이
+#   사실상 상행 값이 된다. 24개 중 14개 구간이 상하행 60초 이상 벌어진다
+#   (최대 90초: 노량진→영등포 하행 150 / 상행 240). skip edge 는 양방향 단일
+#   가중치(`graph_builder.dart` 의 `addBidirectionalEdge`)라 구조적 한계다.
+# ⚠ 한계 2 — 이 3편성이 경부선 급행 전체를 대표한다는 보장은 없다. "통과역엔
+#   레코드가 없다"는 판별 신호는 캐시 커버리지에 의존하며, 실제로 경인선에는
+#   같은 신호가 전혀 나타나지 않아(전 편성이 전 역 레코드 보유) 경인선 매핑은
+#   미검증 상태다. 그래도 0.7 근사보다는 확실히 실측에 가깝다.
+_CURATED_MANUAL_SECONDS = {
+    # --- 1호선 경부선 급행 (통과역: 남영·대방·신길·신도림·구로·독산·관악·석수·명학·당정) ---
+    '1_134_136': 270,   # 서울역→용산 (남영 통과). [210, 270, 270] — 하행 210 은
+                        # dep→dep, 상행 270 은 dep→arv(서울역 종착)라 실제 상행
+                        # dep→dep 는 270 이상. 방향차 60초 이상인 구간.
+    '1_136_137': 150,   # 용산→노량진 (인접). 경인선 급행과 공유하는 구간.
+    '1_137_140': 240,   # 노량진→영등포 (대방·신길 통과). 경인선 급행과 공유.
+    '1_140_166': 540,   # 영등포→금천구청 (신도림·구로 통과)
+    '1_166_170': 360,   # 금천구청→안양 (독산·관악·석수 통과)
+    '1_170_172': 360,   # 안양→군포 (명학 통과)
+    '1_172_174': 240,   # 군포→의왕 (당정 통과)
+    # 의왕 이남은 급행도 전 역 정차 — 완행보다 정차시간(dwell)만큼만 빠르다.
+    '1_174_175': 210,   # 의왕→성균관대
+    '1_175_176': 180,   # 성균관대→화서
+    '1_176_177': 120,   # 화서→수원
+    '1_177_178': 240,   # 수원→세류. 완행 상한(210)에 걸려 실제 출력은 210 —
+                        # 급행 편성이 수원에서 오래 정차해 중앙값이 완행을 넘음.
+    '1_178_179': 210,   # 세류→병점
+    '1_179_181': 180,   # 병점→세마
+    '1_181_182': 150,   # 세마→오산대
+    '1_182_183': 150,   # 오산대→오산
+    '1_183_184': 210,   # 오산→진위
+    '1_184_185': 150,   # 진위→송탄
+    '1_185_186': 120,   # 송탄→서정리
+    '1_186_187': 210,   # 서정리→평택지제
+    '1_187_188': 210,   # 평택지제→평택
+    '1_188_189': 450,   # 평택→성환. 완행 상한(420)에 걸려 실제 출력은 420 —
+                        # 사유는 수원→세류와 같다.
+    '1_189_190': 240,   # 성환→직산
+    '1_190_191': 210,   # 직산→두정
+    '1_191_192': 240,   # 두정→천안. [240, 240, 270] — 하행 240 은 천안이 종착이라
+                        # trainArvlTm 폴백으로 잡힌 표본.
+}
+
+
+def _curated_seconds(line, a, b):
+    """해당 skip edge 의 실측 고정값(없으면 None). 방향 무관."""
+    return _CURATED_MANUAL_SECONDS.get(
+        f'{line}_{a}_{b}',
+        _CURATED_MANUAL_SECONDS.get(f'{line}_{b}_{a}'),
+    )
 
 
 def parse_sec(s):
@@ -144,23 +217,31 @@ def _bfs_full_path(start, end, adj):
     return None
 
 
-def _apply_manual(*, line, adj, conns, name_to_id, existing_keys, line_edges):
+def _apply_manual(
+    *, line, adj, conns, name_to_id, existing_keys, line_edges, curated_hits,
+    clamped,
+):
     """`manual_express_stops.json` 의 해당 노선 항목을 skip edge 로 변환해 병합.
 
-    Returns: 추가된 edge 수.
+    `curated_hits` 는 실제로 적용된 `_CURATED_MANUAL_SECONDS` 키를 모으는 set
+    (미사용 curated 키 경고용). `clamped` 는 완행 상한에 걸린 edge 를 모으는
+    list (보고용).
+
+    Returns: (추가된 edge 수, curated 로 결정된 edge 수).
     """
     if not MANUAL_JSON.exists():
-        return 0
+        return 0, 0
     try:
         data = json.loads(MANUAL_JSON.read_text(encoding='utf-8'))
     except json.JSONDecodeError:
-        return 0
+        return 0, 0
     manual_for_line = data.get(line, [])
     if not manual_for_line:
-        return 0
+        return 0, 0
 
     tt_lookup = _travel_time_lookup(line, conns)
     added = 0
+    curated_used = 0
     for route in manual_for_line:
         stops = route.get('stops') or []
         for i in range(len(stops) - 1):
@@ -173,15 +254,28 @@ def _apply_manual(*, line, adj, conns, name_to_id, existing_keys, line_edges):
             full_path = _bfs_full_path(a, b, adj)
             if not full_path or len(full_path) < 2:
                 continue
-            # 완행 travelTime 합계 산출
             local_sum = 0
             for k in range(len(full_path) - 1):
                 local_sum += tt_lookup.get(
                     (full_path[k], full_path[k + 1]), 0,
                 )
-            if local_sum <= 0:
+            # 실측 고정값이 있으면 우선. 없으면 완행 travelTime 합 × 비율.
+            curated = _curated_seconds(line, a, b)
+            if curated is not None:
+                seconds = curated
+                curated_hits.add((line, a, b))
+                curated_used += 1
+            elif local_sum > 0:
+                seconds = max(60, int(round(local_sum * MANUAL_EXPRESS_RATIO)))
+            else:
                 continue
-            seconds = max(60, int(round(local_sum * MANUAL_EXPRESS_RATIO)))
+            # 불변식: 같은 구간에서 급행이 완행보다 느릴 수는 없다.
+            # 실측 표본이 적은 인접 구간(수원→세류, 평택→성환)은 급행 편성이
+            # 주요역에서 오래 정차해 중앙값이 완행을 넘기도 한다. 30초 격자
+            # 해상도 안의 오차이므로 완행 값으로 눌러 라우팅 역전을 막는다.
+            if local_sum > 0 and seconds > local_sum:
+                clamped.append((line, a, b, seconds, local_sum))
+                seconds = local_sum
             skipped = full_path[1:-1]
             line_edges.append({
                 'lineId': line,
@@ -192,7 +286,7 @@ def _apply_manual(*, line, adj, conns, name_to_id, existing_keys, line_edges):
             })
             existing_keys.add((a, b))
             added += 1
-    return added
+    return added, curated_used
 
 
 def bfs_station_ids(start, end, adj):
@@ -221,6 +315,8 @@ def main():
 
     result = {}
     total_edges = 0
+    curated_hits = set()
+    clamped = []
 
     for line in LINES:
         stops = gather_express_stops(line)
@@ -303,9 +399,10 @@ def main():
         #
         # data.go.kr API 가 1호선 처럼 etrnYn 만으로 정차역을 구분 못 하는 경우
         # `tool/manual_express_stops.json` 의 정차역 순서를 그대로 사용해 skip edge
-        # 를 강제 생성한다. seconds 는 연결된 완행 경로의 travelTimeSeconds 합에
-        # MANUAL_EXPRESS_RATIO 를 곱한 값.
-        manual_added = _apply_manual(
+        # 를 강제 생성한다. seconds 는 `_CURATED_MANUAL_SECONDS` 에 실측값이 있으면
+        # 그 값, 없으면 연결된 완행 경로의 travelTimeSeconds 합에
+        # MANUAL_EXPRESS_RATIO 를 곱한 값. 어느 쪽이든 완행 합을 상한으로 한다.
+        manual_added, curated_used = _apply_manual(
             line=line,
             adj=adj,
             conns=conns,
@@ -314,6 +411,8 @@ def main():
                 (e['fromStationId'], e['toStationId']) for e in line_edges
             },
             line_edges=line_edges,
+            curated_hits=curated_hits,
+            clamped=clamped,
         )
 
         # 정렬: fromStationId → toStationId (재실행 시 diff 안정화)
@@ -324,7 +423,8 @@ def main():
         total_edges += len(line_edges)
         print(f'  {len(line_edges)}개 skip edge 생성 '
               f'(빈도부족 {skipped_low_freq}, 비현실 {skipped_unrealistic}, '
-              f'경로없음 {skipped_no_path}, 수동 +{manual_added})')
+              f'경로없음 {skipped_no_path}, 수동 +{manual_added}, '
+              f'실측고정 {curated_used})')
 
     # === 수동 전용 노선 처리 (자동 수집 LINES 에 없는 MANUAL_LINES 항목) ===
     #
@@ -337,13 +437,15 @@ def main():
             continue  # 이미 자동 수집에서 처리됨
         adj, name_to_id = build_line_graph(line, conns, stations)
         line_edges = []
-        manual_added = _apply_manual(
+        manual_added, curated_used = _apply_manual(
             line=line,
             adj=adj,
             conns=conns,
             name_to_id=name_to_id,
             existing_keys=set(),
             line_edges=line_edges,
+            curated_hits=curated_hits,
+            clamped=clamped,
         )
         line_edges.sort(
             key=lambda e: (e['fromStationId'], e['toStationId']),
@@ -351,13 +453,30 @@ def main():
         result[line] = line_edges
         total_edges += len(line_edges)
         print(f'[{line}] (수동 전용) {len(line_edges)}개 skip edge 생성 '
-              f'(수동 +{manual_added})')
+              f'(수동 +{manual_added}, 실측고정 {curated_used})')
 
     OUTPUT_JSON.write_text(
         json.dumps(result, ensure_ascii=False, indent=2),
         encoding='utf-8',
     )
     print(f'\n{OUTPUT_JSON.relative_to(ROOT)} 생성: 총 {total_edges}개 edge')
+
+    # 어느 skip edge 에도 붙지 않은 curated 키 경고.
+    # 정차역 매핑이 바뀌어 키가 죽으면 조용히 0.7 근사로 돌아가므로 드러내 준다.
+    applied = {f'{l}_{a}_{b}' for l, a, b in curated_hits}
+    applied |= {f'{l}_{b}_{a}' for l, a, b in curated_hits}
+    unused = sorted(set(_CURATED_MANUAL_SECONDS) - applied)
+    print(f'실측 고정값 {len(_CURATED_MANUAL_SECONDS)}개 중 '
+          f'{len(_CURATED_MANUAL_SECONDS) - len(unused)}개 적용')
+    if unused:
+        print(f'  ⚠ 미사용 curated 키 {len(unused)}개 (매핑과 어긋남): '
+              f'{", ".join(unused)}')
+    id_to_name = {(s['lineId'], s['id']): s['name'] for s in stations}
+    for line, a, b, was, now in clamped:
+        f_nm = id_to_name.get((line, a), a)
+        t_nm = id_to_name.get((line, b), b)
+        print(f'  · 완행 상한 적용 [{line}] {f_nm}({a})→{t_nm}({b}): '
+              f'{was} → {now}')
 
 
 if __name__ == '__main__':
