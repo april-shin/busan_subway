@@ -4364,9 +4364,9 @@
     "fromStationId": "B53",
     "toStationId": "B58",
     "lineId": "수인분당",
-    "travelTimeSeconds": 360,
+    "travelTimeSeconds": 120,
     "isTransfer": false,
-    "expressTimeSeconds": 300
+    "expressTimeSeconds": 120
   },
   {
     "fromStationId": "B58",
@@ -4374,7 +4374,7 @@
     "lineId": "수인분당",
     "travelTimeSeconds": 120,
     "isTransfer": false,
-    "expressTimeSeconds": 60
+    "expressTimeSeconds": 120
   },
   {
     "fromStationId": "B59",
@@ -4382,7 +4382,7 @@
     "lineId": "수인분당",
     "travelTimeSeconds": 120,
     "isTransfer": false,
-    "expressTimeSeconds": 120
+    "expressTimeSeconds": 60
   },
   {
     "fromStationId": "B61",
@@ -5345,15 +5345,15 @@
     "fromStationId": "B60",
     "toStationId": "K266",
     "lineId": "수인분당",
-    "travelTimeSeconds": 240,
-    "expressTimeSeconds": 180
+    "travelTimeSeconds": 120,
+    "expressTimeSeconds": 60
   },
   {
     "fromStationId": "K266",
     "toStationId": "B61",
     "lineId": "수인분당",
-    "travelTimeSeconds": 240,
-    "expressTimeSeconds": 180
+    "travelTimeSeconds": 120,
+    "expressTimeSeconds": 120
   },
   {
     "fromStationId": "246",
