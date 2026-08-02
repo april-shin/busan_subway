@@ -118,6 +118,22 @@ void main() {
     );
   });
 
+  test('위경도도 결선 순서와 정합한다 (삼송 경도 회귀 가드)', () {
+    // 종전 삼송 경도가 126.8561 로 원흥(126.8730)보다 서쪽이라 결선 순서와
+    // 모순됐다. 서울 열린데이터 `subwayStationMaster`(서울교통공사 역사마스터)
+    // 공식값 기준으로 정정: 원당 126.843041 / 원흥 126.872642 /
+    // 삼송 126.895558 / 지축 126.913970 → 물리 순서대로 단조 증가.
+    final byId = {for (final s in stations) s.id: s};
+    final lngs = [for (final (id, _) in _order) byId[id]!.longitude];
+    for (var i = 0; i + 1 < lngs.length; i++) {
+      expect(lngs[i], lessThan(lngs[i + 1]),
+          reason: '결선 순서(원당→지축)대로 경도가 동쪽으로 증가해야 한다');
+    }
+    // 공식값과 100m 이내(경도 0.0012°≈100m).
+    expect((byId['309']!.longitude - 126.895558).abs(), lessThan(0.0012));
+    expect((byId['309']!.latitude - 37.653083).abs(), lessThan(0.001));
+  });
+
   test('SVG 좌표가 결선 순서대로 단조 증가한다', () {
     // 지도 경로 하이라이트는 결선을 따라 그려진다. 결선 순서와 좌표 순서가
     // 어긋나면 이 구간만 지그재그로 꺾인다(회귀 당시 증상).
