@@ -32,584 +32,511 @@
     "toStationId": "103",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "103",
     "toStationId": "104",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "104",
     "toStationId": "105",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "105",
     "toStationId": "106",
     "lineId": "1",
     "travelTimeSeconds": 300,
-    "isTransfer": false,
-    "expressTimeSeconds": 300
+    "isTransfer": false
   },
   {
     "fromStationId": "106",
     "toStationId": "107",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "107",
     "toStationId": "108",
     "lineId": "1",
     "travelTimeSeconds": 300,
-    "isTransfer": false,
-    "expressTimeSeconds": 270
+    "isTransfer": false
   },
   {
     "fromStationId": "108",
     "toStationId": "109",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "109",
     "toStationId": "110",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 60
+    "isTransfer": false
   },
   {
     "fromStationId": "110",
     "toStationId": "111",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "111",
     "toStationId": "112",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "112",
     "toStationId": "113",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "113",
     "toStationId": "114",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "114",
     "toStationId": "115",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "115",
     "toStationId": "116",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 60
+    "isTransfer": false
   },
   {
     "fromStationId": "116",
     "toStationId": "117",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "117",
     "toStationId": "118",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 60
+    "isTransfer": false
   },
   {
     "fromStationId": "118",
     "toStationId": "119",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "119",
     "toStationId": "120",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "120",
     "toStationId": "121",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "121",
     "toStationId": "122",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "122",
     "toStationId": "123",
     "lineId": "1",
     "travelTimeSeconds": 90,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "123",
     "toStationId": "124",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "124",
     "toStationId": "125",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "125",
     "toStationId": "126",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "126",
     "toStationId": "127",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "127",
     "toStationId": "128",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "128",
     "toStationId": "129",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "129",
     "toStationId": "130",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "130",
     "toStationId": "131",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "131",
     "toStationId": "132",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "132",
     "toStationId": "133",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "133",
     "toStationId": "134",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "134",
     "toStationId": "135",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "135",
     "toStationId": "136",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "136",
     "toStationId": "137",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 210
+    "isTransfer": false
   },
   {
     "fromStationId": "137",
     "toStationId": "138",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "138",
     "toStationId": "139",
     "lineId": "1",
     "travelTimeSeconds": 90,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "139",
     "toStationId": "140",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "140",
     "toStationId": "141",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "141",
     "toStationId": "142",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "142",
     "toStationId": "143",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "143",
     "toStationId": "144",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "144",
     "toStationId": "145",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "145",
     "toStationId": "146",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "146",
     "toStationId": "147",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "147",
     "toStationId": "148",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "148",
     "toStationId": "149",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "149",
     "toStationId": "150",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "150",
     "toStationId": "151",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "151",
     "toStationId": "152",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 60
+    "isTransfer": false
   },
   {
     "fromStationId": "152",
     "toStationId": "153",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "153",
     "toStationId": "154",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "154",
     "toStationId": "155",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "155",
     "toStationId": "156",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "156",
     "toStationId": "157",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "157",
     "toStationId": "158",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 60
+    "isTransfer": false
   },
   {
     "fromStationId": "158",
     "toStationId": "159",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "159",
     "toStationId": "160",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "160",
     "toStationId": "161",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "161",
     "toStationId": "162",
     "lineId": "1",
     "travelTimeSeconds": 240,
-    "isTransfer": false,
-    "expressTimeSeconds": 240
+    "isTransfer": false
   },
   {
     "fromStationId": "166",
     "toStationId": "167",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "167",
     "toStationId": "168",
     "lineId": "1",
     "travelTimeSeconds": 480,
-    "isTransfer": false,
-    "expressTimeSeconds": 360
+    "isTransfer": false
   },
   {
     "fromStationId": "168",
     "toStationId": "169",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "169",
     "toStationId": "170",
     "lineId": "1",
     "travelTimeSeconds": 330,
-    "isTransfer": false,
-    "expressTimeSeconds": 270
+    "isTransfer": false
   },
   {
     "fromStationId": "170",
     "toStationId": "171",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "171",
     "toStationId": "172",
     "lineId": "1",
     "travelTimeSeconds": 360,
-    "isTransfer": false,
-    "expressTimeSeconds": 240
+    "isTransfer": false
   },
   {
     "fromStationId": "172",
     "toStationId": "173",
     "lineId": "1",
     "travelTimeSeconds": 120,
-    "isTransfer": false,
-    "expressTimeSeconds": 90
+    "isTransfer": false
   },
   {
     "fromStationId": "173",
     "toStationId": "174",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "174",
     "toStationId": "175",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 210
+    "isTransfer": false
   },
   {
     "fromStationId": "175",
     "toStationId": "176",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "176",
     "toStationId": "177",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "177",
     "toStationId": "178",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 180
+    "isTransfer": false
   },
   {
     "fromStationId": "178",
     "toStationId": "179",
     "lineId": "1",
     "travelTimeSeconds": 270,
-    "isTransfer": false,
-    "expressTimeSeconds": 240
+    "isTransfer": false
   },
   {
     "fromStationId": "179",
@@ -623,160 +550,140 @@
     "toStationId": "182",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 120
+    "isTransfer": false
   },
   {
     "fromStationId": "182",
     "toStationId": "183",
     "lineId": "1",
     "travelTimeSeconds": 240,
-    "isTransfer": false,
-    "expressTimeSeconds": 210
+    "isTransfer": false
   },
   {
     "fromStationId": "183",
     "toStationId": "184",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 210
+    "isTransfer": false
   },
   {
     "fromStationId": "184",
     "toStationId": "185",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "185",
     "toStationId": "186",
     "lineId": "1",
     "travelTimeSeconds": 180,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "186",
     "toStationId": "187",
     "lineId": "1",
     "travelTimeSeconds": 270,
-    "isTransfer": false,
-    "expressTimeSeconds": 210
+    "isTransfer": false
   },
   {
     "fromStationId": "187",
     "toStationId": "188",
     "lineId": "1",
     "travelTimeSeconds": 270,
-    "isTransfer": false,
-    "expressTimeSeconds": 240
+    "isTransfer": false
   },
   {
     "fromStationId": "188",
     "toStationId": "189",
     "lineId": "1",
     "travelTimeSeconds": 420,
-    "isTransfer": false,
-    "expressTimeSeconds": 420
+    "isTransfer": false
   },
   {
     "fromStationId": "189",
     "toStationId": "190",
     "lineId": "1",
     "travelTimeSeconds": 270,
-    "isTransfer": false,
-    "expressTimeSeconds": 240
+    "isTransfer": false
   },
   {
     "fromStationId": "190",
     "toStationId": "191",
     "lineId": "1",
     "travelTimeSeconds": 300,
-    "isTransfer": false,
-    "expressTimeSeconds": 240
+    "isTransfer": false
   },
   {
     "fromStationId": "191",
     "toStationId": "192",
     "lineId": "1",
     "travelTimeSeconds": 270,
-    "isTransfer": false,
-    "expressTimeSeconds": 270
+    "isTransfer": false
   },
   {
     "fromStationId": "192",
     "toStationId": "193",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "193",
     "toStationId": "194",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "194",
     "toStationId": "195",
     "lineId": "1",
     "travelTimeSeconds": 150,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "195",
     "toStationId": "196",
     "lineId": "1",
-    "travelTimeSeconds": 390,
-    "isTransfer": false,
-    "expressTimeSeconds": 390
+    "travelTimeSeconds": 180,
+    "isTransfer": false
   },
   {
     "fromStationId": "196",
     "toStationId": "197",
     "lineId": "1",
-    "travelTimeSeconds": 270,
-    "isTransfer": false,
-    "expressTimeSeconds": 270
+    "travelTimeSeconds": 210,
+    "isTransfer": false
   },
   {
     "fromStationId": "197",
     "toStationId": "198",
     "lineId": "1",
-    "travelTimeSeconds": 480,
-    "isTransfer": false,
-    "expressTimeSeconds": 480
+    "travelTimeSeconds": 270,
+    "isTransfer": false
   },
   {
     "fromStationId": "198",
     "toStationId": "199",
     "lineId": "1",
-    "travelTimeSeconds": 60,
-    "isTransfer": false,
-    "expressTimeSeconds": 540
+    "travelTimeSeconds": 300,
+    "isTransfer": false
   },
   {
     "fromStationId": "142",
     "toStationId": "166",
     "lineId": "1",
     "travelTimeSeconds": 570,
-    "isTransfer": false,
-    "expressTimeSeconds": 540
+    "isTransfer": false
   },
   {
     "fromStationId": "179",
     "toStationId": "181",
     "lineId": "1",
     "travelTimeSeconds": 210,
-    "isTransfer": false,
-    "expressTimeSeconds": 150
+    "isTransfer": false
   },
   {
     "fromStationId": "166",
@@ -2056,7 +1963,7 @@
     "fromStationId": "539",
     "toStationId": "550",
     "lineId": "5",
-    "travelTimeSeconds": 120,
+    "travelTimeSeconds": 140,
     "isTransfer": false
   },
   {
