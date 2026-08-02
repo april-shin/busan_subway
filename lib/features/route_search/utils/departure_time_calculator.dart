@@ -144,8 +144,8 @@ String baseLineId(String lineId) {
 /// 출발역의 출발시각을 기준으로, 각 구간의 소요시간과 환승시간을
 /// 순서대로 누적하여 구간별 출발시각 리스트를 반환한다.
 ///
-/// [useExpress]가 true면 세그먼트의 `expressDurationSeconds`를 우선 사용한다
-/// (없으면 `durationSeconds`로 폴백). 기본값은 false (완행).
+/// 급행 세그먼트는 가상 노선(`{base}E`)의 skip edge 가중치로 만들어지므로
+/// `durationSeconds` 자체가 이미 급행 소요시간이다 — 모드별 분기가 필요 없다.
 ///
 /// 환승역에서의 출발시각 결정 우선순위:
 /// 1순위: [transferArrivals]에서 해당 역의 실시간 데이터 (afterTransfer 이후 열차만)
@@ -160,7 +160,6 @@ List<DateTime> computeSegmentDepartures({
   required Map<String, LineSchedule> schedules,
   Map<String, AsyncValue<List<ArrivalInfo>>> transferArrivals = const {},
   required DateTime now,
-  bool useExpress = false,
   List<Station> stations = const [],
   List<Connection> connections = const [],
 }) {
@@ -169,13 +168,9 @@ List<DateTime> computeSegmentDepartures({
 
   for (var i = 0; i < routeResult.segments.length; i++) {
     final segment = routeResult.segments[i];
-    // 구간 소요시간 (모드별)
-    final durationSeconds = useExpress
-        ? (segment.expressDurationSeconds ?? segment.durationSeconds)
-        : segment.durationSeconds;
     // 구간 종료 시각
     final segmentEnd =
-        currentTime.add(Duration(seconds: durationSeconds));
+        currentTime.add(Duration(seconds: segment.durationSeconds));
 
     if (i < routeResult.segments.length - 1) {
       // 환승 시간 추가

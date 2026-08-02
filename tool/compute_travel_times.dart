@@ -7,24 +7,29 @@
 //      (connections.json은 `from→to` 한쪽 방향만 기록하지만 인접 역간 이동시간은
 //      방향 대칭이므로 상/하행 timetable 둘 다 양방향으로 gap 수집)
 //   3. 인접 역 쌍별로 다수 열차의 **중앙값**을 사용 (outlier에 강건)
-//   4. 완행/급행 분리: etrnYn=='N' 또는 빈 값 → 완행, 'Y' → 급행
-//   5. connections.json의 travelTimeSeconds(완행) + expressTimeSeconds(급행) 갱신
+//   4. connections.json의 travelTimeSeconds 갱신
 //
 // 양방향 수집이 중요한 이유:
 //   - 9호선 흑석→동작 상행만 수집하면 급행 대피 대기시간이 포함된 290s가 잡히지만,
 //     하행(동작→흑석) 155s가 누락되어 비대칭 outlier로 굳어진다.
 //   - `.abs()`로 양방향을 합치면 249건 중앙값이 인근 구간(125s)과 정합한다.
 //
-// 한계 (급행 데이터 커버리지):
-//   - 이 알고리즘은 "인접 두 역" 쌍에서만 trainno 매칭을 수행한다.
-//   - 9호선 급행처럼 여러 역을 **건너뛰는(skip)** 급행 열차는 인접 쌍의 한쪽에
-//     해당 trainno가 나타나지 않아 대부분 매칭 실패한다.
-//     예) 9호선 급행은 김포공항↔마곡나루 직통(공항시장·신방화 스킵). 따라서
-//         김포공항↔공항시장 같은 인접 쌍에는 급행 trainno가 없음.
-//   - 결과적으로 9호선은 expressTimeSeconds가 거의 수집되지 않는다(1건 수준).
-//     1호선·경춘선·수인분당선은 인접 쌍 매칭이 잘 되어 정상 수집됨.
-//   - 후속 개선 아이디어: graph에 "skip-edge"를 추가해 급행 정차역 시퀀스를
-//     별도로 모델링하거나, 공식 시간표 PDF에서 수동 시딩.
+// ⛔ 급행은 이 도구가 다루지 않는다 (구 모델 폐지, 2026-08).
+//   과거 이 도구는 `etrnYn=='Y'` 열차의 인접쌍 중앙값을 `expressTimeSeconds` 로
+//   기록했다(구 급행 모델). 그 필드와 배관은 전부 제거됐다. 급행은
+//   `tool/extract_express_skip_edges.py` → `assets/json/express_skip_edges.json`
+//   → 가상 노선 `{base}E` 로만 표현한다.
+//
+//   폐지 사유 — `etrnYn` 은 급행 지표가 아니다. 실측(`data/timetables/`) 결과:
+//     · 1호선: Y 편성 대부분이 전 역에 레코드를 가진 사실상 완행. 93개 값 중
+//       68개가 급행 미운행 구간에 붙고 36개는 완행보다 빠르다고 표시했다.
+//     · 경춘: Y 편성 5개 전부 24역 전역 정차. 값 23개가 신 모델과 완전 중복.
+//     · 수인분당: Y 편성 22개 중 14개 전역 정차, 나머지 8개도 캐시가 없는
+//       원인재 1역만 "통과". 값 49개 중 31개가 완행보다 느리거나 같았다.
+//     · 9호선: Y 편성은 실제로 역을 건너뛰므로 인접쌍 매칭이 거의 실패해
+//       값이 1개(봉은사→종합운동장)뿐이었고, 그마저 완행과 동일했다.
+//   급행은 "인접 두 역" 매칭으로는 원리상 잡히지 않는다 — 건너뛴 역에는 해당
+//   trainno 레코드가 없기 때문이다. skip edge 모델이 이를 대체한다.
 //
 // 사용법:
 //   dart run tool/compute_travel_times.dart [--line=1] [--dry-run]
@@ -71,10 +76,10 @@ void main(List<String> args) async {
   }
 
   var updated = 0;
-  var expressUpdated = 0;
   var skipped = 0;
+  var expressStripped = 0;
+  var expressSamplesDropped = 0;
   final stats = <String, List<int>>{};
-  final expressStats = <String, List<int>>{};
 
   for (final lid in pairs.keys) {
     final lineConns = pairs[lid]!;
@@ -90,9 +95,11 @@ void main(List<String> args) async {
         continue;
       }
 
-      // 두 방향 모두 시도. 완행/급행 분리.
+      // 구 급행 모델 잔재 제거 — 어떤 경로로든 되살아나면 여기서 걷어낸다.
+      if (c.remove('expressTimeSeconds') != null) expressStripped++;
+
+      // 두 방향 모두 시도.
       final localGaps = <int>[];
-      final expressGaps = <int>[];
       for (final dir in ['상행', '하행']) {
         final fromFile = File('data/timetables/${lid}_${fromName}_$dir.json');
         final toFile = File('data/timetables/${lid}_${toName}_$dir.json');
@@ -133,17 +140,20 @@ void main(List<String> args) async {
           final gap = (toTime - fromTime).abs();
           // 0 이하는 동일 시각(이상) 또는 파싱 오류로 간주. 600s 이상은 종착/회차 케이스.
           if (gap <= 0 || gap >= 600) continue;
+          // `etrnYn=='Y'` 표본은 **버린다**(급행 값을 만들지도 않는다).
+          // 완행 median 에 섞지 않는 이유: 기존 travelTimeSeconds 가 Y 제외
+          // median 으로 산출된 값이므로, 섞으면 재실행마다 전 노선 완행 시간이
+          // 흔들린다. 급행 취급은 위 헤더의 "구 모델 폐지" 항목 참조.
           final etrn = (m['etrnYn']?.toString() ?? '').trim().toUpperCase();
           if (etrn == 'Y') {
-            expressGaps.add(gap);
-          } else {
-            // 'N' 또는 빈 값 → 완행
-            localGaps.add(gap);
+            expressSamplesDropped++;
+            continue;
           }
+          localGaps.add(gap);
         }
       }
 
-      if (localGaps.isEmpty && expressGaps.isEmpty) {
+      if (localGaps.isEmpty) {
         skipped++;
         continue;
       }
@@ -161,21 +171,6 @@ void main(List<String> args) async {
         }
       }
 
-      // 급행 갱신 (있을 때만 필드 설정, 없으면 필드 자체를 삭제하여 null 보장)
-      if (expressGaps.isNotEmpty) {
-        expressGaps.sort();
-        final exMedian = expressGaps[expressGaps.length ~/ 2];
-        expressStats.putIfAbsent(lid, () => []).add(exMedian);
-
-        final old = c['expressTimeSeconds'];
-        if (old != exMedian) {
-          c['expressTimeSeconds'] = exMedian;
-          expressUpdated++;
-        }
-      } else {
-        // 데이터 없음 → 기존 필드 제거 (null 처리)
-        c.remove('expressTimeSeconds');
-      }
     }
   }
 
@@ -188,19 +183,12 @@ void main(List<String> args) async {
         '중앙값 ${vals[vals.length ~/ 2]}s, 범위 ${vals.first}~${vals.last}s');
   }
 
-  print('\n=== 노선별 급행 통계 ===');
-  if (expressStats.isEmpty) {
-    print('  (급행 데이터 없음)');
-  } else {
-    for (final lid in expressStats.keys) {
-      final vals = expressStats[lid]!..sort();
-      final sum = vals.reduce((a, b) => a + b);
-      print('  $lid: ${vals.length}개 구간, 평균 ${(sum / vals.length).toStringAsFixed(1)}s, '
-          '중앙값 ${vals[vals.length ~/ 2]}s, 범위 ${vals.first}~${vals.last}s');
-    }
+  print('\n전체: 완행 갱신 $updated건, 스킵 $skipped건');
+  print('급행(etrnYn=Y) 표본 $expressSamplesDropped건 폐기 — 급행은 '
+      'express_skip_edges.json 이 담당한다 (헤더 주석 참조).');
+  if (expressStripped > 0) {
+    print('⚠ 구 모델 잔재 expressTimeSeconds $expressStripped건 제거됨.');
   }
-  print(
-      '\n전체: 완행 갱신 $updated건, 급행 갱신 $expressUpdated건, 스킵 $skipped건');
 
   if (dryRun) {
     print('(dry-run, 파일 변경 없음)');

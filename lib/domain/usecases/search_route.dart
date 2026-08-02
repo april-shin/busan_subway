@@ -318,35 +318,7 @@ class SearchRoute {
       transferDurations: built.transferDurations,
       transferWalkDurations: built.transferWalkDurations,
       transferGuides: built.transferGuides,
-      totalExpressTimeSeconds: _computeTotalExpress(
-        segments: built.segments,
-        transferDurations: built.transferDurations,
-      ),
     );
-  }
-
-  /// 전 경로 급행 환산 총 시간을 계산한다.
-  ///
-  /// - 어떤 세그먼트라도 `expressDurationSeconds`가 non-null이면 결과는 non-null.
-  ///   해당 세그먼트는 급행 시간을, 그렇지 않은 세그먼트는 완행(`durationSeconds`) 시간을 합산한다.
-  /// - 모든 세그먼트가 null이면 결과도 null (급행 적용 가능 구간 없음).
-  /// - 환승 시간은 동일하게 합산된다.
-  int? _computeTotalExpress({
-    required List<RouteSegment> segments,
-    required List<int> transferDurations,
-  }) {
-    final hasAnyExpress =
-        segments.any((s) => s.expressDurationSeconds != null);
-    if (!hasAnyExpress) return null;
-
-    var total = 0;
-    for (final seg in segments) {
-      total += seg.expressDurationSeconds ?? seg.durationSeconds;
-    }
-    for (final t in transferDurations) {
-      total += t;
-    }
-    return total;
   }
 
   ({
@@ -377,12 +349,6 @@ class SearchRoute {
     var currentLineId = path.edges.first.lineId;
     var currentStations = <Station>[];
     var currentDurationSeconds = 0;
-    // 급행 환산 시간 누적값 — 항상 매 edge를 `expressWeightSeconds ?? weightSeconds`로 합산.
-    // 세그먼트 내 `expressWeightSeconds`가 **하나라도** 등장하면 `hasExpressInSegment=true`로
-    // 표시되어, 세그먼트 종료 시 이 누적값이 채택된다. 모두 null이면 세그먼트의
-    // expressDurationSeconds는 null로 남는다.
-    var currentExpressAccumulated = 0;
-    var hasExpressInSegment = false;
 
     for (var i = 0; i < path.edges.length; i++) {
       final edge = path.edges[i];
@@ -403,14 +369,10 @@ class SearchRoute {
               math.max(0, currentStations.length - 2);
           final dwellSum = intermediateCount * dwellTimeSeconds;
           currentDurationSeconds += dwellSum;
-          // 급행 시간도 동일한 dwell 가산 (단순화 가정).
-          currentExpressAccumulated += dwellSum;
           completedSegment = _createSegment(
             currentLineId,
             currentStations,
             currentDurationSeconds,
-            expressDurationSeconds:
-                hasExpressInSegment ? currentExpressAccumulated : null,
           );
           segments.add(completedSegment);
         }
@@ -438,8 +400,6 @@ class SearchRoute {
 
         currentStations = [];
         currentDurationSeconds = 0;
-        currentExpressAccumulated = 0;
-        hasExpressInSegment = false;
         if (i + 1 < path.edges.length) {
           currentLineId = path.edges[i + 1].lineId;
         }
@@ -451,18 +411,13 @@ class SearchRoute {
             math.max(0, currentStations.length - 2);
         final dwellSum2 = intermediateCount2 * dwellTimeSeconds;
         currentDurationSeconds += dwellSum2;
-        currentExpressAccumulated += dwellSum2;
         segments.add(_createSegment(
           currentLineId,
           currentStations,
           currentDurationSeconds,
-          expressDurationSeconds:
-              hasExpressInSegment ? currentExpressAccumulated : null,
         ));
         currentStations = [];
         currentDurationSeconds = 0;
-        currentExpressAccumulated = 0;
-        hasExpressInSegment = false;
         currentLineId = edge.lineId;
       }
 
@@ -474,17 +429,6 @@ class SearchRoute {
       }
 
       currentDurationSeconds += edge.weightSeconds;
-      // 급행 시간 누적 전략 (순서 의존성 버그 방지):
-      //   - 매 edge마다 항상 `expressWeightSeconds ?? weightSeconds`를 누적한다.
-      //   - `expressWeightSeconds`가 non-null인 edge가 하나라도 있으면 세그먼트는
-      //     "급행 운영 구간 포함"으로 표시되고, 세그먼트 종료 시 누적값이 채택된다.
-      //   - 모든 edge가 null이면 hasExpressInSegment=false → expressDurationSeconds=null.
-      // 이 방식으로 "첫 N개 완행 + 뒤 M개 급행" 순서에서도 앞쪽 completed 시간이 누락되지 않는다.
-      final expressOrLocal = edge.expressWeightSeconds ?? edge.weightSeconds;
-      currentExpressAccumulated += expressOrLocal;
-      if (edge.expressWeightSeconds != null) {
-        hasExpressInSegment = true;
-      }
 
       if (i == path.edges.length - 1) {
         final toNodeId = edge.toNodeId;
@@ -502,13 +446,10 @@ class SearchRoute {
           math.max(0, currentStations.length - 2);
       final lastDwellSum = lastIntermediateCount * dwellTimeSeconds;
       currentDurationSeconds += lastDwellSum;
-      currentExpressAccumulated += lastDwellSum;
       segments.add(_createSegment(
         currentLineId,
         currentStations,
         currentDurationSeconds,
-        expressDurationSeconds:
-            hasExpressInSegment ? currentExpressAccumulated : null,
       ));
     }
 
@@ -586,9 +527,8 @@ class SearchRoute {
   RouteSegment _createSegment(
     String lineId,
     List<Station> stations,
-    int durationSeconds, {
-    int? expressDurationSeconds,
-  }) {
+    int durationSeconds,
+  ) {
     final lineName = lineNames[lineId] ?? lineId;
     final lastStation = stations.isNotEmpty ? stations.last.name : '';
 
@@ -598,7 +538,6 @@ class SearchRoute {
       stations: List.unmodifiable(stations),
       durationSeconds: durationSeconds,
       direction: '$lastStation 방면',
-      expressDurationSeconds: expressDurationSeconds,
     );
   }
 }

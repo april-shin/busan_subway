@@ -25,10 +25,6 @@ class SubwayGraph {
       lineId: edge.lineId,
       weightSeconds: edge.weightSeconds,
       isTransfer: edge.isTransfer,
-      // 역방향 edge에도 급행 시간을 전달해야 양방향 경로 모두에서 급행 토글이
-      // 올바르게 표시된다. (누락 시 역방향 경로에서만 expressWeight가 null이 되어
-      // totalExpressTimeSeconds도 null로 계산되는 버그 발생)
-      expressWeightSeconds: edge.expressWeightSeconds,
     ));
   }
 

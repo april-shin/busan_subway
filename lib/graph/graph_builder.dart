@@ -69,7 +69,6 @@ class GraphBuilder {
         toNodeId: toNodeId,
         lineId: connection.lineId,
         weightSeconds: connection.travelTimeSeconds,
-        expressWeightSeconds: connection.expressTimeSeconds,
       ));
     }
   }

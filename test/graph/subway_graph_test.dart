@@ -51,26 +51,26 @@ void main() {
       expect(graph.edgeCount, 2);
     });
 
-    test('addBidirectionalEdge propagates expressWeightSeconds to reverse edge',
+    test('addBidirectionalEdge propagates lineId and weight to reverse edge',
         () {
-      // 역방향 edge에 급행 시간이 누락되면 해당 방향 경로의 급행 토글이
-      // 사라지는 회귀 방지.
-      graph.addNode(GraphNode(id: 'A_9', stationName: '언주', lineId: '9'));
-      graph.addNode(GraphNode(id: 'B_9', stationName: '신논현', lineId: '9'));
+      // 급행은 가상 노선 `{base}E` 의 별도 edge 로 표현되므로, 역방향에도
+      // lineId/weight 가 그대로 전달돼야 양방향 경로가 같은 급행 edge 를 쓴다.
+      graph.addNode(GraphNode(id: 'A_9E', stationName: '언주', lineId: '9E'));
+      graph.addNode(GraphNode(id: 'B_9E', stationName: '신논현', lineId: '9E'));
 
       graph.addBidirectionalEdge(GraphEdge(
-        fromNodeId: 'A_9',
-        toNodeId: 'B_9',
-        lineId: '9',
-        weightSeconds: 120,
-        expressWeightSeconds: 80,
+        fromNodeId: 'A_9E',
+        toNodeId: 'B_9E',
+        lineId: '9E',
+        weightSeconds: 80,
       ));
 
-      final forward = graph.getNeighbors('A_9').first;
-      final reverse = graph.getNeighbors('B_9').first;
-      expect(forward.expressWeightSeconds, 80);
-      expect(reverse.expressWeightSeconds, 80,
-          reason: '역방향 edge에도 급행 시간이 전달돼야 함');
+      final forward = graph.getNeighbors('A_9E').first;
+      final reverse = graph.getNeighbors('B_9E').first;
+      expect(forward.weightSeconds, 80);
+      expect(reverse.weightSeconds, 80,
+          reason: '역방향 edge에도 같은 가중치가 전달돼야 함');
+      expect(reverse.lineId, '9E');
     });
 
     test('getNeighbors returns empty list for unknown node', () {

@@ -177,10 +177,9 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
 
 /// 단일 경로 뷰 — 탭이 모드/경로를 이미 결정하므로 내부 토글은 없다.
 ///
-/// 급행 모드 사용 여부는 첫 세그먼트 lineId 패턴(`{base}E`)으로 자동 판정한다.
-/// 단, 가상 급행 노선을 거치지 않더라도 세그먼트가 `expressDurationSeconds`를
-/// 가질 수 있으므로(완행 모델에서 운영 구간만 별도 시간 노출), 시간 표시는
-/// 첫 세그먼트의 lineId가 `E`로 끝날 때만 급행 시간을 사용한다.
+/// 급행 세그먼트는 가상 노선(`{base}E`)으로만 표현되고 그 `durationSeconds`가
+/// 이미 급행 소요시간이므로, 화면에는 모드별 시간 분기가 없다. 급행 여부는
+/// 세그먼트 lineId 패턴(`isExpressLineId`)만으로 판정한다.
 ///
 /// **도착정보 freeze 정책** — 결과 화면은 "한번 로드되면 더 이상 refresh하지
 /// 않는다". 출발역/환승역별 `arrivalInfoProvider`가 최초 1회 non-loading 값을
@@ -206,13 +205,6 @@ class _RouteView extends ConsumerStatefulWidget {
     required this.query,
     required this.onQueryChanged,
   });
-
-  bool get _useExpress {
-    if (routeResult.segments.isEmpty) return false;
-    // 첫 세그먼트가 가상 급행 노선(`{base}E`)이면 급행 모드로 동작한다.
-    // 가상 급행 세그먼트의 시간/도착정보는 `expressOnly` 필터로 분리 매칭된다.
-    return isExpressLineId(routeResult.segments.first.lineId);
-  }
 
   @override
   ConsumerState<_RouteView> createState() => _RouteViewState();
@@ -353,7 +345,6 @@ class _RouteViewState extends ConsumerState<_RouteView> {
           const AsyncValue<List<ArrivalInfo>>.loading();
     }
 
-    final useExpress = widget._useExpress;
     final wallClock = DateTime.now();
     final departureOptions = _buildDepartureOptions(
       context: departureContext,
@@ -417,24 +408,19 @@ class _RouteViewState extends ConsumerState<_RouteView> {
       schedules: schedules,
       transferArrivals: effectiveTransferArrivals,
       now: now,
-      useExpress: useExpress,
       stations: stations,
       connections: connections,
     );
 
-    // 실제 도착시간: 마지막 세그먼트 출발 + 마지막 세그먼트 소요시간(모드별)
+    // 실제 도착시간: 마지막 세그먼트 출발 + 마지막 세그먼트 소요시간
     final DateTime arrivalTime;
     final int totalMinutes;
     if (routeResult.segments.isEmpty) {
       arrivalTime = departureTime;
       totalMinutes = 0;
     } else {
-      final lastSegment = routeResult.segments.last;
-      final lastDuration = useExpress
-          ? (lastSegment.expressDurationSeconds ?? lastSegment.durationSeconds)
-          : lastSegment.durationSeconds;
-      arrivalTime =
-          segmentDepartures.last.add(Duration(seconds: lastDuration));
+      arrivalTime = segmentDepartures.last
+          .add(Duration(seconds: routeResult.segments.last.durationSeconds));
       totalMinutes = arrivalTime.difference(departureTime).inMinutes;
     }
 
@@ -460,7 +446,6 @@ class _RouteViewState extends ConsumerState<_RouteView> {
             routeResult: routeResult,
             departureTime: departureTime,
             segmentDepartures: segmentDepartures,
-            useExpress: useExpress,
           ),
         ),
       ],
@@ -784,22 +769,12 @@ class _RouteTimeline extends StatelessWidget {
   final RouteResult routeResult;
   final DateTime departureTime;
   final List<DateTime> segmentDepartures;
-  final bool useExpress;
 
   const _RouteTimeline({
     required this.routeResult,
     required this.departureTime,
     required this.segmentDepartures,
-    required this.useExpress,
   });
-
-  /// 모드별 세그먼트 소요시간(초)을 반환한다.
-  int _segmentDuration(RouteSegment segment) {
-    if (useExpress) {
-      return segment.expressDurationSeconds ?? segment.durationSeconds;
-    }
-    return segment.durationSeconds;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -822,7 +797,7 @@ class _RouteTimeline extends StatelessWidget {
       _addSegmentItems(items, i, segStartTime, isLast);
       if (!isLast) {
         final segEndTime = segStartTime.add(
-          Duration(seconds: _segmentDuration(routeResult.segments[i])),
+          Duration(seconds: routeResult.segments[i].durationSeconds),
         );
         _addTransferItem(items, i, segEndTime);
       }
@@ -840,16 +815,14 @@ class _RouteTimeline extends StatelessWidget {
     final segment = routeResult.segments[segIndex];
     final color = lineColorFor(segment.lineId);
     final stationCount = segment.stations.length;
-    final segmentDuration = _segmentDuration(segment);
+    final segmentDuration = segment.durationSeconds;
     final intervalSeconds = stationCount > 1
         ? segmentDuration / (stationCount - 1)
         : 0.0;
-    // 배지 표시 조건:
-    //   - 새 모델: 세그먼트가 가상 급행 노선(`{base}E`)인 경우 → 항상 "급행" 배지.
-    //   - 구 모델: useExpress + 세그먼트가 급행 운영 구간(expressDurationSeconds 존재).
-    //     (가상 노선 구분이 없는 노선에서 후속 정리 후 제거 예정.)
-    final showExpressBadge = isExpressLineId(segment.lineId) ||
-        (useExpress && segment.expressDurationSeconds != null);
+    // 배지 표시 조건: 세그먼트가 가상 급행 노선(`{base}E`)이면 "급행" 배지.
+    // 급행은 `express_skip_edges.json` 기반 가상 노선으로만 표현되므로 이 판정이
+    // 유일한 기준이다.
+    final showExpressBadge = isExpressLineId(segment.lineId);
 
     items.add(_SegmentHeader(
       color: color,

@@ -59,28 +59,6 @@ void main() {
       expect(modified.transferCount, 1);
     });
 
-    test('totalExpressTimeSeconds 기본값은 null', () {
-      const result = RouteResult(
-        segments: [],
-        totalTimeSeconds: 300,
-        transferCount: 0,
-        stationCount: 5,
-      );
-
-      expect(result.totalExpressTimeSeconds, isNull);
-    });
-
-    test('totalExpressTimeSeconds 명시 값', () {
-      const result = RouteResult(
-        segments: [],
-        totalTimeSeconds: 3000,
-        transferCount: 0,
-        stationCount: 5,
-        totalExpressTimeSeconds: 1800,
-      );
-
-      expect(result.totalExpressTimeSeconds, 1800);
-    });
   });
 
   group('RouteSegment', () {
@@ -113,29 +91,20 @@ void main() {
       expect(segment.durationSeconds, 90);
     });
 
-    test('expressDurationSeconds 기본값은 null', () {
+    // 급행 세그먼트는 가상 노선(`{base}E`)의 skip edge 가중치로 만들어지므로
+    // `durationSeconds` 자체가 급행 소요시간이다. 구 모델의 별도
+    // `expressDurationSeconds` 필드는 2026-08 에 제거됐다.
+    test('급행 세그먼트는 lineId 로만 구분되고 소요시간은 durationSeconds 하나', () {
       const segment = RouteSegment(
-        lineId: '2',
-        lineName: '2호선',
-        stations: [],
-        durationSeconds: 90,
-        direction: '을지로입구 방면',
-      );
-
-      expect(segment.expressDurationSeconds, isNull);
-    });
-
-    test('expressDurationSeconds 명시 값', () {
-      const segment = RouteSegment(
-        lineId: '9',
+        lineId: '9E',
         lineName: '9호선',
         stations: [],
-        durationSeconds: 180,
+        durationSeconds: 90,
         direction: '중앙보훈병원 방면',
-        expressDurationSeconds: 90,
       );
 
-      expect(segment.expressDurationSeconds, 90);
+      expect(segment.lineId, '9E');
+      expect(segment.durationSeconds, 90);
     });
   });
 }
