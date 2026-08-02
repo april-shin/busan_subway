@@ -950,6 +950,20 @@
     ]
   },
   {
+    "id": "1715",
+    "name": "금정",
+    "lineId": "1",
+    "latitude": 37.3717,
+    "longitude": 126.9412,
+    "svgX": 816.0,
+    "svgY": 1352.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
+      "4"
+    ]
+  },
+  {
     "id": "172",
     "name": "군포",
     "lineId": "1",
@@ -1264,7 +1278,7 @@
     ]
   },
   {
-    "id": "196",
+    "id": "197",
     "name": "배방",
     "lineId": "1",
     "latitude": 36.786,
@@ -1277,7 +1291,7 @@
     ]
   },
   {
-    "id": "197",
+    "id": "198",
     "name": "온양온천",
     "lineId": "1",
     "latitude": 36.7836,
@@ -1290,7 +1304,7 @@
     ]
   },
   {
-    "id": "198",
+    "id": "196",
     "name": "탕정",
     "lineId": "1",
     "latitude": 36.7779,
@@ -2097,12 +2111,12 @@
     ]
   },
   {
-    "id": "309",
-    "name": "삼송",
+    "id": "344",
+    "name": "원흥",
     "lineId": "3",
-    "latitude": 37.6499,
-    "longitude": 126.8561,
-    "svgX": 576.0,
+    "latitude": 37.645,
+    "longitude": 126.873,
+    "svgX": 536.0,
     "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
@@ -2110,12 +2124,12 @@
     ]
   },
   {
-    "id": "344",
-    "name": "원흥",
+    "id": "309",
+    "name": "삼송",
     "lineId": "3",
-    "latitude": 37.645,
-    "longitude": 126.873,
-    "svgX": 536.0,
+    "latitude": 37.6531,
+    "longitude": 126.8956,
+    "svgX": 576.0,
     "svgY": 256.0,
     "isTransfer": false,
     "transferLines": [
@@ -3090,8 +3104,8 @@
     "svgY": 1352.0,
     "isTransfer": true,
     "transferLines": [
-      "4",
-      "수인분당"
+      "1",
+      "4"
     ]
   },
   {
