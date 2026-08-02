@@ -946,7 +946,8 @@
       "toStationId": "172",
       "seconds": 360,
       "skippedStationIds": [
-        "171"
+        "171",
+        "1715"
       ]
     },
     {

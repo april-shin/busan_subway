@@ -15,6 +15,20 @@
 //     하행(동작→흑석) 155s가 누락되어 비대칭 outlier로 굳어진다.
 //   - `.abs()`로 양방향을 합치면 249건 중앙값이 인근 구간(125s)과 정합한다.
 //
+// ⚠ dwell 규약 불일치 (재실행 전 반드시 확인):
+//   이 도구는 출발시각 차(`trainDptreTm` → `trainDptreTm`)를 쓰므로 산출값에
+//   **다음 역의 정차시간(약 30초)이 포함**된다. 반면 앱은 경로 총시간을
+//   "edge 주행합 + 중간역 × dwell"(`lib/core/constants/dwell_time.dart`)로
+//   계산하고, 최근 작업(경강선 48351f4, 금정 1호선)은 dwell 을 제외한
+//   `다음역 trainArvlTm − 현재역 trainDptreTm` 을 규약으로 쓴다.
+//   → 이 도구를 그대로 재실행하면 그렇게 넣은 구간이 dwell 이중 가산 값으로
+//     되돌아간다:
+//       1호선 명학↔금정 120→150, 금정↔군포 180→210
+//       3호선 원당↔원흥 150→180, 원흥↔삼송 120→150, 삼송↔지축 150→180
+//       경강선 전 구간
+//     회귀 가드: `test/data/geumjeong_transfer_test.dart`,
+//     `test/data/ilsan_line_order_test.dart`, `test/data/gyeonggang_line_test.dart`.
+//
 // 한계 (급행 데이터 커버리지):
 //   - 이 알고리즘은 "인접 두 역" 쌍에서만 trainno 매칭을 수행한다.
 //   - 9호선 급행처럼 여러 역을 **건너뛰는(skip)** 급행 열차는 인접 쌍의 한쪽에
