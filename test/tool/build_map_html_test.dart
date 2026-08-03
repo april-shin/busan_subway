@@ -142,6 +142,30 @@ void main() {
       expect(hlBody, contains("classList.remove('dimmed')"));
     });
 
+    test('buildWaypointIndex가 순환선 재방문 역을 인덱스 최소 거리로 짝짓는다', () {
+      // 회귀 가드: 2호선 본선 SVG path 는 신도림을 두 번 지난다(순환선 진입점 =
+      // 종료점). "가장 가까운 정점 하나"만 고르면 대림↔신도림 구간이 앞쪽 신도림과
+      // 짝지어져 slice 가 순환선을 거꾸로 한 바퀴 감싸고, 하이라이트가 2호선
+      // 전체에 칠해진다.
+      final start = htmlContent.indexOf('function buildWaypointIndex()');
+      expect(start, greaterThan(0),
+          reason: 'buildWaypointIndex 함수가 존재해야 한다');
+      final body = htmlContent.substring(start, start + 3000);
+
+      // 후보를 배열로 수집(동률 정점 모두) 후 인덱스 거리 최소 조합 선택
+      expect(body, contains('findNearestIdxs('),
+          reason: '단일 최근접 정점이 아니라 동률 후보 배열을 받아야 한다');
+      expect(body, contains('Math.abs(fIdxs[fj] - tIdxs[tj])'));
+      expect(body, contains('bestSpan'));
+
+      // slice 길이 sanity(직선거리 3배) 가드 — 분기/순환 오매칭 2차 방어선
+      expect(body, contains('straightDist * 3'));
+
+      // 동률 제한 없이 tolerance 내 전 정점을 후보로 삼으면 곡선 중간점이
+      // 사라지므로(약 50개 구간) TIE_EPS 제한이 있어야 한다
+      expect(htmlContent, contains('TIE_EPS'));
+    });
+
     test('HTML 파일 크기가 합리적이다 (100KB~500KB)', () {
       final size = htmlContent.length;
       expect(size, greaterThan(100 * 1024)); // 최소 100KB

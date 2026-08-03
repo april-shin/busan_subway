@@ -1130,20 +1130,36 @@ $textElements
     return coords;
   }
 
-  // 좌표 배열에서 (x,y)에 가장 가까운 인덱스 찾기 (tolerance 이내)
-  function findNearestIdx(path, x, y, tolerance) {
-    var bestIdx = -1;
+  // 좌표 배열에서 (x,y)에 가장 가까운 인덱스를 찾되, **동률(±2px)인 정점을 모두**
+  // 반환한다 (tolerance 이내, 없으면 빈 배열).
+  //
+  // ⚠️ "가장 가까운 하나"만 골라선 안 된다. 하나의 SVG path 가 같은 역 좌표를 두 번
+  // 지나는 경우가 있다 — 2호선 본선 path 는 신정지선 끝에서 시작해 신도림(index 6)
+  // 에서 순환선에 진입한 뒤 한 바퀴 돌아 다시 신도림(마지막 index 72)에서 끝난다.
+  // 이때 대림(69)↔신도림 구간이 앞쪽 신도림(6)과 짝지어지면 slice 가 순환선을
+  // 거꾸로 한 바퀴 감싸(64개 정점, 3316px) 하이라이트가 2호선 전체에 칠해진다.
+  // 후보를 모두 모은 뒤 호출부에서 인덱스 거리가 최소인 조합을 고른다.
+  //
+  // 동률(TIE_EPS)로 제한하는 이유: tolerance(20px) 이내 정점을 전부 후보로 삼으면
+  // 역 근처 곡선 꺾임점까지 후보가 되어, 최소 인덱스 거리 조합이 실제 구간보다
+  // 짧은 인접 정점 쌍으로 잡히고 곡선 중간점이 사라진다(약 50개 구간 소실).
+  function findNearestIdxs(path, x, y, tolerance) {
+    var TIE_EPS = 4; // 거리제곱 허용오차 = 2px
     var bestDist = tolerance * tolerance;
     for (var i = 0; i < path.length; i++) {
       var dx = path[i].x - x;
       var dy = path[i].y - y;
       var d2 = dx * dx + dy * dy;
-      if (d2 < bestDist) {
-        bestDist = d2;
-        bestIdx = i;
-      }
+      if (d2 < bestDist) bestDist = d2;
     }
-    return bestIdx;
+    if (bestDist >= tolerance * tolerance) return [];
+    var idxs = [];
+    for (var i = 0; i < path.length; i++) {
+      var dx2 = path[i].x - x;
+      var dy2 = path[i].y - y;
+      if (dx2 * dx2 + dy2 * dy2 <= bestDist + TIE_EPS) idxs.push(i);
+    }
+    return idxs;
   }
 
   // 모든 connection의 waypoints를 사전 계산하여 waypointIndex에 저장
@@ -1181,14 +1197,46 @@ $textElements
         if (!paths) continue;
         for (var pi = 0; pi < paths.length && !found; pi++) {
           var path = paths[pi];
-          var fi = findNearestIdx(path, from.svgX, from.svgY, TOLERANCE);
-          var ti = findNearestIdx(path, to.svgX, to.svgY, TOLERANCE);
-          if (fi < 0 || ti < 0 || fi === ti) continue;
+          var fIdxs = findNearestIdxs(path, from.svgX, from.svgY, TOLERANCE);
+          var tIdxs = findNearestIdxs(path, to.svgX, to.svgY, TOLERANCE);
+          if (fIdxs.length === 0 || tIdxs.length === 0) continue;
+
+          // 인접 두 역이므로 path 상에서도 가장 가까운 조합이 실제 구간이다.
+          // (같은 역이 두 번 등장하는 순환선 대응 — findNearestIdxs 주석 참조)
+          var fi = -1;
+          var ti = -1;
+          var bestSpan = Infinity;
+          for (var fj = 0; fj < fIdxs.length; fj++) {
+            for (var tj = 0; tj < tIdxs.length; tj++) {
+              var span = Math.abs(fIdxs[fj] - tIdxs[tj]);
+              if (span > 0 && span < bestSpan) {
+                bestSpan = span;
+                fi = fIdxs[fj];
+                ti = tIdxs[tj];
+              }
+            }
+          }
+          if (fi < 0) continue;
 
           var lo = Math.min(fi, ti);
           var hi = Math.max(fi, ti);
           var segment = path.slice(lo, hi + 1);
           if (fi > ti) segment.reverse();
+
+          // Sanity: slice 총 길이가 두 역 직선거리의 3배를 넘으면 분기/지선
+          // 오매칭으로 보고 탈락(다른 path 를 계속 탐색). 저장하지 않으면
+          // 렌더러가 직선 폴백으로 그리므로 최소한 엉뚱한 곳을 칠하지 않는다.
+          // (열차 스냅 경로 getSnappedSlice 와 동일 기준)
+          var straightDist = Math.sqrt(
+              (to.svgX - from.svgX) * (to.svgX - from.svgX) +
+              (to.svgY - from.svgY) * (to.svgY - from.svgY));
+          var sliceLen = 0;
+          for (var k = 0; k < segment.length - 1; k++) {
+            var sdx = segment[k + 1].x - segment[k].x;
+            var sdy = segment[k + 1].y - segment[k].y;
+            sliceLen += Math.sqrt(sdx * sdx + sdy * sdy);
+          }
+          if (straightDist > 0 && sliceLen > straightDist * 3) continue;
 
           // 중간점이 있는 경우만 저장 (2개 = 직선이므로 불필요)
           if (segment.length > 2) {
