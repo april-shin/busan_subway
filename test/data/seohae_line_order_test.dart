@@ -52,6 +52,7 @@ const _seohaeOrder = <(String, String)>[
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late List<Station> allStations;
   late Map<String, Station> byId;
   late List<String> seohaeFileOrder;
   late List<String> seohaeLineIds;
@@ -60,6 +61,7 @@ void main() {
 
   setUpAll(() async {
     final stations = await LocalDataSource().loadStations();
+    allStations = stations;
     seohaeFileOrder = [
       for (final s in stations)
         if (s.lineId == '서해') s.id,
@@ -106,10 +108,10 @@ void main() {
       expect(seohaeLineIds, [for (final (id, _) in _seohaeOrder) id]);
     });
 
-    test('신설 역의 좌표가 동명 타노선 엔트리와 일치한다', () async {
+    test('신설 역의 좌표가 동명 타노선 엔트리와 일치한다', () {
       // 환승역 관례: 동명 엔트리는 svg 좌표를 그대로 공유한다(김포공항 5/9/공항철도/
       // 김포골드/서해 참조). 좌표가 어긋나면 지도에서 유령 마커가 생긴다.
-      final all = await LocalDataSource().loadStations();
+      final all = allStations;
       const sources = <String, (String, String)>{
         'H13': ('일산', '경의중앙'),
         'H14': ('풍산', '경의중앙'),
@@ -153,12 +155,29 @@ void main() {
           reason: '서해 비환승 엣지는 정확히 19개여야 한다');
     });
 
-    test('분해된 구간의 합이 기존 합산값을 보존한다', () {
-      int sec(String key) => seohaeLocal[key]!.travelTimeSeconds;
-      // 원종↔소새울 570s → 원종-부천종합운동장-소사-소새울
-      expect(sec('H01|H18') + sec('H18|H19') + sec('H19|H02'), 570);
-      // 선부↔시우 360s → 선부-초지-시우
-      expect(sec('H09|H20') + sec('H20|H10'), 360);
+    test('신설·분해 구간 소요시간이 시간표 실측 중앙값이다 (dwell 규약 가드)', () {
+      // `dart run tool/compute_travel_times.dart --line=서해` 산출값(순수 주행,
+      // dwell 제외). 재실행이 이 값을 재현해야 한다 — 수기 추정치나 dwell 포함
+      // 값이 다시 들어오면 여기서 잡힌다.
+      const measured = <String, int>{
+        'H13|H14': 120, // 일산↔풍산
+        'H14|H15': 120, // 풍산↔백마
+        'H15|H16': 330, // 백마↔대곡
+        'H16|H17': 150, // 대곡↔능곡
+        'H17|H12': 540, // 능곡↔김포공항 (한강 하저터널 — 서해선 최장 구간)
+        'H12|H01': 270, // 김포공항↔원종
+        'H01|H18': 150, // 원종↔부천종합운동장
+        'H18|H19': 210, // 부천종합운동장↔소사
+        'H19|H02': 180, // 소사↔소새울
+        'H09|H20': 180, // 선부↔초지
+        'H20|H10': 120, // 초지↔시우
+      };
+      measured.forEach((key, expected) {
+        final c = seohaeLocal[key];
+        expect(c, isNotNull, reason: '$key 연결이 없다');
+        expect(c!.travelTimeSeconds, expected,
+            reason: '$key 는 시간표 실측 중앙값 $expected초여야 한다');
+      });
     });
 
     test('김포공항 이북 신설 구간이 연결되어 있다 (제보 재현 가드)', () {

@@ -4995,21 +4995,21 @@
     "fromStationId": "H15",
     "toStationId": "H16",
     "lineId": "서해",
-    "travelTimeSeconds": 240,
+    "travelTimeSeconds": 330,
     "isTransfer": false
   },
   {
     "fromStationId": "H16",
     "toStationId": "H17",
     "lineId": "서해",
-    "travelTimeSeconds": 180,
+    "travelTimeSeconds": 150,
     "isTransfer": false
   },
   {
     "fromStationId": "H17",
     "toStationId": "H12",
     "lineId": "서해",
-    "travelTimeSeconds": 420,
+    "travelTimeSeconds": 540,
     "isTransfer": false
   },
   {
@@ -5030,7 +5030,7 @@
     "fromStationId": "H19",
     "toStationId": "H02",
     "lineId": "서해",
-    "travelTimeSeconds": 210,
+    "travelTimeSeconds": 180,
     "isTransfer": false
   },
   {
@@ -5044,7 +5044,7 @@
     "fromStationId": "H20",
     "toStationId": "H10",
     "lineId": "서해",
-    "travelTimeSeconds": 180,
+    "travelTimeSeconds": 120,
     "isTransfer": false
   },
   {
@@ -5387,7 +5387,7 @@
     "fromStationId": "H12",
     "toStationId": "H01",
     "lineId": "서해",
-    "travelTimeSeconds": 240,
+    "travelTimeSeconds": 270,
     "isTransfer": false
   },
   {
