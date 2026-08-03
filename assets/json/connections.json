@@ -2122,9 +2122,17 @@
   },
   {
     "fromStationId": "606",
-    "toStationId": "607",
+    "toStationId": "601",
     "lineId": "6",
     "travelTimeSeconds": 120,
+    "isTransfer": false,
+    "isOneWay": true
+  },
+  {
+    "fromStationId": "601",
+    "toStationId": "607",
+    "lineId": "6",
+    "travelTimeSeconds": 90,
     "isTransfer": false
   },
   {

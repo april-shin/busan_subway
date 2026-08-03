@@ -64,12 +64,19 @@ class GraphBuilder {
       final fromNodeId = '${connection.fromStationId}_${connection.lineId}';
       final toNodeId = '${connection.toStationId}_${connection.lineId}';
 
-      graph.addBidirectionalEdge(GraphEdge(
+      final edge = GraphEdge(
         fromNodeId: fromNodeId,
         toNodeId: toNodeId,
         lineId: connection.lineId,
         weightSeconds: connection.travelTimeSeconds,
-      ));
+      );
+      // 단선 일방통행(예: 6호선 구산→응암 순환 폐합)은 역방향 edge 를 만들지
+      // 않는다 — 양방향으로 열면 실존하지 않는 역주행 경로가 최단으로 잡힌다.
+      if (connection.isOneWay) {
+        graph.addEdge(edge);
+      } else {
+        graph.addBidirectionalEdge(edge);
+      }
     }
   }
 

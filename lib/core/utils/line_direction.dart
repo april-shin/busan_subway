@@ -42,6 +42,20 @@ bool isDownBetween(String fromId, String toId, String lineId) {
     return _isLine4Down(fromNum, toNum);
   }
 
+  // 6호선 응암 순환 폐합 edge(구산 606 ↔ 응암 601): 2호선 순환 경계(201↔243)와
+  // 같은 사정으로, ID 비교만으로는 방향이 뒤집힌다. 하행(신내 방면) 열차는
+  // 응암→역촌→…→구산→응암 순환을 마저 돌아 새절로 향하므로 구산→응암이
+  // 하행 연속이다. 반전하지 않으면 방향별 인접 리스트(`path_on_line.dart`)에서
+  // 하행 체인이 구산에서 끊겨 순환 구간 ↔ 본선 간 방향 경로가 전부 소실된다
+  // (실시간 열차 아이콘·위치 폴백 도착정보 누락). 회귀 가드:
+  // `test/data/eungam_loop_order_test.dart`.
+  // ⚠ 이 특례는 **인접 edge 쌍 전제**다. 비인접 쌍(예: 605→601)은 일반 규칙을
+  // 타므로, 순환 구간을 가로지르는 비인접 비교를 새로 도입하면 오판할 수 있다.
+  if (baseId == '6') {
+    if (fromNum == 606 && toNum == 601) return true; // 구산→응암 = 하행
+    if (fromNum == 601 && toNum == 606) return false; // 응암→구산 = 상행
+  }
+
   // 번호 순서가 물리 순서와 어긋나는 역은 rank 로 환산한다([_stationRanks]).
   final ranks = _stationRanks[baseId];
   final from = ranks?[fromId] ?? fromNum.toDouble();

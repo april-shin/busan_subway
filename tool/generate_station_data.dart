@@ -1241,6 +1241,40 @@ void main() {
         'isTransfer': false,
       });
     }
+    // Handle 6호선 응암 단선 순환 (구산-응암-새절)
+    // 역 목록이 응암(601)~구산(606) 다음에 새절(607)을 잇달아 나열하므로
+    // 자동 인접 연결이 구산→새절을 만들어 응암을 건너뛴다. 실제 선로는
+    // 구산→응암→새절이다(하행 열차가 응암→역촌→…→구산→응암 순환을 마저
+    // 돌아 새절로 향한다). 고치지 않으면 "연신내→새절" 경로에서 응암이
+    // 빠진다. 회귀 가드: `test/data/eungam_loop_order_test.dart`.
+    if (lineId == '6') {
+      // 구산(606)→새절(607) 잘못된 자동 연결 제거
+      connectionsList.removeWhere((c) =>
+          c['fromStationId'] == '606' &&
+          c['toStationId'] == '607' &&
+          c['lineId'] == '6');
+      // 구산(606)→응암(601) 순환 폐합 + 응암(601)→새절(607) 본선 연결 추가.
+      // 폐합 edge 는 단선 일방통행(isOneWay)이다 — 양방향으로 열면 Dijkstra 가
+      // "응암→구산"을 실존하지 않는 1구간 역주행으로 잡는다.
+      // ⚠ 값은 추정치다 — 6호선 시간표 캐시(`data/timetables/6_*`)가 없어
+      //   실측이 불가능했고, 인근 구간 값과 정합하도록 잡았다. 캐시 확보 시
+      //   `tool/compute_travel_times.dart` 로 재실측할 것.
+      connectionsList.add({
+        'fromStationId': '606',
+        'toStationId': '601',
+        'lineId': '6',
+        'travelTimeSeconds': 120,
+        'isTransfer': false,
+        'isOneWay': true,
+      });
+      connectionsList.add({
+        'fromStationId': '601',
+        'toStationId': '607',
+        'lineId': '6',
+        'travelTimeSeconds': 90,
+        'isTransfer': false,
+      });
+    }
     // Handle Line 2 circular connection + 지선 처리
     if (lineId == '2') {
       // 순환 연결 (충정로→시청)
