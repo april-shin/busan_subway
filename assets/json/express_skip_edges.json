@@ -4,7 +4,7 @@
       "lineId": "9",
       "fromStationId": "902",
       "toStationId": "905",
-      "seconds": 235,
+      "seconds": 205,
       "skippedStationIds": [
         "903",
         "904"
@@ -13,8 +13,18 @@
     {
       "lineId": "9",
       "fromStationId": "905",
+      "toStationId": "902",
+      "seconds": 220,
+      "skippedStationIds": [
+        "904",
+        "903"
+      ]
+    },
+    {
+      "lineId": "9",
+      "fromStationId": "905",
       "toStationId": "907",
-      "seconds": 215,
+      "seconds": 185,
       "skippedStationIds": [
         "906"
       ]
@@ -23,7 +33,7 @@
       "lineId": "9",
       "fromStationId": "907",
       "toStationId": "905",
-      "seconds": 225,
+      "seconds": 195,
       "skippedStationIds": [
         "906"
       ]
@@ -32,7 +42,7 @@
       "lineId": "9",
       "fromStationId": "907",
       "toStationId": "910",
-      "seconds": 250,
+      "seconds": 220,
       "skippedStationIds": [
         "908",
         "909"
@@ -42,7 +52,7 @@
       "lineId": "9",
       "fromStationId": "910",
       "toStationId": "907",
-      "seconds": 245,
+      "seconds": 215,
       "skippedStationIds": [
         "909",
         "908"
@@ -52,7 +62,7 @@
       "lineId": "9",
       "fromStationId": "910",
       "toStationId": "913",
-      "seconds": 260,
+      "seconds": 230,
       "skippedStationIds": [
         "911",
         "912"
@@ -62,7 +72,7 @@
       "lineId": "9",
       "fromStationId": "913",
       "toStationId": "910",
-      "seconds": 260,
+      "seconds": 230,
       "skippedStationIds": [
         "912",
         "911"
@@ -72,7 +82,7 @@
       "lineId": "9",
       "fromStationId": "913",
       "toStationId": "915",
-      "seconds": 215,
+      "seconds": 185,
       "skippedStationIds": [
         "914"
       ]
@@ -81,7 +91,7 @@
       "lineId": "9",
       "fromStationId": "915",
       "toStationId": "913",
-      "seconds": 220,
+      "seconds": 190,
       "skippedStationIds": [
         "914"
       ]
@@ -90,7 +100,7 @@
       "lineId": "9",
       "fromStationId": "915",
       "toStationId": "917",
-      "seconds": 195,
+      "seconds": 165,
       "skippedStationIds": [
         "916"
       ]
@@ -99,7 +109,7 @@
       "lineId": "9",
       "fromStationId": "917",
       "toStationId": "915",
-      "seconds": 190,
+      "seconds": 160,
       "skippedStationIds": [
         "916"
       ]
@@ -108,7 +118,7 @@
       "lineId": "9",
       "fromStationId": "917",
       "toStationId": "920",
-      "seconds": 280,
+      "seconds": 250,
       "skippedStationIds": [
         "918",
         "919"
@@ -118,7 +128,7 @@
       "lineId": "9",
       "fromStationId": "920",
       "toStationId": "917",
-      "seconds": 280,
+      "seconds": 250,
       "skippedStationIds": [
         "919",
         "918"
@@ -128,7 +138,7 @@
       "lineId": "9",
       "fromStationId": "920",
       "toStationId": "923",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": [
         "921",
         "922"
@@ -138,7 +148,7 @@
       "lineId": "9",
       "fromStationId": "923",
       "toStationId": "920",
-      "seconds": 215,
+      "seconds": 185,
       "skippedStationIds": [
         "922",
         "921"
@@ -148,7 +158,7 @@
       "lineId": "9",
       "fromStationId": "923",
       "toStationId": "925",
-      "seconds": 190,
+      "seconds": 160,
       "skippedStationIds": [
         "924"
       ]
@@ -157,7 +167,7 @@
       "lineId": "9",
       "fromStationId": "925",
       "toStationId": "923",
-      "seconds": 195,
+      "seconds": 165,
       "skippedStationIds": [
         "924"
       ]
@@ -166,7 +176,7 @@
       "lineId": "9",
       "fromStationId": "925",
       "toStationId": "927",
-      "seconds": 165,
+      "seconds": 135,
       "skippedStationIds": [
         "926"
       ]
@@ -175,7 +185,7 @@
       "lineId": "9",
       "fromStationId": "927",
       "toStationId": "925",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": [
         "926"
       ]
@@ -184,7 +194,7 @@
       "lineId": "9",
       "fromStationId": "927",
       "toStationId": "929",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": [
         "928"
       ]
@@ -193,7 +203,7 @@
       "lineId": "9",
       "fromStationId": "929",
       "toStationId": "927",
-      "seconds": 165,
+      "seconds": 135,
       "skippedStationIds": [
         "928"
       ]
@@ -202,21 +212,21 @@
       "lineId": "9",
       "fromStationId": "929",
       "toStationId": "930",
-      "seconds": 155,
+      "seconds": 125,
       "skippedStationIds": []
     },
     {
       "lineId": "9",
       "fromStationId": "930",
       "toStationId": "929",
-      "seconds": 145,
+      "seconds": 115,
       "skippedStationIds": []
     },
     {
       "lineId": "9",
       "fromStationId": "930",
       "toStationId": "933",
-      "seconds": 250,
+      "seconds": 220,
       "skippedStationIds": [
         "931",
         "932"
@@ -226,7 +236,7 @@
       "lineId": "9",
       "fromStationId": "933",
       "toStationId": "930",
-      "seconds": 250,
+      "seconds": 220,
       "skippedStationIds": [
         "932",
         "931"
@@ -236,7 +246,7 @@
       "lineId": "9",
       "fromStationId": "933",
       "toStationId": "936",
-      "seconds": 245,
+      "seconds": 215,
       "skippedStationIds": [
         "934",
         "935"
@@ -246,7 +256,7 @@
       "lineId": "9",
       "fromStationId": "936",
       "toStationId": "933",
-      "seconds": 245,
+      "seconds": 215,
       "skippedStationIds": [
         "935",
         "934"
@@ -254,9 +264,18 @@
     },
     {
       "lineId": "9",
+      "fromStationId": "936",
+      "toStationId": "938",
+      "seconds": 215,
+      "skippedStationIds": [
+        "937"
+      ]
+    },
+    {
+      "lineId": "9",
       "fromStationId": "938",
       "toStationId": "936",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": [
         "937"
       ]
@@ -267,14 +286,21 @@
       "lineId": "경춘",
       "fromStationId": "C01",
       "toStationId": "C02",
-      "seconds": 210,
+      "seconds": 180,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "경춘",
+      "fromStationId": "C02",
+      "toStationId": "C01",
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C02",
       "toStationId": "C04",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "C03"
       ]
@@ -283,25 +309,16 @@
       "lineId": "경춘",
       "fromStationId": "C04",
       "toStationId": "C02",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "C03"
       ]
     },
     {
       "lineId": "경춘",
-      "fromStationId": "C04",
-      "toStationId": "C06",
-      "seconds": 210,
-      "skippedStationIds": [
-        "C05"
-      ]
-    },
-    {
-      "lineId": "경춘",
       "fromStationId": "C06",
       "toStationId": "C04",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": [
         "C05"
       ]
@@ -310,63 +327,56 @@
       "lineId": "경춘",
       "fromStationId": "C06",
       "toStationId": "C07",
-      "seconds": 210,
-      "skippedStationIds": []
-    },
-    {
-      "lineId": "경춘",
-      "fromStationId": "C07",
-      "toStationId": "C06",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C07",
       "toStationId": "C08",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C08",
       "toStationId": "C07",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C08",
       "toStationId": "C09",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C09",
       "toStationId": "C08",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C09",
       "toStationId": "C10",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C10",
       "toStationId": "C09",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "경춘",
       "fromStationId": "C10",
       "toStationId": "C12",
-      "seconds": 390,
+      "seconds": 360,
       "skippedStationIds": [
         "C11"
       ]
@@ -375,7 +385,7 @@
       "lineId": "경춘",
       "fromStationId": "C12",
       "toStationId": "C10",
-      "seconds": 390,
+      "seconds": 360,
       "skippedStationIds": [
         "C11"
       ]
@@ -384,7 +394,7 @@
       "lineId": "경춘",
       "fromStationId": "C12",
       "toStationId": "C14",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "C13"
       ]
@@ -393,7 +403,7 @@
       "lineId": "경춘",
       "fromStationId": "C14",
       "toStationId": "C12",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "C13"
       ]
@@ -402,7 +412,7 @@
       "lineId": "경춘",
       "fromStationId": "C14",
       "toStationId": "C16",
-      "seconds": 690,
+      "seconds": 660,
       "skippedStationIds": [
         "C15"
       ]
@@ -411,7 +421,7 @@
       "lineId": "경춘",
       "fromStationId": "C16",
       "toStationId": "C14",
-      "seconds": 690,
+      "seconds": 660,
       "skippedStationIds": [
         "C15"
       ]
@@ -420,7 +430,7 @@
       "lineId": "경춘",
       "fromStationId": "C16",
       "toStationId": "C18",
-      "seconds": 540,
+      "seconds": 510,
       "skippedStationIds": [
         "C17"
       ]
@@ -429,7 +439,7 @@
       "lineId": "경춘",
       "fromStationId": "C18",
       "toStationId": "C16",
-      "seconds": 540,
+      "seconds": 510,
       "skippedStationIds": [
         "C17"
       ]
@@ -438,7 +448,7 @@
       "lineId": "경춘",
       "fromStationId": "C18",
       "toStationId": "C21",
-      "seconds": 630,
+      "seconds": 600,
       "skippedStationIds": [
         "C19",
         "C20"
@@ -448,7 +458,7 @@
       "lineId": "경춘",
       "fromStationId": "C21",
       "toStationId": "C18",
-      "seconds": 630,
+      "seconds": 600,
       "skippedStationIds": [
         "C20",
         "C19"
@@ -458,7 +468,7 @@
       "lineId": "경춘",
       "fromStationId": "C21",
       "toStationId": "C23",
-      "seconds": 630,
+      "seconds": 600,
       "skippedStationIds": [
         "C22"
       ]
@@ -467,16 +477,23 @@
       "lineId": "경춘",
       "fromStationId": "C23",
       "toStationId": "C21",
-      "seconds": 630,
+      "seconds": 600,
       "skippedStationIds": [
         "C22"
       ]
     },
     {
       "lineId": "경춘",
+      "fromStationId": "C23",
+      "toStationId": "C24",
+      "seconds": 180,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "경춘",
       "fromStationId": "C24",
       "toStationId": "C23",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     }
   ],
@@ -485,322 +502,329 @@
       "lineId": "수인분당",
       "fromStationId": "B02",
       "toStationId": "B03",
-      "seconds": 210,
+      "seconds": 180,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B03",
+      "toStationId": "B02",
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B03",
       "toStationId": "B04",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B04",
       "toStationId": "B03",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B04",
       "toStationId": "B05",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B05",
       "toStationId": "B04",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B05",
       "toStationId": "B06",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B06",
       "toStationId": "B05",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B06",
       "toStationId": "B07",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B07",
       "toStationId": "B06",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B07",
       "toStationId": "B08",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B08",
       "toStationId": "B07",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B08",
       "toStationId": "B09",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B09",
       "toStationId": "B08",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B09",
       "toStationId": "B10",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B10",
       "toStationId": "B09",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B10",
       "toStationId": "B11",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B11",
       "toStationId": "B10",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B11",
       "toStationId": "B12",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B12",
       "toStationId": "B11",
-      "seconds": 90,
+      "seconds": 60,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B12",
       "toStationId": "B13",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B13",
       "toStationId": "B12",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B13",
       "toStationId": "B14",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B14",
       "toStationId": "B13",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B14",
       "toStationId": "B15",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B15",
       "toStationId": "B14",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B15",
       "toStationId": "B16",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B16",
       "toStationId": "B15",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B16",
       "toStationId": "B17",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B17",
       "toStationId": "B16",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B17",
       "toStationId": "B18",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B18",
       "toStationId": "B17",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B18",
       "toStationId": "B19",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B19",
       "toStationId": "B18",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B19",
       "toStationId": "B20",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B20",
       "toStationId": "B19",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B20",
       "toStationId": "B21",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B21",
       "toStationId": "B20",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B21",
       "toStationId": "B22",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B22",
       "toStationId": "B21",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B22",
       "toStationId": "B23",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B23",
       "toStationId": "B22",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B23",
       "toStationId": "B24",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B24",
       "toStationId": "B23",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B24",
       "toStationId": "B25",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B25",
       "toStationId": "B24",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B25",
       "toStationId": "B29",
-      "seconds": 390,
+      "seconds": 360,
       "skippedStationIds": [
         "B26",
         "B27",
@@ -811,7 +835,7 @@
       "lineId": "수인분당",
       "fromStationId": "B29",
       "toStationId": "B25",
-      "seconds": 360,
+      "seconds": 330,
       "skippedStationIds": [
         "B28",
         "B27",
@@ -822,7 +846,7 @@
       "lineId": "수인분당",
       "fromStationId": "B29",
       "toStationId": "B33",
-      "seconds": 480,
+      "seconds": 450,
       "skippedStationIds": [
         "B30",
         "B31",
@@ -833,7 +857,7 @@
       "lineId": "수인분당",
       "fromStationId": "B33",
       "toStationId": "B29",
-      "seconds": 480,
+      "seconds": 450,
       "skippedStationIds": [
         "B32",
         "B31",
@@ -844,7 +868,7 @@
       "lineId": "수인분당",
       "fromStationId": "B33",
       "toStationId": "B35",
-      "seconds": 270,
+      "seconds": 240,
       "skippedStationIds": [
         "B34"
       ]
@@ -853,7 +877,7 @@
       "lineId": "수인분당",
       "fromStationId": "B35",
       "toStationId": "B33",
-      "seconds": 270,
+      "seconds": 240,
       "skippedStationIds": [
         "B34"
       ]
@@ -862,7 +886,7 @@
       "lineId": "수인분당",
       "fromStationId": "B35",
       "toStationId": "B37",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": [
         "B36"
       ]
@@ -871,23 +895,30 @@
       "lineId": "수인분당",
       "fromStationId": "B37",
       "toStationId": "B35",
-      "seconds": 270,
+      "seconds": 240,
       "skippedStationIds": [
         "B36"
       ]
     },
     {
       "lineId": "수인분당",
+      "fromStationId": "B37",
+      "toStationId": "B38",
+      "seconds": 210,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "수인분당",
       "fromStationId": "B38",
       "toStationId": "B37",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B50",
       "toStationId": "B53",
-      "seconds": 330,
+      "seconds": 300,
       "skippedStationIds": [
         "B51",
         "B52"
@@ -896,15 +927,35 @@
     {
       "lineId": "수인분당",
       "fromStationId": "B53",
+      "toStationId": "B50",
+      "seconds": 300,
+      "skippedStationIds": [
+        "B52",
+        "B51"
+      ]
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B53",
       "toStationId": "B58",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B54",
+      "toStationId": "B57",
+      "seconds": 270,
+      "skippedStationIds": [
+        "B55",
+        "B56"
+      ]
+    },
+    {
+      "lineId": "수인분당",
+      "fromStationId": "B54",
       "toStationId": "B61",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "B62"
       ]
@@ -913,7 +964,7 @@
       "lineId": "수인분당",
       "fromStationId": "B57",
       "toStationId": "B54",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "B56",
         "B55"
@@ -923,14 +974,14 @@
       "lineId": "수인분당",
       "fromStationId": "B58",
       "toStationId": "B53",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "B58",
       "toStationId": "K266",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": [
         "B59",
         "B60"
@@ -940,7 +991,7 @@
       "lineId": "수인분당",
       "fromStationId": "B61",
       "toStationId": "B54",
-      "seconds": 300,
+      "seconds": 270,
       "skippedStationIds": [
         "B62"
       ]
@@ -949,14 +1000,14 @@
       "lineId": "수인분당",
       "fromStationId": "B61",
       "toStationId": "K266",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     },
     {
       "lineId": "수인분당",
       "fromStationId": "K266",
       "toStationId": "B58",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": [
         "B60",
         "B59"
@@ -966,7 +1017,7 @@
       "lineId": "수인분당",
       "fromStationId": "K266",
       "toStationId": "B61",
-      "seconds": 120,
+      "seconds": 90,
       "skippedStationIds": []
     }
   ],
@@ -984,14 +1035,14 @@
       "lineId": "1",
       "fromStationId": "136",
       "toStationId": "137",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "137",
       "toStationId": "140",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": [
         "138",
         "139"
@@ -1001,7 +1052,7 @@
       "lineId": "1",
       "fromStationId": "140",
       "toStationId": "142",
-      "seconds": 210,
+      "seconds": 168,
       "skippedStationIds": [
         "141"
       ]
@@ -1010,7 +1061,7 @@
       "lineId": "1",
       "fromStationId": "140",
       "toStationId": "167",
-      "seconds": 540,
+      "seconds": 480,
       "skippedStationIds": [
         "141",
         "142",
@@ -1022,7 +1073,7 @@
       "lineId": "1",
       "fromStationId": "142",
       "toStationId": "149",
-      "seconds": 693,
+      "seconds": 546,
       "skippedStationIds": [
         "143",
         "144",
@@ -1036,7 +1087,7 @@
       "lineId": "1",
       "fromStationId": "149",
       "toStationId": "151",
-      "seconds": 189,
+      "seconds": 147,
       "skippedStationIds": [
         "150"
       ]
@@ -1045,7 +1096,7 @@
       "lineId": "1",
       "fromStationId": "151",
       "toStationId": "153",
-      "seconds": 189,
+      "seconds": 147,
       "skippedStationIds": [
         "152"
       ]
@@ -1054,35 +1105,35 @@
       "lineId": "1",
       "fromStationId": "153",
       "toStationId": "154",
-      "seconds": 126,
+      "seconds": 84,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "154",
       "toStationId": "155",
-      "seconds": 105,
+      "seconds": 84,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "155",
       "toStationId": "156",
-      "seconds": 105,
+      "seconds": 84,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "156",
       "toStationId": "157",
-      "seconds": 105,
+      "seconds": 63,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "157",
       "toStationId": "159",
-      "seconds": 168,
+      "seconds": 126,
       "skippedStationIds": [
         "158"
       ]
@@ -1091,7 +1142,7 @@
       "lineId": "1",
       "fromStationId": "159",
       "toStationId": "161",
-      "seconds": 168,
+      "seconds": 126,
       "skippedStationIds": [
         "160"
       ]
@@ -1100,7 +1151,7 @@
       "lineId": "1",
       "fromStationId": "167",
       "toStationId": "170",
-      "seconds": 360,
+      "seconds": 330,
       "skippedStationIds": [
         "168",
         "169"
@@ -1110,7 +1161,7 @@
       "lineId": "1",
       "fromStationId": "170",
       "toStationId": "172",
-      "seconds": 360,
+      "seconds": 300,
       "skippedStationIds": [
         "171",
         "1715"
@@ -1120,7 +1171,7 @@
       "lineId": "1",
       "fromStationId": "172",
       "toStationId": "174",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": [
         "173"
       ]
@@ -1129,70 +1180,70 @@
       "lineId": "1",
       "fromStationId": "174",
       "toStationId": "175",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "175",
       "toStationId": "176",
-      "seconds": 180,
+      "seconds": 150,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "176",
       "toStationId": "177",
-      "seconds": 120,
+      "seconds": 150,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "177",
       "toStationId": "178",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "178",
       "toStationId": "179",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "179",
       "toStationId": "181",
-      "seconds": 180,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "181",
       "toStationId": "182",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "182",
       "toStationId": "183",
-      "seconds": 150,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "183",
       "toStationId": "184",
-      "seconds": 210,
+      "seconds": 180,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "184",
       "toStationId": "185",
-      "seconds": 150,
+      "seconds": 120,
       "skippedStationIds": []
     },
     {
@@ -1213,28 +1264,28 @@
       "lineId": "1",
       "fromStationId": "187",
       "toStationId": "188",
-      "seconds": 210,
+      "seconds": 240,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "188",
       "toStationId": "189",
-      "seconds": 420,
+      "seconds": 390,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "189",
       "toStationId": "190",
-      "seconds": 240,
+      "seconds": 210,
       "skippedStationIds": []
     },
     {
       "lineId": "1",
       "fromStationId": "190",
       "toStationId": "191",
-      "seconds": 210,
+      "seconds": 240,
       "skippedStationIds": []
     },
     {

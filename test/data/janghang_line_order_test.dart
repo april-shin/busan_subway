@@ -4,7 +4,7 @@
 // 198=탕정) 인접 관계가 **아산-배방-온양온천-탕정-신창** 으로 잘못 잡혀 있었다.
 // 증상:
 //   1) 경로 탐색이 실재하지 않는 인접을 따라가 아산~신창 소요가 1200s 로 계산됨
-//      (실측 960s).
+//      (실측 840s, dwell 제외).
 //   2) 탕정→신창이 인접으로 잡혀 `travelTimeSeconds=60` 이라는 값이 굳었다.
 //      실측은 780s 인데 `tool/compute_travel_times.dart` 의 600s 상한(종착/회차
 //      제외용)에 걸려 **자동 교정조차 되지 않는** 상태였다.
@@ -42,11 +42,14 @@ const _janghangOrder = <(String, String)>[
 ];
 
 /// 실측 인접 구간 소요시간(초) — `data/timetables/1_*.json` 출발시각 차 중앙값.
+/// dwell 제외(`다음역 trainArvlTm − 현재역 trainDptreTm`) 실측 — 앱 규약.
+/// 2026-08 dwell 이중 가산 교정 때 30초씩 내려갔다(종전 180/210/270/300 은
+/// dep→dep 측정값이라 다음 역 정차시간이 포함돼 있었다).
 const _segmentSeconds = <String, int>{
-  '195|196': 180, // 아산→탕정
-  '196|197': 210, // 탕정→배방
-  '197|198': 270, // 배방→온양온천
-  '198|199': 300, // 온양온천→신창
+  '195|196': 150, // 아산→탕정
+  '196|197': 180, // 탕정→배방
+  '197|198': 240, // 배방→온양온천
+  '198|199': 270, // 온양온천→신창
 };
 
 void main() {
@@ -166,7 +169,7 @@ void main() {
       }
     });
 
-    test('구간 소요시간이 실측값이고, 아산~신창 총합은 960초다', () {
+    test('구간 소요시간이 실측값이고, 아산~신창 총합은 840초다', () {
       var total = 0;
       _segmentSeconds.forEach((key, expected) {
         final c = line1Local[key];
@@ -175,11 +178,11 @@ void main() {
           c!.travelTimeSeconds,
           expected,
           reason: '$key 소요시간이 실측과 다르다. connections.json 을 손으로 고쳤다면 '
-              'dart run tool/compute_travel_times.dart --line=1 로 재산출할 것.',
+              'dart run tool/compute_travel_times.dart --line=1 로 재산출할 것 (arvl 규약).',
         );
         total += c.travelTimeSeconds;
       });
-      expect(total, 960, reason: '종전 오배정 상태의 합은 1200초였다');
+      expect(total, 840, reason: '종전 오배정 상태의 합은 1200초(dep→dep 로도 960초)였다');
     });
   });
 }

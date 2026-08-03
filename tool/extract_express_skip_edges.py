@@ -88,6 +88,12 @@ _MIN_FREQUENCY = {'경춘': 2}
 # `_CURATED_MANUAL_SECONDS` 로 고정한다.
 MANUAL_EXPRESS_RATIO = 0.7
 
+# 완행 상한 계산에 쓰는 역당 정차시간(초) — 앱의 `dwellTimeSeconds` 와 동일.
+# edge 값이 순수 주행(dwell 제외) 규약으로 바뀌면서(2026-08), "급행 ≤ 완행"
+# 불변식의 완행 쪽은 `주행합 + 통과역 수 × dwell` 이 됐다. 주행합만으로 누르면
+# 통과역 1개당 30초씩 과도하게 깎아 급행이 실측보다 빨라진다.
+DWELL_SECONDS = 30
+
 # 수동 매핑 skip edge 의 `seconds` 실측 고정값 — 재생성 안전장치.
 #
 # 배경: 과거 `assets/json/express_skip_edges.json` 이 생성기 출력과 어긋난
@@ -99,24 +105,20 @@ MANUAL_EXPRESS_RATIO = 0.7
 #
 # 키 형식: `{lineId}_{fromStationId}_{toStationId}` — 방향 무관(역순도 매칭).
 # 값 출처: `data/timetables/1_*.json` (getTrainSch 캐시) 의 실제 급행 편성
-#   K1902·K1904(상행) / K1945(하행) 3편성 구간 소요시간 중앙값.
-#   척도는 `trainDptreTm` → `trainDptreTm`(출발시각 차)다. 종착역은 출발시각이
-#   없으므로 `trainArvlTm` 으로 폴백한다 — 이 폴백을 빠뜨리면 서울역·천안 인접
-#   구간에서 표본이 1~2개로 줄어 중앙값이 틀어진다. 원본 시각이 30초 격자라
-#   값도 30초 배수다.
+#   K1902·K1904(상행) / K1945(하행) 3편성 구간 실측 중앙값(상위 중앙 = 생성기와
+#   같은 규칙). 원본 시각이 30초 격자라 값도 30초 배수다.
 #
-#   ⚠ 이 척도는 connections.json 의 `travelTimeSeconds` 와 **일부 구간에서만**
-#     같다. `tool/compute_travel_times.dart` 로 만든 구간은 같은 dep→dep 이지만,
-#     최근 작업(금정·일산선·경강선·경부선 구로 이남)이 손으로 넣은 구간은
-#     `다음역 trainArvlTm − 현재역 trainDptreTm`(dwell 제외)이라 약 30초 작다.
-#     그래서 급행 seconds 를 완행 합과 비교하는 "급행 ≤ 완행" 클램프는 dwell
-#     제외 구간에서 상한이 조금 타이트해진다. 현재 경부선 corridor 는 여유가
-#     충분하다(영등포→금천구청 540 ≤ 780, 금천구청→안양 360 ≤ 420).
+#   척도는 `다음역 trainArvlTm − 현재역 trainDptreTm`(dwell 제외)로,
+#   connections.json 의 완행 `travelTimeSeconds` 와 **같은 규약**이다(2026-08
+#   dwell 이중 가산 교정 때 함께 전환). 앱이 경로 총시간에 중간역 dwell 을 따로
+#   가산하므로 급행 edge 도 순수 주행시간이어야 완행과의 비교·회계가 정합한다.
+#   ⚠ 급행 정차역 4곳(용산→노량진, 노량진→영등포, 세마→오산대, 진위→송탄)은
+#     3편성 모두 arvl 이 비어 있어 실측 불가 — dep→dep 실측에서 dwell 30초를
+#     뺀 근사값을 쓴다(30초 격자상 오차 0~30초).
 #
 # ⚠ 한계 1 — 표본이 상행 2 + 하행 1 이라 상하행이 갈리는 구간에서는 중앙값이
-#   사실상 상행 값이 된다. 24개 중 14개 구간이 상하행 60초 이상 벌어진다
-#   (최대 90초: 노량진→영등포 하행 150 / 상행 240). skip edge 는 양방향 단일
-#   가중치(`graph_builder.dart` 의 `addBidirectionalEdge`)라 구조적 한계다.
+#   사실상 상행 값이 된다. skip edge 는 양방향 단일 가중치(`graph_builder.dart`
+#   의 `addBidirectionalEdge`)라 구조적 한계다.
 # ⚠ 한계 2 — 이 3편성이 경부선 급행 전체를 대표한다는 보장은 없다. "통과역엔
 #   레코드가 없다"는 판별 신호는 캐시 커버리지에 의존하며, 실제로 경인선에는
 #   같은 신호가 전혀 나타나지 않아(전 편성이 전 역 레코드 보유) 경인선 매핑은
@@ -124,46 +126,32 @@ MANUAL_EXPRESS_RATIO = 0.7
 _CURATED_MANUAL_SECONDS = {
     # --- 1호선 경부선 급행 (통과역: 남영·대방·신길·신도림·구로·가산디지털단지·
     #     독산·석수·관악·명학·금정·당정 = 12개) ---
-    #
-    # ⚠ 구로 이남 역 ID 재배정(2026-08) 반영: 독산 167→166, 금천구청 166→167,
-    #   석수 169→168, 관악 168→169. 종전 결선이 구로→금천구청→독산→관악→석수→안양
-    #   순으로 뒤바뀌어 있었고, 공식 stnNo(P143 독산·P144 금천구청·P145 석수·
-    #   P146 관악)·편성 시각·SVG 좌표·공식 위경도 4중 근거로 정정했다.
-    # ⚠ 같은 작업에서 가산디지털단지 1호선 노드(1425, 공식 stnNo P142)를 신설해
-    #   `영등포→금천구청` 의 통과역이 3개→4개가 됐다. 급행 3편성
-    #   (K1902·K1904·K1945)에 그 역 레코드가 없어 통과역으로 자동 분류된다.
-    #   급행 정차역(영등포·금천구청·안양)은 그대로이므로 아래 seconds 실측값은
-    #   불변이고, 키의 역 ID 와 통과역 배분만 바뀐다.
-    '1_134_136': 270,   # 서울역→용산 (남영 통과). [210, 270, 270] — 하행 210 은
-                        # dep→dep, 상행 270 은 dep→arv(서울역 종착)라 실제 상행
-                        # dep→dep 는 270 이상. 방향차 60초 이상인 구간.
-    '1_136_137': 150,   # 용산→노량진 (인접). 경인선 급행과 공유하는 구간.
-    '1_137_140': 240,   # 노량진→영등포 (대방·신길 통과). 경인선 급행과 공유.
-    '1_140_167': 540,   # 영등포→금천구청 (신도림·구로·가산디지털단지·독산 통과)
-    '1_167_170': 360,   # 금천구청→안양 (석수·관악 통과)
-    '1_170_172': 360,   # 안양→군포 (명학 통과)
-    '1_172_174': 240,   # 군포→의왕 (당정 통과)
+    '1_134_136': 270,   # 서울역→용산 (남영 통과). [270, 270]
+    '1_136_137': 120,   # 용산→노량진 (인접). arvl 결측 — dep→dep 150 − dwell 30.
+    '1_137_140': 210,   # 노량진→영등포 (대방·신길 통과). arvl 결측 — 240 − 30.
+    '1_140_167': 480,   # 영등포→금천구청 (신도림·구로·가산디지털단지·독산 통과).
+                        # [420, 480, 480]
+    '1_167_170': 330,   # 금천구청→안양 (석수·관악 통과). [330, 330, 360]
+    '1_170_172': 300,   # 안양→군포 (명학·금정 통과). [270, 300, 330]
+    '1_172_174': 210,   # 군포→의왕 (당정 통과). [180, 210, 210]
     # 의왕 이남은 급행도 전 역 정차 — 완행보다 정차시간(dwell)만큼만 빠르다.
-    '1_174_175': 210,   # 의왕→성균관대
-    '1_175_176': 180,   # 성균관대→화서
-    '1_176_177': 120,   # 화서→수원
-    '1_177_178': 240,   # 수원→세류. 완행 상한(210)에 걸려 실제 출력은 210 —
-                        # 급행 편성이 수원에서 오래 정차해 중앙값이 완행을 넘음.
-    '1_178_179': 210,   # 세류→병점
-    '1_179_181': 180,   # 병점→세마
-    '1_181_182': 150,   # 세마→오산대
-    '1_182_183': 150,   # 오산대→오산
-    '1_183_184': 210,   # 오산→진위
-    '1_184_185': 150,   # 진위→송탄
-    '1_185_186': 120,   # 송탄→서정리
-    '1_186_187': 210,   # 서정리→평택지제
-    '1_187_188': 210,   # 평택지제→평택
-    '1_188_189': 450,   # 평택→성환. 완행 상한(420)에 걸려 실제 출력은 420 —
-                        # 사유는 수원→세류와 같다.
-    '1_189_190': 240,   # 성환→직산
-    '1_190_191': 210,   # 직산→두정
-    '1_191_192': 240,   # 두정→천안. [240, 240, 270] — 하행 240 은 천안이 종착이라
-                        # trainArvlTm 폴백으로 잡힌 표본.
+    '1_174_175': 180,   # 의왕→성균관대. [180, 180, 210]
+    '1_175_176': 150,   # 성균관대→화서. [150, 150]
+    '1_176_177': 150,   # 화서→수원. [150] — 완행과 동일(150), 클램프 미적용.
+    '1_177_178': 210,   # 수원→세류. [180, 210] — 급행 편성이 수원에서 오래 정차.
+    '1_178_179': 180,   # 세류→병점. [180]
+    '1_179_181': 120,   # 병점→세마. [120, 120]
+    '1_181_182': 120,   # 세마→오산대. arvl 결측 — 150 − 30.
+    '1_182_183': 180,   # 오산대→오산. [180] — 완행합(210) 이내, 클램프 미적용.
+    '1_183_184': 210,   # 오산→진위. [180, 210]
+    '1_184_185': 120,   # 진위→송탄. arvl 결측 — 150 − 30.
+    '1_185_186': 120,   # 송탄→서정리. [120]
+    '1_186_187': 210,   # 서정리→평택지제. [180, 210]
+    '1_187_188': 240,   # 평택지제→평택. [240] — 완행합(240)과 동일, 클램프 미적용.
+    '1_188_189': 420,   # 평택→성환. [360, 420, 420]
+    '1_189_190': 210,   # 성환→직산. [210, 210]
+    '1_190_191': 240,   # 직산→두정. [240]
+    '1_191_192': 240,   # 두정→천안. [210, 240, 240]
 }
 
 
@@ -213,7 +201,7 @@ def gather_express_stops(line):
     """같은 노선의 모든 시간표 캐시를 읽어 trainno별 정차 순서를 반환.
 
     Returns:
-        { (trainno, direction): [(stnNm, time_sec), ...] (시간 오름차순) }
+        { (trainno, direction): [(stnNm, sort_sec, arvl_sec, dptre_sec), ...] (시간 오름차순) }
     """
     ts = defaultdict(list)
     for d in ['상행', '하행']:
@@ -238,10 +226,13 @@ def gather_express_stops(line):
                 if item.get('stnNm') != stn_nm:
                     continue
                 tno = item.get('trainno')
-                t = parse_sec(item.get('trainDptreTm', ''))
-                if not tno or t is None:
+                arvl = parse_sec(item.get('trainArvlTm', ''))
+                dptre = parse_sec(item.get('trainDptreTm', ''))
+                # 정렬 키는 dptre 우선(종착역은 dptre 가 없어 arvl 폴백).
+                sort_t = dptre if dptre is not None else arvl
+                if not tno or sort_t is None:
                     continue
-                ts[(tno, d)].append((stn_nm, t))
+                ts[(tno, d)].append((stn_nm, sort_t, arvl, dptre))
     # 같은 trainno+dir 내에서 `(역명, 시각)` 중복 제거.
     # data.go.kr API 응답에서 1호선 같은 노선은 동일 레코드가 5~6번
     # 반복 나타나 시퀀스 길이가 부풀려지는 이슈가 확인됨 (예: K1906 312역 = 실제
@@ -382,14 +373,16 @@ def _apply_manual(
                 seconds = max(60, int(round(local_sum * MANUAL_EXPRESS_RATIO)))
             else:
                 continue
-            # 불변식: 같은 구간에서 급행이 완행보다 느릴 수는 없다.
-            # 실측 표본이 적은 인접 구간(수원→세류, 평택→성환)은 급행 편성이
-            # 주요역에서 오래 정차해 중앙값이 완행을 넘기도 한다. 30초 격자
-            # 해상도 안의 오차이므로 완행 값으로 눌러 라우팅 역전을 막는다.
-            if local_sum > 0 and seconds > local_sum:
-                clamped.append((line, a, b, seconds, local_sum))
-                seconds = local_sum
             skipped = full_path[1:-1]
+            # 불변식: 같은 구간에서 급행이 완행(정차 포함)보다 느릴 수는 없다.
+            # 완행 쪽 총시간 = 순수 주행합 + 통과역 dwell. 실측 표본이 적은
+            # 인접 구간(수원→세류, 평택→성환)은 급행 편성이 주요역에서 오래
+            # 정차해 중앙값이 이 상한을 넘기도 한다. 30초 격자 해상도 안의
+            # 오차이므로 상한으로 눌러 라우팅 역전을 막는다.
+            local_total = local_sum + DWELL_SECONDS * len(skipped)
+            if local_sum > 0 and seconds > local_total:
+                clamped.append((line, a, b, seconds, local_total))
+                seconds = local_total
             line_edges.append({
                 'lineId': line,
                 'fromStationId': a,
@@ -450,17 +443,24 @@ def main():
         for (_tno, _dir), seq in stops.items():
             seen = set()
             trimmed = []
-            for name, t in seq:
-                if name in seen:
+            for rec in seq:
+                if rec[0] in seen:
                     break
-                seen.add(name)
-                trimmed.append((name, t))
+                seen.add(rec[0])
+                trimmed.append(rec)
             for i in range(len(trimmed) - 1):
-                f_stn, f_t = trimmed[i]
-                t_stn, t_t = trimmed[i + 1]
+                f_stn, _f_sort, _f_arvl, f_dptre = trimmed[i]
+                t_stn, _t_sort, t_arvl, _t_dptre = trimmed[i + 1]
                 if f_stn == t_stn:
                     continue
-                gap = t_t - f_t
+                # 순수 주행시간 = 다음역 arvl − 현재역 dptre (dwell 제외).
+                # connections.json 의 완행 값과 같은 규약이어야 "급행 ≤ 완행"
+                # 클램프와 경로 총시간 회계(주행합 + 중간역 dwell)가 정합한다.
+                # arvl 이 없는 표본은 버린다 — dptre 폴백을 두면 dwell 포함
+                # 값이 섞여 중앙값이 오염된다.
+                if t_arvl is None or f_dptre is None:
+                    continue
+                gap = t_arvl - f_dptre
                 # 종착/시발 분리로 인한 비현실적 gap 제외 (30분 초과)
                 if 0 < gap < 1800:
                     pair_times[(f_stn, t_stn)].append(gap)
@@ -511,9 +511,11 @@ def main():
             tt = _travel_time_lookup(line, conns)
             for k in range(len(chain) - 1):
                 local_sum += tt.get((chain[k], chain[k + 1]), 0)
-            if local_sum > 0 and seconds > local_sum:
-                clamped.append((line, f_id, t_id, seconds, local_sum))
-                seconds = local_sum
+            # 완행 총시간 = 순수 주행합 + 통과역 dwell (위 수동 경로와 동일 정책).
+            local_total = local_sum + DWELL_SECONDS * len(skipped_ids)
+            if local_sum > 0 and seconds > local_total:
+                clamped.append((line, f_id, t_id, seconds, local_total))
+                seconds = local_total
             line_edges.append({
                 'lineId': line,
                 'fromStationId': f_id,

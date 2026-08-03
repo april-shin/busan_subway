@@ -3,34 +3,38 @@
 //
 // 알고리즘:
 //   1. 각 (노선, 방향, 역) 시간표를 로드
-//   2. 같은 trainno(열차번호)가 인접 두 역에서 출발하는 시각 차의 **절댓값** = 소요시간
-//      (connections.json은 `from→to` 한쪽 방향만 기록하지만 인접 역간 이동시간은
-//      방향 대칭이므로 상/하행 timetable 둘 다 양방향으로 gap 수집)
+//   2. 같은 trainno(열차번호)에 대해 **다음역 trainArvlTm − 현재역 trainDptreTm**
+//      = 순수 주행시간(dwell 제외). 양방향을 모두 수집한다 — `from→to` 순서의
+//      열차는 `to.arvl − from.dptre`, 역순 열차는 `from.arvl − to.dptre`.
 //   3. 인접 역 쌍별로 다수 열차의 **중앙값**을 사용 (outlier에 강건)
 //   4. connections.json의 travelTimeSeconds 갱신
 //
 // 양방향 수집이 중요한 이유:
-//   - 9호선 흑석→동작 상행만 수집하면 급행 대피 대기시간이 포함된 290s가 잡히지만,
-//     하행(동작→흑석) 155s가 누락되어 비대칭 outlier로 굳어진다.
-//   - `.abs()`로 양방향을 합치면 249건 중앙값이 인근 구간(125s)과 정합한다.
+//   - 9호선 흑석→동작 상행만 수집하면 급행 대피 대기시간이 포함된 값이 잡히지만,
+//     하행(동작→흑석)이 누락되어 비대칭 outlier로 굳어진다.
+//   - 양방향을 합치면 표본이 커져 중앙값이 인근 구간과 정합한다.
 //
-// ⚠ dwell 규약 불일치 (재실행 전 반드시 확인):
-//   이 도구는 출발시각 차(`trainDptreTm` → `trainDptreTm`)를 쓰므로 산출값에
-//   **다음 역의 정차시간(약 30초)이 포함**된다. 반면 앱은 경로 총시간을
-//   "edge 주행합 + 중간역 × dwell"(`lib/core/constants/dwell_time.dart`)로
-//   계산하고, 최근 작업(경강선 48351f4, 금정 1호선)은 dwell 을 제외한
-//   `다음역 trainArvlTm − 현재역 trainDptreTm` 을 규약으로 쓴다.
-//   → 이 도구를 그대로 재실행하면 그렇게 넣은 구간이 dwell 이중 가산 값으로
-//     되돌아간다:
-//       1호선 명학↔금정 120→150, 금정↔군포 180→210
-//       1호선 경부선 구로 이남 6구간 — 구로↔가산디지털단지 240→270,
-//         가산디지털단지↔독산 120→150, 독산↔금천구청 120→150,
-//         금천구청↔석수 150→180, 석수↔관악 120→150, 관악↔안양 150→180
-//       3호선 원당↔원흥 150→180, 원흥↔삼송 120→150, 삼송↔지축 150→180
-//       경강선 전 구간
-//     회귀 가드: `test/data/geumjeong_transfer_test.dart`,
-//     `test/data/gyeongbu_line_order_test.dart`,
-//     `test/data/ilsan_line_order_test.dart`, `test/data/gyeonggang_line_test.dart`.
+// ── dwell 규약 (2026-08 전환) ──────────────────────────────────────────────
+//   edge 값은 **순수 주행시간**(dwell 제외)이다. 앱이 경로 총시간을
+//   "edge 주행합 + 중간역 × dwellTimeSeconds(30)"(`lib/core/constants/
+//   dwell_time.dart`)로 계산하기 때문이다.
+//
+//   과거 이 도구는 출발시각 차(`dptre → dptre`)를 썼는데, 그 값에는 다음 역의
+//   정차시간(~30초)이 포함돼 **전 노선에서 역당 ~30초 dwell 이중 가산**이
+//   발생했다(실측: 전 노선 524개 대조 구간 중 511개가 dptre 기준값, 오이도→수원
+//   47.5분 vs 실제 편성 41.2분 = +6.2분 ≈ 중간역 12개 × 30초). 손으로 넣던
+//   구간(금정·일산선·경강선·장항선·수인선·경부선 구로 이남)만 arvl 규약이라
+//   재실행 시 그 구간들이 dwell 포함 값으로 되돌아가는 충돌도 있었다.
+//   지금은 도구 자체가 arvl 규약이므로 재실행이 손 실측값을 **재현**한다 —
+//   회귀 가드: `test/data/geumjeong_transfer_test.dart`,
+//   `test/data/gyeongbu_line_order_test.dart`, `test/data/ilsan_line_order_test.dart`,
+//   `test/data/janghang_line_order_test.dart`, `test/data/suin_line_order_test.dart`,
+//   `test/data/gyeonggang_line_test.dart`.
+//
+//   arvl 이 없는 표본(기점역 출발 등)은 버린다 — dptre 폴백을 두면 dwell 포함
+//   값이 섞여 규약이 다시 오염된다. 캐시가 없어 갱신 불가한 노선(2호선·경의중앙
+//   등)은 기존 값을 유지하므로 dptre 시절 값이 남는다. 아래 실행 로그의
+//   "미갱신" 카운트로 추적한다.
 //
 // ⛔ 급행은 이 도구가 다루지 않는다 (구 모델 폐지, 2026-08).
 //   과거 이 도구는 `etrnYn=='Y'` 열차의 인접쌍 중앙값을 `expressTimeSeconds` 로
@@ -133,6 +137,7 @@ void main(List<String> args) async {
 
       // 두 방향 모두 시도.
       final localGaps = <int>[];
+      final terminalGaps = <int>[];
       for (final dir in ['상행', '하행']) {
         final fromFile = File('data/timetables/${lid}_${fromName}_$dir.json');
         final toFile = File('data/timetables/${lid}_${toName}_$dir.json');
@@ -142,49 +147,72 @@ void main(List<String> args) async {
         final toList = json.decode(toFile.readAsStringSync()) as List;
         if (fromList.isEmpty || toList.isEmpty) continue;
 
-        // toList를 trainno → time 맵으로
+        // trainno → (arvl, dptre) 맵.
         // [데이터 오염 방어] fetch_timetables.dart 의 substring 검색이 "양재" 로
         // 양재시민의숲까지 끌어와 한 파일에 두 역 데이터가 섞이는 케이스가 있다.
-        // (예: SB_양재_상행.json 에 양재 + 양재시민의숲 326건 → 같은 trainno 의
-        //  양재(06:05:13) / 양재시민의숲(06:02:59) 이 toMap 에서 덮어써져 gap 이
-        //  139s/273s 로 절반씩 오염, median=259s 가 산출됨.)
         // stnNm 이 정확히 대상 역명과 일치하는 레코드만 채택하여 차단.
-        final toMap = <String, int>{};
-        for (final i in toList) {
-          final m = i as Map;
-          if (m['stnNm']?.toString() != toName) continue;
-          final tno = m['trainno']?.toString();
-          final t = _parseSec(m['trainDptreTm']?.toString() ?? '');
-          if (tno != null && t != null) toMap[tno] = t;
+        Map<String, (int?, int?, String, bool)> collect(List list, String name) {
+          final out = <String, (int?, int?, String, bool)>{};
+          for (final i in list) {
+            final m = i as Map;
+            if (m['stnNm']?.toString() != name) continue;
+            final tno = m['trainno']?.toString();
+            if (tno == null) continue;
+            final arvl = _parseSec(m['trainArvlTm']?.toString() ?? '');
+            final dptre = _parseSec(m['trainDptreTm']?.toString() ?? '');
+            final etrn = (m['etrnYn']?.toString() ?? '').trim().toUpperCase();
+            // 이 역이 해당 편성의 **종착역**인가 — 종착 도착시각(arvl)에는 회차
+            // 여유시분이 섞여 실주행보다 크게 잡힌다(의정부 송산→탑석 143s vs
+            // 비종착 방향 실측 32~34s, 4.3배). 종착 도착 표본은 후순위 버킷으로
+            // 내리고, 비종착 표본이 하나도 없는 구간에서만 폴백으로 쓴다.
+            final isTerminal = m['arvlStnNm']?.toString() == name;
+            out[tno] = (arvl, dptre, etrn, isTerminal);
+          }
+          return out;
         }
 
-        // fromList의 각 열차에 대해 to에서의 시각 차이 계산
-        for (final i in fromList) {
-          final m = i as Map;
-          if (m['stnNm']?.toString() != fromName) continue;
-          final tno = m['trainno']?.toString();
-          if (tno == null) continue;
-          final fromTime = _parseSec(m['trainDptreTm']?.toString() ?? '');
-          final toTime = toMap[tno];
-          if (fromTime == null || toTime == null) continue;
-          // 인접 두 역 간 이동시간은 방향 대칭으로 가정하고 절댓값 수집.
-          // connections.json 은 `from→to` 한쪽만 저장하므로 상/하행 timetable 중
-          // `to→from` 순서의 열차(음수 gap)도 유효한 데이터로 포함해야 한다.
-          final gap = (toTime - fromTime).abs();
-          // 0 이하는 동일 시각(이상) 또는 파싱 오류로 간주. 600s 이상은 종착/회차 케이스.
-          if (gap <= 0 || gap >= 600) continue;
+        final fromMap = collect(fromList, fromName);
+        final toMap = collect(toList, toName);
+
+        for (final tno in fromMap.keys) {
+          final f = fromMap[tno];
+          final t = toMap[tno];
+          if (f == null || t == null) continue;
           // `etrnYn=='Y'` 표본은 **버린다**(급행 값을 만들지도 않는다).
           // 완행 median 에 섞지 않는 이유: 기존 travelTimeSeconds 가 Y 제외
           // median 으로 산출된 값이므로, 섞으면 재실행마다 전 노선 완행 시간이
           // 흔들린다. 급행 취급은 위 헤더의 "구 모델 폐지" 항목 참조.
-          final etrn = (m['etrnYn']?.toString() ?? '').trim().toUpperCase();
-          if (etrn == 'Y') {
+          if (f.$3 == 'Y' || t.$3 == 'Y') {
             expressSamplesDropped++;
             continue;
           }
-          // 'N' 또는 빈 값 → 완행
-          localGaps.add(gap);
+          // 순수 주행시간 = 뒤 역 도착 − 앞 역 출발 (dwell 제외).
+          // connections.json 은 `from→to` 한쪽만 저장하지만 이동시간은 방향
+          // 대칭이므로, 같은 timetable 안의 역순 열차(`to→from`)도 수집한다.
+          // dptre→dptre 폴백은 두지 않는다 — dwell 포함 값이 섞이면 규약이
+          // 오염된다(헤더의 "dwell 규약" 참조).
+          for (final (dep, arr, arrTerminal) in [
+            (f.$2, t.$1, t.$4),
+            (t.$2, f.$1, f.$4),
+          ]) {
+            if (dep == null || arr == null) continue;
+            final gap = arr - dep;
+            // 0 이하는 역순 매칭 또는 파싱 오류. 600s 이상은 종착/회차 케이스.
+            if (gap <= 0 || gap >= 600) continue;
+            // 종착 도착 표본은 별도 버킷 — collect() 주석 참조.
+            (arrTerminal ? terminalGaps : localGaps).add(gap);
+          }
         }
+      }
+
+      // 비종착 표본이 없으면 종착 도착 표본으로 폴백한다(광명 셔틀처럼 양쪽이
+      // 전부 종착인 구간). 회차 여유가 섞여 상한 추정이 되지만 값이 없는 것보다
+      // 낫고, 폴백 사용은 아래 로그로 드러난다.
+      final usedTerminalFallback = localGaps.isEmpty && terminalGaps.isNotEmpty;
+      if (usedTerminalFallback) {
+        localGaps.addAll(terminalGaps);
+        print('  [종착 폴백] ${idToName[fromId]}↔${idToName[toId]}: '
+            '비종착 표본 0, 종착 도착 표본 ${terminalGaps.length}개 사용');
       }
 
       if (localGaps.isEmpty) {
@@ -193,7 +221,7 @@ void main(List<String> args) async {
       }
 
       // 완행 갱신
-      if (localGaps.isNotEmpty) {
+      {
         localGaps.sort();
         final median = localGaps[localGaps.length ~/ 2];
         stats.putIfAbsent(lid, () => []).add(median);

@@ -50,11 +50,13 @@ const _suinOrder = <(String, String)>[
 /// 실측 인접 구간 소요시간(초) — `data/timetables/수인분당_*.json` 출발시각 차 중앙값.
 /// (`tool/compute_travel_times.dart --line=수인분당` 산출)
 const _segmentSeconds = <String, int>{
-  'B53|B58': 120, // 소래포구→인천논현
-  'B58|B59': 120, // 인천논현→호구포
-  'B59|B60': 120, // 호구포→남동인더스파크
-  'B60|K266': 120, // 남동인더스파크→원인재
-  'K266|B61': 120, // 원인재→연수
+  // dwell 제외(`다음역 trainArvlTm − 현재역 trainDptreTm`) 실측 — 앱 규약.
+  // 2026-08 dwell 이중 가산 교정 때 120→90 으로 내려갔다(종전 값은 dep→dep).
+  'B53|B58': 90, // 소래포구→인천논현
+  'B58|B59': 90, // 인천논현→호구포
+  'B59|B60': 90, // 호구포→남동인더스파크
+  'B60|K266': 90, // 남동인더스파크→원인재
+  'K266|B61': 90, // 원인재→연수
 };
 
 void main() {
@@ -200,7 +202,7 @@ void main() {
       }
     });
 
-    test('구간 소요시간이 실측값이고, 소래포구~연수 총합은 600초다', () {
+    test('구간 소요시간이 실측값이고, 소래포구~연수 총합은 450초다', () {
       var total = 0;
       _segmentSeconds.forEach((key, expected) {
         final c = suinLocal[key];
@@ -213,7 +215,7 @@ void main() {
         );
         total += c.travelTimeSeconds;
       });
-      expect(total, 600, reason: '종전 오배정 상태의 합은 1080초였다');
+      expect(total, 450, reason: '종전 오배정 상태의 합은 1080초(dep→dep 로도 600초)였다');
     });
 
     test('line_schedules 하행 첫차가 역 순서대로 증가한다', () async {
