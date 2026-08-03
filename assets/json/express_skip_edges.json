@@ -1009,11 +1009,13 @@
     {
       "lineId": "1",
       "fromStationId": "140",
-      "toStationId": "166",
+      "toStationId": "167",
       "seconds": 540,
       "skippedStationIds": [
         "141",
-        "142"
+        "142",
+        "1425",
+        "166"
       ]
     },
     {
@@ -1096,11 +1098,10 @@
     },
     {
       "lineId": "1",
-      "fromStationId": "166",
+      "fromStationId": "167",
       "toStationId": "170",
       "seconds": 360,
       "skippedStationIds": [
-        "167",
         "168",
         "169"
       ]

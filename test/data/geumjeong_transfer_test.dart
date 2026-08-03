@@ -281,22 +281,25 @@ void main() {
     expect(graph.containsNode('${_geumjeong1}_1E'), isFalse);
   });
 
-  test('1호선 금정은 역별 시간표가 없어 배차간격 폴백으로 계산된다 (알려진 공백)', () async {
-    // `line_schedules.json` 의 1호선 t/tE 는 서울교통공사
-    // SearchSTNTimeTableByIDService(`tool/build_metro_timetable.dart`)가 만든다.
-    // 이 생성기는 역 단위 병합이라 안전하지만 `--lines=1` 재실행 시 100개 역의
-    // 시각이 오늘 API 값으로 함께 갱신돼 금정과 무관한 변동이 섞인다. 그래서
-    // 금정 시간표 보강은 별건으로 남겼다. 그 결과 금정에서 1호선을 타는 경로만
-    // "출발 시각 선택"이 비활성이고 배차간격 폴백으로 계산된다(크래시 없음).
+  test('1호선 금정 역별 시간표가 채워져 있다 (알려진 공백 해소)', () async {
+    // 종전 상태: `17e97af` 이 1호선 금정 노드를 신설할 때 `line_schedules.json`
+    // 의 1호선 t/tE 에는 금정 키가 없었다. 생성기(`build_metro_timetable.dart`)를
+    // `--lines=1` 로 돌리면 100개 역이 함께 갱신돼 무관한 변동이 섞일 것을 우려해
+    // 별건으로 남겼고, 그 결과 금정에서 1호선을 타는 경로만 "출발 시각 선택"이
+    // 조용히 비활성이었다.
     //
-    // 후속 작업으로 시간표를 채우면 이 테스트가 실패한다 — 그때 삭제할 것.
+    // 해소: 경부선 구로 이남 순서 교정 작업에서 가산디지털단지 1호선 노드를
+    // 신설하며 같은 생성기를 돌렸고, 스냅샷 대조 결과 **기존 100개 역은 변경
+    // 0건**이고 빠져 있던 금정·가산 두 역만 추가됐다(다른 노선 무변경).
+    // 우려했던 드리프트가 실제로는 없었다.
     final schedules = await TimetableDataSource().loadSchedules();
     final t = schedules['1']!.weekday.stationDepartures;
     expect(t, isNotNull);
     expect(t!.containsKey('171'), isTrue, reason: '명학은 시간표가 있다');
     expect(t.containsKey('172'), isTrue, reason: '군포는 시간표가 있다');
-    expect(t.containsKey(_geumjeong1), isFalse,
-        reason: '금정 시간표가 채워졌다면 이 테스트를 삭제하라');
+    expect(t.containsKey(_geumjeong1), isTrue,
+        reason: '금정 시간표가 사라졌다 — '
+            'dart run tool/build_metro_timetable.dart --lines=1 로 채울 것');
   });
 
   test('금정은 경부선 급행 통과역이라 skip edge 가 함께 건너뛴다', () async {

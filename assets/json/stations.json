@@ -872,20 +872,21 @@
     ]
   },
   {
-    "id": "166",
-    "name": "금천구청",
+    "id": "1425",
+    "name": "가산디지털단지",
     "lineId": "1",
-    "latitude": 37.4568,
-    "longitude": 126.8953,
+    "latitude": 37.4821,
+    "longitude": 126.8825,
     "svgX": 656.0,
-    "svgY": 1128.0,
-    "isTransfer": false,
+    "svgY": 1000.0,
+    "isTransfer": true,
     "transferLines": [
-      "1"
+      "1",
+      "7"
     ]
   },
   {
-    "id": "167",
+    "id": "166",
     "name": "독산",
     "lineId": "1",
     "latitude": 37.4683,
@@ -898,13 +899,26 @@
     ]
   },
   {
-    "id": "168",
-    "name": "관악",
+    "id": "167",
+    "name": "금천구청",
     "lineId": "1",
-    "latitude": 37.4625,
-    "longitude": 126.9072,
-    "svgX": 816.0,
-    "svgY": 1176.0,
+    "latitude": 37.4568,
+    "longitude": 126.8953,
+    "svgX": 656.0,
+    "svgY": 1128.0,
+    "isTransfer": false,
+    "transferLines": [
+      "1"
+    ]
+  },
+  {
+    "id": "168",
+    "name": "석수",
+    "lineId": "1",
+    "latitude": 37.435,
+    "longitude": 126.9023,
+    "svgX": 744.0,
+    "svgY": 1128.0,
     "isTransfer": false,
     "transferLines": [
       "1"
@@ -912,12 +926,12 @@
   },
   {
     "id": "169",
-    "name": "석수",
+    "name": "관악",
     "lineId": "1",
-    "latitude": 37.4492,
-    "longitude": 126.9175,
-    "svgX": 744.0,
-    "svgY": 1128.0,
+    "latitude": 37.4192,
+    "longitude": 126.9087,
+    "svgX": 816.0,
+    "svgY": 1176.0,
     "isTransfer": false,
     "transferLines": [
       "1"
