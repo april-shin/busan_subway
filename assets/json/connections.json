@@ -4978,10 +4978,73 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "H13",
+    "toStationId": "H14",
+    "lineId": "서해",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H14",
+    "toStationId": "H15",
+    "lineId": "서해",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H15",
+    "toStationId": "H16",
+    "lineId": "서해",
+    "travelTimeSeconds": 240,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H16",
+    "toStationId": "H17",
+    "lineId": "서해",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H17",
+    "toStationId": "H12",
+    "lineId": "서해",
+    "travelTimeSeconds": 420,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "H01",
+    "toStationId": "H18",
+    "lineId": "서해",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H18",
+    "toStationId": "H19",
+    "lineId": "서해",
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H19",
     "toStationId": "H02",
     "lineId": "서해",
-    "travelTimeSeconds": 330,
+    "travelTimeSeconds": 210,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H09",
+    "toStationId": "H20",
+    "lineId": "서해",
+    "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "H20",
+    "toStationId": "H10",
+    "lineId": "서해",
+    "travelTimeSeconds": 180,
     "isTransfer": false
   },
   {
@@ -5031,13 +5094,6 @@
     "toStationId": "H09",
     "lineId": "서해",
     "travelTimeSeconds": 150,
-    "isTransfer": false
-  },
-  {
-    "fromStationId": "H09",
-    "toStationId": "H10",
-    "lineId": "서해",
-    "travelTimeSeconds": 390,
     "isTransfer": false
   },
   {

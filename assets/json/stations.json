@@ -682,9 +682,10 @@
     "longitude": 126.7916,
     "svgX": 448.0,
     "svgY": 1012.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "1"
+      "1",
+      "서해"
     ]
   },
   {
@@ -2095,7 +2096,8 @@
     "transferLines": [
       "3",
       "경의중앙",
-      "GTX-A"
+      "GTX-A",
+      "서해"
     ]
   },
   {
@@ -3240,7 +3242,8 @@
     "isTransfer": true,
     "transferLines": [
       "4",
-      "수인분당"
+      "수인분당",
+      "서해"
     ]
   },
   {
@@ -5147,9 +5150,10 @@
     "longitude": 126.7757,
     "svgX": 456.0,
     "svgY": 844.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "7"
+      "7",
+      "서해"
     ]
   },
   {
@@ -6455,9 +6459,10 @@
     "longitude": 126.7696,
     "svgX": 412.0,
     "svgY": 120.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "경의중앙"
+      "경의중앙",
+      "서해"
     ]
   },
   {
@@ -6468,9 +6473,10 @@
     "longitude": 126.7637,
     "svgX": 412.0,
     "svgY": 152.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "경의중앙"
+      "경의중앙",
+      "서해"
     ]
   },
   {
@@ -6481,9 +6487,10 @@
     "longitude": 126.7695,
     "svgX": 412.0,
     "svgY": 184.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "경의중앙"
+      "경의중앙",
+      "서해"
     ]
   },
   {
@@ -6511,7 +6518,8 @@
     "transferLines": [
       "3",
       "경의중앙",
-      "GTX-A"
+      "GTX-A",
+      "서해"
     ]
   },
   {
@@ -6522,9 +6530,10 @@
     "longitude": 126.7738,
     "svgX": 440.0,
     "svgY": 318.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "경의중앙"
+      "경의중앙",
+      "서해"
     ]
   },
   {
@@ -8375,7 +8384,8 @@
     "isTransfer": true,
     "transferLines": [
       "4",
-      "수인분당"
+      "수인분당",
+      "서해"
     ]
   },
   {
@@ -9799,6 +9809,95 @@
     ]
   },
   {
+    "id": "H13",
+    "name": "일산",
+    "lineId": "서해",
+    "latitude": 37.6919,
+    "longitude": 126.7696,
+    "svgX": 412.0,
+    "svgY": 120.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "서해"
+    ]
+  },
+  {
+    "id": "H14",
+    "name": "풍산",
+    "lineId": "서해",
+    "latitude": 37.6822,
+    "longitude": 126.7637,
+    "svgX": 412.0,
+    "svgY": 152.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "서해"
+    ]
+  },
+  {
+    "id": "H15",
+    "name": "백마",
+    "lineId": "서해",
+    "latitude": 37.6721,
+    "longitude": 126.7695,
+    "svgX": 412.0,
+    "svgY": 184.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "서해"
+    ]
+  },
+  {
+    "id": "H16",
+    "name": "대곡",
+    "lineId": "서해",
+    "latitude": 37.6534,
+    "longitude": 126.7486,
+    "svgX": 404.0,
+    "svgY": 256.0,
+    "isTransfer": true,
+    "transferLines": [
+      "3",
+      "경의중앙",
+      "GTX-A",
+      "서해"
+    ]
+  },
+  {
+    "id": "H17",
+    "name": "능곡",
+    "lineId": "서해",
+    "latitude": 37.6499,
+    "longitude": 126.7738,
+    "svgX": 440.0,
+    "svgY": 318.0,
+    "isTransfer": true,
+    "transferLines": [
+      "경의중앙",
+      "서해"
+    ]
+  },
+  {
+    "id": "H12",
+    "name": "김포공항",
+    "lineId": "서해",
+    "latitude": 37.5624,
+    "longitude": 126.8015,
+    "svgX": 328.0,
+    "svgY": 544.0,
+    "isTransfer": true,
+    "transferLines": [
+      "5",
+      "9",
+      "공항철도",
+      "김포골드",
+      "서해"
+    ]
+  },
+  {
     "id": "H01",
     "name": "원종",
     "lineId": "서해",
@@ -9808,6 +9907,34 @@
     "svgY": 736.0,
     "isTransfer": false,
     "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H18",
+    "name": "부천종합운동장",
+    "lineId": "서해",
+    "latitude": 37.4837,
+    "longitude": 126.7757,
+    "svgX": 456.0,
+    "svgY": 844.0,
+    "isTransfer": true,
+    "transferLines": [
+      "7",
+      "서해"
+    ]
+  },
+  {
+    "id": "H19",
+    "name": "소사",
+    "lineId": "서해",
+    "latitude": 37.4827,
+    "longitude": 126.7916,
+    "svgX": 448.0,
+    "svgY": 1012.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
       "서해"
     ]
   },
@@ -9912,6 +10039,21 @@
     "svgY": 1440.0,
     "isTransfer": false,
     "transferLines": [
+      "서해"
+    ]
+  },
+  {
+    "id": "H20",
+    "name": "초지",
+    "lineId": "서해",
+    "latitude": 37.3192,
+    "longitude": 126.8001,
+    "svgX": 408.0,
+    "svgY": 1488.0,
+    "isTransfer": true,
+    "transferLines": [
+      "4",
+      "수인분당",
       "서해"
     ]
   },
@@ -10291,7 +10433,8 @@
     "transferLines": [
       "3",
       "경의중앙",
-      "GTX-A"
+      "GTX-A",
+      "서해"
     ]
   },
   {
@@ -10415,23 +10558,6 @@
     "id": "P10",
     "name": "김포공항",
     "lineId": "김포골드",
-    "latitude": 37.5624,
-    "longitude": 126.8015,
-    "svgX": 328.0,
-    "svgY": 544.0,
-    "isTransfer": true,
-    "transferLines": [
-      "5",
-      "9",
-      "공항철도",
-      "김포골드",
-      "서해"
-    ]
-  },
-  {
-    "id": "H12",
-    "name": "김포공항",
-    "lineId": "서해",
     "latitude": 37.5624,
     "longitude": 126.8015,
     "svgX": 328.0,
