@@ -2125,8 +2125,8 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // realRemaining(초) → 표시 문구.
   function formatArrivalBubbleText(remainingSeconds) {
     var sec = Math.ceil(remainingSeconds);
-    // 10초 미만(9초 이하)은 "곧 도착"으로 표시. 10초부터 "N초 후 도착".
-    if (sec < 10) return '곧 도착';
+    // 30초 이하는 "곧 도착"으로 표시. 31초부터 "N초 후 도착".
+    if (sec <= 30) return '곧 도착';
     if (sec < 60) return sec + '초 후 도착';
     var min = Math.floor(sec / 60);
     var rem = sec % 60;

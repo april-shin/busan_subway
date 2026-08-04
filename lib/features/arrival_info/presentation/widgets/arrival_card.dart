@@ -109,6 +109,12 @@ class ArrivalCard extends StatelessWidget {
   }
 }
 
+/// 이 값 이하의 잔여초는 숫자 대신 "곧 도착"으로 표기한다.
+///
+/// 지도 말풍선의 `formatArrivalBubbleText`(tool/build_map_html.dart)와 같은 값을
+/// 유지해야 두 화면의 표기가 어긋나지 않는다. 한쪽만 바꾸지 말 것.
+const int _imminentTextThresholdSeconds = 30;
+
 class _CountdownBadge extends StatelessWidget {
   final int seconds;
   final bool isEstimated;
@@ -144,7 +150,11 @@ class _CountdownBadge extends StatelessWidget {
 
     final String mainText;
     if (isEstimated) {
+      // 추정값은 "곧 도착"으로 단정하지 않는다 — 약 표기로 불확실성을 유지.
       mainText = '약 ${minutes > 0 ? '$minutes분' : '$remainingSeconds초'}';
+    } else if (seconds <= _imminentTextThresholdSeconds) {
+      // 지도 말풍선(formatArrivalBubbleText)과 같은 임계로 맞춘다.
+      mainText = '곧 도착';
     } else {
       mainText = minutes > 0 ? '$minutes분' : '$remainingSeconds초';
     }

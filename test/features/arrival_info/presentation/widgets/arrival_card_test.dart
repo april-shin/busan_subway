@@ -109,15 +109,58 @@ void main() {
         isEstimated: false,
       )));
 
-      expect(find.text('30초'), findsOneWidget);
+      // 30초 이하는 숫자 대신 "곧 도착"(지도 말풍선과 동일 임계).
+      expect(find.text('곧 도착'), findsOneWidget);
+      expect(find.text('30초'), findsNothing);
       final container = tester.widget<Container>(
         find.ancestor(
-          of: find.text('30초'),
+          of: find.text('곧 도착'),
           matching: find.byType(Container),
         ).first,
       );
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.color, Colors.red[50]);
+    });
+
+    testWidgets('"곧 도착" 경계: 30초는 곧 도착, 31초는 숫자', (WidgetTester tester) async {
+      ArrivalInfo at(int secs) => ArrivalInfo(
+            subwayId: '1002',
+            stationName: '강남',
+            trainLineNm: '2호선 성수행',
+            direction: '상행',
+            arrivalMessage: '역삼 진입',
+            destination: '시청',
+            trainType: '일반',
+            arrivalSeconds: secs,
+            receivedAt: freshReceivedAt(),
+            isEstimated: false,
+          );
+
+      await tester.pumpWidget(buildTestWidget(at(30)));
+      expect(find.text('곧 도착'), findsOneWidget);
+
+      await tester.pumpWidget(buildTestWidget(at(31)));
+      expect(find.text('31초'), findsOneWidget);
+      expect(find.text('곧 도착'), findsNothing);
+    });
+
+    testWidgets('추정값은 30초 이하여도 "곧 도착"으로 단정하지 않는다',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestWidget(ArrivalInfo(
+        subwayId: '1002',
+        stationName: '강남',
+        trainLineNm: '2호선 성수행',
+        direction: '상행',
+        arrivalMessage: '역삼 진입',
+        destination: '시청',
+        trainType: '일반',
+        arrivalSeconds: 20,
+        receivedAt: freshReceivedAt(),
+        isEstimated: true,
+      )));
+
+      expect(find.text('약 20초'), findsOneWidget);
+      expect(find.text('곧 도착'), findsNothing);
     });
 
     testWidgets('추정값 1분 이내: 주황색 배경 (빨간색 아님)', (WidgetTester tester) async {
@@ -186,7 +229,7 @@ void main() {
       expect(find.text('정보 없음'), findsOneWidget);
     });
 
-    testWidgets('도착 상태(0초)는 데이터가 신선하면 "0초"', (WidgetTester tester) async {
+    testWidgets('도착 상태(0초)는 데이터가 신선하면 "곧 도착"', (WidgetTester tester) async {
       await tester.pumpWidget(buildTestWidget(ArrivalInfo(
         subwayId: '1002',
         stationName: '강남',
@@ -200,7 +243,7 @@ void main() {
         isEstimated: false,
       )));
 
-      expect(find.text('0초'), findsOneWidget);
+      expect(find.text('곧 도착'), findsOneWidget);
       expect(find.text('정보 없음'), findsNothing);
     });
 
