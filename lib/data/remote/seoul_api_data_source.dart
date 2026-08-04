@@ -43,8 +43,9 @@ class SeoulApiDataSource {
   /// **엔드포인트:**
   /// `http://swopenapi.seoul.go.kr/api/subway/{apiKey}/json/realtimePosition/0/100/{노선명}`
   ///
-  /// 도착정보 API 가 특정 (역, 노선) 을 제공하지 않을 때의 폴백 경로다
-  /// (예: 5호선 천호). 응답 필드는 [TrainPositionDto] 주석 참조.
+  /// 도착정보 API 가 특정 (역, 노선) 을 제공하지 않을 때의 폴백 경로다(계기는 5호선
+  /// 천호였고 2026-08-04 해소 — [ApiConstants.realtimePositionUrl] 주석 참조).
+  /// 응답 필드는 [TrainPositionDto] 주석 참조.
   ///
   /// 위치 API 로 조회할 수 없는 노선(도착 API 미제공 노선 등)이면 빈 목록을
   /// 반환한다 — 폴백은 없으면 없는 대로 동작해야 하므로 예외를 던지지 않는다.
