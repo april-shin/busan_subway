@@ -388,6 +388,97 @@ void main() {
       );
     });
 
+    test('[원칙 1-a] 표시용 기준쌍은 API 원본이 바뀐 refresh 에서만 채택한다', () {
+      // 회귀 가드: 같은 barvlDt 를 recptnDt 만 바꿔 반복 보고하는 구간(2호선
+      // 사당 정차 등)에서 recptnDt 를 매번 채택하면 말풍선 카운트다운이
+      // "감소 → 원위치" 톱니파를 그린다.
+      final fnStart = htmlContent.indexOf('function adoptDisplayBase');
+      expect(fnStart, greaterThan(0), reason: '표시용 기준쌍 헬퍼가 존재해야 한다');
+      final fnBody = htmlContent.substring(fnStart, fnStart + 400);
+      expect(fnBody, contains('trainState.lastDisplayRawArrival !== raw'));
+
+      // showTrains 의 기존 열차 갱신 경로가 헬퍼를 우회해 직접 대입하면
+      // 그 경로만 다시 톱니파가 된다.
+      expect(
+        htmlContent,
+        isNot(contains('existing.baseReceivedAt = t.receivedAtEpochMs')),
+      );
+
+      // step() 의 말풍선 숫자는 trainData 원본이 아니라 기준쌍을 입력으로 쓴다.
+      // (공백·줄바꿈 변화에 깨지지 않도록 공백을 정규화해 비교한다.)
+      final flat = htmlContent.replaceAll(RegExp(r'\s+'), ' ');
+      expect(
+        flat,
+        contains('remainingFromReceivedAt( '
+            'trainState.baseArrival, trainState.baseReceivedAt'),
+      );
+
+      // 호출부가 지워지면 기준쌍이 생성 시점에 영구 고정돼 원본이 바뀌어도
+      // 갱신되지 않는다. 위 검사들만으로는 그 회귀를 못 잡으므로 호출 횟수를 본다.
+      expect(
+        'adoptDisplayBase(existing, t, nowMs)'.allMatches(htmlContent).length,
+        2,
+        reason: 'showTrains 의 두 갱신 경로가 모두 헬퍼를 거쳐야 한다',
+      );
+    });
+
+    test('[원칙 1-a] 위치 기준쌍은 표시 기준쌍을 그대로 물려받는다', () {
+      // 회귀 가드: 위치가 trainData 원본(매 refresh 갱신되는 recptnDt)을 물면
+      // 표시 카운트다운보다 뒤처져, 말풍선이 "곧 도착"인데 아이콘은 아직 오는
+      // 중인 그림이 된다. 두 도메인이 같은 시각에 0 이 되어야 한다.
+      expect(
+        htmlContent,
+        contains('var receivedAt = (trainState.baseReceivedAt != null)'),
+      );
+      expect(
+        htmlContent,
+        contains('var baseArrival = (trainState.baseArrival != null)'),
+      );
+    });
+
+    test('[원칙 1-a] 도착 이펙트는 표시 숫자만으로 발동한다 (게이트 없음)', () {
+      // 사용자 요구: 남은시간이 줄어 0 이 되면 열차도 그때 도착해야 한다.
+      // API 원본으로 발동을 막는 게이트를 두면 이 동기화가 깨진다.
+      expect(
+        htmlContent,
+        contains(
+            'if (realRemaining <= 0 && atFinalLeg && !trainState.catchingUp)'),
+      );
+      expect(htmlContent, isNot(contains('ARRIVAL_RAW_GATE_SEC')));
+      // 위치 일관성 조건: 아이콘이 목표역까지 온 경우에만 도착시킨다.
+      // (원칙 3 클램프가 중간역에 붙잡고 있는데 숫자만 0 이 되면 엉뚱한 역에서
+      //  사라진다. API 원본 게이트가 아니므로 동기화 요구와 충돌하지 않는다.)
+      expect(
+        htmlContent,
+        contains('var atFinalLeg = (nextIdx === path.length - 1);'),
+      );
+    });
+
+    test('[원칙 1-a] 유령 도착은 원본값이 바뀌면 복구된다', () {
+      // 기준쌍 고정으로 realRemaining 이 0 에 닿으므로, stall 이 잔여초보다 길면
+      // 아직 전역에 있는 열차가 도착 처리될 수 있다. `true` 만 박아두면 API 가
+      // 계속 보고하는 한 정리 루프(!trainNoSet[id])가 못 지워 영구 소실된다.
+      expect(htmlContent, contains('arrivedTrains[trainNo] = { raw: rawAtArrival }'));
+      expect(htmlContent, contains('delete arrivedTrains[t.trainNo];'));
+      // 옛 무조건 skip 이 남아 있으면 복구 경로가 죽는다.
+      expect(htmlContent, isNot(contains('if (arrivedTrains[t.trainNo]) continue;')));
+
+      // 반대로 **정상 도착 열차까지 부활**시키면 안 된다 — 도착 직후 API 가
+      // barvlDt=0 으로 한 번 더 보고하는 것은 흔하며, 부활시키면 단일 점 path
+      // 분기가 도착 이펙트를 재발동해 깜빡임 + 스낵바 중복이 난다.
+      expect(
+        htmlContent,
+        contains('if (arrivedRec.raw === t.arrivalSeconds '
+            '|| t.arrivalSeconds <= 0) continue;'),
+      );
+
+      // 페이드아웃(0.6초) 중 부활 시 조기 continue 분기가 페이드의 animationId 를
+      // 주행으로 오인하면 열차가 소리 없이 사라진다.
+      expect(htmlContent, contains('trainState.arrivalPlaying = true;'));
+      expect(htmlContent, contains('&& !existing.arrivalPlaying'));
+      expect(htmlContent, contains('existing.arrivalPlaying = false;'));
+    });
+
     test('showTrains가 경로 스코프 키를 두 번째 인자로 받는다', () {
       // Flutter 가 activeRouteFilter 를 스코프 키로 넘기고, JS 가 이를 열차
       // 상태에 기록해야 경로 변경으로 무효해진 열차를 즉시 제거할 수 있다.

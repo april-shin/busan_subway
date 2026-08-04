@@ -16,12 +16,14 @@
 ///   원칙을 유지한 채 필요한 최소 변경만 가해야 한다. 원칙 자체를 바꾸려면
 ///   사용자 승인이 필요하다.
 ///   - 원칙 1: 열차는 절대 뒤로 가지 않는다 — 카운트다운 숫자는 API 원본
-///       (recptnDt 기반 realRemaining)을 그대로 쓰므로 재조회 시 늘어날 수
-///       있지만, 아이콘의 경로상 위치는 단조 전진만 허용한다. 위치 역산 입력은
-///       별도 기준쌍(`posBaseArrival`/`posBaseReceivedAt`)을 쓰되 **API 원본
-///       값이 바뀐 refresh 에서만** 보정하고(stale 반복 보고 시 정지 방지),
-///       그 위에 "경로 끝까지 남은 거리" backstop 가드(`minDistToEnd`/
-///       `pathEndKey`)를 둔다. startTrainAnimation 참조.
+///       (recptnDt 기반 realRemaining)을 그대로 쓰므로 재조회로 원본이 바뀌면
+///       늘어날 수 있지만, 아이콘의 경로상 위치는 단조 전진만 허용한다.
+///       표시용·위치용 모두 **API 원본 값이 바뀐 refresh 에서만** 기준쌍을
+///       보정한다 — 표시용은 `baseArrival`/`baseReceivedAt`(`adoptDisplayBase`),
+///       위치용은 `posBaseArrival`/`posBaseReceivedAt`(startTrainAnimation).
+///       원본이 그대로인 반복 보고에서 recptnDt 만 채택하면 표시는 톱니파가,
+///       위치는 무기한 정지가 된다. 위치에는 추가로 "경로 끝까지 남은 거리"
+///       backstop 가드(`minDistToEnd`/`pathEndKey`)를 둔다.
 ///   - 원칙 2: estimateTrainPosition — 뒤에서부터 역산
 ///   - 원칙 3: stationIndices 기반 3-way 클램프 (현재역 ↔ 다음역 안에만 머뭄)
 ///   - 원칙 4: 열차는 순간이동하지 않는다 — 목표가 바뀌어도 현재 위치에서
@@ -1517,13 +1519,42 @@ $textElements
   // 붙박이로 남는다.
   //
   // 같은 (baseArrival, receivedAt) 쌍 안에서는 시간이 지날수록 줄어들기만 한다.
-  // 값 자체는 API 재조회로 새 쌍이 오면 늘어날 수 있으며, 이는 원칙 1 이 허용한다
-  // (뒤로 가면 안 되는 것은 아이콘의 위치).
-  // Dart 측 동일 규칙: arrival_card.dart 의 `_liveSeconds`,
-  // enrich_arrival_info.dart 의 elapsed 하한.
+  // 값 자체는 API 재조회로 **원본이 바뀐** 새 쌍이 오면 늘어날 수 있으며, 이는
+  // 원칙 1 이 허용한다 (뒤로 가면 안 되는 것은 아이콘의 위치).
+  // Dart 측에도 같은 0 하한이 있다: arrival_card.dart 의 `_liveSeconds`,
+  // enrich_arrival_info.dart 의 elapsed 하한. 단 **기준쌍 stale 필터(원칙 1-a)는
+  // 이 파일(지도 말풍선)에만 있다** — arrival_card 는 refresh 마다 `receivedAt`
+  // 을 그대로 채택하므로 도착정보 화면에는 톱니파가 남아 있다(의도적 미적용:
+  // ArrivalInfo 는 refresh 마다 새로 생성돼 열차별 기준쌍을 둘 자리가 없다).
   function remainingFromReceivedAt(baseArrival, receivedAtMs, nowMs) {
     var elapsed = Math.max(0, (nowMs - receivedAtMs) / 1000);
     return Math.max(0, (baseArrival || 0) - elapsed);
+  }
+
+  // [원칙 1-a] **표시용 기준쌍**(baseArrival/baseReceivedAt) 갱신.
+  //
+  // 갱신 규칙은 위치용 기준쌍(posBaseArrival/posBaseReceivedAt)과 동일하다 —
+  // **API 원본 남은시간(arrivalSeconds)이 실제로 바뀐 refresh 에서만** 채택하고,
+  // 값이 그대로면(= 같은 값이 2회 이상 반복 보고된 것) 이전 쌍을 유지해
+  // **recptnDt 의 새 값도 보지 않는다.**
+  //
+  // 이유: 2호선 사당 정차 구간 등에서 API 가 barvlDt 를 고정한 채 recptnDt 만
+  // 갱신해 반복 보고한다(2026-08-04 실측: barvlDt=150 이 1분 이상 고정). 매
+  // refresh 마다 recptnDt 를 채택하면 경과시간이 리셋돼 말풍선 숫자가
+  // "15초 감소 → 원위치" 톱니파를 그린다. 기준쌍을 고정하면 같은 원본값 안에서
+  // 카운트다운이 매끄럽게 이어진다.
+  //
+  // 표시 숫자는 여전히 API 원본 기반이다 — 값을 깎는 clamp 가 아니라 "어느 쌍을
+  // 새 측정치로 볼 것인가"의 문제이며, 원본이 바뀌면 늘어난 값도 그대로 채택한다.
+  // 회귀 테스트: test/core/utils/train_forward_guard_test.dart
+  function adoptDisplayBase(trainState, train, nowMs) {
+    var raw = train.arrivalSeconds;
+    if (trainState.baseArrival == null
+        || trainState.lastDisplayRawArrival !== raw) {
+      trainState.baseArrival = raw;
+      trainState.baseReceivedAt = train.receivedAtEpochMs || nowMs;
+    }
+    trainState.lastDisplayRawArrival = raw;
   }
 
   // realRemaining(초) → 표시 문구.
@@ -2042,10 +2073,17 @@ $textElements
       return;
     }
 
-    // recptnDt 기준 매 frame 실시간 남은시간 계산을 위한 베이스(표시용).
-    var receivedAt = (trainData.receivedAtEpochMs != null)
-      ? trainData.receivedAtEpochMs : Date.now();
-    var baseArrival = trainData.arrivalSeconds || 0;
+    // [원칙 1-a] 위치 기준쌍의 입력은 **표시 기준쌍**(showTrains 의
+    // adoptDisplayBase 가 이미 골라 둔 쌍)이다. trainData 원본을 쓰면 표시는
+    // 낡은 recptnDt 를, 위치는 새 recptnDt 를 물어 아이콘이 카운트다운보다
+    // 뒤처진다 — 말풍선이 "곧 도착"인데 열차는 아직 오는 중인 그림이 된다.
+    // (표시 쌍은 stale 반복 보고에서 고정되므로 두 도메인이 같은 시각에 0 이 된다.)
+    var receivedAt = (trainState.baseReceivedAt != null)
+      ? trainState.baseReceivedAt
+      : ((trainData.receivedAtEpochMs != null)
+          ? trainData.receivedAtEpochMs : Date.now());
+    var baseArrival = (trainState.baseArrival != null)
+      ? trainState.baseArrival : (trainData.arrivalSeconds || 0);
 
     // [원칙 1] 단조 전진 가드 준비 — "경로 끝까지 남은 거리(px)".
     //
@@ -2087,7 +2125,9 @@ $textElements
     //     뒤로 가더라도 아이콘은 아래 minDistToEnd 백스톱이 붙잡으므로 뒤로 가지
     //     않는다 (뒤로 가는 대신 멈춰 기다렸다가 재개).
     //
-    // 표시용 realRemaining 은 이 규칙과 무관하게 언제나 API 원본이다.
+    // 입력(baseArrival/receivedAt)이 이미 표시 기준쌍이므로 이 층은 사실상
+    // "표시 쌍이 바뀌었을 때만 위치 쌍도 바꾼다" 와 동치다. 남겨 두는 이유는
+    // pathEndKey 리셋 뒤 재채택 경로와 방어선을 유지하기 위함이다.
     // 회귀 테스트: test/core/utils/train_forward_guard_test.dart
     if (trainState.posBaseArrival == null
         || trainState.lastRawArrival !== baseArrival) {
@@ -2154,8 +2194,12 @@ $textElements
     function step() {
       // realRemaining = arrivalSeconds - (now - recptnDt)
       // (미래 recptnDt 방어를 위해 경과시간 0 하한 — remainingFromReceivedAt 주석 참조)
-      var realRemaining =
-        remainingFromReceivedAt(baseArrival, receivedAt, Date.now());
+      //
+      // [원칙 1-a] 입력은 showTrains 에서 adoptDisplayBase 로 고른 **표시용
+      // 기준쌍**이다. trainData 원본을 직접 쓰면 stale 반복 보고 때 recptnDt 만
+      // 갱신돼 카운트다운이 매 refresh 원복하는 톱니파가 된다.
+      var realRemaining = remainingFromReceivedAt(
+        trainState.baseArrival, trainState.baseReceivedAt, Date.now());
 
       // 도착 말풍선: realRemaining 을 API 원본 그대로 정수화해 표시(원칙 1 —
       // 숫자는 재조회로 늘어날 수 있다). 별도 카운트다운 변수를 두지 않고,
@@ -2260,8 +2304,25 @@ $textElements
       trainState.element.setAttribute('transform',
         'translate(' + pos.x + ',' + pos.y + ')');
 
-      // 도착 이펙트는 catch-up 이 끝난 뒤에 발동 (달리다 중간에 사라지는 현상 방지)
-      if (realRemaining <= 0 && !trainState.catchingUp) {
+      // 도착 이펙트는 catch-up 이 끝난 뒤에 발동 (달리다 중간에 사라지는 현상 방지).
+      //
+      // [원칙 1-a] 발동 기준은 **표시 숫자(realRemaining)** 다. 기준쌍이 고정된
+      // 동안 카운트다운이 0 까지 내려가면 열차도 그 시각에 도착해야 한다 —
+      // 말풍선이 "곧 도착"인데 아이콘만 남아 있으면 안 된다. 매 refresh 갱신되는
+      // API 원본으로 발동을 막는 게이트를 두면 이 동기화가 깨지므로 두지 않는다.
+      //
+      // 실제 도착이 아니었을 때의 복구는 `arrivedTrains` 가 담당한다 — 도착 시점의
+      // 원본값을 기억해 두고, API 가 **다른 값**을 보고하면 아직 달리는 열차로
+      // 보아 다시 그린다(showTrains 참조).
+      //
+      // 단 **위치 일관성 조건**은 함께 본다: 원칙 3 클램프가 아이콘을 중간역
+      // (`nextIdx`)에 붙잡고 있는 동안 숫자만 0 이 되면, 열차가 목표역이 아닌
+      // 엉뚱한 역에서 사라진다. 이는 API 원본으로 발동을 막는 게이트가 아니라
+      // "아이콘이 목표역까지 왔는가" 를 확인하는 것이라 위 동기화를 깨지 않는다
+      // (정상 케이스에서는 항상 참). 거짓이면 사라지는 대신 "곧 도착" 말풍선을
+      // 단 채 대기한다.
+      var atFinalLeg = (nextIdx === path.length - 1);
+      if (realRemaining <= 0 && atFinalLeg && !trainState.catchingUp) {
         playArrivalEffect(trainState, trainData.trainNo);
         return;
       }
@@ -2272,7 +2333,33 @@ $textElements
   }
 
   function playArrivalEffect(trainState, trainNo) {
-    arrivedTrains[trainNo] = true;
+    // [원칙 1-a] 도착 시점의 **API 원본** 남은시간을 함께 기억한다.
+    //
+    // 표시 기준쌍이 고정된 동안 카운트다운은 0 까지 내려가므로, API 가 원본을
+    // 그 초 수보다 오래 고정하면(장시간 정차·간격조정) 아직 전역에 있는 열차가
+    // 도착 처리될 수 있다. 그때 `true` 만 박아 두면 API 가 계속 보고하는 한
+    // 정리 루프(`!trainNoSet[id]`)가 지우지 못해 열차가 **영구히 사라진다.**
+    // 원본값을 기억해 두면 showTrains 가 "다른 값이 왔다 = 아직 달리는 중"을
+    // 구분해 다시 그릴 수 있다. 값이 그대로면 도착 상태를 유지한다.
+    var rawAtArrival = (trainState.lastArrivalSeconds != null)
+      ? trainState.lastArrivalSeconds : 0;
+    // **정상 도착은 영구 확정 — 절대 살아나지 않는다(요구사항).**
+    //
+    // 두 도착을 도착 시점의 API 원본으로 구분한다.
+    //  - 정상 도착: 원본이 벽시계와 함께 줄어들어 이 순간엔 이미 작다(refresh
+    //    주기가 15초이므로 통상 그 이하). → { final: true }, 부활 대상 아님.
+    //  - 유령 도착: stall 로 원본이 큰 값에 고정된 채 우리 추정만 0 에 닿았다.
+    //    → 그 원본값을 기록해 두고, 값이 바뀌면(= 새 측정치) 아직 달리는
+    //      열차이므로 되살린다.
+    // 임계는 refresh 주기의 2배. 이 판정은 **도착 발동이 아니라 부활 가능성**만
+    // 가르므로 "숫자 0 = 도착" 동기화(원칙 1-a)를 깨지 않는다.
+    arrivedTrains[trainNo] = (rawAtArrival > GHOST_ARRIVAL_MIN_SEC)
+      ? { raw: rawAtArrival }
+      : { final: true };
+    // 페이드아웃(0.6초) 진행 중임을 표시한다. 이 창에서 부활 판정이 통과하면
+    // `animationId` 가 주행이 아니라 **페이드**의 rAF id 라, 조기 continue 분기가
+    // 이를 살아있는 주행으로 오인해 페이드를 그대로 두면 열차가 소리 없이 사라진다.
+    trainState.arrivalPlaying = true;
     var el = trainState.element;
     var currentTransform = el.getAttribute('transform') || '';
 
@@ -2338,7 +2425,7 @@ $textElements
   // 순서가 refresh 사이에 뒤집히지 않으므로, 매 frame 이 아니라 showTrains
   // (API 갱신) 시점에만 정렬해도 충분하다.
   //
-  // 한계: 정렬 기준은 **표시용 원본 숫자**다(원칙 1 — 숫자 도메인은 API 원본).
+  // 한계: 정렬 기준은 **표시용 기준쌍**이다(원칙 1-a — adoptDisplayBase 가 고른 쌍).
   // 원칙 1 가드가 발동해 열차가 붙잡혀 있는 동안에는 "숫자 순서 ≠ 화면상 순서"
   // 가 될 수 있다. z-order 만의 문제라 위치 정확도에는 영향이 없다.
   function reorderTrainsByRemaining() {
@@ -2373,7 +2460,18 @@ $textElements
 
     for (var i = 0; i < trains.length; i++) {
       var t = trains[i];
-      if (arrivedTrains[t.trainNo]) continue;
+      // [원칙 1-a] 도착 처리된 열차라도 API 가 **다른 원본값**을 보고하면
+      // 아직 달리는 중이므로 도착 표시를 풀고 다시 그린다(유령 도착 복구).
+      // 같은 값이면 stall 이 이어지는 것이 아니라 실제 도착 후의 잔여 보고이므로
+      // 그대로 건너뛴다.
+      var arrivedRec = arrivedTrains[t.trainNo];
+      if (arrivedRec) {
+        // 값이 그대로이거나, 새 원본도 "도착"(<=0)이면 실제 도착 후의 잔여
+        // 보고다. 이때 부활시키면 단일 점 path 분기가 즉시 도착 이펙트를 다시
+        // 발동해 아이콘 깜빡임 + 도착 스낵바 중복이 난다.
+        if (arrivedRec.raw === t.arrivalSeconds || t.arrivalSeconds <= 0) continue;
+        delete arrivedTrains[t.trainNo];
+      }
       newTrainIds[t.trainNo] = true;
       var color = lineColors[t.lineId] || '#999';
 
@@ -2384,38 +2482,48 @@ $textElements
         // 같은 열차가 새 스코프에 그대로 포함되는 경우도 정상 처리).
         existing.scopeKey = scopeKey;
 
-        // [원칙 1] 남은시간(숫자)은 API 원본을 그대로 쓴다 — 재조회로 늘어나도
-        // 보정하지 않는다. 열차가 뒤로 가지 않는 것은 startTrainAnimation 의
-        // 단조 전진 가드(minDistToEnd)가 위치 레벨에서 보장한다.
+        // [원칙 1] 남은시간(숫자)은 API 원본을 그대로 쓴다 — 원본이 바뀌어
+        // 늘어났다면 늘어난 대로 표시한다(값을 깎는 clamp 재도입 금지).
+        // 다만 원본이 그대로인 반복 보고에서는 adoptDisplayBase 가 기준쌍을
+        // 유지해 recptnDt 만의 갱신을 무시한다(원칙 1-a).
+        // 열차가 뒤로 가지 않는 것은 startTrainAnimation 의 단조 전진
+        // 가드(minDistToEnd)가 위치 레벨에서 보장한다.
 
         // 도착 임박 열차는 기존 애니메이션 유지 (15초 갱신에서 끊김 방지)
-        // 단, 이미 도착역에 있는 열차(pathToTarget 1점)는 즉시 도착 처리
+        // 단, 이미 도착역에 있는 열차(pathToTarget 1점)는 즉시 도착 처리.
+        // `arrivalPlaying` 이면 animationId 가 페이드아웃의 것이라 "유지" 대상이
+        // 아니다 — 아래 일반 경로로 내려보내 cancel 후 재시작시킨다.
         if (t.arrivalSeconds <= 2 && (t.initialProgress || 0) >= 0.7 && existing.animationId
+            && !existing.arrivalPlaying
             && t.pathToTarget && t.pathToTarget.length >= 2) {
           existing.destination = t.destination || '';
           existing.lastArrivalSeconds = t.arrivalSeconds;
           existing.lastUpdateTime = nowMs;
-          existing.baseArrival = t.arrivalSeconds;
-          existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
+          adoptDisplayBase(existing, t, nowMs);
           // 행선지는 말풍선의 .bubble-dest 줄(class 기반)로 갱신 —
           // 길이 변화에 맞춰 말풍선 너비도 재계산(짧아질 때도 재축소).
           updateArrivalBubbleDestination(existing.element, t.destination);
           applyTrainGhostState(existing, t);
           updateTrainDebugInfo(existing.element, t);
-          // 여기서 existing.lastRawArrival 을 갱신하지 않는 것은 의도적이다.
-          // 이 분기는 startTrainAnimation 을 부르지 않아 위치 기준쌍도 그대로인데,
-          // lastRawArrival 만 앞서 갱신하면 다음 refresh 가 같은 값을 stale 로
-          // 오판해 (낡은 쌍을 물고) 보정 기회를 놓친다. 짝을 맞춰 함께 둔다.
+          // 여기서 existing.lastRawArrival(위치용 추적자)을 갱신하지 않는 것은
+          // 의도적이다. 이 분기는 startTrainAnimation 을 부르지 않아 위치
+          // 기준쌍도 그대로인데, lastRawArrival 만 앞서 갱신하면 다음 refresh 가
+          // 같은 값을 stale 로 오판해 (낡은 쌍을 물고) 보정 기회를 놓친다.
+          // 짝을 맞춰 함께 둔다.
+          // 반면 표시용 추적자(lastDisplayRawArrival)는 바로 위 adoptDisplayBase
+          // 가 기준쌍과 짝을 맞춰 갱신하므로 같은 오판이 생기지 않는다.
           continue;
         }
         // [jitter grace] train 이 다시 보고됨 → 누락 카운트 리셋.
         existing.missedCycles = 0;
         cancelTrainAnimation(existing);
+        // 페이드아웃을 끊고 주행을 재시작하는 경로 — 도착 상태를 푼다.
+        // (opacity 는 바로 아래 applyTrainGhostState 가 원복한다.)
+        existing.arrivalPlaying = false;
         existing.destination = t.destination || '';
         existing.lastArrivalSeconds = t.arrivalSeconds;
         existing.lastUpdateTime = nowMs;
-        existing.baseArrival = t.arrivalSeconds;
-        existing.baseReceivedAt = t.receivedAtEpochMs || nowMs;
+        adoptDisplayBase(existing, t, nowMs);
         updateArrivalBubbleDestination(existing.element, t.destination);
         applyTrainGhostState(existing, t);
         // [디버그용] 기존 열차의 디버그 정보 갱신
@@ -2429,8 +2537,10 @@ $textElements
           element: g, animationId: null, destination: t.destination || '',
           lastArrivalSeconds: t.arrivalSeconds,
           lastUpdateTime: nowMs2,
+          // 표시용 기준쌍. 이후 갱신은 adoptDisplayBase 가 원본 변화 시에만 수행.
           baseArrival: t.arrivalSeconds,
           baseReceivedAt: t.receivedAtEpochMs || nowMs2,
+          lastDisplayRawArrival: t.arrivalSeconds,
           // 이 열차가 속한 활성 경로 스코프. 스코프가 바뀌면 즉시 제거된다.
           scopeKey: scopeKey,
           // 유령(중간 종착) 여부에 따른 기본 투명도. 도착 이펙트가 곱셈 기준으로 쓴다.

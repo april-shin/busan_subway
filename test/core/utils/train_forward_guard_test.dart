@@ -191,6 +191,74 @@ void main() {
     });
   });
 
+  group('[원칙 1-a] 표시용 기준쌍 stale 필터', () {
+    test('원본이 같으면 recptnDt 만의 갱신을 무시해 카운트다운이 이어진다', () {
+      // 2026-08-04 사당→방배 실측: barvlDt=150 고정, recptnDt 만 ~16초씩 전진.
+      final d = TrainDisplayBase()
+        ..onRefresh(arrivalSeconds: 150, receivedAtMs: 0);
+      expect(d.displayRemaining(15000), 135);
+
+      d.onRefresh(arrivalSeconds: 150, receivedAtMs: 16000); // 반복 보고
+      expect(d.displayRemaining(30000), 120, reason: '원복(톱니파) 금지');
+
+      d.onRefresh(arrivalSeconds: 150, receivedAtMs: 32000);
+      expect(d.displayRemaining(45000), 105);
+    });
+
+    test('원본이 바뀌면 새 쌍을 채택한다 — 늘어난 값도 그대로', () {
+      final d = TrainDisplayBase()
+        ..onRefresh(arrivalSeconds: 150, receivedAtMs: 0);
+      expect(d.displayRemaining(60000), 90);
+
+      // 실제 지연으로 남은시간이 늘어난 경우: 깎지 않고 그대로 표시한다.
+      d.onRefresh(arrivalSeconds: 200, receivedAtMs: 60000);
+      expect(d.displayRemaining(60000), 200);
+    });
+
+    test('같은 값으로 되돌아오면 그 시점 쌍을 새로 채택한다', () {
+      final d = TrainDisplayBase()
+        ..onRefresh(arrivalSeconds: 150, receivedAtMs: 0)
+        ..onRefresh(arrivalSeconds: 140, receivedAtMs: 10000)
+        ..onRefresh(arrivalSeconds: 150, receivedAtMs: 20000);
+      expect(d.displayRemaining(20000), 150,
+          reason: '직전 값과 다르므로 stale 이 아니다');
+    });
+  });
+
+  group('[원칙 1-a] 위치는 표시 기준쌍을 상속한다 (도착 시각 동기화)', () {
+    test('stall 이 이어져도 위치 남은시간 == 표시 남은시간', () {
+      final d = TrainDisplayBase();
+      final g = TrainForwardGuard();
+
+      // t=0: 최초 보고. 이후 stall 로 같은 150 이 recptnDt 만 바꿔 반복.
+      for (final recv in [0, 16000, 32000, 48000]) {
+        d.onRefresh(arrivalSeconds: 150, receivedAtMs: recv);
+        g.onRefreshFrom(d, pathEndKey: endKey);
+      }
+      for (final now in [16000, 32000, 48000, 60000]) {
+        expect(g.positionRemaining(now), d.displayRemaining(now),
+            reason: '두 도메인이 같은 시각에 0 이 되어야 한다');
+      }
+      // 150초 뒤 양쪽 모두 0 — 말풍선 "곧 도착"과 아이콘 도착이 같은 시점.
+      expect(d.displayRemaining(150000), 0);
+      expect(g.positionRemaining(150000), 0);
+    });
+
+    test('stall 중 pathEndKey 리셋이 일어나도 되감기지 않는다', () {
+      final d = TrainDisplayBase();
+      final g = TrainForwardGuard();
+      d.onRefresh(arrivalSeconds: 150, receivedAtMs: 0);
+      g.onRefreshFrom(d, pathEndKey: endKey);
+
+      // 60초 뒤 stall 반복 + 경로 끝점 변경(리셋). 원본 recptnDt(60000)를 물면
+      // 위치가 150 으로 되감겨 표시(90)보다 뒤처진다.
+      d.onRefresh(arrivalSeconds: 150, receivedAtMs: 60000);
+      g.onRefreshFrom(d, pathEndKey: '999,999');
+      expect(g.positionRemaining(60000), d.displayRemaining(60000));
+      expect(g.positionRemaining(60000), 90);
+    });
+  });
+
   group('미래 recptnDt 방어 (경과시간 0 하한)', () {
     test('recptnDt 가 미래여도 남은시간이 부풀지 않는다', () {
       expect(
