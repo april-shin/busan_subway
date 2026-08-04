@@ -458,19 +458,31 @@ void main() {
       // 기준쌍 고정으로 realRemaining 이 0 에 닿으므로, stall 이 잔여초보다 길면
       // 아직 전역에 있는 열차가 도착 처리될 수 있다. `true` 만 박아두면 API 가
       // 계속 보고하는 한 정리 루프(!trainNoSet[id])가 못 지워 영구 소실된다.
-      expect(htmlContent, contains('arrivedTrains[trainNo] = { raw: rawAtArrival }'));
       expect(htmlContent, contains('delete arrivedTrains[t.trainNo];'));
       // 옛 무조건 skip 이 남아 있으면 복구 경로가 죽는다.
       expect(htmlContent, isNot(contains('if (arrivedTrains[t.trainNo]) continue;')));
 
-      // 반대로 **정상 도착 열차까지 부활**시키면 안 된다 — 도착 직후 API 가
-      // barvlDt=0 으로 한 번 더 보고하는 것은 흔하며, 부활시키면 단일 점 path
-      // 분기가 도착 이펙트를 재발동해 깜빡임 + 스낵바 중복이 난다.
+      // 도착 시점의 API 원본으로 정상/유령을 가른다. 임계 이하면 영구 확정.
+      final flat = htmlContent.replaceAll(RegExp(r'\s+'), ' ');
+      expect(htmlContent, contains('var GHOST_ARRIVAL_MIN_SEC = 30;'));
       expect(
-        htmlContent,
-        contains('if (arrivedRec.raw === t.arrivalSeconds '
-            '|| t.arrivalSeconds <= 0) continue;'),
+        flat,
+        contains('arrivedTrains[trainNo] = '
+            '(rawAtArrival > GHOST_ARRIVAL_MIN_SEC) '
+            '? { raw: rawAtArrival } : { final: true };'),
       );
+      expect(htmlContent, contains('if (arrivedRec.raw === t.arrivalSeconds) continue;'));
+    });
+
+    test('[요구사항] 정상 도착 열차는 절대 되살아나지 않는다', () {
+      // 2026-08-04 방배 실측: 목표역 **진입** 중인 열차가 `barvlDt=10, arvlCd=0`
+      // 으로, 즉 **양수**로 다시 보고된다. 따라서 "새 원본이 <=0 이면 숨김" 같은
+      // 값 비교로는 부활을 막지 못한다 — 도착 시점에 확정해야 한다.
+      expect(htmlContent, contains('if (arrivedRec.final) continue;'));
+      expect(htmlContent, contains('? { raw: rawAtArrival }'));
+      expect(htmlContent, contains(': { final: true };'));
+      // 값 비교로 정상 도착을 막으려던 옛 방식이 남아 있으면 안 된다.
+      expect(htmlContent, isNot(contains('|| t.arrivalSeconds <= 0) continue;')));
 
       // 페이드아웃(0.6초) 중 부활 시 조기 continue 분기가 페이드의 animationId 를
       // 주행으로 오인하면 열차가 소리 없이 사라진다.

@@ -402,7 +402,16 @@ $textElements
   var selectionMarkers = document.getElementById('selection-markers');
   var liveTrainsGroup = document.getElementById('live-trains');
   var activeTrains = {};
+  // 도착 처리된 열차. 값은 두 형태 중 하나다 (playArrivalEffect 참조).
+  //   { final: true }  — 정상 도착. **절대 되살리지 않는다(요구사항).**
+  //   { raw: N }       — 유령 도착 후보. API 원본이 N 에서 바뀌면 되살린다.
   var arrivedTrains = {};
+  // 유령 도착 판정 임계(초). 도착 시점의 API 원본이 이보다 크면 "우리 추정만
+  // 앞서갔다" 로 본다. refresh 주기(15초)의 2배 — 정상 접근 열차는 원본이 벽시계와
+  // 함께 줄어 도착 순간엔 통상 refresh 주기 이하다.
+  // 2026-08-04 실측 근거: 목표역 진입 열차가 `barvlDt=10, arvlCd=0`(방배 진입)으로
+  // 오고, 사당 stall 열차는 `barvlDt=150` 에 고정된다 — 두 군이 뚜렷이 갈린다.
+  var GHOST_ARRIVAL_MIN_SEC = 30;
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
   var trainLayer = document.getElementById('train-layer');
@@ -2466,10 +2475,13 @@ $textElements
       // 그대로 건너뛴다.
       var arrivedRec = arrivedTrains[t.trainNo];
       if (arrivedRec) {
-        // 값이 그대로이거나, 새 원본도 "도착"(<=0)이면 실제 도착 후의 잔여
-        // 보고다. 이때 부활시키면 단일 점 path 분기가 즉시 도착 이펙트를 다시
-        // 발동해 아이콘 깜빡임 + 도착 스낵바 중복이 난다.
-        if (arrivedRec.raw === t.arrivalSeconds || t.arrivalSeconds <= 0) continue;
+        // 정상 도착은 영구 확정 — 이후 API 가 무엇을 보고하든 되살리지 않는다.
+        // (목표역 진입 열차가 `barvlDt=10` 같은 **양수**로 다시 오는 것이 실제로
+        //  관측된다 — 2026-08-04 방배 실측. 값 비교만으로는 막지 못한다.)
+        if (arrivedRec.final) continue;
+        // 유령 도착 후보: 원본이 그대로면 stall 이 이어지는 중이므로 계속 숨긴다.
+        if (arrivedRec.raw === t.arrivalSeconds) continue;
+        // 원본이 바뀌었다 = 새 측정치 = 아직 달리는 중 → 되살린다.
         delete arrivedTrains[t.trainNo];
       }
       newTrainIds[t.trainNo] = true;
