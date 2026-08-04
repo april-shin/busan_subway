@@ -137,10 +137,14 @@ void main() {
       // 종전에는 까치산 환승이 불가능해 영등포구청 등 원거리 환승으로 우회했다.
       expect(route!.totalTimeSeconds, lessThanOrEqualTo(15 * 60),
           reason: '까치산 환승이 안 잡히면 15분을 훌쩍 넘는 우회가 된다');
-      final names = [
-        for (final seg in route.segments) ...seg.stations.map((s) => s.name),
-      ];
-      expect(names, contains('까치산'));
+      // ⚠ "경로에 까치산이 포함된다" 단언은 판별력이 없다 — 종전 결함 경로도
+      //   5호선 위에서 까치산을 **통과**하므로 통과한다. 환승이 실제로
+      //   까치산에서 일어나는지는 세그먼트 **경계**로 고정해야 한다.
+      expect(route.segments.first.stations.last.name, '까치산',
+          reason: '첫(5호선) 세그먼트가 까치산에서 끝나야 한다 — '
+              '다른 역에서 끝나면 원거리 환승 우회가 재발한 것');
+      expect(route.segments.last.stations.first.name, '까치산',
+          reason: '마지막(2호선) 세그먼트가 까치산에서 시작해야 한다');
     });
 
     test('2호선 역별 시간표는 아직 공백이다 (배차간격 폴백, 알려진 한계)', () async {

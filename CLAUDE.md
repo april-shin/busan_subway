@@ -149,7 +149,7 @@ lib/
 ### 핵심 도메인 개념
 
 - **역(Station)** 은 캔버스 렌더링용 `svgX`/`svgY` 좌표를 가짐 (원본 SVG의 circle 좌표에서 추출, `extract_svg_stations.dart`로 생성)
-- **그래프 노드 ID 형식:** `"{stationId}_{lineId}"` (예: `"216_2"` = 2호선 강남역)
+- **그래프 노드 ID 형식:** `"{stationId}_{lineId}"` (예: `"222_2"` = 2호선 강남역, `"216_2"` 는 잠실)
 - **환승 시간 키 형식:** `"{역이름}_{lineId1}_{lineId2}"` (`transfer_times.json` 내)
 ### 노선 정보
 
