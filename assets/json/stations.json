@@ -2020,6 +2020,20 @@
     ]
   },
   {
+    "id": "251",
+    "name": "까치산",
+    "lineId": "2",
+    "latitude": 37.531,
+    "longitude": 126.8476,
+    "svgX": 456.0,
+    "svgY": 712.0,
+    "isTransfer": true,
+    "transferLines": [
+      "2",
+      "5"
+    ]
+  },
+  {
     "id": "301",
     "name": "대화",
     "lineId": "3",

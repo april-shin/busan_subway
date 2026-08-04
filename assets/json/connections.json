@@ -1029,6 +1029,13 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "249",
+    "toStationId": "251",
+    "lineId": "2",
+    "travelTimeSeconds": 150,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "243",
     "toStationId": "201",
     "lineId": "2",
