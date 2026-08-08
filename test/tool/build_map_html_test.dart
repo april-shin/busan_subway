@@ -215,19 +215,61 @@ void main() {
       // 에서 노선이 순간 소실되는 점멸을 유발했다. 이제 map-container와 동일한
       // CSS transform matrix를 text-layer/train-layer에도 그대로 적용해 팬 중
       // 재페인트 자체를 제거한다(회귀 가드).
+      // [L-1 정리, 2026-08 리뷰] applyTransform 자체의 본문만 검사하려면
+      // 창을 다음 함수(updateTextCompensation)가 시작하기 전까지로 좁혀야
+      // 한다. 예전엔 setInitialView() 까지를 창으로 잡아 그 사이에 낀
+      // updateTextCompensation() 전체(폰트/스트로크 보정 로직)가 함께
+      // 매칭되어, 테스트명("applyTransform 에서…")과 실제 매칭 위치가
+      // 어긋났다 — 아래 폰트/스트로크 관련 단언은 별도 창(applyEnd 이후,
+      // updateTextCompensationBody)으로 분리한다.
       final applyStart = htmlContent.indexOf('function applyTransform()');
       final applyEnd =
-          htmlContent.indexOf('function setInitialView()', applyStart);
+          htmlContent.indexOf('function updateTextCompensation()', applyStart);
       final applyBody = htmlContent.substring(applyStart, applyEnd);
 
       expect(applyBody, isNot(contains("textLayer.setAttribute('viewBox'")));
       expect(applyBody, isNot(contains("trainLayer.setAttribute('viewBox'")));
       expect(applyBody, contains('textLayer.style.transform = matrixStr'));
       expect(applyBody, contains('trainLayer.style.transform = matrixStr'));
-      expect(applyBody, contains('textLayer.style.fontSize'));
-      expect(applyBody, contains("'--stroke-w'"));
+      // [2026-08 핀치 점멸 수정 회귀 가드] 2-포인터 핀치 진행 중에는 매 프레임
+      // scale 이 바뀌므로, 팬 전용 프레임만 스킵하는 캐시(updateTextCompensation
+      // 내부)가 무력화된다. applyTransform 은 핀치 중엔 폰트 보정 호출 자체를
+      // 건너뛰고, 핀치 종료 시(pointerup/pointercancel) 별도로 flush 해야
+      // 한다 — 그렇지 않으면 핀치 내내 text-layer 전체가 매 프레임(최대
+      // 60fps) 리페인트된다.
+      expect(applyBody, contains('getPointerCount() !== 2'));
+      expect(applyBody, contains('updateTextCompensation();'));
+
+      // 폰트/스트로크 보정 로직 자체는 별도 함수로 분리되어 있어야
+      // pointerup/pointercancel 에서도 재사용할 수 있다. 이 함수 자신의
+      // 본문(updateTextCompensation ~ setInitialView 사이)에서 검사한다.
+      final compEnd =
+          htmlContent.indexOf('function setInitialView()', applyEnd);
+      final compBody = htmlContent.substring(applyEnd, compEnd);
+      expect(compBody, contains('textLayer.style.fontSize'));
+      expect(compBody, contains("'--stroke-w'"));
       // 팬 전용 프레임(scale 불변)에서는 폰트/스트로크 보정을 건너뛰어야 한다.
-      expect(applyBody, contains('scale !== lastFontScale'));
+      // [P2, 2026-08 리뷰] no-op 판정 키는 scale 이 아니라 실제로 화면에
+      // 쓰일 보정계수(cs)다 — scale>1(확대) 구간·MIN_SCALE 축소 구간처럼
+      // scale 은 계속 바뀌어도 cs 는 고정되는 구간에서 동일 값 재기록을
+      // 추가로 막는다(scale 키였다면 이 구간에서 매번 다시 썼을 것).
+      expect(compBody, contains('cs === lastCs'));
+      // pointerup/pointercancel 모두 핀치 종료 시 보정을 flush 해야 한다
+      // (그렇지 않으면 핀치가 포인터 0개로 끝났을 때 아무도 applyTransform 을
+      // 다시 부르지 않아 최종 폰트 크기가 영영 반영되지 않는다).
+      final pointerUpStart = htmlContent.indexOf("addEventListener('pointerup'");
+      final pointerCancelStart =
+          htmlContent.indexOf("addEventListener('pointercancel'");
+      expect(pointerUpStart, greaterThan(0));
+      expect(pointerCancelStart, greaterThan(pointerUpStart));
+      final pointerUpBody =
+          htmlContent.substring(pointerUpStart, pointerCancelStart);
+      final pointerCancelEnd = htmlContent.indexOf(
+          "addEventListener('wheel'", pointerCancelStart);
+      final pointerCancelBody =
+          htmlContent.substring(pointerCancelStart, pointerCancelEnd);
+      expect(pointerUpBody, contains('updateTextCompensation()'));
+      expect(pointerCancelBody, contains('updateTextCompensation()'));
     });
 
     test('text-layer/train-layer가 map-container와 동일한 고정 viewBox(1:1)를 갖는다',
@@ -508,10 +550,14 @@ void main() {
       // 마지막 = 최상위가 되어 말풍선 겹침에서 가려지지 않는다.
       final fnStart = htmlContent.indexOf('function reorderTrainsByRemaining');
       expect(fnStart, greaterThan(0), reason: '재정렬 함수가 존재해야 한다');
-      final fnBody = htmlContent.substring(fnStart, fnStart + 1200);
+      final fnEnd = htmlContent.indexOf('window.showTrains', fnStart);
+      final fnBody = htmlContent.substring(fnStart, fnEnd);
 
       expect(fnBody, contains('return b.rem - a.rem'));
       expect(fnBody, contains('liveTrainsGroup.appendChild(items[i].el)'));
+      // [래스터 부하 절감, 2026-08] 이미 원하는 순서와 같으면 DOM 이동 자체를
+      // 생략해 불필요한 #train-layer 재정렬(페인트 유발)을 피한다.
+      expect(fnBody, contains('alreadyOrdered'));
 
       // showTrains 가 신규 추가·제거를 끝낸 뒤 호출해야 한다.
       final showStart = htmlContent.indexOf('window.showTrains');
@@ -713,6 +759,194 @@ void main() {
         htmlContent,
         contains('formatArrivalBubbleText(realRemaining)'),
       );
+    });
+
+    test('[안드로이드 팬/핀치 점멸 v2 수정] 열차 transform 쓰기는 좌표가 바뀔 때만 일어난다', () {
+      // 2026-08 재발 점멸(라벨 타일 산발적 순간 소실) 조사 결과, 매 rAF 마다
+      // 좌표가 그대로여도 #train-layer 내부 <g> 의 transform 속성을 무조건
+      // 다시 쓰고 있었다. 3-way 클램프(원칙 3)나 단조 전진 backstop(원칙 1)이
+      // target 을 같은 지점에 붙잡아 두는 동안에도 매 프레임 DOM 을 건드려
+      // 불필요한 레이어 무효화를 유발한다 — 위치 계산 자체(4원칙)는 그대로
+      // 두고 최종 DOM 반영만 실제 변화가 있을 때로 제한해야 한다.
+      final stepStart = htmlContent.indexOf('function step() {');
+      expect(stepStart, greaterThan(0));
+      final stepEnd = htmlContent.indexOf(
+          'function playArrivalEffect', stepStart);
+      final stepBody = htmlContent.substring(stepStart, stepEnd);
+
+      expect(
+        stepBody,
+        contains(
+            'trainState.lastRenderedX !== pos.x || trainState.lastRenderedY !== pos.y'),
+      );
+      expect(stepBody, contains('trainState.lastRenderedX = pos.x;'));
+      expect(stepBody, contains('trainState.lastRenderedY = pos.y;'));
+    });
+
+    test('[안드로이드 핀치 점멸 v2 수정] 핀치 중엔 text-layer 폰트 보정을 미루고 종료 시 flush한다', () {
+      // 2026-08 재연 영상 분석: 역명 라벨만 타일 단위로 순간 소실되는 점멸이
+      // 12회 이상 산발적으로 발생했다(7월의 "노선 2.9초 연속 소실"과는 다른
+      // 증상). 2-포인터 핀치 동안 pointermove 마다 scale 이 거의 매번 달라져
+      // text-layer 의 font-size/--stroke-w(상속 속성, 수백 개 <text> 자식에
+      // 영향)가 최대 60fps 로 반복 재기록됐다 — 팬 전용 프레임은 이미
+      // scale 불변 캐시로 스킵되지만 핀치 프레임은 스킵되지 않았다. 같은
+      // 프레임에 실시간 열차 갱신(#train-layer)까지 겹치면 두 대형 레이어가
+      // 동시에 무효화되어 안드로이드 래스터 스레드가 타일 커밋을 따라가지
+      // 못해 라벨 타일이 순간 노출(미래스터 상태)됐다. 핀치 중엔 보정을
+      // 미루고(라벨이 매트릭스 스케일을 그대로 따라감) 제스처 종료 시 한 번만
+      // 반영해 리페인트를 제스처당 1회로 줄인다.
+      expect(htmlContent, contains('function updateTextCompensation()'));
+
+      final applyStart = htmlContent.indexOf('function applyTransform()');
+      final applyEnd =
+          htmlContent.indexOf('function updateTextCompensation()', applyStart);
+      final applyBody = htmlContent.substring(applyStart, applyEnd);
+      expect(applyBody, contains('if (getPointerCount() !== 2) {'));
+      expect(applyBody, contains('updateTextCompensation();'));
+
+      // 핀치가 포인터 0개로 끝나는 경우 이후 아무도 applyTransform 을 다시
+      // 부르지 않으므로, pointerup/pointercancel 이 직접 flush 해야 최종
+      // 폰트 크기가 반영된다.
+      final pointerUpStart =
+          htmlContent.indexOf("addEventListener('pointerup'");
+      final pointerCancelStart =
+          htmlContent.indexOf("addEventListener('pointercancel'");
+      final wheelStart =
+          htmlContent.indexOf("addEventListener('wheel'", pointerCancelStart);
+      final pointerUpBody =
+          htmlContent.substring(pointerUpStart, pointerCancelStart);
+      final pointerCancelBody =
+          htmlContent.substring(pointerCancelStart, wheelStart);
+      expect(pointerUpBody, contains('if (getPointerCount() !== 2) {'));
+      expect(pointerUpBody, contains('updateTextCompensation();'));
+      expect(pointerCancelBody, contains('if (getPointerCount() !== 2) {'));
+      expect(pointerCancelBody, contains('updateTextCompensation();'));
+    });
+
+    test('[H-1, 2026-08 리뷰] 도착 이펙트 시작 시 렌더 캐시를 무효화한다', () {
+      // playArrivalEffect.animate() 는 매 프레임 el.setAttribute('transform',
+      // currentTransform + ' scale(...)') 로 transform 을 **직접** 덮어써
+      // step() 의 lastRenderedX/Y 좌표 비교를 완전히 우회한다. 0.6초 페이드
+      // 도중 유령 도착이 부활(startTrainAnimation 재시작)하면, stall 열차는
+      // 원칙 1 가드가 target 을 최전진 지점(직전 렌더 좌표와 비트 동일)에
+      // 붙잡아 두므로 부활 후 첫 step() 프레임이 "좌표 변화 없음"으로 오판해
+      // DOM 쓰기를 스킵한다 — 페이드 마지막 프레임의 확대(scale) 잔재가 위치가
+      // 실제로 바뀔 때까지 고착되는 회귀. playArrivalEffect 진입 시 캐시를
+      // 비워 부활 시 첫 step() 프레임이 반드시 clean translate 를 다시 쓰도록
+      // 강제해야 한다.
+      final fnStart = htmlContent.indexOf('function playArrivalEffect');
+      expect(fnStart, greaterThan(0));
+      final fnEnd =
+          htmlContent.indexOf('function cancelTrainAnimation', fnStart);
+      final fnBody = htmlContent.substring(fnStart, fnEnd);
+
+      expect(fnBody, contains('trainState.lastRenderedX = null;'));
+      expect(fnBody, contains('trainState.lastRenderedY = null;'));
+
+      // 무효화가 arrivedTrains 판정보다 먼저(진입부에) 있어야 한다 — 이
+      // 함수의 어느 조기 return/분기를 타든 캐시가 항상 비워지도록.
+      final invalidateIdx = fnBody.indexOf('trainState.lastRenderedX = null;');
+      final rawAtArrivalIdx = fnBody.indexOf('var rawAtArrival');
+      expect(rawAtArrivalIdx, greaterThan(0));
+      expect(invalidateIdx, lessThan(rawAtArrivalIdx));
+    });
+
+    test('[M-1, 2026-08 리뷰] 휠 줌은 포인터 게이트와 무관하게 폰트 보정을 직접 flush한다', () {
+      // applyTransform 의 폰트 보정은 getPointerCount() !== 2 로 게이트된다.
+      // pointerup/pointercancel 유실로 pointers 에 유령 항목 2개가 남으면 이
+      // 게이트가 영구히 닫혀 이후 모든 보정(휠 줌 포함)이 동결될 수 있다.
+      // scale 을 바꾸는 경로는 2-포인터 핀치와 휠 줌 뿐이고(panTo/resize 는
+      // scale 을 바꾸지 않아 영향 없음), 휠은 터치 포인터 상태와 완전히 무관한
+      // 입력이므로 핸들러 안에서 게이트를 우회해 직접 flush해야 한다.
+      final wheelStart = htmlContent.indexOf("addEventListener('wheel'");
+      expect(wheelStart, greaterThan(0));
+      final wheelEnd = htmlContent.indexOf('});', wheelStart);
+      final wheelBody = htmlContent.substring(wheelStart, wheelEnd);
+
+      expect(wheelBody, contains('scale = newScale;'));
+      expect(wheelBody, contains('updateTextCompensation();'));
+      // 게이트를 재도입하면 안 된다 — 이 호출은 조건문 없이 이루어져야 한다
+      // (설명 주석에서 getPointerCount 를 언급하는 것 자체는 허용하되, 실제
+      // 코드로 조건 분기하면 안 된다).
+      expect(wheelBody, isNot(contains('if (getPointerCount()')));
+    });
+
+    test('[P2, 2026-08 리뷰] 폰트 보정 캐시 키가 scale 이 아니라 cs 다', () {
+      // cs = clamp(scale, TEXT_COMP_FLOOR, 1) 이므로 scale > 1(확대) 구간
+      // 전체와 scale < TEXT_COMP_FLOOR(최대 축소) 구간에서는 scale 이 계속
+      // 바뀌어도 cs 는 고정된다. 캐시 키가 scale 이면 이 구간에서 매번
+      // "값이 다르다"고 오판해 실제로는 동일한 fontSize/--stroke-w 를
+      // 불필요하게 다시 쓴다.
+      final compStart = htmlContent.indexOf('function updateTextCompensation()');
+      expect(compStart, greaterThan(0));
+      final compEnd = htmlContent.indexOf('function setInitialView()', compStart);
+      final compBody = htmlContent.substring(compStart, compEnd);
+
+      expect(compBody, contains('if (cs === lastCs) return;'));
+      expect(compBody, contains('lastCs = cs;'));
+      expect(compBody, isNot(contains('lastFontScale')));
+      expect(htmlContent, contains('var lastCs = null;'));
+    });
+
+    test('[P1, 2026-08 리뷰] 팬/핀치 제스처 중엔 말풍선 카운트다운 DOM 쓰기를 미룬다', () {
+      // 열차 대수가 늘고(20→30행 조회, 유령 열차 상주 등) train-layer 무효화
+      // 총량이 증가했을 가능성에 대한 저위험 방어. realRemaining 계산(원칙
+      // 1-a)은 매 프레임 그대로 수행하고, 결과를 말풍선 텍스트에 반영하는
+      // DOM 쓰기만 제스처 동안 미룬다 — 도착 판정(realRemaining<=0 기준)은
+      // 이 값을 참조하지 않으므로 4원칙에는 영향이 없다.
+      final stepStart = htmlContent.indexOf('function step() {');
+      final stepEnd = htmlContent.indexOf('function playArrivalEffect', stepStart);
+      final stepBody = htmlContent.substring(stepStart, stepEnd);
+
+      expect(
+        stepBody,
+        contains('if (!gestureActive && trainState.lastShownSec !== shownSec)'),
+      );
+
+      // 제스처 상태는 포인터 접촉 여부(pointerdown~pointerup/cancel 0개)로
+      // 정의되며, 도착 판정(realRemaining<=0)과는 별개 변수여야 한다.
+      expect(htmlContent, contains('var gestureActive = false;'));
+      final pointerDownStart = htmlContent.indexOf("addEventListener('pointerdown'");
+      final pointerUpStart2 = htmlContent.indexOf("addEventListener('pointerup'");
+      final pointerDownBody =
+          htmlContent.substring(pointerDownStart, pointerUpStart2);
+      expect(pointerDownBody, contains('gestureActive = true;'));
+
+      final arrivalGateIdx = stepBody.indexOf('realRemaining <= 0 && atFinalLeg');
+      expect(arrivalGateIdx, greaterThan(0),
+          reason: '도착 발동 조건은 gestureActive 와 무관하게 realRemaining 만 봐야 한다');
+
+      // [L-4, 2026-08 2차 리뷰] gestureActive 가 도착 판정식 자체에 결합되는
+      // 것을 명시적으로 부정한다 — 위 인덱스 비교만으로는 "같은 줄에
+      // gestureActive 가 섞여 들어가는" 형태의 회귀(예: 실수로
+      // `if (!gestureActive && realRemaining <= 0 && ...)` 처럼 게이트가
+      // 번져 도착이 제스처 동안 미뤄지는 경우)를 못 잡는다.
+      expect(
+        stepBody,
+        isNot(contains('gestureActive && realRemaining')),
+      );
+    });
+
+    test('[M-2, 2026-08 2차 리뷰] 툴바 드래그의 포인터 전량 클리어가 gestureActive 도 초기화한다', () {
+      // initRouteToolbarDrag 는 "맵 pan state 강제 초기화" 관용구로 pointers
+      // 를 전량 비우며 isDragging 도 함께 false 로 되돌린다. 지도 쪽
+      // pointerup/pointercancel 유실로 gestureActive 가 이미 true 로 걸려
+      // 있었다면, 이 초기화 지점에 gestureActive 리셋이 빠질 경우 회복
+      // 기회를 놓쳐 이후 세션 내내 열차 카운트다운 DOM 쓰기가 동결된다.
+      final dragFnStart = htmlContent.indexOf('function initRouteToolbarDrag');
+      expect(dragFnStart, greaterThan(0));
+      final dragFnEnd = htmlContent.indexOf('routeToolbar.addEventListener(\'pointerdown\', onDragStart);', dragFnStart);
+      final dragFnBody = htmlContent.substring(dragFnStart, dragFnEnd);
+
+      // pointers 전량 클리어 지점이 정확히 2곳(onDragStart, onDragEnd)이고,
+      // 각각 isDragging = false 옆에 gestureActive = false 가 있어야 한다.
+      final clearPattern = RegExp(
+        r'for \(var __k in pointers\)[^\n]*\n\s*isDragging = false;\s*\n(?:[^\n]*\n)*?\s*gestureActive = false;',
+      );
+      final matches = clearPattern.allMatches(dragFnBody).toList();
+      expect(matches.length, equals(2),
+          reason: 'onDragStart/onDragEnd 두 클리어 지점 모두 gestureActive 를 '
+              '초기화해야 한다');
     });
   });
 }

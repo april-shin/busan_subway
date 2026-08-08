@@ -350,9 +350,16 @@ $textElements
   // ============================================================
   var scale = INITIAL_SCALE;
   var tx = 0, ty = 0;
-  // text-layer 폰트/스트로크 보정을 마지막으로 계산한 scale (팬 전용 프레임에서
-  // scale 이 안 바뀌면 재계산을 건너뛰기 위한 캐시). null 이면 최초 1회 강제 계산.
-  var lastFontScale = null;
+  // text-layer 폰트/스트로크 보정을 마지막으로 적용한 **보정계수(cs)** — scale
+  // 자체가 아니다. [P2, 2026-08 리뷰] cs = clamp(scale, TEXT_COMP_FLOOR, 1) 라
+  // scale > 1(확대) 구간 전체에서 cs 는 항상 1 로 고정되고, scale < TEXT_COMP_FLOOR
+  // (최대 축소) 구간에서도 cs 는 TEXT_COMP_FLOOR 로 고정된다. 캐시 키를 scale 로
+  // 두면 이 두 구간에서 scale 이 계속 바뀌는데도(확대 제스처 지속, 휠 줌 반복 등)
+  // 매번 "값이 다르다"고 오판해 실제로는 동일한 fontSize/--stroke-w 를 다시
+  // 쓴다 — 결과가 같은 불필요한 DOM 쓰기이자 text-layer 재래스터 유발 요인.
+  // cs 를 키로 쓰면 이런 정체 구간에서 진짜 no-op 이 된다. null 이면 최초 1회
+  // 강제 계산.
+  var lastCs = null;
   var stations = [];
   var connections = [];
   var lineColors = {};
@@ -442,27 +449,51 @@ $textElements
     trainLayer.style.transform = matrixStr;
 
     // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로).
-    // 단, COMP_FLOOR 아래로는 완전 보상하지 않아 최대 줌아웃에서 라벨이 축소되도록.
-    // [2026-07 리뷰 수정] 구 viewBox 구현도 element(vw×vh) : viewBox(vw/scale×vh/scale)
-    // 비율로 이미 scale배 확대를 수행하고 있었다 — CSS transform(scale)과 수학적으로
-    // 동일한 배율이다. 즉 로컬(SVG 사용자 단위) font-size/stroke-width 값은 구현을
-    // 바꾸기 전과 후 모두 "그 위에 scale배가 곱해진다"는 전제가 같으므로, 여기서
-    // 추가로 /scale 을 나눠 상쇄할 필요가 없다(그렇게 하면 scale배 보정이 이중으로
-    // 취소되어 최종 화면 크기가 scale=0.5에서 2배, scale=2에서 1/2배로 어긋난다 —
-    // 브라우저 A/B 실측으로 확인된 회귀). 최종 화면 크기 = 로컬값 × scale =
-    // TEXT_BASE_FONT_SIZE/cs × scale, TEXT_BASE_STROKE_W/cs × scale 로 구버전과
-    // 동일하게 유지된다. scale 이 실제로 바뀐 프레임(핀치/휠 줌)에서만 재계산하고,
-    // 팬 전용 프레임(scale 불변, tx/ty만 변경)에서는 건너뛰어 --stroke-w/font-size
-    // 변경으로 인한 text-layer 리페인트를 추가로 만들지 않는다.
-    if (scale !== lastFontScale) {
-      var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
-      textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
-      textLayer.style.setProperty(
-          '--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
-      lastFontScale = scale;
+    // [2026-08 핀치 점멸 수정] 2-포인터 핀치 진행 중에는 이 보정을 미룬다.
+    // updateTextCompensation() 주석 참조 — pointerup/pointercancel 이 핀치
+    // 종료 시점에 명시적으로 flush 한다.
+    if (getPointerCount() !== 2) {
+      updateTextCompensation();
     }
 
     updateRouteToolbarPosition();
+  }
+
+  // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로).
+  // 단, COMP_FLOOR 아래로는 완전 보상하지 않아 최대 줌아웃에서 라벨이 축소되도록.
+  // [2026-07 리뷰 수정] 구 viewBox 구현도 element(vw×vh) : viewBox(vw/scale×vh/scale)
+  // 비율로 이미 scale배 확대를 수행하고 있었다 — CSS transform(scale)과 수학적으로
+  // 동일한 배율이다. 즉 로컬(SVG 사용자 단위) font-size/stroke-width 값은 구현을
+  // 바꾸기 전과 후 모두 "그 위에 scale배가 곱해진다"는 전제가 같으므로, 여기서
+  // 추가로 /scale 을 나눠 상쇄할 필요가 없다(그렇게 하면 scale배 보정이 이중으로
+  // 취소되어 최종 화면 크기가 scale=0.5에서 2배, scale=2에서 1/2배로 어긋난다 —
+  // 브라우저 A/B 실측으로 확인된 회귀). 최종 화면 크기 = 로컬값 × scale =
+  // TEXT_BASE_FONT_SIZE/cs × scale, TEXT_BASE_STROKE_W/cs × scale 로 구버전과
+  // 동일하게 유지된다. scale 이 실제로 바뀐 프레임에서만 재계산하고, 팬 전용
+  // 프레임(scale 불변, tx/ty만 변경)에서는 건너뛰어 --stroke-w/font-size 변경으로
+  // 인한 text-layer 리페인트를 추가로 만들지 않는다.
+  //
+  // [2026-08 핀치 점멸 수정] 2-포인터 핀치 동안은 pointermove 마다(최대 60fps)
+  // scale 이 거의 매 프레임 달라져 이 함수가 매 프레임 호출되고, font-size 는
+  // text-layer 의 모든 <text> 자식(수백 개)이 상속하는 속성이라 값이 바뀔 때마다
+  // 전체 서브트리 레이아웃/페인트가 강제된다. 팬 중엔 이미 scale 불변으로 스킵되지만
+  // 핀치 중엔 scale 자체가 계속 바뀌므로 이 캐시가 무력화되어, 핀치 제스처 내내
+  // (최대 60Hz) text-layer 전체가 반복 리페인트됐다 — 실시간 열차 업데이트(같은
+  // 프레임에 #train-layer 도 갱신)와 겹치면 안드로이드 래스터 스레드가 두 대형
+  // 레이어를 동시에 감당하지 못해 일부 타일이 새 프레임 커밋에 늦게 반영되는
+  // 순간 노출(라벨 타일 점멸)로 이어진다. 핀치 도중엔 라벨이 매트릭스 스케일을
+  // 그대로 따라가도록 두고(지도 전체와 함께 커지고 작아짐 — 통상적인 핀치 시각
+  // 효과이며 판독성 저하는 순간적), 핀치가 끝나는 순간(pointerup/pointercancel)
+  // 한 번만 반영해 리페인트를 제스처당 1회로 줄인다.
+  function updateTextCompensation() {
+    var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
+    // [P2] scale 이 아니라 실제로 화면에 쓰일 보정계수(cs)로 no-op 판정한다 —
+    // 위 lastCs 선언부 주석 참조.
+    if (cs === lastCs) return;
+    textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
+    textLayer.style.setProperty(
+        '--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+    lastCs = cs;
   }
 
   function setInitialView() {
@@ -477,6 +508,13 @@ $textElements
   // 터치/마우스 이벤트 (줌/팬)
   // ============================================================
   var pointers = {};
+  // [P1, 2026-08 리뷰] 팬/핀치 제스처가 진행 중인 동안(포인터 1개 이상 접촉)
+  // true. 열차 도착 말풍선의 카운트다운 텍스트 DOM 쓰기(step() 참조)를 제스처
+  // 동안 미루는 데만 쓰인다 — realRemaining/위치 계산(4원칙)에는 관여하지 않고,
+  // 최종 DOM 반영 여부만 제어한다. step() 의 rAF 루프는 제스처 중에도 계속
+  // 돌므로, 제스처가 끝나 이 값이 false 로 바뀌면 바로 다음 프레임이 스스로
+  // 밀린 텍스트를 반영한다(폰트 보정과 달리 별도 flush 호출이 필요 없다).
+  var gestureActive = false;
   var lastDist = 0;
   var lastMidX = 0, lastMidY = 0;
   var isDragging = false;
@@ -536,6 +574,7 @@ $textElements
 
   document.addEventListener('pointerdown', function(e) {
     panAnimId++;
+    gestureActive = true;
     pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
     if (getPointerCount() === 1) {
       isDragging = true;
@@ -607,6 +646,7 @@ $textElements
     delete pointers[e.pointerId];
     if (getPointerCount() === 0) {
       isDragging = false;
+      gestureActive = false;
     } else if (getPointerCount() === 1) {
       // 핀치 → 드래그 전환: 남은 포인터로 드래그 재시작
       var keys = Object.keys(pointers);
@@ -617,10 +657,25 @@ $textElements
       dragStartTx = tx;
       dragStartTy = ty;
     }
+    // [2026-08 핀치 점멸 수정] 핀치(2-포인터) 가 끝나 포인터 수가 2 밖으로
+    // 벗어나면, applyTransform 에서 미뤄뒀던 폰트 보정을 여기서 한 번만 반영한다.
+    // pointerup 자체는 scheduleTransform/applyTransform 을 부르지 않으므로
+    // (드래그 계속 시엔 다음 pointermove 가 부르지만, 핀치가 완전히 끝나 포인터가
+    // 0 이 되는 경우엔 아무도 applyTransform 을 다시 부르지 않아 flush 가 누락된다).
+    if (getPointerCount() !== 2) {
+      updateTextCompensation();
+    }
   });
 
   document.addEventListener('pointercancel', function(e) {
     delete pointers[e.pointerId];
+    if (getPointerCount() === 0) {
+      gestureActive = false;
+    }
+    // 위 pointerup 과 동일한 이유로 flush.
+    if (getPointerCount() !== 2) {
+      updateTextCompensation();
+    }
   });
 
   // 마우스 휠 줌
@@ -637,6 +692,15 @@ $textElements
 
     clampTranslation();
     scheduleTransform();
+    // [M-1, 2026-08 리뷰] applyTransform 의 폰트 보정은 `getPointerCount() !== 2`
+    // 로 게이트된다 — pointerup/pointercancel 유실로 `pointers` 에 유령 항목
+    // 2개가 남으면 이 게이트가 영구히 닫혀 이후 모든 보정이 동결될 수 있다.
+    // 휠 줌은 터치 포인터 상태와 무관한 별개 입력 경로이므로(scale 을 바꾸는
+    // 곳은 이 휠 핸들러와 2-포인터 핀치 두 곳뿐 — panTo/resize 는 scale 을
+    // 바꾸지 않아 영향 없음), 여기서 게이트를 우회해 직접 flush한다. 핀치
+    // 억제 로직(applyTransform 내부)은 건드리지 않아 그쪽 검증 결과에
+    // 영향이 없다 — 실패 전파 범위를 이 핸들러 안으로만 좁힌다.
+    updateTextCompensation();
   }, { passive: false });
 
   // ============================================================
@@ -653,11 +717,11 @@ $textElements
     // 인접 역 라벨을 침범한다. (이후 setInitialView→applyTransform 이 현재
     // 줌에 맞는 값으로 다시 설정하므로 임시 고정은 무해.)
     textLayer.style.fontSize = TEXT_BASE_FONT_SIZE + 'px';
-    // 위에서 fontSize를 직접 덮어썼으므로, applyTransform의 lastFontScale 캐시가
-    // "이미 현재 scale에 맞게 계산됐다"고 오인해 재계산을 건너뛰지 않도록 무효화한다.
-    // 현재는 buildTextTargets가 최초 applyTransform 이전(lastFontScale=null인 시점)
+    // 위에서 fontSize를 직접 덮어썼으므로, updateTextCompensation의 lastCs 캐시가
+    // "이미 현재 cs에 맞게 계산됐다"고 오인해 재계산을 건너뛰지 않도록 무효화한다.
+    // 현재는 buildTextTargets가 최초 applyTransform 이전(lastCs=null인 시점)
     // 에만 호출되어 무해하지만, 향후 재측정 목적으로 재호출될 경우를 대비한 안전장치.
-    lastFontScale = null;
+    lastCs = null;
     var texts = textLayer.querySelectorAll('text[data-station]');
     for (var i = 0; i < texts.length; i++) {
       var el = texts[i];
@@ -2213,8 +2277,15 @@ $textElements
       // 도착 말풍선: realRemaining 을 API 원본 그대로 정수화해 표시(원칙 1 —
       // 숫자는 재조회로 늘어날 수 있다). 별도 카운트다운 변수를 두지 않고,
       // 정수 초가 바뀔 때만 DOM 을 갱신해 매 frame(~60fps) textContent 쓰기를 피한다.
+      // [P1, 2026-08 리뷰] 팬/핀치 제스처 진행 중엔 이 DOM 쓰기(및 뒤따르는
+      // resizeArrivalBubble 의 rect 폭 재계산)를 미룬다. realRemaining 계산
+      // 자체(원칙 1-a)는 그대로 매 프레임 수행하고 lastShownSec 갱신만 보류하므로,
+      // 제스처가 끝나면 바로 다음 rAF 프레임에서 값이 달라진 것으로 감지돼
+      // 스스로 flush 된다(폰트 보정과 달리 별도 flush 호출이 불필요 — 이 루프
+      // 자체가 제스처 중에도 계속 돈다). 표시가 최대 한 제스처 길이만큼
+      // 늦어질 뿐 값이 틀리거나 멈추지 않는다.
       var shownSec = Math.ceil(realRemaining);
-      if (trainState.lastShownSec !== shownSec) {
+      if (!gestureActive && trainState.lastShownSec !== shownSec) {
         trainState.lastShownSec = shownSec;
         updateArrivalBubbleText(trainState.element,
           formatArrivalBubbleText(realRemaining));
@@ -2310,8 +2381,19 @@ $textElements
       }
       var pos = cp;
 
-      trainState.element.setAttribute('transform',
-        'translate(' + pos.x + ',' + pos.y + ')');
+      // [래스터 부하 절감] 좌표가 직전 프레임과 동일하면 DOM 쓰기를 생략한다.
+      // 3-way 클램프(원칙 3)나 단조 전진 backstop(원칙 1)이 target 을 같은
+      // 지점에 붙잡아 두는 동안(예: 정차 중 표시 기준쌍이 stale 반복 보고로
+      // 고정돼 있을 때) 매 프레임 동일한 좌표를 다시 쓰면 #train-layer 를
+      // 불필요하게 계속 무효화한다. 위치 계산(4원칙)은 그대로 매 프레임
+      // 수행하고, 최종 DOM 반영만 "실제로 달라졌을 때"로 제한한다 — 시각적
+      // 결과는 동일하다.
+      if (trainState.lastRenderedX !== pos.x || trainState.lastRenderedY !== pos.y) {
+        trainState.element.setAttribute('transform',
+          'translate(' + pos.x + ',' + pos.y + ')');
+        trainState.lastRenderedX = pos.x;
+        trainState.lastRenderedY = pos.y;
+      }
 
       // 도착 이펙트는 catch-up 이 끝난 뒤에 발동 (달리다 중간에 사라지는 현상 방지).
       //
@@ -2342,6 +2424,20 @@ $textElements
   }
 
   function playArrivalEffect(trainState, trainNo) {
+    // [H-1, 2026-08 리뷰] 아래 페이드 애니메이션(animate())은 매 프레임
+    // el.setAttribute('transform', currentTransform + ' scale(...)') 로
+    // transform 을 **직접** 덮어쓴다. step() 의 조건부 쓰기 최적화가 쓰는
+    // lastRenderedX/Y 캐시는 이 우회 경로를 모른 채 페이드 시작 시점 값에
+    // 머물러 있으므로, 페이드(0.6초) 도중 유령 도착이 부활해 startTrainAnimation
+    // 이 재시작되면 stall 열차의 원칙 1 가드가 target 을 최전진 지점(직전
+    // 렌더 좌표와 비트 동일)에 고정해 첫 step() 프레임부터 캐시가 "변화 없음"
+    // 으로 오판, DOM 쓰기가 스킵돼 페이드 마지막 프레임의 확대(scale) 잔재가
+    // 위치가 실제로 바뀔 때까지(수 분 가능) 고착된다. transform 을 우회
+    // 기록하기 시작하는 이 지점에서 캐시를 무효화해, 부활 시 step() 의 첫
+    // 프레임이 반드시 clean translate 를 다시 쓰도록 강제한다.
+    trainState.lastRenderedX = null;
+    trainState.lastRenderedY = null;
+
     // [원칙 1-a] 도착 시점의 **API 원본** 남은시간을 함께 기억한다.
     //
     // 표시 기준쌍이 고정된 동안 카운트다운은 0 까지 내려가므로, API 가 원본을
@@ -2452,6 +2548,21 @@ $textElements
     if (items.length < 2) return;
     // 남은시간 내림차순 → 앞선 열차(작은 값)가 마지막에 붙어 최상위가 된다.
     items.sort(function(a, b) { return b.rem - a.rem; });
+
+    // [래스터 부하 절감] 이미 원하는 순서와 같으면 DOM 이동을 생략한다.
+    // appendChild 를 통한 재배치는 자식이 이동하지 않아도 #train-layer 의
+    // 페인트 순서가 바뀐 것으로 취급돼 리페인트를 유발할 수 있다. 열차가
+    // 1~2개뿐이거나 상대 순서가 이미 안정된(대부분의) refresh 에서는 실제로
+    // 옮길 노드가 없으므로, 그 경우엔 DOM 에 손대지 않는다.
+    var current = liveTrainsGroup.children;
+    var alreadyOrdered = current.length === items.length;
+    if (alreadyOrdered) {
+      for (var ci = 0; ci < items.length; ci++) {
+        if (current[ci] !== items[ci].el) { alreadyOrdered = false; break; }
+      }
+    }
+    if (alreadyOrdered) return;
+
     for (var i = 0; i < items.length; i++) {
       // 이미 자식인 노드의 appendChild 는 복제가 아니라 "맨 뒤로 이동" 이다.
       liveTrainsGroup.appendChild(items[i].el);
@@ -2905,6 +3016,13 @@ $textElements
       // 이전 터치 잔재가 남아있지 않도록 보장
       for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
       isDragging = false;
+      // [M-2, 2026-08 리뷰] gestureActive 도 함께 초기화한다. pointers 를
+      // 전량 비우면서 이 플래그를 빠뜨리면, 지도 쪽 pointerup/pointercancel
+      // 유실로 gestureActive 가 이미 true 로 걸려 있던 경우 여기서 회복할
+      // 기회를 놓쳐 세션 내내(툴바 드래그 이후 포함) 열차 카운트다운 DOM
+      // 쓰기가 영구 동결된다. isDragging 과 동일한 "팬 상태 강제 초기화"
+      // 관용구의 일부로 취급한다.
+      gestureActive = false;
 
       var rect = routeToolbar.getBoundingClientRect();
       dragState = {
@@ -2961,6 +3079,9 @@ $textElements
       // 맵 pan state 완전 클리어: 다음 맵 터치가 깨끗하게 pan을 시작하도록 보장
       for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
       isDragging = false;
+      // [M-2, 2026-08 리뷰] 위 onDragStart 와 동일한 이유로 gestureActive 도
+      // 함께 초기화한다.
+      gestureActive = false;
     }
 
     routeToolbar.addEventListener('pointerdown', onDragStart);
