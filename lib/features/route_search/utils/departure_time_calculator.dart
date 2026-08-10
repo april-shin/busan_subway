@@ -147,10 +147,14 @@ String baseLineId(String lineId) {
 /// 급행 세그먼트는 가상 노선(`{base}E`)의 skip edge 가중치로 만들어지므로
 /// `durationSeconds` 자체가 이미 급행 소요시간이다 — 모드별 분기가 필요 없다.
 ///
+/// 환승 기준 시각은 "이전 구간 종료 + **환승 도보시간**"(afterWalk)이다.
+/// `transferDurations` 에 섞여 있는 배차간격/2 대기 추정을 여기서 더하면,
+/// 그 뒤에 다시 찾는 다음 열차 대기와 이중 계상된다.
+///
 /// 환승역에서의 출발시각 결정 우선순위:
-/// 1순위: [transferArrivals]에서 해당 역의 실시간 데이터 (afterTransfer 이후 열차만)
-/// 2순위: 시간표 기반 다음 출발
-/// 3순위: afterTransfer 그대로 사용
+/// 1순위: [transferArrivals]에서 해당 역의 실시간 데이터 (afterWalk 이후 열차만)
+/// 2순위: 시간표 기반 다음 출발 (afterWalk 이후)
+/// 3순위: 근거가 없을 때만 대기 추정 포함값(`transferDurations`)으로 폴백
 ///
 /// [stations]/[connections] 의 역할은 [computeDepartureTimeDetailed] 와 같다
 /// (환승 후 세그먼트에 구간 완주 판정 추가, 미로딩 시 fail-open).
@@ -173,12 +177,21 @@ List<DateTime> computeSegmentDepartures({
         currentTime.add(Duration(seconds: segment.durationSeconds));
 
     if (i < routeResult.segments.length - 1) {
-      // 환승 시간 추가
+      // 환승 도보시간만 더해 "승강장 도착 시각"을 만든다.
+      //
+      // `transferDurations`(= 환승 edge 가중치)에는 그래프 빌더가 얹은
+      // 배차간격/2 대기 추정이 이미 섞여 있다. 그 값을 기준으로 다음 열차를
+      // 다시 찾으면 "추정 대기 + 실제 다음 열차까지의 대기"가 이중 계상돼,
+      // 환승 경로의 표시 시간만 부풀고 "최단시간이 최소환승보다 오래 걸린다"는
+      // 역전이 화면에 노출된다(역삼→왕십리 등). 실제 대기는 아래 1·2순위가
+      // 시각표/실시간으로 산출하므로 여기서는 도보시간만 더한다.
       final transferSeconds = i < routeResult.transferDurations.length
           ? routeResult.transferDurations[i]
           : 0;
-      final afterTransfer =
-          segmentEnd.add(Duration(seconds: transferSeconds));
+      final walkSeconds = i < routeResult.transferWalkDurations.length
+          ? routeResult.transferWalkDurations[i]
+          : transferSeconds; // 레거시(도보 미분리) 데이터는 기존 동작 유지
+      final afterWalk = segmentEnd.add(Duration(seconds: walkSeconds));
 
       // 다음 구간 정보 (1역 세그먼트이면 방향 판별 불가 → false 폴백)
       final nextSegment = routeResult.segments[i + 1];
@@ -187,7 +200,7 @@ List<DateTime> computeSegmentDepartures({
           : false;
       final transferStationName = nextSegment.stations.first.name;
 
-      // 1순위: 환승역 실시간 도착정보 (afterTransfer 이후 열차만 유효)
+      // 1순위: 환승역 실시간 도착정보 (afterWalk 이후 열차만 유효)
       // 다음 세그먼트가 급행(`{line}E`)이면 급행 trainType만 매칭한다.
       // 그 구간을 끝까지 태워주지 않는 행선지의 열차(지선 분기·중간 종착)는
       // 제외한다(출발역과 같은 규칙).
@@ -196,7 +209,7 @@ List<DateTime> computeSegmentDepartures({
       final nextRealtimeLineId = baseLineId(nextSegment.lineId);
       DateTime? nextDeparture;
       if (arrivalAsync != null) {
-        final minSeconds = afterTransfer.difference(now).inSeconds;
+        final minSeconds = afterWalk.difference(now).inSeconds;
         nextDeparture = _getRealtimeDeparture(
           arrivalAsync: arrivalAsync,
           lineId: nextRealtimeLineId,
@@ -221,7 +234,7 @@ List<DateTime> computeSegmentDepartures({
         if (nextSchedule != null) {
           nextDeparture = findNextDeparture(
             schedule: nextSchedule,
-            now: afterTransfer,
+            now: afterWalk,
             isDown: nextIsDown,
             stationId: nextSegment.stations.first.id,
             express: nextIsExpress,
@@ -229,8 +242,10 @@ List<DateTime> computeSegmentDepartures({
         }
       }
 
-      // 3순위: afterTransfer 그대로 사용
-      nextDeparture ??= afterTransfer;
+      // 3순위: 실시간·시간표 모두 없을 때만 그래프의 대기 추정(배차간격/2)이
+      // 포함된 `transferSeconds` 로 폴백한다. 이 분기에는 실제 대기를 알려줄
+      // 근거가 없으므로 추정치를 쓰는 편이 도보시간만 세는 것보다 낫다.
+      nextDeparture ??= segmentEnd.add(Duration(seconds: transferSeconds));
 
       departures.add(nextDeparture);
       currentTime = nextDeparture;

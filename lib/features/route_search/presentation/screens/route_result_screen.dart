@@ -17,6 +17,7 @@ import '../providers/timetable_providers.dart';
 import '../../utils/departure_candidates.dart';
 import '../../utils/departure_query_time.dart';
 import '../../utils/departure_time_calculator.dart';
+import '../../utils/route_timing.dart';
 import '../widgets/departure_time_sheet.dart';
 import '../widgets/transfer_row.dart';
 
@@ -83,6 +84,46 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
   _TabConfig get _tabConfig => _resolveTabConfig(widget);
   bool get _hasTabs => _tabConfig != _TabConfig.single;
 
+  /// 최소환승 경로가 최단시간 후보보다 **먼저 도착**하는지.
+  ///
+  /// 도착이 같으면 false — 순서를 바꿀 이유가 없으므로 기존 배치를 유지한다.
+  ///
+  /// `SearchRoute` 의 swap 정규화는 **그래프 비용**으로 한다 — 환승 대기를
+  /// 배차간격/2 로 추정하고, 탑승 전 승강장 대기는 아예 모른다. 반면 화면에
+  /// 찍히는 시각은 시간표에서 실제 다음 열차를 짚어 만든다. 두 척도가 달라
+  /// "최단시간 탭이 최소환승 탭보다 늦게 도착"하는 역전이 생길 수 있다.
+  ///
+  /// 그래서 탭 순서만 실제 도착 시각으로 다시 정한다(라벨은 각 경로에 그대로
+  /// 붙어 다니고, 먼저 도착하는 쪽이 왼쪽=기본 탭이 된다).
+  ///
+  /// 비교는 **시간표만으로** 한다 — 실시간을 섞으면 refresh 마다 탭 순서가
+  /// 뒤바뀔 수 있다. 시각을 못 구하면(막차 이후·시간표 없음) 판정을 포기하고
+  /// false 를 돌려 기존 순서를 유지한다(fail-open).
+  bool _leastTransferArrivesFirst({
+    required Map<String, LineSchedule> schedules,
+    required List<Station> stations,
+    required List<Connection> connections,
+    required DateTime wallClock,
+  }) {
+    final leastTransfer = widget.leastTransfer;
+    if (leastTransfer == null || schedules.isEmpty) return false;
+
+    RouteTiming? timingOf(RouteResult route) => computeRouteTiming(
+          routeResult: route,
+          query: _query,
+          wallClock: wallClock,
+          schedules: schedules,
+          stations: stations,
+          connections: connections,
+        );
+
+    final comparison = compareByArrival(
+      timingOf(leastTransfer),
+      timingOf(widget.fastest),
+    );
+    return comparison != null && comparison < 0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -109,9 +150,29 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
 
   @override
   Widget build(BuildContext context) {
+    // 정적 데이터(keepAlive) — 로딩 중이면 빈 값이라 판정이 fail-open 된다.
+    final schedules =
+        ref.watch(lineSchedulesProvider).value ?? const <String, LineSchedule>{};
+    final stations = ref.watch(allStationsProvider).value ?? const <Station>[];
+    final connections =
+        ref.watch(allConnectionsProvider).value ?? const <Connection>[];
+
     final config = _tabConfig;
-    final tabs = _buildTabs(config);
-    final routes = _buildRoutes(config);
+    // 환승 트레이드오프 탭에 한해, 실제 도착이 빠른 쪽을 왼쪽으로 보낸다.
+    //
+    // 조회 시각을 바꾸면 순서가 뒤집힐 수 있고, 그때 선택 인덱스는 그대로라
+    // 보고 있던 탭의 내용이 다른 경로로 바뀐다. 라벨도 함께 바뀌므로 사용자가
+    // 알아챌 수 있고, 순서를 조회 시각에 맞추는 편이 맞아 그대로 둔다.
+    final swapTransferTabs = config == _TabConfig.transferTradeoff &&
+        _leastTransferArrivesFirst(
+          schedules: schedules,
+          stations: stations,
+          connections: connections,
+          wallClock: DateTime.now(),
+        );
+
+    final tabs = _buildTabs(config, swapTransferTabs: swapTransferTabs);
+    final routes = _buildRoutes(config, swapTransferTabs: swapTransferTabs);
 
     return Scaffold(
       appBar: AppBar(
@@ -144,13 +205,22 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
   }
 
   /// 탭 라벨 — 단일 탭이면 null.
-  List<Widget>? _buildTabs(_TabConfig config) {
+  ///
+  /// 라벨은 경로에 붙어 다닌다. [swapTransferTabs] 면 두 탭이 통째로 자리를
+  /// 바꾸므로 "최소환승"이 왼쪽(기본 탭)이 된다.
+  List<Widget>? _buildTabs(
+    _TabConfig config, {
+    required bool swapTransferTabs,
+  }) {
     switch (config) {
       case _TabConfig.transferTradeoff:
-        return const [
-          Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간'),
-          Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승'),
-        ];
+        const fastestTab =
+            Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간');
+        const leastTransferTab =
+            Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승');
+        return swapTransferTabs
+            ? const [leastTransferTab, fastestTab]
+            : const [fastestTab, leastTransferTab];
       case _TabConfig.modeTradeoff:
         return const [
           // 급행이 기본값이므로 왼쪽에 위치한다 (사용자 합의 사항).
@@ -162,11 +232,16 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
     }
   }
 
-  /// 각 탭에 대응하는 경로 리스트.
-  List<RouteResult> _buildRoutes(_TabConfig config) {
+  /// 각 탭에 대응하는 경로 리스트. [_buildTabs] 와 같은 순서여야 한다.
+  List<RouteResult> _buildRoutes(
+    _TabConfig config, {
+    required bool swapTransferTabs,
+  }) {
     switch (config) {
       case _TabConfig.transferTradeoff:
-        return [widget.fastest, widget.leastTransfer!];
+        return swapTransferTabs
+            ? [widget.leastTransfer!, widget.fastest]
+            : [widget.fastest, widget.leastTransfer!];
       case _TabConfig.modeTradeoff:
         return [widget.fastestExpress!, widget.fastestLocal!];
       case _TabConfig.single:
@@ -320,9 +395,8 @@ class _RouteViewState extends ConsumerState<_RouteView> {
         ref.watch(allConnectionsProvider).value ?? const <Connection>[];
     final query = widget.query;
     // 고정 시각 조회는 실시간 도착정보를 쓰지 않으므로 API 를 기다릴 이유가 없다.
-    final useRealtime = query.isNow;
     final isLoading =
-        useRealtime && arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
+        query.isNow && arrivalAsync is AsyncLoading && !schedulesAsync.hasValue;
 
     final schedules = schedulesAsync.value ?? <String, LineSchedule>{};
     // 출발 시각과 관련된 모든 조회(후보 목록·실제 계산)는 이 컨텍스트 하나에서
@@ -352,35 +426,21 @@ class _RouteViewState extends ConsumerState<_RouteView> {
       now: wallClock,
     );
 
-    // 고정 시각이면 실시간을 통째로 무시한다 — 미래 시각에 현재 열차 위치를
-    // 섞으면 명백히 틀린 값이 나온다. 빈 데이터를 넘기면 실시간 분기가 자연히
-    // null 을 반환해 시간표 경로로 떨어진다.
-    const noArrivals = AsyncValue<List<ArrivalInfo>>.data([]);
-    final effectiveArrival = useRealtime ? arrivalAsync : noArrivals;
-    final effectiveTransferArrivals =
-        useRealtime ? transferArrivals : const <String, AsyncValue<List<ArrivalInfo>>>{};
-
-    final now = resolveQueryDateTime(query, wallClock);
-
-    // 고른 시각이 이 경로의 실제 출발시각이면 탐색 없이 확정한다(사유는
-    // `resolveChosenDeparture` doc 참조). null 이면 기존 탐색 경로를 탄다.
-    final chosenDeparture = resolveChosenDeparture(
+    // 출발/도착 시각 계산은 `computeRouteTiming` 하나로 모았다. 탭 순서 판정
+    // (`_RouteResultScreenState`)도 같은 함수를 쓰므로, 화면에 보이는 도착시각과
+    // 순서를 정한 근거가 갈라지지 않는다. 고정 시각일 때 실시간을 무시하는
+    // 처리도 그 안에 있다.
+    final timing = computeRouteTiming(
+      routeResult: routeResult,
       query: query,
-      candidates: departureOptions.forDayType(query.dayType),
-      now: wallClock,
+      wallClock: wallClock,
+      schedules: schedules,
+      departureArrival: arrivalAsync,
+      transferArrivals: transferArrivals,
+      stations: stations,
+      connections: connections,
     );
-
-    final departureResult = chosenDeparture != null
-        ? (departure: chosenDeparture, source: DepartureSource.timetable)
-        : computeDepartureTimeDetailed(
-            arrivalAsync: effectiveArrival,
-            routeResult: routeResult,
-            now: now,
-            lineSchedule: departureSchedule,
-            stations: stations,
-            connections: connections,
-          );
-    final departureTime = departureResult.departure;
+    final departureTime = timing?.departure ?? wallClock;
 
     // 고정 시각 조회에서만 안내를 띄운다. "지금" 조회는 기존처럼 조용히
     // 폴백한다(회귀 방지).
@@ -392,7 +452,8 @@ class _RouteViewState extends ConsumerState<_RouteView> {
     final String? departureNotice;
     if (query.isNow) {
       departureNotice = null;
-    } else if (departureResult.source == DepartureSource.unavailable) {
+    } else if (timing == null ||
+        timing.source == DepartureSource.unavailable) {
       // 애초에 시각을 못 구했다 — 막차 이후이거나 시간표 자체가 없다.
       departureNotice = '선택한 시각에는 운행하지 않습니다';
     } else if (departureOptions.forDayType(query.dayType).isEmpty) {
@@ -402,27 +463,10 @@ class _RouteViewState extends ConsumerState<_RouteView> {
       departureNotice = null;
     }
 
-    final segmentDepartures = computeSegmentDepartures(
-      routeResult: routeResult,
-      initialDeparture: departureTime,
-      schedules: schedules,
-      transferArrivals: effectiveTransferArrivals,
-      now: now,
-      stations: stations,
-      connections: connections,
-    );
-
-    // 실제 도착시간: 마지막 세그먼트 출발 + 마지막 세그먼트 소요시간
-    final DateTime arrivalTime;
-    final int totalMinutes;
-    if (routeResult.segments.isEmpty) {
-      arrivalTime = departureTime;
-      totalMinutes = 0;
-    } else {
-      arrivalTime = segmentDepartures.last
-          .add(Duration(seconds: routeResult.segments.last.durationSeconds));
-      totalMinutes = arrivalTime.difference(departureTime).inMinutes;
-    }
+    // 세그먼트가 없는 경로(= timing null)는 출발=도착, 소요 0분.
+    final segmentDepartures = timing?.segmentDepartures ?? [departureTime];
+    final arrivalTime = timing?.arrival ?? departureTime;
+    final totalMinutes = timing?.totalMinutes ?? 0;
 
     return Column(
       children: [

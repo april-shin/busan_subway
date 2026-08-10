@@ -671,6 +671,134 @@ void main() {
       // 구간 종료 09:10, 환승 3분 → 09:13
       expect(result[1], DateTime(2026, 2, 23, 9, 13));
     });
+
+    // 회귀 가드: `transferDurations` 에는 그래프가 얹은 배차간격/2 대기 추정이
+    // 섞여 있다. 그 값을 기준 시각으로 쓰면 뒤이어 찾는 다음 열차 대기와
+    // 이중 계상돼 환승 경로의 표시 시간만 부풀고, "최단시간이 최소환승보다
+    // 오래 걸린다"는 역전이 화면에 노출된다(역삼→왕십리).
+    test('환승 기준 시각은 도보시간만 더한다 (대기 이중 계상 금지)', () {
+      const route = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '2',
+            lineName: '2호선',
+            stations: [
+              Station(
+                  id: '216', name: '강남', lineId: '2', latitude: 0, longitude: 0),
+              Station(
+                  id: '222', name: '시청', lineId: '2', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 600, // 10분
+            direction: '시청 방면',
+          ),
+          RouteSegment(
+            lineId: '3',
+            lineName: '3호선',
+            stations: [
+              Station(
+                  id: '330',
+                  name: '충무로',
+                  lineId: '3',
+                  latitude: 0,
+                  longitude: 0),
+              Station(
+                  id: '331',
+                  name: '동대입구',
+                  lineId: '3',
+                  latitude: 0,
+                  longitude: 0),
+            ],
+            durationSeconds: 300,
+            direction: '수서 방면',
+          ),
+        ],
+        totalTimeSeconds: 1290,
+        transferCount: 1,
+        stationCount: 4,
+        transferDurations: [390], // 도보 150s + 대기 추정 240s
+        transferWalkDurations: [150],
+      );
+
+      final departure = DateTime(2026, 2, 23, 9, 5);
+      final schedule3 = LineSchedule(
+        lineId: '3',
+        weekday: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '00:00',
+          periods: [
+            TimePeriod(start: '05:30', end: '09:00', headwayMinutes: 3),
+            TimePeriod(start: '09:00', end: '16:30', headwayMinutes: 6),
+          ],
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:30',
+          lastTrain: '23:30',
+          periods: [
+            TimePeriod(start: '05:30', end: '23:30', headwayMinutes: 8),
+          ],
+        ),
+      );
+
+      final result = computeSegmentDepartures(
+        routeResult: route,
+        initialDeparture: departure,
+        schedules: {'2': makeSchedule(), '3': schedule3},
+        now: fixedNow,
+      );
+
+      // 첫 구간 종료 09:15 + 도보 150s = 09:17:30 → 3호선 다음 열차 09:18.
+      // 대기 추정까지 더했다면(09:21:30) 09:24 가 되어 6분이 더 붙는다.
+      expect(result[1], DateTime(2026, 2, 23, 9, 18));
+    });
+
+    test('시간표·실시간이 모두 없으면 대기 추정이 포함된 값으로 폴백한다', () {
+      const route = RouteResult(
+        segments: [
+          RouteSegment(
+            lineId: '2',
+            lineName: '2호선',
+            stations: [
+              Station(
+                  id: '216', name: '강남', lineId: '2', latitude: 0, longitude: 0),
+            ],
+            durationSeconds: 300,
+            direction: '시청 방면',
+          ),
+          RouteSegment(
+            lineId: 'UNKNOWN',
+            lineName: '미등록',
+            stations: [
+              Station(
+                  id: 'U01',
+                  name: '역A',
+                  lineId: 'UNKNOWN',
+                  latitude: 0,
+                  longitude: 0),
+            ],
+            durationSeconds: 200,
+            direction: '방면',
+          ),
+        ],
+        totalTimeSeconds: 890,
+        transferCount: 1,
+        stationCount: 2,
+        transferDurations: [390],
+        transferWalkDurations: [150],
+      );
+
+      final departure = DateTime(2026, 2, 23, 9, 5);
+
+      final result = computeSegmentDepartures(
+        routeResult: route,
+        initialDeparture: departure,
+        schedules: {'2': makeSchedule()},
+        now: fixedNow,
+      );
+
+      // 구간 종료 09:10 + 390s(도보+대기 추정) = 09:16:30.
+      // 근거가 없는 분기이므로 도보만 세지 않는다.
+      expect(result[1], DateTime(2026, 2, 23, 9, 16, 30));
+    });
   });
 
   group('computeSegmentDepartures - 환승역 역별 시간표', () {

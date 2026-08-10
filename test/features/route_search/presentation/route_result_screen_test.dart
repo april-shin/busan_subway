@@ -664,6 +664,12 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
+      // 탭 순서는 실제 도착 시각으로 정해지므로 실행 시각에 따라 어느 쪽이
+      // 왼쪽일지 달라진다. 시각을 고르는 것은 최단시간 탭이어야 하므로 명시적으로
+      // 그 탭을 고른다(순서에 의존하지 않는 테스트).
+      await tester.tap(find.text('최단시간'));
+      await tester.pumpAndSettle();
+
       await openSheet(tester);
       await tester.tap(find.text('12'));
       await tester.pumpAndSettle();
