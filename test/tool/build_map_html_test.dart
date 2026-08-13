@@ -280,13 +280,13 @@ void main() {
           htmlContent.indexOf('function setInitialView()', applyEnd);
       final compBody = htmlContent.substring(applyEnd, compEnd);
       expect(compBody, contains('textLayer.style.fontSize'));
-      // [래스터 기아 실험 A, 2026-08-13] stroke 보정이 `--stroke-w` 커스텀
-      // 프로퍼티에서 네이티브 `style.strokeWidth` 로 바뀌었다(CSS 쪽은
-      // `stroke-width: inherit`). 커스텀 프로퍼티는 Blink 의 독립 상속
-      // 프로퍼티 최적화 경로를 타지 못해, 조상 스타일이 매 프레임 바뀌는 팬
-      // 중에 라벨 655개가 스타일 재계산 후보로 남는다는 가설에 따른 것이다.
-      // 검사 대상은 "보정이 이 함수 안에서 일어난다"는 사실이므로 형태만 교체한다.
-      expect(compBody, contains('textLayer.style.strokeWidth'));
+      // [래스터 기아 실험 A, 2026-08-13 — 기각·원복] stroke 보정을 `--stroke-w`
+      // 커스텀 프로퍼티에서 네이티브 `style.strokeWidth` 로 바꿔 CDP Tracing 으로
+      // 검증했으나 개선이 없었다(§10 보고서 §20~§22 — InvalidateLayout 이 자식의
+      // 상속 프로퍼티 메커니즘과 무관하게 SVG 루트 자신에 직접 걸림이 확정됨).
+      // 원래의 `--stroke-w` 커스텀 프로퍼티 방식으로 원복한다.
+      expect(compBody, contains("textLayer.style.setProperty("));
+      expect(compBody, contains("'--stroke-w'"));
       // 팬 전용 프레임(scale 불변)에서는 폰트/스트로크 보정을 건너뛰어야 한다.
       // [P2, 2026-08 리뷰] no-op 판정 키는 scale 이 아니라 실제로 화면에
       // 쓰일 보정계수(cs)다 — scale>1(확대) 구간·MIN_SCALE 축소 구간처럼
@@ -421,15 +421,11 @@ void main() {
             '화면 폰트 크기가 scale=0.5에서 2배, scale=2에서 1/2배로 어긋난다',
       );
 
-      // [래스터 기아 실험 A, 2026-08-13] `setProperty('--stroke-w', …)` 에서
-      // `style.strokeWidth = …` 로 바뀌었다. 이 테스트가 지키려는 것은 대입
-      // **경로**가 아니라 우변 수식에 `/scale` 이 붙지 않는다는 불변식이므로,
-      // 패턴만 새 형태로 옮기고 단언은 그대로 둔다.
       final strokeMatch = RegExp(
-        r"textLayer\.style\.strokeWidth\s*=\s*\(([^)]+)\)\s*\+\s*'px'",
+        r"setProperty\(\s*'--stroke-w',\s*\(([^)]+)\)\s*\+\s*'px'",
       ).firstMatch(applyBody);
       expect(strokeMatch, isNotNull,
-          reason: 'textLayer.style.strokeWidth 대입식을 찾지 못했다');
+          reason: "setProperty('--stroke-w', ...) 대입식을 찾지 못했다");
       expect(
         strokeMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
         equals('TEXT_BASE_STROKE_W/cs'),
