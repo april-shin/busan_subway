@@ -6,6 +6,7 @@ import '../entities/transfer_guide.dart';
 import '../repositories/station_repository.dart';
 import '../../data/local/timetable_data_source.dart';
 import '../../graph/graph_builder.dart';
+import '../../graph/models/graph_edge.dart';
 import '../../graph/shortest_path.dart';
 import '../../graph/subway_graph.dart';
 import '../../core/constants/dwell_time.dart';
@@ -381,11 +382,15 @@ class SearchRoute {
         // transferWalkDurations, transferGuidesList 세 리스트는 항상 같은 길이.
         transferWalkDurations.add(edge.transferWalkSeconds);
 
-        // 환승 가이드 매칭 (이전 세그먼트 방향 + 다음 노선 기준).
+        // 환승 가이드 매칭 (이전 세그먼트 방향 + 다음 노선/방향 기준).
         // 단, 모드 전환(`{line}M`)은 같은 역의 완행↔급행 전환이라 환승 가이드 의미 없음.
-        final nextLineId = (i + 1 < path.edges.length)
-            ? path.edges[i + 1].lineId
-            : null;
+        //
+        // 다음 세그먼트는 이 시점에 아직 조립되지 않았으므로, 환승 직후 첫 주행
+        // edge(`path.edges[i + 1]`)를 미리 들여다봐(lookahead) 목적 노선의 방향을
+        // 산출한다. 산출 불가면 null → 폴백(4-tuple) 키만 사용한다.
+        final nextEdge =
+            (i + 1 < path.edges.length) ? path.edges[i + 1] : null;
+        final nextLineId = nextEdge?.lineId;
         final isModeSwitch = edge.lineId.endsWith('M');
         transferGuidesList.add(
           isModeSwitch
@@ -394,6 +399,7 @@ class SearchRoute {
                   completedSegment: completedSegment,
                   stationName: station?.name,
                   nextLineId: nextLineId,
+                  destIsDown: _resolveDestinationDirection(nextEdge),
                   guides: transferGuides,
                 ),
         );
@@ -477,14 +483,19 @@ class SearchRoute {
 
   /// 환승 가이드 키를 조립하여 매칭되는 가이드를 반환한다.
   ///
-  /// 이전 세그먼트의 마지막 두 역으로 방향(up/down)을 판정하고,
-  /// `{역명}_{이전노선}_{방향}_{다음노선}` 포맷으로 조회한다.
+  /// 이전 세그먼트의 마지막 두 역으로 도착 방향(up/down)을 판정하고,
+  /// `{역명}_{이전노선}_{도착방향}_{다음노선}_{목적방향}` 구체 키를 먼저,
+  /// 없으면 `{역명}_{이전노선}_{도착방향}_{다음노선}` 폴백 키를 조회한다
+  /// ([lookupTransferGuide]).
+  ///
+  /// [destIsDown] 이 null 이면(다음 주행 edge 없음·모드 전환 등) 폴백 키만 쓴다.
   ///
   /// 매칭 실패, 방향 판정 불가(역 수 부족), 세그먼트 없음 → null.
   TransferGuide? _resolveTransferGuide({
     required RouteSegment? completedSegment,
     required String? stationName,
     required String? nextLineId,
+    required bool? destIsDown,
     required Map<String, TransferGuide> guides,
   }) {
     if (completedSegment == null ||
@@ -503,13 +514,56 @@ class SearchRoute {
     // 가상 급행 노선(`{base}E`) 은 실제 환승 가이드 키가 base 노선 ID 로 등록되어
     // 있다. 급행·완행에서 내려도 하차 문 방향/객차 번호는 동일하므로 `1E → 1`
     // 처럼 정규화하여 조회.
-    final key = buildTransferGuideKey(
+    return lookupTransferGuide<TransferGuide>(
+      guides,
       stationName: stationName,
       arrivalLineId: _stripExpressSuffix(prevLineId),
       isDown: isDown,
       destinationLineId: _stripExpressSuffix(nextLineId),
+      destIsDown: destIsDown,
     );
-    return guides[key];
+  }
+
+  /// 환승 직후 첫 주행 edge 로 **목적 노선의 진행 방향**(하행 여부)을 산출한다.
+  ///
+  /// 반환 null = "방향을 알 수 없음" → 호출부는 폴백(4-tuple) 키만 쓴다. null 이
+  /// 되는 경우:
+  ///   - 다음 edge 가 없다(환승이 경로의 마지막 edge — 비정상이지만 방어).
+  ///   - 다음 edge 가 또 환승 edge 다(연속 환승 — 목적 노선 주행이 아직 없음).
+  ///   - 다음 edge 가 모드 전환(`{base}M`) 이다(같은 역 완행↔급행 전환).
+  ///   - 노드 ID 에서 역 ID 를 못 뽑거나 두 역이 같다.
+  ///   - 역 ID 에 후행 숫자가 없어 `isDownBetween` 이 방향을 판정할 수 없다.
+  ///
+  /// 마지막 항목이 중요하다: `isDownBetween` 은 숫자 ID 추출 실패 시 안전한
+  /// 기본값 `false`(= up) 를 반환하므로, 그대로 쓰면 "모름"이 "up" 으로 둔갑해
+  /// 존재하지도 않는 근거로 `..._up` 구체 키를 조회하게 된다(계약 위반). 그래서
+  /// `canResolveDirection` 으로 **먼저** 거른다. 현재 번들 데이터로는 도달 불가한
+  /// 경로지만, 계약을 코드로 못박아 데이터 확장 시 조용히 어긋나지 않게 한다.
+  ///
+  /// 가이드는 부가 정보이므로 산출 실패가 경로 검색 자체를 깨뜨려선 안 된다.
+  /// 예외는 삼켜 null 로 처리한다.
+  bool? _resolveDestinationDirection(GraphEdge? nextEdge) {
+    if (nextEdge == null) return null;
+    if (nextEdge.isTransfer) return null;
+
+    final lineId = nextEdge.lineId;
+    if (lineId.endsWith('M')) return null;
+
+    try {
+      // 노드 ID 포맷은 `{stationId}_{lineId}` 이고 stationId 에는 `_` 가 없다
+      // (`_buildSegments` 의 `split('_').first` 와 같은 전제).
+      final fromId = nextEdge.fromNodeId.split('_').first;
+      final toId = nextEdge.toNodeId.split('_').first;
+      if (fromId.isEmpty || toId.isEmpty || fromId == toId) return null;
+      if (!canResolveDirection(fromId) || !canResolveDirection(toId)) {
+        return null;
+      }
+      // 급행 접미사는 키 조립과 동일하게 정규화한다. `isDownBetween` 자체도 내부
+      // 정규화를 하지만, 방향 산출과 키 조립이 같은 규칙을 쓴다는 것을 명시.
+      return isDownBetween(fromId, toId, _stripExpressSuffix(lineId));
+    } catch (_) {
+      return null;
+    }
   }
 
   /// 가상 급행 노선 ID(`{base}E`)에서 `E` 접미사 제거. 그 외는 그대로.

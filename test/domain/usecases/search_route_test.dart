@@ -1292,6 +1292,221 @@ void main() {
         expect(result.fastest!.transferGuides.length, 1);
         expect(result.fastest!.transferGuides.first, equals(guide));
       });
+
+      group('목적 노선 방향 (v2 5-tuple 키)', () {
+        // 사당역 4호선 → 2호선 픽스처. **역 ID·이름은 실 번들 데이터와 일치한다**
+        // (나무위키와 대조하는 사람이 오도되지 않도록 정합화).
+        //
+        // 실제 나무위키 데이터상 이 환승은 **2호선 내선/외선에 따라 빠른환승 칸이
+        // 갈린다**(4-tuple 키로는 한 값으로 뭉개져 오안내가 났던 케이스).
+        //
+        // 방향 계산 근거:
+        //   - 4호선 424(총신대입구) → 425(사당): 둘 다 본선(<449) & ID 증가 → down.
+        //   - 2호선 226(사당) → 227(낙성대): step +1, |step| ≤ 21 → up = 내선.
+        //   - 2호선 226(사당) → 225(방배): step -1 → down = 외선.
+        final sadangStations = [
+          const Station(id: '424', name: '총신대입구(이수)', lineId: '4',
+              latitude: 0, longitude: 0),
+          const Station(id: '425', name: '사당', lineId: '4',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '4']),
+          const Station(id: '226', name: '사당', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', '4']),
+          const Station(id: '227', name: '낙성대', lineId: '2',
+              latitude: 0, longitude: 0),
+          const Station(id: '225', name: '방배', lineId: '2',
+              latitude: 0, longitude: 0),
+        ];
+        final sadangConnections = [
+          const Connection(fromStationId: '424', toStationId: '425',
+              lineId: '4', travelTimeSeconds: 120),
+          const Connection(fromStationId: '226', toStationId: '227',
+              lineId: '2', travelTimeSeconds: 120),
+          const Connection(fromStationId: '225', toStationId: '226',
+              lineId: '2', travelTimeSeconds: 120),
+        ];
+
+        setUp(() {
+          when(() => mockRepo.getAllStations())
+              .thenAnswer((_) async => sadangStations);
+          when(() => mockRepo.getAllConnections())
+              .thenAnswer((_) async => sadangConnections);
+          when(() => mockRepo.getTransferTimes())
+              .thenAnswer((_) async => {'사당_4_2': 180});
+        });
+
+        test('목적 방향이 다른 두 경로가 서로 다른 가이드를 받는다 (2호선 내선/외선)',
+            () async {
+          const inner = TransferGuide(
+              doorSide: DoorSide.left, car: 4, door: 1, note: '내선(낙성대 방향)');
+          const outer = TransferGuide(
+              doorSide: DoorSide.right, car: 10, door: 4, note: '외선(방배 방향)');
+          when(() => mockRepo.getTransferGuides()).thenAnswer((_) async => {
+                '사당_4_down_2_up': inner,
+                '사당_4_down_2_down': outer,
+              });
+
+          // 총신대입구 → 낙성대: 환승 후 2호선 내선(up).
+          final toNakseongdae = await searchRoute.execute('424', '227');
+          expect(toNakseongdae, isNotNull);
+          expect(toNakseongdae!.transferGuides.length, 1);
+          expect(toNakseongdae.transferGuides.first, equals(inner),
+              reason: '목적 노선이 내선(up)이므로 "사당_4_down_2_up" 가이드여야 함');
+
+          // 총신대입구 → 방배: 환승 후 2호선 외선(down).
+          final toBangbae = await searchRoute.execute('424', '225');
+          expect(toBangbae, isNotNull);
+          expect(toBangbae!.transferGuides.length, 1);
+          expect(toBangbae.transferGuides.first, equals(outer),
+              reason: '목적 노선이 외선(down)이므로 "사당_4_down_2_down" 가이드여야 함');
+
+          expect(toNakseongdae.transferGuides.first,
+              isNot(equals(toBangbae.transferGuides.first)),
+              reason: '4-tuple 로 뭉개지던 두 케이스가 분리되어야 함');
+        });
+
+        test('5-tuple 구체 키가 없으면 4-tuple 폴백 키로 매칭된다', () async {
+          const fallback = TransferGuide(
+              doorSide: DoorSide.left, car: 3, note: '방향 무관');
+          when(() => mockRepo.getTransferGuides())
+              .thenAnswer((_) async => {'사당_4_down_2': fallback});
+
+          final toNakseongdae = await searchRoute.execute('424', '227');
+          final toBangbae = await searchRoute.execute('424', '225');
+
+          expect(toNakseongdae!.transferGuides.first, equals(fallback));
+          expect(toBangbae!.transferGuides.first, equals(fallback),
+              reason: '목적 방향이 반대여도 폴백 키는 양쪽 모두에 적용되어야 함');
+        });
+
+        test('구체 키가 반대 방향으로만 등록되고 폴백도 없으면 null (느슨한 매칭 금지)',
+            () async {
+          const outer = TransferGuide(doorSide: DoorSide.right, car: 10);
+          when(() => mockRepo.getTransferGuides())
+              .thenAnswer((_) async => {'사당_4_down_2_down': outer});
+
+          // 총신대입구 → 낙성대는 목적 방향이 up(내선) 이라 down 키에 매칭되면 안 된다.
+          final toNakseongdae = await searchRoute.execute('424', '227');
+          expect(toNakseongdae!.transferGuides.first, isNull);
+
+          // 같은 데이터로 방향이 맞는 경로(외선)는 정상 매칭.
+          final toBangbae = await searchRoute.execute('424', '225');
+          expect(toBangbae!.transferGuides.first, equals(outer));
+        });
+
+        test('구체 키와 폴백 키가 모두 있으면 구체 키가 우선한다', () async {
+          const specific = TransferGuide(car: 4, note: '내선 전용');
+          const fallback = TransferGuide(car: 6, note: '방향 무관');
+          when(() => mockRepo.getTransferGuides()).thenAnswer((_) async => {
+                '사당_4_down_2_up': specific,
+                '사당_4_down_2': fallback,
+              });
+
+          final toNakseongdae = await searchRoute.execute('424', '227');
+          expect(toNakseongdae!.transferGuides.first, equals(specific));
+
+          // 구체 키가 없는 반대 방향(외선)은 폴백으로 내려간다.
+          final toBangbae = await searchRoute.execute('424', '225');
+          expect(toBangbae!.transferGuides.first, equals(fallback));
+        });
+      });
+
+      test('목적 노선의 역 ID 로 방향 판정이 불가능하면 폴백 키만 쓴다 (계약 방어)',
+          () async {
+        // `isDownBetween` 은 숫자 ID 추출 실패 시 안전한 기본값 false(=up) 를
+        // 반환한다. 그 값을 그대로 쓰면 "모름"이 "up" 으로 둔갑해 근거 없이
+        // `..._up` 구체 키가 잡힌다. `_resolveDestinationDirection` 이
+        // `canResolveDirection` 으로 먼저 걸러 null → 폴백만 쓰는지 확인한다.
+        const specific = TransferGuide(car: 9, note: '근거 없는 up — 잡히면 안 됨');
+        const fallback = TransferGuide(car: 2, note: '방향 무관');
+        // 목적 노선 'Z' 의 역 ID 는 후행 숫자가 없다(`_parseNumericId` → null).
+        final stationsNoDigit = [
+          const Station(id: '201', name: '시청', lineId: '2',
+              latitude: 0, longitude: 0),
+          const Station(id: '202', name: '을지로입구', lineId: '2',
+              latitude: 0, longitude: 0),
+          const Station(id: '203', name: '을지로3가', lineId: '2',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', 'Z']),
+          const Station(id: 'ZA', name: '을지로3가', lineId: 'Z',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['2', 'Z']),
+          const Station(id: 'ZB', name: '종점', lineId: 'Z',
+              latitude: 0, longitude: 0),
+        ];
+        final connsNoDigit = [
+          const Connection(fromStationId: '201', toStationId: '202',
+              lineId: '2', travelTimeSeconds: 90),
+          const Connection(fromStationId: '202', toStationId: '203',
+              lineId: '2', travelTimeSeconds: 90),
+          const Connection(fromStationId: 'ZA', toStationId: 'ZB',
+              lineId: 'Z', travelTimeSeconds: 90),
+        ];
+        when(() => mockRepo.getAllStations())
+            .thenAnswer((_) async => stationsNoDigit);
+        when(() => mockRepo.getAllConnections())
+            .thenAnswer((_) async => connsNoDigit);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => {'을지로3가_2_Z': 180});
+        when(() => mockRepo.getTransferGuides()).thenAnswer((_) async => {
+              '을지로3가_2_up_Z_up': specific,
+              '을지로3가_2_up_Z': fallback,
+            });
+
+        final result = await searchRoute.execute('201', 'ZB');
+
+        expect(result, isNotNull);
+        expect(result!.transferGuides.length, 1);
+        expect(result.transferGuides.first, equals(fallback),
+            reason: '목적 방향 산출 불가이므로 구체 키(_up)가 아니라 폴백 키가 잡혀야 함');
+      });
+
+      test('급행 세그먼트로 환승해도 목적 노선 방향은 base 노선 규칙으로 산출된다',
+          () async {
+        // 목적 노선이 가상 급행(`{base}E`)이어도 키에는 base 노선 ID 가 들어가고,
+        // 방향은 base 규칙으로 판정되어야 한다(`_stripExpressSuffix` 일관 적용).
+        // 5호선 신길(530) → 영등포(529) 환승 → 1호선 급행으로 용산(136) 방면.
+        // 1호선 140(영등포) → 136(용산) 은 ID 감소 → up.
+        const guide = TransferGuide(car: 7, note: '급행 목적 방향');
+        final mixed = [
+          const Station(id: '530', name: '신길', lineId: '5',
+              latitude: 0, longitude: 0),
+          const Station(id: '529', name: '영등포', lineId: '5',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['1', '5']),
+          const Station(id: '140', name: '영등포', lineId: '1',
+              latitude: 0, longitude: 0,
+              isTransfer: true, transferLines: ['1', '5']),
+          const Station(id: '136', name: '용산', lineId: '1',
+              latitude: 0, longitude: 0),
+        ];
+        final conns = [
+          const Connection(fromStationId: '530', toStationId: '529',
+              lineId: '5', travelTimeSeconds: 120),
+          const Connection(fromStationId: '140', toStationId: '136',
+              lineId: '1', travelTimeSeconds: 500),
+        ];
+        final ex = [
+          const ExpressSkipEdge(lineId: '1', fromStationId: '140',
+              toStationId: '136', seconds: 280, skippedStationIds: []),
+        ];
+        when(() => mockRepo.getAllStations()).thenAnswer((_) async => mixed);
+        when(() => mockRepo.getAllConnections()).thenAnswer((_) async => conns);
+        when(() => mockRepo.getTransferTimes())
+            .thenAnswer((_) async => {'영등포_5_1': 180});
+        when(() => mockRepo.getExpressSkipEdges()).thenAnswer((_) async => ex);
+        // 5호선 530→529 는 ID 감소 → up. 목적 1호선은 base 규칙으로 up.
+        when(() => mockRepo.getTransferGuides())
+            .thenAnswer((_) async => {'영등포_5_up_1_up': guide});
+
+        final result = await searchRoute.executeAll('530', '136');
+
+        expect(result.fastest, isNotNull);
+        expect(result.fastest!.transferGuides.length, 1);
+        expect(result.fastest!.transferGuides.first, equals(guide),
+            reason: '목적 노선이 `1E` 여도 키·방향 모두 base(`1`) 로 정규화되어야 함');
+      });
     });
 
     group('급행 가상 노선 모델링', () {

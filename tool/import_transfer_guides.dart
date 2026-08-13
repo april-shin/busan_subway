@@ -4,9 +4,14 @@
 // 사용법:
 //   dart run tool/import_transfer_guides.dart
 //
-// CSV 포맷:
-//   station,arrival_line,direction,destination_line,door_side,car,door,note
-//   - direction: "up" | "down"
+// CSV 포맷 (v2 — destination_direction 컬럼 추가):
+//   station,arrival_line,direction,destination_line,destination_direction,door_side,car,door,note
+//   - direction: "up" | "down"  (환승역에 **도착할 때** 타고 온 노선의 방향)
+//   - destination_direction: "up" | "down" | (빈 값)
+//       환승 후 타는 노선의 방향. 빈 값이면 "방향 무관"으로 4-tuple 폴백 키에
+//       기록된다. 값이 있으면 5-tuple 구체 키로 기록되어 런타임 2단 조회에서
+//       폴백보다 우선한다. 사당 4호선→2호선처럼 목적 노선 방향에 따라 빠른환승
+//       칸이 갈리는 환승만 값을 채운다.
 //   - door_side: "left" | "right" | (빈 값)
 //   - car, door: 정수 또는 빈 값
 //   - note: 한글/영문 주석 또는 빈 값
@@ -14,7 +19,9 @@
 // 동작:
 //   - 4가지 데이터 필드(door_side, car, door, note) 중 하나라도 값이 있는 행만 JSON에 기록
 //   - 모든 값이 비어 있는 행은 무시 (템플릿 기본 상태)
-//   - 키 포맷: `lib/core/utils/transfer_guide_key.dart`의 `buildTransferGuideKey`와 일치
+//   - 키 조립은 `lib/core/utils/transfer_guide_key.dart`의 `buildTransferGuideKey`를
+//     **그대로 호출**한다. 과거 이 파일이 키를 직접 문자열 조립하던 중복이
+//     런타임과의 스키마 불일치 버그를 낳았으므로 다시 복제하지 말 것.
 //   - 유효하지 않은 행(필수 필드 누락, 잘못된 enum 값 등)은 경고 출력 후 건너뜀
 //
 // 런타임의 `LocalDataSource.loadTransferGuides`는 개별 엔트리 파싱 실패를
@@ -22,6 +29,8 @@
 
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:seoul_subway/core/utils/transfer_guide_key.dart';
 
 const _csvPath = 'data/transfer_guides.csv';
 const _jsonPath = 'assets/json/transfer_guides.json';
@@ -31,6 +40,7 @@ const _expectedHeader = [
   'arrival_line',
   'direction',
   'destination_line',
+  'destination_direction',
   'door_side',
   'car',
   'door',
@@ -80,10 +90,11 @@ void main() {
     final arrivalLine = cols[1].trim();
     final direction = cols[2].trim();
     final destinationLine = cols[3].trim();
-    final doorSideRaw = cols[4].trim();
-    final carRaw = cols[5].trim();
-    final doorRaw = cols[6].trim();
-    final note = cols[7].trim();
+    final destDirectionRaw = cols[4].trim();
+    final doorSideRaw = cols[5].trim();
+    final carRaw = cols[6].trim();
+    final doorRaw = cols[7].trim();
+    final note = cols[8].trim();
 
     // 값이 하나도 없으면 템플릿 빈 행 → 스킵
     if (doorSideRaw.isEmpty &&
@@ -103,6 +114,18 @@ void main() {
           '경고: $i번 행 필수 필드 오류 (station/arrival_line/destination_line/direction): "$rawLine"');
       skippedInvalid++;
       continue;
+    }
+
+    // destination_direction 검증 — 빈 값은 "방향 무관"(4-tuple 폴백 키)으로 허용.
+    bool? destIsDown;
+    if (destDirectionRaw.isNotEmpty) {
+      if (destDirectionRaw != 'up' && destDirectionRaw != 'down') {
+        stderr.writeln(
+            '경고: $i번 행 destination_direction 값 오류 ("$destDirectionRaw"): up/down 또는 빈 값만 허용');
+        skippedInvalid++;
+        continue;
+      }
+      destIsDown = destDirectionRaw == 'down';
     }
 
     // door_side 검증
@@ -138,7 +161,14 @@ void main() {
       }
     }
 
-    final key = '${station}_${arrivalLine}_${direction}_$destinationLine';
+    // 키 조립은 런타임과 공유하는 단일 진입점을 사용한다(문자열 직접 조립 금지).
+    final key = buildTransferGuideKey(
+      stationName: station,
+      arrivalLineId: arrivalLine,
+      isDown: direction == 'down',
+      destinationLineId: destinationLine,
+      destIsDown: destIsDown,
+    );
 
     // 중복 체크
     if (result.containsKey(key)) {

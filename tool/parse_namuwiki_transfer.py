@@ -1,6 +1,31 @@
 #!/usr/bin/env python3
 """나무위키 "수도권 전철 환승 정보" HTML을 파싱하여 transfer_guides.csv에 채운다.
 
+⚠⚠⚠ 2026-08 기준 주 소스가 아니다 (보조 스크립트로 격하).
+    환승 가이드의 주 소스는 서울교통공사 공식 "서울 도시철도 환승정보"
+    데이터셋(공공데이터포털 15098252, `tool/data/seoul_metro_transfer_guides_official.csv`)
+    이며, `tool/import_official_transfer_guides.dart` 가 그 데이터로
+    `data/transfer_guides.csv` 를 생성한다. 대조 검증(336건) 결과 나무위키
+    값은 공식과 45%(153건) 불일치했다 — **결과가 공식과 충돌하면 공식이
+    항상 우선**이다.
+
+    이 스크립트는 삭제하지 않고 **공식 데이터셋이 아예 커버하지 않는 노선의
+    보충용**으로만 남긴다(예: GTX-A — 공식 데이터셋에 없어
+    `data/transfer_guides_manual.csv` 에 나무위키 유래 값이 그대로 남아 있다).
+    공식이 커버하는 역/노선에는 이 스크립트를 다시 돌리지 말 것 — 돌리면
+    `data/transfer_guides.csv` 를 직접 덮어써 공식 값을 나무위키 값으로
+    되돌리는 회귀가 된다. 공식 미커버 구간만 수기로 `data/transfer_guides_manual.csv`
+    에 채워 넣는 용도로 한정한다.
+
+    ⚠ 미러 유지 부담: 아래 `is_down_between()`/`STATION_RANKS` 는
+    `lib/core/utils/line_direction.dart` 의 파이썬 미러다. 이 스크립트를
+    계속 쓰는 한 이 미러가 Dart 원본과 다시 드리프트할 위험이 상존한다
+    (2026-08 오안내 버그의 근본 원인이 바로 이 미러 드리프트였다). 완전
+    제거를 고려했으나, (1) GTX-A처럼 공식 데이터셋에 없는 노선이 실재하고
+    (2) 나무위키가 유일한 대체 소스라, 당장 삭제하면 그 노선의 환승 안내가
+    통째로 사라진다. 대신 사용 범위를 "공식 미커버 노선"으로 좁혀 드리프트
+    위험을 최소화했다.
+
 사용법:
     python3 tool/parse_namuwiki_transfer.py <input_html> [--dry-run]
 
@@ -8,13 +33,32 @@
     1. HTML에서 h2/h3/h4 헤더를 추출 ("XX역 (A호선-B호선)" 패턴)
     2. 각 데이터 테이블을 직전 헤더의 역에 귀속
     3. 각 행을 "A호선 (방면) → B호선 [(방면)] | m-n" 형태로 파싱
-    4. 방면 이름을 프로젝트의 up/down으로 매핑
-    5. data/transfer_guides.csv에 door_side/car/door/note 채움
-       (door_side는 이 소스에서 구하지 못하므로 공란 유지)
+    4. 방면 이름을 프로젝트의 up/down으로 매핑 (도착노선 + 목적노선 양쪽)
+    5. data/transfer_guides.csv(v2 스키마)에 destination_direction/door_side/
+       car/door/note 채움 (door_side는 이 소스에서 구하지 못하므로 공란 유지)
+
+CSV v2 스키마 (컬럼 순서 고정):
+    station,arrival_line,direction,destination_line,destination_direction,
+    door_side,car,door,note
+    - destination_direction: up | down | 빈 값(방향 무관, 대다수 환승)
+    - 목적노선 방면(예: 2호선 내선/외선)에 따라 값이 갈리는 역(사당역 등)은
+      destination_direction 이 채워진 행으로 분할된다. 이 컬럼이 없으면 여러
+      행이 (station, arrival_line, direction, destination_line) 4-tuple 키로
+      뭉개져 마지막 값이 앞의 값을 덮어쓴다 — 2026-08 사당역 오안내 버그의
+      원인 중 하나였다.
+
+방향 판정:
+    resolve_direction()/is_down_between() 은 `lib/core/utils/line_direction.dart`
+    의 미러다. 두 구현이 드리프트하면 방향 오안내가 재발하므로, Dart 쪽 방향
+    규칙(2호선 순환·4호선 진접선·6호선 응암 순환·9호선/공항철도 반전·역별 rank
+    보정)을 고치면 반드시 이 파일도 함께 고칠 것.
 
 주의:
     - 파일 직접 수정을 원하지 않으면 --dry-run 옵션 사용
     - 매칭 실패 행은 warnings에 출력하고 스킵
+    - assets/json/transfer_guides.json 은 이 CSV로부터 별도 importer
+      (tool/import_transfer_guides.dart, 워크스트림 B 담당)가 생성한다. 이
+      스크립트가 직접 만들지 않는다.
 """
 import argparse
 import json
@@ -27,7 +71,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 STATIONS_JSON = ROOT / 'assets' / 'json' / 'stations.json'
 CONNECTIONS_JSON = ROOT / 'assets' / 'json' / 'connections.json'
-CSV_PATH = ROOT / 'data' / 'transfer_guides.csv'
+# ⚠ 쓰기 대상은 **수기 파일**이다. `data/transfer_guides.csv` 는
+# `tool/import_official_transfer_guides.dart` 의 산출물이므로 이 스크립트가
+# 직접 쓰면 공식 값이 나무위키 값으로 되돌아간다(회귀). 위 docstring 의 규칙을
+# 주석이 아니라 코드로 강제하기 위해 경로 자체를 수기 파일로 고정한다.
+# 이 파일을 고친 뒤에는 공식 임포터를 다시 돌려 병합해야 반영된다:
+#   dart run tool/import_official_transfer_guides.dart
+CSV_PATH = ROOT / 'data' / 'transfer_guides_manual.csv'
 
 # 나무위키 노선 표기 → 프로젝트 노선 ID
 LINE_ALIAS = {
@@ -83,6 +133,133 @@ MANUAL_DIR = {
 def parse_numeric(s):
     m = re.search(r'(\d+)$', s)
     return int(m.group(1)) if m else None
+
+
+# ⚠⚠⚠ 이 표와 is_down_between() 은 `lib/core/utils/line_direction.dart` 의
+# `_stationRanks` / `isDownBetween` 을 그대로 미러링한다. **한쪽을 고치면 반드시
+# 다른 쪽도 고칠 것** — 두 구현이 드리프트한 것이 2026-08 사당/동작 환승위치
+# 오안내 버그의 근본 원인이었다(`_workspace/10_transfer_guide_direction_requirements.md`).
+#
+# "번호 순서 = 물리 순서" 규칙에서 벗어나는 역의 정렬 rank. `{노선: {역ID: rank}}`.
+# 값의 의미와 근거는 Dart 쪽 주석과 동일하다 — 여기서는 대응관계만 표시한다.
+STATION_RANKS = {
+    '1': {
+        # 연천/전곡/청산 (경원선 북단, 소요산보다 번호가 큼)
+        '165': 100.7,
+        '164': 100.8,
+        '163': 100.9,
+        # 가산디지털단지 (구로-독산 사이, 번호 소진으로 1425 부여)
+        '1425': 142.5,
+        # 금정 (명학-군포 사이, 1715 = "171.5")
+        '1715': 171.5,
+        # 광명 (금천구청 지선 종착, 물리적으로 남쪽)
+        '1A1': 167.5,
+    },
+    '3': {
+        # 원흥 (원당-삼송 사이, 2014년 개통으로 번호만 뒤에 붙음)
+        '344': 308.5,
+    },
+    '8': {
+        # 별내선 (암사 북쪽 연장, 번호가 물리 순서와 반대)
+        '819': 800.1,  # 별내 (최북단 종착)
+        '820': 800.2,  # 다산
+        '821': 800.3,  # 동구릉
+        '822': 800.4,  # 구리
+        '823': 800.5,  # 장자호수공원
+        '824': 800.6,  # 암사역사공원
+    },
+    '경의중앙': {
+        # 임진강 지선 (문산 북쪽인데 번호가 K55/K56 으로 큼)
+        'K55': 0.8,  # 임진강 (최북단 종착)
+        'K56': 0.9,  # 운천
+    },
+    '서해': {
+        # 서해선 북단(일산~능곡) + 대곡소사선 중간 신설역
+        'H13': 0.05,  # 일산 (최북단 종착)
+        'H14': 0.1,   # 풍산
+        'H15': 0.2,   # 백마
+        'H16': 0.3,   # 대곡
+        'H17': 0.4,   # 능곡
+        'H12': 0.5,   # 김포공항 (원종 H01 북쪽인데 번호가 큼)
+        'H18': 1.3,   # 부천종합운동장
+        'H19': 1.6,   # 소사
+        'H20': 9.5,   # 초지
+    },
+    '수인분당': {
+        # 원인재 (구 수인선 코드 K266)
+        'K266': 60.5,
+        # 인천 방면 종단 (송도 너머인데 번호가 B54~B57 로 작음)
+        'B54': 62.5,  # 인하대
+        'B55': 62.6,  # 숭의
+        'B56': 62.7,  # 신포
+        'B57': 62.8,  # 인천 (종착)
+    },
+    # 2호선(순환)·4호선(진접선)은 번호를 특수 규칙으로 해석하므로 여기 넣지 않는다
+    # (Dart 쪽과 동일한 이유 — is_down_between() 의 전용 분기 참고).
+}
+
+# 성수지선 역 번호. Dart `_line2SeongsuBranchIds` 미러.
+LINE2_SEONGSU_BRANCH_IDS = {244, 245, 246, 250}
+
+
+def _is_line2_down_between(from_num, to_num):
+    """Dart `_isLine2DownBetween` 미러."""
+    if from_num in LINE2_SEONGSU_BRANCH_IDS or to_num in LINE2_SEONGSU_BRANCH_IDS:
+        return to_num > from_num
+    step = to_num - from_num
+    if abs(step) > 21:
+        return step > 0
+    return step < 0
+
+
+def _is_line4_down(first_num, last_num):
+    """Dart `_isLine4Down` 미러."""
+    first_is_ext = first_num >= 449
+    last_is_ext = last_num >= 449
+    if not first_is_ext and not last_is_ext:
+        return last_num > first_num
+    if first_is_ext and last_is_ext:
+        return last_num > first_num
+    if first_is_ext and not last_is_ext:
+        return True
+    return False
+
+
+def is_down_between(from_id, to_id, line_id):
+    """`fromId → toId` 진행 방향이 하행(외선)인지 판정. Dart `isDownBetween` 미러.
+
+    숫자 ID 추출 실패 시 None (Dart 는 false 를 반환하지만, 파서는 "판정 불가"와
+    "상행"을 구분해야 하므로 None 을 쓴다 — 호출부에서 매칭 실패로 처리).
+    """
+    from_num = parse_numeric(from_id)
+    to_num = parse_numeric(to_id)
+    if from_num is None or to_num is None:
+        return None
+
+    # 가상 급행 노선 정규화: `9E` → `9` 등. Dart와 동일.
+    base_id = line_id[:-1] if line_id.endswith('E') else line_id
+
+    if base_id == '2':
+        return _is_line2_down_between(from_num, to_num)
+    if base_id == '4':
+        return _is_line4_down(from_num, to_num)
+
+    # 6호선 응암 순환 폐합 edge (구산 606 ↔ 응암 601). Dart와 동일한 인접쌍 전제.
+    if base_id == '6':
+        if from_num == 606 and to_num == 601:
+            return True
+        if from_num == 601 and to_num == 606:
+            return False
+
+    ranks = STATION_RANKS.get(base_id, {})
+    frm = ranks.get(from_id, float(from_num))
+    to = ranks.get(to_id, float(to_num))
+
+    if base_id in ('9', '공항철도'):
+        # 서울 API updnLine 라벨 기준 반전. Dart와 동일.
+        return to < frm
+
+    return to > frm
 
 
 # 별칭 → 정식명 역매핑 (station_index가 별칭으로도 lookup 되도록 보완)
@@ -213,10 +390,17 @@ def extract_station_from_header(header_text):
 def resolve_direction(line_id, direction_text, station_name, station_index, line_stations, adj):
     """방면 텍스트 → up/down.
 
+    ⚠ 이 함수는 `lib/core/utils/line_direction.dart::isDownBetween` 의 미러다.
+    실제 방향 판정 로직(2/4/6/9/공항철도 특례 + rank 보정)은 `is_down_between()` 에
+    위임한다 — 파서 전용 코드에 판정 로직을 복제하면 Dart 와 다시 드리프트한다.
+    한쪽을 고치면 반드시 다른 쪽도 고칠 것.
+
     정확성을 위해 `connections.json` 기반 BFS로 환승역에서 방면 역으로의 첫 인접
-    역 ID를 찾고, 프로젝트 `isDownBetween` 로직(인접 쌍 ID 비교)과 동일하게 판정한다.
+    역 ID를 찾고, `is_down_between(station_id, hop_id, line_id)` 로 판정한다.
+    도착노선뿐 아니라 목적노선의 방면 텍스트에도 그대로 재사용된다
+    (`parse_table` 의 `destination_direction` 산출).
     """
-    # 2호선 순환 직접 매핑
+    # 2호선 순환 직접 매핑 (나무위키가 "내선"/"외선" 텍스트로 직접 표기하는 경우)
     if line_id == '2':
         for k, v in LINE2_DIRECTION.items():
             if k in direction_text:
@@ -251,21 +435,10 @@ def resolve_direction(line_id, direction_text, station_name, station_index, line
         hop_id = find_first_hop_id(line_id, station_id, target_id, adj)
         if not hop_id:
             continue
-        hop_num = parse_numeric(hop_id)
-        stn_num = parse_numeric(station_id)
-        if hop_num is None or stn_num is None:
+        down = is_down_between(station_id, hop_id, line_id)
+        if down is None:
             continue
-        # 4호선 진접선 특수 처리: project line_direction과 동일
-        if line_id == '4':
-            # 진접(449+) ↔ 본선(402-448) 경계 처리
-            stn_is_ext = stn_num >= 449
-            hop_is_ext = hop_num >= 449
-            if stn_is_ext != hop_is_ext:
-                # 본선→진접: up (북쪽)
-                # 진접→본선: down (남쪽)
-                return 'down' if stn_is_ext and not hop_is_ext else 'up'
-            # 둘 다 본선/진접이면 ID 증가 = down
-        return 'down' if hop_num > stn_num else 'up'
+        return 'down' if down else 'up'
     return None  # 매칭 실패
 
 
@@ -339,6 +512,16 @@ def parse_table(table_html, station_name, station_index, line_stations, adj):
         else:
             dirs = [arr_dir]
 
+        # 목적노선 방면 해석 (예: 사당역 "4호선→2호선(내선순환)"의 "내선순환").
+        # 목적방면이 없거나 해석 불가면 빈 값(방향 무관)으로 둔다 — 대다수 환승이
+        # 이 경우이며, 2호선처럼 내선/외선에 따라 값이 갈리는 역만 채워진다.
+        dest_dir_resolved = {}
+        if dest_dir.strip():
+            for dest_line_id in dest_line_ids:
+                dest_dir_resolved[dest_line_id] = resolve_direction(
+                    dest_line_id, dest_dir, station_name, station_index, line_stations, adj
+                ) or ''
+
         # 각 목적 노선마다 행 생성
         for dest_line_id in dest_line_ids:
             for d in dirs:
@@ -350,6 +533,7 @@ def parse_table(table_html, station_name, station_index, line_stations, adj):
                     'arrival_line': arrival_line_id,
                     'direction': d,
                     'destination_line': dest_line_id,
+                    'destination_direction': dest_dir_resolved.get(dest_line_id, ''),
                     'car': int(car),
                     'door': int(door),
                     'note': note,
@@ -401,7 +585,8 @@ def main():
             table_positions.append((m.start(), m.group(0)))
 
     # 각 테이블을 직전 헤더의 역에 귀속
-    collected = defaultdict(list)  # key = (station, arrival, direction, destination) -> row
+    # key = (station, arrival_line, direction, destination_line, destination_direction) -> row (v2)
+    collected = defaultdict(list)
     unmatched_headers = set()
     parse_errors = 0
 
@@ -430,7 +615,16 @@ def main():
                 candidates[-1],
             )
             st = ALIAS_TO_OFFICIAL.get(st, st)
-            key = (st, r['arrival_line'], r['direction'], r['destination_line'])
+            # v2: 목적노선의 방향(destination_direction)까지 키에 포함한다. 이게
+            # 없으면 사당역처럼 목적노선 방면(내선/외선)에 따라 값이 갈리는 표에서
+            # 여러 행이 같은 키로 뭉개져 마지막 값이 앞의 값을 덮어쓴다.
+            key = (
+                st,
+                r['arrival_line'],
+                r['direction'],
+                r['destination_line'],
+                r['destination_direction'],
+            )
             if key in collected:
                 # 중복 — 기존 note에 추가
                 parse_errors += 1
@@ -466,14 +660,15 @@ def main():
     matched_keys = set()
     for line in lines[1:]:
         fields = line.rstrip('\n').split(',')
-        if len(fields) < 8:
+        if len(fields) < 9:
             new_rows.append(line)
             continue
         station = fields[col_idx['station']]
         arrival = fields[col_idx['arrival_line']]
         direction = fields[col_idx['direction']]
         destination = fields[col_idx['destination_line']]
-        key = (station, arrival, direction, destination)
+        destination_direction = fields[col_idx['destination_direction']]
+        key = (station, arrival, direction, destination, destination_direction)
         if key in collected:
             v = collected[key]
             fields[col_idx['door_side']] = str(v['door_side'])

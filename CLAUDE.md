@@ -126,6 +126,21 @@ dart run tool/generate_station_data.dart
 # 환승소요시간 재생성 (서울교통공사 공식 데이터셋 + stations.json → transfer_times.json, 유일 소스)
 dart run tool/build_transfer_times.dart
 
+# 환승 가이드("빠른 환승" 칸-문) CSV 재생성 — 서울교통공사 공식 "서울 도시철도
+# 환승정보"(tool/data/seoul_metro_transfer_guides_official.csv, 공공데이터포털
+# 15098252) + data/transfer_guides_manual.csv(공식 미커버 구간, 수기/나무위키
+# 유래) → data/transfer_guides.csv 로 병합한다. data/transfer_guides.csv 는
+# 여전히 assets/json/transfer_guides.json 의 유일 소스이지만, 이제 그 자체가
+# 이 도구의 산출물이므로 **직접 수정 대신 이 도구를 다시 돌릴 것**(공식 CSV
+# 갱신 시 재실행). 공식이 커버하는 조합은 공식 값이 항상 우선한다.
+dart run tool/import_official_transfer_guides.dart
+
+# 환승 가이드 CSV → JSON 변환. data/transfer_guides.csv 는
+# assets/json/transfer_guides.json 의 유일 소스지만 **직접 편집하지 말 것** —
+# 위 공식 임포터의 산출물이라 재실행 시 덮인다. 수기 보정이 필요하면
+# data/transfer_guides_manual.csv 를 고친 뒤 위 임포터 → 아래 순서로 실행한다.
+dart run tool/import_transfer_guides.dart
+
 # WebView용 HTML 생성 (seoul_metro_map.svg → map.html)
 dart run tool/build_map_html.dart
 ```

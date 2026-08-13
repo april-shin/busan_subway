@@ -234,6 +234,18 @@ bool _isLine4Down(int firstNum, int lastNum) {
   return false;
 }
 
+/// [isDownBetween] 가 이 역 ID 로 방향을 **판정할 수 있는지**.
+///
+/// `isDownBetween` 은 숫자 ID 추출에 실패하면 안전한 기본값 `false`(= 상행)를
+/// 반환한다. 그 값은 "상행이다"가 아니라 "모른다"에 가까우므로, 호출부가 두 경우를
+/// 구분해야 할 때(예: 모를 때는 조회를 아예 건너뛰어야 할 때) 이 술어로 먼저
+/// 거른다. 판정 규칙(`_parseNumericId`)을 호출부가 복제하지 않도록 여기서 공개한다.
+///
+/// 현재 번들 데이터의 모든 역 ID 는 후행 숫자를 가져 항상 true 지만, 데이터가
+/// 확장될 때 계약이 조용히 어긋나지 않도록 두는 방어선이다.
+bool canResolveDirection(String stationId) =>
+    _parseNumericId(stationId) != null;
+
 /// 역 ID에서 숫자 부분을 추출한다.
 /// 예: "201" → 201, "D01" → 1, "K32" → 32
 int? _parseNumericId(String id) {
