@@ -191,22 +191,42 @@ html, body {
 path[data-line] { stroke-width: 5 !important; }
 /* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
 path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
-/* [래스터 기아 수정 v4, 2026-08-13 — 기각·원복, v7 재검증] `text[data-line]`
-   (라벨 dim/undim)을 한때 이 셀렉터에서 뺐던 적이 있다. 당시 근본 원인은
-   `<svg>` 루트(#text-layer/#train-layer) 자신이 매 프레임 `.style.transform`
-   대입에 반응해 스스로 `InvalidateLayout` 하는 것이었고(§10_map-math-engineer_
-   pan-flicker-report.md §22.2), `text[data-line]` 제외는 라벨 655개의 상속
-   프로퍼티 재계산 부담을 줄여 그 증상을 완화하는 우회책이었을 뿐, will-change
-   승격이 근본 원인은 아니었다 — 라벨 dim 전환이 트랜지션 없이 즉시 스냅되는
-   UX 트레이드오프가 있었다.
-   v6(§23~§30)가 `<svg>` 루트를 `<div>` 래퍼로 감싸 이 자기-무효화 경로 자체를
-   제거했으므로(순수 팬에서 InvalidateLayout 0건, §26.2), 그 우회책의 전제가
-   소멸했다고 보고 `text[data-line]` 를 이 트랜지션 셀렉터에 되돌렸다(v7).
-   동일 조건(경로+열차+최대 줌아웃+팬) 재측정으로 EVENTS=0 유지를 확인한 뒤
-   채택했다 — 수치는 §32 참조. */
-path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
-  transition: opacity 0.3s;
-}
+/* [래스터 기아 수정 이력 — v4(제외)→v7(복원)→v8(전면 제거), 2026-08]
+   `text[data-line]`(라벨 dim/undim)을 한때 이 셀렉터에서 뺐던 적이 있다(v4).
+   당시 근본 원인은 `<svg>` 루트(#text-layer/#train-layer) 자신이 매 프레임
+   `.style.transform` 대입에 반응해 스스로 `InvalidateLayout` 하는 것이었고
+   (§10_map-math-engineer_pan-flicker-report.md §22.2), `text[data-line]` 제외는
+   라벨 655개의 상속 프로퍼티 재계산 부담을 줄여 그 증상(팬 중 점멸)을 완화하는
+   우회책이었을 뿐이었다. v6(§23~§30)가 `<svg>` 루트를 `<div>` 래퍼로 감싸 이
+   자기-무효화 경로 자체를 제거했으므로(순수 팬에서 InvalidateLayout 0건,
+   §26.2), 그 우회책의 전제가 소멸했다고 보고 `text[data-line]` 를 되돌렸다(v7).
+
+   [v8, 2026-08] v7 재검증은 팬/핀치 시나리오만 CDP로 재측정했고, "출발/도착
+   선택·해제 순간"(팬과 무관한 별개 트리거)은 확인하지 않았다. 사용자 제보
+   (선택/해제 순간 점멸) 후 재조사 중 CDP `LocalFrameView::UpdateStyleAndLayout`
+   급증(~8,500회/selection)을 발견해 처음엔 이 트랜지션이 원인이라 오판했으나,
+   highlightLines/showTrains/showRouteToolbar/highlightRoute/setMarker/panTo를
+   전부 no-op 으로 바꿔도(실APK 재빌드로 검증) 동일 수치가 유지되고 완전
+   유휴 상태(탭 없음)에서는 0이었다 — 이 CDP 지표는 우리 JS 코드가 아니라
+   탭에 반응하는 별개 요인(동일 렌더러 프로세스에 공존하는 테스트 광고 SDK
+   iframe 등)에서 기인하는 것으로 보이며 폐기했다.
+   대신 **화면 녹화(30fps) 프레임 직접 확인**으로 실제 원인을 재확정했다:
+   회현→이태원 선택 완료 순간 원본(v7) 빌드에서 전환 시작 후 약 0.13~0.20초
+   구간(예: t=2.13s~2.20s)에 **지도 전체(노선·라벨·마커)가 완전히 사라지고
+   흰 배경만 남는** 프레임이 실측됐다(검색바 카드·경로 툴바 팝업·광고 배너는
+   생존) — 0.3초 트랜지션이 ~1,200개 요소(텍스트 639+원 528~600+선 32+
+   사각형 38)에 동시에 걸릴 때 안드로이드 WebView 래스터 스레드가 중간
+   프레임 커밋을 완전히 놓치는 것으로 판단된다(기존 v3 팬 점멸의 "래스터
+   기아" 메커니즘과 동일 계열이나, 트리거가 팬이 아니라 대량 동시 트랜지션
+   시작이라는 점이 다르다). 트랜지션을 완전히 제거한 빌드로 동일 시나리오를
+   재녹화한 결과 이 블랭크 프레임이 사라짐(메트릭이 즉시 전환 후 평탄 유지,
+   중간값 없음)을 확인했다. 팬은 v6 구조 변경 이후 이 트랜지션 유무와
+   무관하게 안전하므로(§26.2, transform 을 더 이상 `<svg>` 루트가 받지
+   않음) 트랜지션을 없애도 팬 회귀는 없다 — 라벨/노선/마커 dim·undim 이
+   0.3초 페이드 대신 즉시 전환되는 UX 트레이드오프만 남는다(선택/해제 시
+   블랭크 점멸을 없애는 것이 우선). 상세: 본 보고서 §38 이하.
+   회귀 재유입 방지 가드: test/tool/build_map_html_test.dart
+   '[래스터 기아 v8] dimmed 토글에는 opacity transition 이 없다'. */
 .dimmed {
   opacity: 0.12;
 }

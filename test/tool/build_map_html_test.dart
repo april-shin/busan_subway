@@ -117,43 +117,33 @@ void main() {
       }
     });
 
-    test('CSS 트랜지션 셀렉터에 rect 요소가 포함되어 있다', () {
-      // rect:not(#route-overlay-bg) 가 transition 셀렉터에 포함되어야
-      // 환승역 연결선도 노선 강조 시 부드러운 opacity 전환이 적용된다
+    test(
+        '[래스터 기아 v8] dimmed 토글에는 opacity transition 이 없다',
+        () {
+      // [회귀 가드, 2026-08 v8] v4는 text[data-line] 만 opacity transition
+      // 셀렉터에서 뺐고(팬 중 점멸 완화 우회책), v7은 v6(<svg> 루트를 <div>
+      // 래퍼로 감싼 구조 변경)로 그 우회책의 전제가 소멸했다며 되돌렸다.
+      // 그러나 v7 재검증은 팬/핀치 시나리오만 CDP로 재측정했고, "출발/도착
+      // 선택·해제 순간"(팬과 무관)은 확인하지 않았다.
+      //
+      // 사용자 제보(선택/해제 순간 점멸) 후 화면 녹화(30fps) 프레임을 직접
+      // 확인한 결과: 회현→이태원 선택 완료 순간(v7 빌드), 전환 시작 후 약
+      // 0.13~0.20초 구간에서 지도 전체(노선·라벨·마커)가 완전히 사라지고
+      // 흰 배경만 남는 프레임이 실측됐다(검색바·툴바 팝업·광고 배너는 생존).
+      // 0.3초 트랜지션이 ~1,200개 요소(텍스트 639+원 528~600+선 32+사각형
+      // 38)에 동시에 걸릴 때 안드로이드 WebView 래스터 스레드가 중간 프레임
+      // 커밋을 완전히 놓치는 것으로 판단된다. 트랜지션을 완전히 제거한
+      // 빌드로 재녹화하면 이 블랭크 프레임이 사라짐을 확인했다. 팬은 v6
+      // 구조 변경 이후 이 트랜지션 유무와 무관하게 안전하므로 회귀 없음.
+      // 상세: _workspace/10_map-math-engineer_pan-flicker-report.md §38.
       expect(
         htmlContent,
-        contains('rect:not(#route-overlay-bg)'),
+        isNot(contains('transition: opacity 0.3s')),
+        reason: 'path[data-line]/text[data-line]/circle/rect 의 dimmed 토글에 '
+            'opacity transition 이 재도입되면 출발/도착 선택·해제 순간 '
+            '~1200개 요소가 동시에 트랜지션을 시작해 지도 전체가 0.1~0.2초간 '
+            '완전히 사라지는 블랭크 점멸이 재발한다(30fps 녹화 프레임으로 실측).',
       );
-    });
-
-    test(
-        '[래스터 기아 v7] text[data-line] 는 opacity transition 셀렉터에 복원되어 있다',
-        () {
-      // [회귀 가드, 2026-08 v7] v5(2026-08-13)는 `text[data-line]` 를 이
-      // 셀렉터에서 빼서 라벨 dim/undim 이 트랜지션 없이 즉시 스냅되는 UX
-      // 트레이드오프를 감수했다 — 당시 근본 원인은 <svg> 루트(#text-layer/
-      // #train-layer) 자신이 매 프레임 `.style.transform` 대입에 반응해
-      // 스스로 InvalidateLayout 을 거는 것이었고, text[data-line] 제외는
-      // 라벨 655개의 상속 프로퍼티 재계산 부담을 줄이는 우회책일 뿐이었다.
-      // v6(§23~§30, _workspace/10_map-math-engineer_pan-flicker-report.md)가
-      // <svg> 루트를 <div> 래퍼로 감싸 이 자기-무효화 경로 자체를 제거했으므로
-      // (순수 팬에서 InvalidateLayout 0건, §26.2), 우회책의 전제가 소멸했다고
-      // 보고 되돌렸다(v7, 같은 보고서 §31 이하) — 동일 조건(경로+열차+최대
-      // 줌아웃+팬, 14초/20초 두 길이)재측정에서 EVENTS=0 을 확인한 뒤 채택했다.
-      final transitionRuleMatch = RegExp(
-              r'([a-zA-Z0-9_,:#()\[\]="\-\s]*?)\{\s*transition:\s*opacity 0\.3s;')
-          .firstMatch(htmlContent);
-      expect(transitionRuleMatch, isNotNull,
-          reason: 'opacity 0.3s transition 규칙을 찾지 못했다');
-      final selector = transitionRuleMatch!.group(1)!;
-      expect(selector, contains('text[data-line]'),
-          reason: 'text[data-line] 가 opacity transition 셀렉터에서 다시 빠지면 '
-              '라벨 dim/undim 이 트랜지션 없이 즉시 스냅되는 v5 트레이드오프가 '
-              '재발한다(전제가 소멸했으므로 이제는 불필요한 회귀다)');
-      // path/circle/rect 는 계속 부드러운 dim 전환을 유지해야 한다.
-      expect(selector, contains('path[data-line]'));
-      expect(selector, contains('circle'));
-      expect(selector, contains('rect:not(#route-overlay-bg)'));
     });
 
     test('highlightLines 함수에 rect 흐림 처리 로직이 포함되어 있다', () {
