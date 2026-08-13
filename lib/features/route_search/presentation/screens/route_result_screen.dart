@@ -84,44 +84,131 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
   _TabConfig get _tabConfig => _resolveTabConfig(widget);
   bool get _hasTabs => _tabConfig != _TabConfig.single;
 
-  /// 최소환승 경로가 최단시간 후보보다 **먼저 도착**하는지.
+  /// 탭 구성을 계산한다 — 라벨과 경로를 **짝으로** 묶어 돌려준다.
   ///
-  /// 도착이 같으면 false — 순서를 바꿀 이유가 없으므로 기존 배치를 유지한다.
+  /// 라벨 목록과 경로 목록을 따로 만들면 순서가 어긋나 "완행 탭에 급행 내용"이
+  /// 나올 수 있다. 짝으로 묶어 그 가능성을 없앤다.
   ///
-  /// `SearchRoute` 의 swap 정규화는 **그래프 비용**으로 한다 — 환승 대기를
-  /// 배차간격/2 로 추정하고, 탑승 전 승강장 대기는 아예 모른다. 반면 화면에
-  /// 찍히는 시각은 시간표에서 실제 다음 열차를 짚어 만든다. 두 척도가 달라
-  /// "최단시간 탭이 최소환승 탭보다 늦게 도착"하는 역전이 생길 수 있다.
+  /// 길이 1 이면 탭 없이 그 경로만 보여준다 — [_TabConfig.single] 이거나,
+  /// 모드 탭에서 한쪽 모드가 그 요일에 운행하지 않는 경우다.
   ///
-  /// 그래서 탭 순서만 실제 도착 시각으로 다시 정한다(라벨은 각 경로에 그대로
-  /// 붙어 다니고, 먼저 도착하는 쪽이 왼쪽=기본 탭이 된다).
-  ///
-  /// 비교는 **시간표만으로** 한다 — 실시간을 섞으면 refresh 마다 탭 순서가
-  /// 뒤바뀔 수 있다. 시각을 못 구하면(막차 이후·시간표 없음) 판정을 포기하고
-  /// false 를 돌려 기존 순서를 유지한다(fail-open).
-  bool _leastTransferArrivesFirst({
+  /// `notice` 는 그 경로 화면 상단에 띄울 한 줄 안내다. 급행 탭을 내렸을 때
+  /// "왜 급행이 없는지"를 남은 완행 화면에서 말해 주는 데 쓴다 — 탭이 조용히
+  /// 사라지면 사용자가 앱의 판단인지 자기 실수인지 구분할 단서가 없다.
+  List<({Widget label, RouteResult route, String? notice})> _buildTabPlan({
+    required _TabConfig config,
     required Map<String, LineSchedule> schedules,
     required List<Station> stations,
     required List<Connection> connections,
     required DateTime wallClock,
   }) {
-    final leastTransfer = widget.leastTransfer;
-    if (leastTransfer == null || schedules.isEmpty) return false;
+    const fastestTab =
+        Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간');
+    const leastTransferTab =
+        Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승');
+    const expressTab = Tab(icon: Icon(Icons.flash_on, size: 18), text: '급행');
+    const localTab =
+        Tab(icon: Icon(Icons.directions_subway, size: 18), text: '완행');
 
-    RouteTiming? timingOf(RouteResult route) => computeRouteTiming(
-          routeResult: route,
+    RouteTiming? timingOf(RouteResult route) => schedules.isEmpty
+        ? null
+        : computeRouteTiming(
+            routeResult: route,
+            query: _query,
+            wallClock: wallClock,
+            schedules: schedules,
+            stations: stations,
+            connections: connections,
+          );
+
+    switch (config) {
+      case _TabConfig.single:
+        return [(label: fastestTab, route: widget.fastest, notice: null)];
+
+      case _TabConfig.transferTradeoff:
+        final pair = [
+          (label: fastestTab, route: widget.fastest, notice: null),
+          (label: leastTransferTab, route: widget.leastTransfer!, notice: null),
+        ];
+        return _orderByArrival(pair, timingOf);
+
+      case _TabConfig.modeTradeoff:
+        final express = widget.fastestExpress!;
+        final local = widget.fastestLocal!;
+
+        // 그 요일에 급행이 아예 운행하지 않으면 급행 탭을 내린다 — 완행
+        // 배차간격으로 만든 가짜 급행 시각을 보여주지 않기 위한 것이다.
+        // 실측 대상은 경춘·수인분당 주말(`we.tE` 전역 결손)이다.
+        //
+        // 완행 쪽은 검사하지 않는다. `fastestLocal` 은 급행 노드를 금지한
+        // nodeFilter 로 만들어져(`search_route.dart`) 급행 구간이 없고, 완행은
+        // 23개 노선 전 역이 역별 시간표를 보유하므로 판정이 항상 통과한다.
+        // 대칭으로 적어 두면 절대 실행되지 않는 분기가 남는다.
+        //
+        // 판정은 **요일 단위**다. "고른 시각 이후에 열차가 없다"(막차 이후)로
+        // 내리면 안 된다 — 그 경우는 화면이 "선택한 시각에는 운행하지 않습니다"
+        // 로 안내하며, 탭을 내려 버리면 사용자가 그 사실을 볼 수 없다.
+        //
+        // `schedules` 가 비어 있으면(로딩 중) `routeExpressRunsOnDay` 가 구간마다
+        // schedule null 로 건너뛰어 true 를 돌려주므로 여기서 따로 막지 않는다.
+        final expressRuns = routeExpressRunsOnDay(
+          routeResult: express,
           query: _query,
-          wallClock: wallClock,
           schedules: schedules,
-          stations: stations,
-          connections: connections,
+          wallClock: wallClock,
         );
+        if (!expressRuns) {
+          // 문구는 **데이터 사실**만 말한다(사용자 결정). "주말에는 급행이
+          // 운행하지 않습니다" 처럼 운행 사실을 단정하면, 우리가 아는 것은
+          // 시간표 결손뿐이므로 데이터가 채워지거나 다른 노선에서 결손이 생기는
+          // 순간 앱이 거짓을 말한다. 출발시각 시트의 빈 상태 문구
+          // ('{요일} 시간표 데이터가 없습니다')와 같은 어법을 쓴다.
+          final dayLabel = _query.effectiveDayType(wallClock).label;
+          return [
+            (
+              label: localTab,
+              route: local,
+              notice: '$dayLabel 급행 시간표 데이터가 없어 완행만 표시합니다',
+            ),
+          ];
+        }
 
+        return _orderByArrival(
+          [
+            (label: expressTab, route: express, notice: null),
+            (label: localTab, route: local, notice: null),
+          ],
+          timingOf,
+        );
+    }
+  }
+
+  /// 두 탭을 **먼저 도착하는 쪽이 왼쪽(기본 탭)** 이 되도록 정렬한다.
+  ///
+  /// 도착이 같거나 비교 근거가 없으면 입력 순서를 유지한다 — 그 tie-break 가
+  /// 각 구성의 기본값("최단시간 우선", "급행 우선")을 지켜 준다.
+  ///
+  /// `SearchRoute` 의 후보 선정은 **그래프 비용**으로 한다 — 환승 대기를
+  /// 배차간격/2 로 추정하고, 탑승 전 승강장 대기는 아예 모른다. 반면 화면에
+  /// 찍히는 시각은 시간표에서 실제 다음 열차를 짚어 만든다. 두 척도가 달라
+  /// 기본 탭이 반대쪽 탭보다 늦게 도착하는 역전이 생긴다:
+  /// - 환승 탭: "최단시간"이 "최소환승"보다 늦게 도착
+  /// - 모드 탭: 급행이 완행보다 늦게 도착. 하루 몇 편뿐인 급행에서 크게 벌어진다
+  ///   — 급행 운행 공백이 수인분당 최대 645분·경춘 831분·1호선 239분(천안)이라
+  ///   낮 시간에는 완행이 몇 시간 먼저 도착한다.
+  ///
+  /// 비교는 **시간표만으로** 한다 — 실시간을 섞으면 refresh 마다 탭 순서가
+  /// 뒤바뀔 수 있다.
+  List<({Widget label, RouteResult route, String? notice})> _orderByArrival(
+    List<({Widget label, RouteResult route, String? notice})> pair,
+    RouteTiming? Function(RouteResult) timingOf,
+  ) {
     final comparison = compareByArrival(
-      timingOf(leastTransfer),
-      timingOf(widget.fastest),
+      timingOf(pair[1].route),
+      timingOf(pair[0].route),
     );
-    return comparison != null && comparison < 0;
+    final swap = comparison != null && comparison < 0;
+    return swap ? [pair[1], pair[0]] : pair;
   }
 
   @override
@@ -157,96 +244,54 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
     final connections =
         ref.watch(allConnectionsProvider).value ?? const <Connection>[];
 
-    final config = _tabConfig;
-    // 환승 트레이드오프 탭에 한해, 실제 도착이 빠른 쪽을 왼쪽으로 보낸다.
+    // 탭 구성 — 순서는 실제 도착 시각으로, 운행하지 않는 모드는 제외.
     //
-    // 조회 시각을 바꾸면 순서가 뒤집힐 수 있고, 그때 선택 인덱스는 그대로라
-    // 보고 있던 탭의 내용이 다른 경로로 바뀐다. 라벨도 함께 바뀌므로 사용자가
-    // 알아챌 수 있고, 순서를 조회 시각에 맞추는 편이 맞아 그대로 둔다.
-    final swapTransferTabs = config == _TabConfig.transferTradeoff &&
-        _leastTransferArrivesFirst(
-          schedules: schedules,
-          stations: stations,
-          connections: connections,
-          wallClock: DateTime.now(),
-        );
-
-    final tabs = _buildTabs(config, swapTransferTabs: swapTransferTabs);
-    final routes = _buildRoutes(config, swapTransferTabs: swapTransferTabs);
+    // 조회 시각을 바꾸면 순서가 뒤집히거나 탭이 하나로 줄 수 있고, 그때 선택
+    // 인덱스는 그대로라 보고 있던 탭의 내용이 다른 경로로 바뀐다. 라벨도 함께
+    // 바뀌므로 사용자가 알아챌 수 있고, 구성을 조회 시각에 맞추는 편이 맞아
+    // 그대로 둔다.
+    final plan = _buildTabPlan(
+      config: _tabConfig,
+      schedules: schedules,
+      stations: stations,
+      connections: connections,
+      wallClock: DateTime.now(),
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('경로 검색 결과'),
-        bottom: tabs == null
+        // 탭이 하나로 줄면 TabBar 를 걸지 않는다. `_tabController` 는 length 2
+        // 로 남아 있어도 붙는 위젯이 없으면 무해하고, 다시 둘로 늘면 그대로
+        // 재사용된다.
+        bottom: plan.length == 1
             ? null
             : TabBar(
                 controller: _tabController,
-                tabs: tabs,
+                tabs: [for (final t in plan) t.label],
               ),
       ),
       bottomNavigationBar: const HomeBannerAd(),
-      body: routes.length == 1
-          ? _buildRouteView(routes.first)
+      body: plan.length == 1
+          ? _buildRouteView(plan.first.route, plan.first.notice)
           : TabBarView(
               controller: _tabController,
-              children: [for (final r in routes) _buildRouteView(r)],
+              children: [
+                for (final t in plan) _buildRouteView(t.route, t.notice),
+              ],
             ),
     );
   }
 
-  Widget _buildRouteView(RouteResult route) {
+  Widget _buildRouteView(RouteResult route, String? modeNotice) {
     return _RouteView(
       key: ValueKey(route),
       routeResult: route,
       departureStationName: widget.departureStationName,
       query: _query,
+      modeNotice: modeNotice,
       onQueryChanged: (next) => setState(() => _query = next),
     );
-  }
-
-  /// 탭 라벨 — 단일 탭이면 null.
-  ///
-  /// 라벨은 경로에 붙어 다닌다. [swapTransferTabs] 면 두 탭이 통째로 자리를
-  /// 바꾸므로 "최소환승"이 왼쪽(기본 탭)이 된다.
-  List<Widget>? _buildTabs(
-    _TabConfig config, {
-    required bool swapTransferTabs,
-  }) {
-    switch (config) {
-      case _TabConfig.transferTradeoff:
-        const fastestTab =
-            Tab(icon: Icon(Icons.access_time, size: 18), text: '최단시간');
-        const leastTransferTab =
-            Tab(icon: Icon(Icons.swap_horiz, size: 18), text: '최소환승');
-        return swapTransferTabs
-            ? const [leastTransferTab, fastestTab]
-            : const [fastestTab, leastTransferTab];
-      case _TabConfig.modeTradeoff:
-        return const [
-          // 급행이 기본값이므로 왼쪽에 위치한다 (사용자 합의 사항).
-          Tab(icon: Icon(Icons.flash_on, size: 18), text: '급행'),
-          Tab(icon: Icon(Icons.directions_subway, size: 18), text: '완행'),
-        ];
-      case _TabConfig.single:
-        return null;
-    }
-  }
-
-  /// 각 탭에 대응하는 경로 리스트. [_buildTabs] 와 같은 순서여야 한다.
-  List<RouteResult> _buildRoutes(
-    _TabConfig config, {
-    required bool swapTransferTabs,
-  }) {
-    switch (config) {
-      case _TabConfig.transferTradeoff:
-        return swapTransferTabs
-            ? [widget.leastTransfer!, widget.fastest]
-            : [widget.fastest, widget.leastTransfer!];
-      case _TabConfig.modeTradeoff:
-        return [widget.fastestExpress!, widget.fastestLocal!];
-      case _TabConfig.single:
-        return [widget.fastest];
-    }
   }
 }
 
@@ -271,6 +316,12 @@ class _RouteView extends ConsumerStatefulWidget {
 
   /// 조회 기준 시각 — 부모(`_RouteResultScreenState`)가 소유하고 탭 간 공유한다.
   final DepartureQueryTime query;
+
+  /// 탭 구성 자체에서 나온 한 줄 안내(예: 그 요일에 급행 시간표가 없어 완행만
+  /// 남았다). 출발 시각 계산에서 나오는 `departureNotice` 와 별개 축이라 둘이
+  /// 함께 뜰 수 있다.
+  final String? modeNotice;
+
   final ValueChanged<DepartureQueryTime> onQueryChanged;
 
   const _RouteView({
@@ -278,6 +329,7 @@ class _RouteView extends ConsumerStatefulWidget {
     required this.routeResult,
     required this.departureStationName,
     required this.query,
+    required this.modeNotice,
     required this.onQueryChanged,
   });
 
@@ -442,20 +494,34 @@ class _RouteViewState extends ConsumerState<_RouteView> {
     );
     final departureTime = timing?.departure ?? wallClock;
 
-    // 고정 시각 조회에서만 안내를 띄운다. "지금" 조회는 기존처럼 조용히
-    // 폴백한다(회귀 방지).
+    // 출발 시각을 못 구했으면(`unavailable`) 조회 방식과 무관하게 안내한다.
+    //
+    // `computeDepartureTimeDetailed` 는 그 경우 **조회 기준 시각을 그대로**
+    // 돌려준다 — 실제 열차가 아니다. 예전에는 "지금 출발" 조회에서 이 안내를
+    // 무조건 껐기 때문에, 막차 이후(또는 그 요일에 급행이 없는 경우) 화면이
+    // "지금 출발 → 지금+소요 도착"을 아무 설명 없이 보여줬다. 사용자 지시로
+    // 심야·막차 표시 정책을 포함해 안내하도록 바꿨다.
     //
     // 조회 시각은 탭 간에 공유되므로, 이 탭에는 역별 정확한 시간표가 없는데
     // 다른 탭에서 고른 시각이 그대로 적용될 수 있다. 그 경우 시간표 계층이
     // 배차간격으로 폴백해 "예상 시각"을 만들어내므로, 그것을 실제 열차처럼
     // 보여주지 않도록 별도 문구로 구분한다.
+    final noDeparture =
+        timing == null || timing.source == DepartureSource.unavailable;
     final String? departureNotice;
-    if (query.isNow) {
-      departureNotice = null;
-    } else if (timing == null ||
-        timing.source == DepartureSource.unavailable) {
-      // 애초에 시각을 못 구했다 — 막차 이후이거나 시간표 자체가 없다.
+    if (noDeparture && query.isNow) {
+      // 실시간 조회가 끝나기 전에는 "없다"고 단정하지 않는다 — 막차 직후에는
+      // 시간표상 막차가 지났어도 API 에 아직 운행 중인 열차가 남아 있다.
+      departureNotice = arrivalAsync is AsyncLoading
+          ? null
+          : '지금은 운행하는 열차가 없습니다';
+    } else if (noDeparture) {
+      // 고른 시각 이후에 열차가 없다 — 막차 이후이거나 시간표 자체가 없다.
       departureNotice = '선택한 시각에는 운행하지 않습니다';
+    } else if (query.isNow) {
+      // 시각을 구했고 "지금" 조회다 — 배차간격 추정 안내는 붙이지 않는다.
+      // "지금 출발"에서 그 문구는 항상 떠 있어 소음이 되기 때문이다.
+      departureNotice = null;
     } else if (departureOptions.forDayType(query.dayType).isEmpty) {
       // 시각은 나왔지만 역별 시간표가 없어 배차간격에서 나온 추정치다.
       departureNotice = '이 경로는 정확한 시간표가 없어 예상 시각입니다';
@@ -475,6 +541,7 @@ class _RouteViewState extends ConsumerState<_RouteView> {
           departureTime: departureTime,
           arrivalTime: arrivalTime,
           isLoading: isLoading,
+          modeNotice: widget.modeNotice,
           departureNotice: departureNotice,
           transferCount: routeResult.transferCount,
           stationCount: routeResult.stationCount,
@@ -510,6 +577,10 @@ class _RouteSummaryHeader extends StatelessWidget {
   /// 표시된 시각을 그대로 믿으면 안 되는 경우의 안내 문구.
   /// (해당 시각 미운행, 또는 정확한 시간표가 없어 배차간격 추정인 경우)
   /// null 이면 안내를 표시하지 않는다.
+  /// 탭 구성에서 나온 안내(예: 그 요일에 급행 시간표가 없어 완행만 남았다).
+  /// [departureNotice] 와 다른 축이라 둘이 함께 뜰 수 있다.
+  final String? modeNotice;
+
   final String? departureNotice;
   final int transferCount;
   final int stationCount;
@@ -528,6 +599,7 @@ class _RouteSummaryHeader extends StatelessWidget {
     required this.departureTime,
     required this.arrivalTime,
     required this.isLoading,
+    required this.modeNotice,
     required this.departureNotice,
     required this.transferCount,
     required this.stationCount,
@@ -586,28 +658,20 @@ class _RouteSummaryHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Column(
         children: [
+          // 모드 안내는 "이 화면에 왜 이 모드만 있는가"를 말한다 — 오류가 아니라
+          // 구성 설명이므로 error 색이 아닌 보조 텍스트 색을 쓴다.
+          if (modeNotice != null)
+            _HeaderNotice(
+              message: modeNotice!,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: t.bodySmall,
+            ),
+          // 출발 안내는 "표시된 시각이 실제 열차가 아니다"를 말한다 — 오류 색.
           if (departureNotice != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.space8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: AppIconSize.sm,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(width: AppSpacing.space4),
-                  Flexible(
-                    child: Text(
-                      departureNotice!,
-                      style: t.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _HeaderNotice(
+              message: departureNotice!,
+              color: Theme.of(context).colorScheme.error,
+              style: t.bodySmall,
             ),
           if (isLoading)
             Text(
@@ -1101,6 +1165,39 @@ class _StationRow extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(Icons.swap_horiz, size: 14, color: Colors.grey[400]),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 요약 헤더 상단의 한 줄 안내 — 아이콘 + 중앙 정렬 텍스트.
+///
+/// 모드 안내(구성 설명)와 출발 안내(시각이 실제 열차가 아님)가 같은 자리에 최대
+/// 두 줄까지 쌓이므로, 배치를 한곳에 모아 두 줄의 모양이 갈라지지 않게 한다.
+class _HeaderNotice extends StatelessWidget {
+  final String message;
+  final Color color;
+  final TextStyle? style;
+
+  const _HeaderNotice({
+    required this.message,
+    required this.color,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.space8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.info_outline, size: AppIconSize.sm, color: color),
+          const SizedBox(width: AppSpacing.space4),
+          Flexible(
+            child: Text(message, style: style?.copyWith(color: color)),
+          ),
         ],
       ),
     );

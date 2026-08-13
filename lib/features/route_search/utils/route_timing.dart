@@ -8,6 +8,7 @@ import '../../../domain/entities/station.dart';
 import 'departure_candidates.dart';
 import 'departure_query_time.dart';
 import 'departure_time_calculator.dart';
+import 'direction_resolver.dart';
 
 /// 경로 하나의 "언제 타서 언제 도착하나" 타임라인.
 ///
@@ -73,6 +74,58 @@ DateTime? resolveRouteChosenDeparture({
     candidates: candidates,
     now: wallClock,
   );
+}
+
+/// [routeResult] 의 **모든 급행 구간**이 조회 요일에 운행하는지.
+///
+/// "그 요일에 급행이 아예 없는가"를 묻는다 — 결과 화면이 급행 탭을 내릴지
+/// 판정하는 기준이다. 실측 대상은 경춘·수인분당 주말로, `we.tE` 가 통째로 없어
+/// 급행이 운행하지 않는다.
+///
+/// **첫 구간만 보면 안 된다.** `SearchRoute` 는 경로가 급행 edge 를 **하나라도**
+/// 쓰면 급행/완행 탭을 만든다(`search_route.dart` 의 `expressUsed`). 첫 구간이
+/// 완행이고 환승 후에 급행을 타는 경로(총신대입구→마곡나루 등)가 실재하므로
+/// 전 구간을 순회해야 그 경로에서도 게이트가 걸린다. 첫 구간만 보던 초기 구현은
+/// 이 경우를 통과시켜, 환승 구간 조회가 `computeSegmentDepartures` 의 3순위
+/// 폴백(배차간격/2 추정 포함)으로 떨어진 조작된 시각을 그대로 노출했다.
+///
+/// **완행 구간은 검사하지 않는다.** 23개 노선 전 역이 완행 역별 시간표(`t`)를
+/// 보유하며, 비어 있는 유일한 경우는 종착역의 진행 불가 방향(청량리 상행 등)이라
+/// 경로가 그 방향으로 출발할 수 없다. 검사해도 항상 통과하므로 넣지 않는다.
+///
+/// **`RouteTiming.source == unavailable` 과 혼동하지 말 것.** 그쪽은 "사용자가
+/// 고른 시각 이후에 열차가 없다"(예: 막차 이후)는 뜻이고, 화면은 그 경우
+/// "선택한 시각에는 운행하지 않습니다"로 안내해야 하므로 탭을 내리면 안 된다.
+/// 이 술어는 시각과 무관하게 요일 단위로만 판정한다.
+///
+/// 판정 근거가 없는 구간은 건너뛴다(fail-open) — 방향 판별 불가(역 1개) 또는
+/// 시간표 로딩 전. 로딩 중에 탭이 나타났다 사라지지 않게 하기 위한 것이다.
+bool routeExpressRunsOnDay({
+  required RouteResult routeResult,
+  required DepartureQueryTime query,
+  required Map<String, LineSchedule> schedules,
+  required DateTime wallClock,
+}) {
+  final anchorDate =
+      anchorDateFor(query.effectiveDayType(wallClock), wallClock);
+
+  for (final segment in routeResult.segments) {
+    if (!isExpressLineId(segment.lineId)) continue;
+    // 역 1개 세그먼트는 방향을 판별할 수 없다 — 판정 근거가 없으므로 건너뛴다.
+    if (segment.stations.length < 2) continue;
+    final schedule = schedules[baseLineId(segment.lineId)];
+    if (schedule == null) continue;
+
+    final candidates = buildDepartureCandidates(
+      schedule: schedule,
+      anchorDate: anchorDate,
+      isDown: isDownDirection(segment),
+      stationId: segment.stations.first.id,
+      express: true,
+    );
+    if (candidates.isEmpty) return false;
+  }
+  return true;
 }
 
 /// 경로 하나의 타임라인을 계산한다. 세그먼트가 없으면 null.

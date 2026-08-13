@@ -197,4 +197,119 @@ void main() {
       expect(timing.source, DepartureSource.timetable);
     });
   });
+
+  group('routeExpressRunsOnDay', () {
+    /// 역별 완행 시간표는 있고, 급행 시간표는 [express] 로 제어하는 노선.
+    LineSchedule scheduleWithStationTimes(
+      String lineId, {
+      required List<int> local,
+      List<int>? express,
+    }) {
+      final day = DaySchedule(
+        firstTrain: '05:00',
+        lastTrain: '00:00',
+        periods: const [
+          TimePeriod(start: '05:00', end: '00:00', headwayMinutes: 5),
+        ],
+        // 두 세그먼트의 출발역(101 / 201)에 같은 목록을 달아 둔다.
+        stationDepartures: {'101': local, '201': local},
+        expressStationDepartures:
+            express == null ? null : {'101': express, '201': express},
+      );
+      return LineSchedule(lineId: lineId, weekday: day, weekend: day);
+    }
+
+    /// 첫 구간이 **완행**(A), 환승 후 두 번째 구간이 **급행**(`BE`)인 경로.
+    ///
+    /// `SearchRoute` 는 경로가 급행 edge 를 하나라도 쓰면 급행/완행 탭을 만들기
+    /// 때문에(`expressUsed`) 이런 조합이 실재한다 — 주석의 총신대입구→마곡나루.
+    final expressOnSecondSegment = RouteResult(
+      segments: [
+        RouteSegment(
+          lineId: 'A',
+          lineName: 'A선',
+          stations: [station('101', 'A'), station('102', 'A')],
+          durationSeconds: 120,
+          direction: '하행',
+        ),
+        RouteSegment(
+          lineId: 'BE',
+          lineName: 'B선',
+          stations: [station('201', 'B'), station('202', 'B')],
+          durationSeconds: 120,
+          direction: '하행',
+        ),
+      ],
+      totalTimeSeconds: 240,
+      transferCount: 1,
+      stationCount: 2,
+      transferDurations: const [120],
+      transferWalkDurations: const [60],
+    );
+
+    test('첫 구간이 완행이어도 뒤쪽 급행 구간의 결손을 잡아낸다 (회귀 가드)', () {
+      // 회귀 가드: 초기 구현은 `resolveDepartureContext`(= 첫 방향 판별 세그먼트)
+      // 만 봐서 첫 구간이 완행이면 급행 결손을 통과시켰다. 그 경로는
+      // `computeSegmentDepartures` 의 3순위 폴백으로 조작된 환승 출발시각을
+      // 표시하면서도 탭이 그대로 남았다.
+      final schedules = {
+        'A': scheduleWithStationTimes('A', local: [480]),
+        // B 노선에 완행은 있고 급행(tE)은 없다 — 경춘·수인분당 주말 재현.
+        'B': scheduleWithStationTimes('B', local: [480]),
+      };
+
+      expect(
+        routeExpressRunsOnDay(
+          routeResult: expressOnSecondSegment,
+          query: query,
+          schedules: schedules,
+          wallClock: wallClock,
+        ),
+        isFalse,
+      );
+    });
+
+    test('뒤쪽 급행 구간에 시간표가 있으면 통과한다 (과잉 차단 방지)', () {
+      final schedules = {
+        'A': scheduleWithStationTimes('A', local: [480]),
+        'B': scheduleWithStationTimes('B', local: [480], express: [490]),
+      };
+
+      expect(
+        routeExpressRunsOnDay(
+          routeResult: expressOnSecondSegment,
+          query: query,
+          schedules: schedules,
+          wallClock: wallClock,
+        ),
+        isTrue,
+      );
+    });
+
+    test('급행 구간이 없는 경로는 완행 시간표 유무와 무관하게 통과한다', () {
+      // 완행 구간은 검사 대상이 아니다 — 23개 노선 전 역이 `t` 를 보유하고,
+      // 비어 있는 경우는 종착역의 진행 불가 방향뿐이라 경로가 만들어지지 않는다.
+      expect(
+        routeExpressRunsOnDay(
+          routeResult: directRoute(900),
+          query: query,
+          schedules: {'A': scheduleWithHeadway('A', 3)}, // 역별 시간표 없음
+          wallClock: wallClock,
+        ),
+        isTrue,
+      );
+    });
+
+    test('시간표 로딩 전(schedules 비어 있음)에는 내리지 않는다 (fail-open)', () {
+      expect(
+        routeExpressRunsOnDay(
+          routeResult: expressOnSecondSegment,
+          query: query,
+          schedules: const {},
+          wallClock: wallClock,
+        ),
+        isTrue,
+      );
+    });
+  });
 }

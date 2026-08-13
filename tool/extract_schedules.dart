@@ -3,8 +3,21 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-/// data.go.kr API에서 실제 시간표를 추출하여 line_schedules.json을 생성하는 스크립트
+/// data.go.kr API에서 노선 **대표값**(첫차·막차·배차간격)을 추출해
+/// line_schedules.json 의 `f`/`l`/`p`/`pD` 를 갱신하는 스크립트.
 /// 상행/하행 양방향 데이터를 수집하여 컴팩트 포맷으로 저장한다.
+///
+/// ⚠ **역별 시간표(`t`/`tE`)는 이 도구가 만들지 않는다.** 그 데이터는
+/// `build_metro_timetable.dart`(1~9호선) · `build_gettrainsch_timetable.dart`
+/// (비서울교통공사 12개) · `build_incheon1_timetable.dart` · 경의중앙 엑셀
+/// 파이프라인의 산출물이며, 이 도구는 **기존 파일에서 그대로 물려받는다**.
+/// 예전에는 결과를 통째로 덮어써서 한 번 실행하면 23개 노선의 역별 시간표가
+/// 전부 사라졌다(복원 불가 — 각 수집 도구를 다시 돌려야 했다).
+///
+/// ⚠ **앵커역은 반드시 "양방향 전구간 운행역"으로 고른다.** 회차역을 쓰면 그
+/// 방향의 대표값이 소수 편성만으로 계산돼 무너진다 — 수인분당 왕십리(상행 168행
+/// 중 159편이 당역종착 → `trainDptreTm=null`)는 첫차·막차가 07:32~18:51 로,
+/// 경춘 상봉은 배차 band 가 한 시간짜리 하나로 기록됐다(2026-08-13 정정).
 ///
 /// 사용법: dart run tool/extract_schedules.dart
 void main() async {
@@ -35,10 +48,12 @@ void main() async {
     {'lineId': '9', 'apiLineName': '9호선', 'station': '여의도', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': 'SB', 'apiLineName': '신분당선', 'station': '강남', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '경의중앙', 'apiLineName': '', 'station': '', 'upDir': '', 'dnDir': ''},
-    {'lineId': '경춘', 'apiLineName': '경춘선', 'station': '상봉', 'upDir': '상행', 'dnDir': '하행'},
+    // 앵커: 망우(상봉 옆). 상봉은 회차역이라 상행 대표값이 무너진다.
+    {'lineId': '경춘', 'apiLineName': '경춘선', 'station': '망우', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '경강', 'apiLineName': '경강선', 'station': '이매', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '공항철도', 'apiLineName': '공항철도', 'station': '서울역', 'upDir': '상행', 'dnDir': '하행'},
-    {'lineId': '수인분당', 'apiLineName': '수인분당선', 'station': '왕십리', 'upDir': '상행', 'dnDir': '하행'},
+    // 앵커: 서울숲(왕십리 옆). 왕십리는 회차역이라 상행 대표값이 무너진다.
+    {'lineId': '수인분당', 'apiLineName': '수인분당선', 'station': '서울숲', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '신림', 'apiLineName': '신림선', 'station': '보라매', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '에버라인', 'apiLineName': '용인경전철', 'station': '기흥', 'upDir': '상행', 'dnDir': '하행'},
     {'lineId': '인천1', 'apiLineName': '', 'station': '', 'upDir': '', 'dnDir': ''},
@@ -81,11 +96,14 @@ void main() async {
     await Future.delayed(const Duration(milliseconds: 300));
   }
 
-  // 컴팩트 JSON 파일 저장
-  final encoder = const JsonEncoder.withIndent('  ');
+  // 기존 파일의 역별 시간표(t/tE)를 물려받아 저장한다.
   final outputPath = 'assets/json/line_schedules.json';
+  final carried = _carryOverStationTimetables(outputPath, schedules);
+
+  final encoder = const JsonEncoder.withIndent('  ');
   File(outputPath).writeAsStringSync(encoder.convert(schedules));
-  print('\n✓ $outputPath에 ${schedules.length}개 노선 시간표 저장 완료');
+  print('\n✓ $outputPath에 ${schedules.length}개 노선 대표값 저장 완료'
+      ' (역별 시간표 $carried개 노선 보존)');
 
   dio.close();
 }
@@ -479,4 +497,60 @@ Map<String, dynamic> _getEstimatedSchedule(String lineId) {
         },
       };
   }
+}
+
+/// 기존 `line_schedules.json` 의 역별 시간표(`t`/`tE`)를 새 엔트리에 옮겨 담는다.
+///
+/// 이 도구는 노선 대표값(`f`/`l`/`p`/`pD`)만 계산한다. 역별 시간표는 별개 수집
+/// 도구들의 산출물이라 여기서 재현할 수 없으므로, 덮어쓰기 전에 반드시 물려받아야
+/// 한다. 물려받지 않으면 한 번 실행으로 23개 노선의 역별 시간표가 사라진다.
+///
+/// 기존 파일이 없으면(최초 생성) 아무것도 하지 않는다. 파싱에 실패하면 **예외를
+/// 던져 중단한다** — 조용히 빈 손으로 덮어쓰는 것이 가장 위험한 실패다.
+///
+/// 반환값은 역별 시간표를 물려받은 노선 수(로그용).
+int _carryOverStationTimetables(
+  String path,
+  List<Map<String, dynamic>> schedules,
+) {
+  final file = File(path);
+  if (!file.existsSync()) {
+    print('  (기존 파일 없음 — 역별 시간표 물려받기 생략)');
+    return 0;
+  }
+
+  final decoded = json.decode(file.readAsStringSync());
+  if (decoded is! List) {
+    throw StateError('$path 형식이 배열이 아니다 — 덮어쓰면 역별 시간표가 사라진다');
+  }
+
+  final existing = <String, Map<String, dynamic>>{};
+  for (final entry in decoded) {
+    if (entry is Map<String, dynamic> && entry['id'] is String) {
+      existing[entry['id'] as String] = entry;
+    }
+  }
+
+  var carried = 0;
+  for (final entry in schedules) {
+    final prev = existing[entry['id']];
+    if (prev == null) continue;
+    var touched = false;
+    for (final dayKey in const ['wd', 'we']) {
+      final prevDay = prev[dayKey];
+      final newDay = entry[dayKey];
+      if (prevDay is! Map<String, dynamic> || newDay is! Map<String, dynamic>) {
+        continue;
+      }
+      for (final tableKey in const ['t', 'tE']) {
+        final table = prevDay[tableKey];
+        if (table != null) {
+          newDay[tableKey] = table;
+          touched = true;
+        }
+      }
+    }
+    if (touched) carried++;
+  }
+  return carried;
 }

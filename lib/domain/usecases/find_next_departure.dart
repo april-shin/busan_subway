@@ -12,12 +12,26 @@ import '../entities/line_schedule.dart';
 /// 출발시각을 반환한다. 없으면 기존 배차간격 기반 추정으로 폴백한다.
 ///
 /// [express]가 true이면 급행 역별 시간표([DaySchedule.expressStationDepartures])만
-/// 조회한다. 해당 역에 급행 데이터가 없으면(급행 미정차역 등) 완행 시간표로
-/// 섞지 않고 곧바로 배차간격 폴백으로 넘어간다.
+/// 조회한다. 해당 역에 급행 데이터가 없으면 완행 시간표로 섞지 않으며,
+/// **배차간격 폴백도 타지 않고 null 을 반환한다** — 아래 "급행은 폴백 금지" 참조.
 /// [express]가 false이면 완행 시간표([DaySchedule.stationDepartures])를 조회한다.
 ///
 /// 운행 시간 내이면 현재 시각 + 남은 대기시간을 반환하고,
 /// 운행 시간 외이면 null을 반환한다.
+///
+/// ## 급행은 배차간격 폴백 금지
+///
+/// [DaySchedule.periods] 는 **완행 배차간격**이다. 급행 조회가 여기로 떨어지면
+/// "급행이 완행 간격으로 온다"는 없는 열차를 만들어낸다. 실측 사례: 경춘·수인분당은
+/// 주말 급행 시간표(`we.tE`)가 아예 없어(getTrainSch 가 주말 열차를 전부
+/// `etrnYn=N` 으로 제공) 주말 급행 조회가 전량 폴백을 탔고, 수인분당 하행은
+/// 05:00~23:36 하루 종일 "9분마다 급행"이라는 가짜 시각을 냈다.
+///
+/// 이 게이트가 정상 급행을 막지 않는다는 근거: `express_skip_edges.json` 의 급행
+/// 정차역(1호선 35·9호선 16·경춘 15·수인분당 36) 전부가 **평일 `tE` 를 보유**하며,
+/// 주말 결손은 경춘 15역·수인분당 36역 전부(= 그 요일 급행 미운행)와 1·9호선 0역이다.
+/// 즉 결손은 "그 요일에 급행이 없다"와 정확히 일치한다.
+/// 회귀 가드: `test/domain/usecases/express_no_headway_fallback_test.dart`.
 DateTime? findNextDeparture({
   required LineSchedule schedule,
   required DateTime now,
@@ -47,8 +61,10 @@ DateTime? findNextDeparture({
     }
   }
 
-  // 폴백: 배차간격 기반 추정
-  // (급행이지만 해당 역 급행 데이터가 없는 경우도 여기로 온다)
+  // 급행은 배차간격(= 완행 간격) 폴백을 타지 않는다 — "그 요일에 급행 없음".
+  if (express) return null;
+
+  // 폴백: 배차간격 기반 추정 (완행 전용)
   return _findNextByHeadway(schedule, daySchedule, now, currentMinutes, isDown);
 }
 
@@ -233,7 +249,14 @@ DateTime? _nextInPeriod(
 /// 없으면 배차간격의 절반(평균 대기시간)을 반환한다.
 ///
 /// [express]가 true이면 급행 역별 시간표만 조회하며, 해당 역에 급행 데이터가
-/// 없으면 완행과 섞지 않고 배차간격 폴백으로 넘어간다.
+/// 없으면 **0** 을 반환한다(운행 종료와 같은 취급). [findNextDeparture] 와 같은
+/// 이유로 배차간격 폴백을 금지한다 — 그 값은 완행 간격이다.
+///
+/// ⚠ **현재 lib/tool 에 호출부가 없다 (테스트 전용).** 그래서 반환형이 `int` 인
+/// 채로 `0` 이 "대기 0분(즉시 탑승)"·"운행 종료"·"급행 데이터 없음" 셋을 겸하고
+/// 있다. 소비자가 생기면 그 전에 `int?` 로 바꿔 "없음"을 구분할 것 — 그대로 쓰면
+/// 급행 미운행이 "지금 바로 탑승"으로 읽힌다. [findNextDeparture] 는 애초에
+/// `DateTime?` 이라 이 모호함이 없다.
 int getExpectedWaitMinutes({
   required LineSchedule schedule,
   required DateTime now,
@@ -268,6 +291,9 @@ int getExpectedWaitMinutes({
       return 0;
     }
   }
+
+  // 급행은 완행 배차간격으로 대기시간을 추정하지 않는다.
+  if (express) return 0;
 
   // 폴백: 배차간격의 절반 (올림)
   final headway = _getHeadwayForTime(daySchedule, currentMinutes);

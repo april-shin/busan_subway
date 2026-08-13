@@ -386,10 +386,11 @@ void main() {
       expect(result, DateTime(2026, 2, 23, 5, 55));
     });
 
-    test('express=true + 급행 데이터가 없는 역(급행 미정차역)은 완행과 섞이지 않고 배차간격으로 폴백한다', () {
+    test('express=true + 급행 데이터가 없는 역(급행 미정차역)은 완행도, 배차간격도 쓰지 않는다', () {
       // 905는 expressStationDepartures에 없음.
       // 완행(stationDepartures) 목록에는 905가 있고 다음 값은 349분(05:49)이지만,
-      // express=true이므로 완행 목록을 참조해서는 안 되고 배차간격(6분) 폴백을 사용해야 한다.
+      // express=true이므로 완행 목록을 참조해서는 안 된다. 배차간격(6분) 폴백도
+      // 금지다 — `periods` 는 완행 간격이라 "완행 간격으로 오는 급행"이 된다.
       final now = DateTime(2026, 2, 23, 5, 40);
       final result = findNextDeparture(
         schedule: makeScheduleWithExpress(),
@@ -398,14 +399,10 @@ void main() {
         express: true,
       );
 
-      // 배차간격 폴백: 05:30~23:50, 6분 간격
-      // elapsed = 340-330=10 → intervalsPassed=1 → 다음: 330+2*6=342 == 05:42
-      expect(result, DateTime(2026, 2, 23, 5, 42));
-      // 완행 시간표 값(349=05:49)이 반환되면 안 됨 — 섞이지 않아야 함
-      expect(result, isNot(DateTime(2026, 2, 23, 5, 49)));
+      expect(result, isNull);
     });
 
-    test('express=true + 완행표에도 없는 미지의 역은 배차간격으로 폴백한다 (교차 오염 없음 재확인)', () {
+    test('express=true + 완행표에도 없는 미지의 역도 null (교차 오염 없음 재확인)', () {
       final now = DateTime(2026, 2, 23, 10, 0);
       final result = findNextDeparture(
         schedule: makeScheduleWithExpress(),
@@ -414,8 +411,7 @@ void main() {
         express: true,
       );
 
-      // 배차간격 폴백만 가능 (완행/급행 어느 목록도 조회되지 않음)
-      expect(result, isNotNull);
+      expect(result, isNull);
     });
 
     test('express=false이면 완행(stationDepartures) 목록을 조회한다 (기존 동작)', () {
@@ -467,7 +463,7 @@ void main() {
       expect(result, DateTime(2026, 2, 23, 5, 50));
     });
 
-    test('하위호환: expressStationDepartures가 없는 노선에서 express=true여도 배차간격으로 안전하게 폴백한다', () {
+    test('expressStationDepartures가 없는 노선에서 express=true는 null (배차간격 폴백 금지)', () {
       final schedule = LineSchedule(
         lineId: '김포골드',
         weekday: DaySchedule(
@@ -498,8 +494,10 @@ void main() {
         express: true,
       );
 
-      // NPE 없이 배차간격 폴백으로 정상 반환되어야 함
-      expect(result, isNotNull);
+      // NPE 없이, 그리고 `periods`(= 완행 배차간격)로 가짜 급행을 만들지 않고
+      // null 이어야 한다. 이 폴백이 살아 있으면 경춘·수인분당 주말 급행이
+      // "완행 간격으로 오는 급행"으로 안내된다.
+      expect(result, isNull);
     });
   });
 
@@ -541,7 +539,7 @@ void main() {
       expect(result, 20);
     });
 
-    test('express=true + 급행 미정차역은 완행과 섞이지 않고 배차간격 절반을 반환한다', () {
+    test('express=true + 급행 미정차역은 완행과 섞지도, 배차간격으로 추정하지도 않는다', () {
       final schedule = LineSchedule(
         lineId: '9',
         weekday: DaySchedule(
@@ -572,9 +570,9 @@ void main() {
         express: true,
       );
 
-      // 완행표 기반 결과(다음 350분 → 대기 10분)가 아니라
-      // 배차간격 절반(6/2=3분) 폴백이어야 한다.
-      expect(result, 3);
+      // 완행표 기반 결과(다음 350분 → 대기 10분)도, 배차간격 절반(6/2=3분)도
+      // 아니어야 한다. 급행 데이터가 없으면 "운행 없음"과 같은 0.
+      expect(result, 0);
     });
   });
 

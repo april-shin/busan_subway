@@ -79,10 +79,9 @@ class _DepartureTimeSheetState extends State<_DepartureTimeSheet> {
   /// 열면 시트가 빈 화면으로 뜨는 것을 막는다.
   DepartureDayType _initialDayType() {
     // "지금 출발" 상태에서는 query.dayType 이 계산에 쓰이지 않아 신뢰할 수 없다.
-    // 이 경우 오늘 요일을 기준으로 연다.
-    final preferred = widget.query.isNow
-        ? dayTypeOf(DateTime.now())
-        : widget.query.dayType;
+    // 이 경우 오늘 요일을 기준으로 연다 — 급행 운행 요일 판정
+    // (`routeExpressRunsOnDay`)과 같은 규칙을 쓰도록 공유 메서드로 판정한다.
+    final preferred = widget.query.effectiveDayType(DateTime.now());
     if (widget.options.forDayType(preferred).isNotEmpty) return preferred;
 
     final fallback = preferred == DepartureDayType.weekday

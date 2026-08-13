@@ -7,6 +7,8 @@ import 'package:seoul_subway/domain/usecases/find_next_departure.dart';
 import 'package:seoul_subway/features/route_search/utils/departure_candidates.dart';
 import 'package:seoul_subway/features/route_search/utils/departure_query_time.dart';
 
+import '../../../helpers/compact_schedule_parser.dart';
+
 /// 실제 `assets/json/line_schedules.json` 전 노선·전 역에 대한 왕복 계약 검증.
 ///
 /// 합성 스케줄만으로는 데이터 컨벤션의 편차를 잡을 수 없다. 실제로 다음 두
@@ -32,7 +34,7 @@ void main() {
     schedules = {
       for (final item in raw)
         (item as Map<String, dynamic>)['id'] as String:
-            _parseCompact(item),
+            parseCompactSchedule(item),
     };
   });
 
@@ -323,73 +325,4 @@ void main() {
       reason: 'GTX-A 탐색 경로가 고쳐졌다면 확정 경로의 필요성을 재검토할 것',
     );
   });
-}
-
-// --- 아래는 TimetableDataSource 의 컴팩트 파서와 동일 로직 (rootBundle 회피용) ---
-
-LineSchedule _parseCompact(Map<String, dynamic> json) {
-  final wd = json['wd'] as Map<String, dynamic>;
-  final we = (json['we'] as Map<String, dynamic>?) ?? wd;
-  return LineSchedule(
-    lineId: json['id'] as String,
-    weekday: _dayAt(wd, 0),
-    weekend: _dayAt(we, 0),
-    weekdayDown: _dayDown(wd),
-    weekendDown: _dayDown(we),
-  );
-}
-
-DaySchedule _dayAt(Map<String, dynamic> day, int dir) {
-  return DaySchedule(
-    firstTrain: (day['f'] as List)[dir] as String,
-    lastTrain: (day['l'] as List)[dir] as String,
-    periods: _periods(day['p'] as List),
-    stationDepartures: _departures(day, dir, 't'),
-    expressStationDepartures: _departures(day, dir, 'tE'),
-  );
-}
-
-DaySchedule? _dayDown(Map<String, dynamic> day) {
-  final f = day['f'] as List;
-  final l = day['l'] as List;
-  if (f.length < 2) return null;
-  final hasStations = day.containsKey('t') || day.containsKey('tE');
-  final hasPeriods = day.containsKey('pD');
-  if (!hasPeriods && !hasStations && f[0] == f[1] && l[0] == l[1]) return null;
-  return DaySchedule(
-    firstTrain: f[1] as String,
-    lastTrain: l[1] as String,
-    periods: _periods(day['pD'] as List? ?? day['p'] as List),
-    stationDepartures: _departures(day, 1, 't'),
-    expressStationDepartures: _departures(day, 1, 'tE'),
-  );
-}
-
-Map<String, List<int>>? _departures(
-  Map<String, dynamic> day,
-  int dir,
-  String key,
-) {
-  final raw = day[key] as Map<String, dynamic>?;
-  if (raw == null || raw.isEmpty) return null;
-  final result = <String, List<int>>{};
-  for (final entry in raw.entries) {
-    final dirList = entry.value as List;
-    if (dir >= dirList.length) continue;
-    final minutes = dirList[dir];
-    if (minutes == null) continue;
-    result[entry.key] = (minutes as List).cast<int>();
-  }
-  return result.isEmpty ? null : result;
-}
-
-List<TimePeriod> _periods(List<dynamic> raw) {
-  return raw.map((p) {
-    final arr = p as List;
-    return TimePeriod(
-      start: arr[0] as String,
-      end: arr[1] as String,
-      headwayMinutes: arr[2] as int,
-    );
-  }).toList();
 }

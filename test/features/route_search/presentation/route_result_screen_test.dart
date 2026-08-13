@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -214,6 +216,211 @@ void main() {
 
       // 완행 탭: 5분 노출
       expect(find.textContaining('5분'), findsWidgets);
+    });
+
+    /// 급행/완행 탭 순서 판정용 스케줄.
+    ///
+    /// 완행·급행 출발분을 **동일한 촘촘한 목록**으로 채워, 탭 순서가 오직
+    /// 도착 시각(= 출발 + `durationSeconds`)으로만 갈리게 만든다. 24:00(1440)
+    /// 까지 5분 간격으로 채우므로 몇 시에 돌려도 "다음 열차 없음"(fail-open)
+    /// 으로 조용히 빠지지 않는다.
+    ///
+    /// 실서비스에서 급행이 늦게 도착하는 원인은 소요시간이 아니라 **배차 공백**
+    /// 이다(수인분당 급행 최대 645분, 경춘 831분 공백). 그 공백은 "지금"이
+    /// 언제냐에 따라 대기가 0분이 될 수도 있어 테스트를 시계에 의존하게
+    /// 만들므로, 여기서는 소요시간을 결정적 대체 레버로 쓴다 — 판정 코드가
+    /// 보는 값(`RouteTiming.arrival`)은 어느 쪽이든 동일하다.
+    LineSchedule modeSchedule() {
+      final everyFiveMinutes = [for (var m = 0; m <= 1440; m += 5) m];
+      final day = DaySchedule(
+        firstTrain: '00:00',
+        lastTrain: '24:00',
+        periods: const [
+          TimePeriod(start: '00:00', end: '24:00', headwayMinutes: 5),
+        ],
+        stationDepartures: {station1.id: everyFiveMinutes},
+        expressStationDepartures: {station1.id: everyFiveMinutes},
+      );
+      return LineSchedule(lineId: '9', weekday: day, weekend: day);
+    }
+
+    /// 두 탭 라벨의 x 좌표를 비교해 "완행이 왼쪽인가"를 판정한다.
+    bool localTabIsLeft(WidgetTester tester) {
+      // '급행' 은 탭 라벨 + 세그먼트 배지로 두 번 등장할 수 있다. 탭 라벨은
+      // TabBar 안에 있으므로 그쪽으로 한정해 배지를 배제한다.
+      final expressTab = find.descendant(
+        of: find.byType(TabBar),
+        matching: find.text('급행'),
+      );
+      final localTab = find.descendant(
+        of: find.byType(TabBar),
+        matching: find.text('완행'),
+      );
+      return tester.getTopLeft(localTab).dx < tester.getTopLeft(expressTab).dx;
+    }
+
+    testWidgets('완행이 먼저 도착하면 완행 탭이 왼쪽(기본)이 된다',
+        (tester) async {
+      // 회귀 가드: 예전에는 급행이 무조건 왼쪽이었다. 하루 몇 편뿐인 급행
+      // (수인분당 14편·경춘 5편) 경로에서 낮 시간에 기본 탭이 몇 시간 뒤
+      // 출발을 보여주고, 시간표 시트에도 7개만 뜨던 문제.
+      final fastestExpress = buildExpress(total: 3600); // 60분 뒤 도착
+      final fastestLocal = buildLocal(total: 300); // 5분 뒤 도착
+
+      await tester.pumpWidget(buildApp(
+        fastest: fastestLocal,
+        fastestExpress: fastestExpress,
+        fastestLocal: fastestLocal,
+        schedules: {'9': modeSchedule()},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(localTabIsLeft(tester), isTrue,
+          reason: '완행이 먼저 도착하므로 완행 탭이 왼쪽');
+      // 기본 탭 내용도 완행이어야 한다 (라벨만 바뀌고 내용이 그대로면 오답).
+      expect(find.textContaining('5분'), findsWidgets);
+    });
+
+    testWidgets('급행이 먼저 도착하면 급행 탭이 왼쪽으로 남는다', (tester) async {
+      final fastestExpress = buildExpress(total: 180);
+      final fastestLocal = buildLocal(total: 300);
+
+      await tester.pumpWidget(buildApp(
+        fastest: fastestExpress,
+        fastestExpress: fastestExpress,
+        fastestLocal: fastestLocal,
+        schedules: {'9': modeSchedule()},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(localTabIsLeft(tester), isFalse,
+          reason: '급행이 먼저 도착하므로 급행 탭이 왼쪽에 남는다');
+      expect(find.textContaining('3분'), findsWidgets);
+    });
+
+    testWidgets('그 요일에 급행이 없으면 급행 탭이 사라지고 완행만 남는다',
+        (tester) async {
+      // 회귀 가드: 경춘·수인분당 주말은 `we.tE` 가 없어 급행 조회가 완행
+      // 배차간격 폴백을 타 "완행 간격으로 오는 급행"을 안내했다. 이제
+      // `findNextDeparture` 가 null 을 돌려주므로 타임라인이 unavailable 이 되고,
+      // 그 모드는 탭에서 내려간다.
+      final everyFiveMinutes = [for (var m = 0; m <= 1440; m += 5) m];
+      final noExpress = DaySchedule(
+        firstTrain: '00:00',
+        lastTrain: '24:00',
+        periods: const [
+          TimePeriod(start: '00:00', end: '24:00', headwayMinutes: 5),
+        ],
+        stationDepartures: {station1.id: everyFiveMinutes},
+        // expressStationDepartures 없음 — 주말 급행 결손 재현.
+      );
+
+      await tester.pumpWidget(buildApp(
+        fastest: buildExpress(total: 180),
+        fastestExpress: buildExpress(total: 180),
+        fastestLocal: buildLocal(total: 300),
+        schedules: {
+          '9': LineSchedule(lineId: '9', weekday: noExpress, weekend: noExpress),
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      // TabBar 자체가 없어야 한다.
+      expect(find.byType(TabBar), findsNothing);
+      // 남은 화면은 완행 — 5분.
+      expect(find.textContaining('5분'), findsWidgets);
+
+      // 탭이 조용히 사라지지 않는다 — 왜 완행만 있는지 한 줄로 말해 준다.
+      // 문구는 **데이터 사실**만 주장한다(사용자 결정). "운행하지 않습니다" 처럼
+      // 운행 사실을 단정하면 데이터가 채워지는 순간 거짓이 된다.
+      final notice = find.textContaining('급행 시간표 데이터가 없어');
+      expect(notice, findsOneWidget);
+      expect(find.textContaining('급행이 운행하지 않습니다'), findsNothing,
+          reason: '운행 사실을 단정하는 문구를 쓰지 말 것');
+    });
+
+    testWidgets('급행 탭이 사라졌다 돌아와도 깨지지 않는다 (요일 왕복)',
+        (tester) async {
+      // `TabController` 는 length 2 로 고정 생성되는데 `plan.length` 는 build 마다
+      // 1↔2 로 바뀐다. 축소되면 TabBar/TabBarView 를 아예 걸지 않고, 다시 늘면
+      // 보존된 index 로 재부착된다 — 그 왕복에 크래시가 없는지 잠근다.
+      // 오른쪽 탭(index 1)을 고른 상태에서 축소시키는 것이 가장 위험한 순서다.
+      // 시각을 08:12 한 개로 둔다 — 촘촘하게 채우면 시(hour) 라벨과 분 칩의
+      // 텍스트가 겹쳐(`00` 이 0시 행이면서 0분 칩) 시트에서 엉뚱한 것을 누른다.
+      const only0812 = [492];
+      DaySchedule day({required bool withExpress}) => DaySchedule(
+            firstTrain: '05:00',
+            lastTrain: '00:00',
+            periods: const [
+              TimePeriod(start: '05:00', end: '00:00', headwayMinutes: 5),
+            ],
+            stationDepartures: {station1.id: only0812},
+            expressStationDepartures:
+                withExpress ? {station1.id: only0812} : null,
+          );
+
+      // 급행을 **오늘이 아닌 요일**에서만 없앤다. 이렇게 하면 실행 요일과
+      // 무관하게 "탭 둘로 시작 → 반대 요일 커밋으로 축소" 순서가 보장된다.
+      // (급행을 주말에서 없애면 토요일에 돌릴 때 이미 축소 상태로 시작해
+      //  왕복 자체를 검증할 수 없다.)
+      final today = dayTypeOf(DateTime.now());
+      final other = today == DepartureDayType.weekday
+          ? DepartureDayType.weekend
+          : DepartureDayType.weekday;
+
+      await tester.pumpWidget(buildApp(
+        fastest: buildExpress(total: 180),
+        fastestExpress: buildExpress(total: 180),
+        fastestLocal: buildLocal(total: 300),
+        schedules: {
+          '9': LineSchedule(
+            lineId: '9',
+            weekday: day(withExpress: today == DepartureDayType.weekday),
+            weekend: day(withExpress: today == DepartureDayType.weekend),
+          ),
+        },
+      ));
+      await tester.pumpAndSettle();
+
+      TabController? tabController() {
+        final bar = find.byType(TabBar);
+        if (bar.evaluate().isEmpty) return null;
+        return tester.widget<TabBar>(bar).controller;
+      }
+
+      // 오늘은 급행이 있으므로 탭이 둘이다.
+      expect(tabController(), isNotNull, reason: '오늘은 급행이 있어 탭이 둘이어야 한다');
+
+      // 오른쪽 탭(완행)으로 이동해 index 1 을 만든다 — 축소 시 가장 위험한 상태.
+      await tester.tap(find.descendant(
+        of: find.byType(TabBar),
+        matching: find.text('완행'),
+      ));
+      await tester.pumpAndSettle();
+      expect(tabController()!.index, 1);
+
+      // 시트를 열어 반대 요일로 바꾸고 그 요일의 시각을 커밋한다.
+      await tester.tap(find.byIcon(Icons.expand_more).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(other.label));
+      await tester.pumpAndSettle();
+      expect(find.text('08'), findsOneWidget, reason: '08시 행');
+      await tester.tap(find.text('12')); // 08:12 칩
+      await tester.pumpAndSettle();
+
+      // 축소됐다 — 급행이 없는 요일이므로 TabBar 가 사라지고 완행만 남는다.
+      expect(tabController(), isNull, reason: '급행 없는 요일 → TabBar 제거');
+      expect(find.textContaining('5분'), findsWidgets, reason: '남은 화면은 완행');
+
+      // 다시 오늘 요일로 되돌리면 탭이 둘로 복귀하고, 보존된 index 로 재부착된다.
+      await tester.tap(find.text('지금 출발로'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final restored = tabController();
+      expect(restored, isNotNull, reason: '오늘 요일로 돌아오면 탭이 둘로 복귀');
+      expect(restored!.index, 1, reason: '축소 전 보던 탭(완행)이 유지되어야 한다');
+      expect(restored.length, 2);
     });
 
     testWidgets('두 모드 시간이 같으면 단일 탭으로 폴백', (tester) async {
@@ -592,6 +799,84 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('선택한 시각에는 운행하지 않습니다'), findsOneWidget);
+    });
+
+    testWidgets('"지금 출발"인데 운행 열차가 없으면 조용히 넘어가지 않는다',
+        (tester) async {
+      // 회귀 가드: 예전에는 `query.isNow` 면 안내를 무조건 껐다. 그래서 막차
+      // 이후(또는 그 요일에 급행이 없는 경우) `computeDepartureTimeDetailed` 가
+      // 돌려주는 **조회 기준 시각**이 실제 출발 시각처럼 찍히고, 화면은 그게
+      // 열차가 아니라는 사실을 한 글자도 말하지 않았다.
+      //
+      // 05:00 첫차 / 08:00 막차인 노선을 만들어 "지금"이 언제든 조회가 운행
+      // 시간 밖이 되도록 한다 — 역별 시간표에 08:00 한 편만 두고, 배차간격
+      // period 도 그 구간만 둬서 그 밖에서는 폴백조차 시각을 못 만든다.
+      final closedLine = LineSchedule(
+        lineId: '9',
+        weekday: const DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '05:00',
+          periods: [TimePeriod(start: '05:00', end: '05:01', headwayMinutes: 5)],
+          stationDepartures: {'901': [300]}, // 05:00 한 편
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '05:00',
+          periods: [TimePeriod(start: '05:00', end: '05:01', headwayMinutes: 5)],
+          stationDepartures: {'901': [300]},
+        ),
+      );
+
+      // 실시간은 빈 응답(setUp 기본) — 확정된 뒤에야 "없다"고 말해야 한다.
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': closedLine},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('지금은 운행하는 열차가 없습니다'), findsOneWidget);
+      // 고정 시각 조회용 문구가 잘못 나오지 않는지 — 사용자가 고른 시각이 없다.
+      expect(find.text('선택한 시각에는 운행하지 않습니다'), findsNothing);
+    });
+
+    testWidgets('실시간 조회가 끝나기 전에는 "열차 없음"으로 단정하지 않는다',
+        (tester) async {
+      // 막차 직후에는 시간표상 막차가 지났어도 API 에 아직 운행 중인 열차가
+      // 남아 있다. 그래서 실시간이 확정되기 전에 안내를 띄우면 잠깐 잘못된
+      // 단정이 깜빡인다.
+      final pending = Completer<List<ArrivalInfo>>();
+      when(() => mockRepo.getArrivalInfo(station1.name))
+          .thenAnswer((_) => pending.future);
+
+      final closedLine = LineSchedule(
+        lineId: '9',
+        weekday: const DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '05:00',
+          periods: [TimePeriod(start: '05:00', end: '05:01', headwayMinutes: 5)],
+          stationDepartures: {'901': [300]},
+        ),
+        weekend: const DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '05:00',
+          periods: [TimePeriod(start: '05:00', end: '05:01', headwayMinutes: 5)],
+          stationDepartures: {'901': [300]},
+        ),
+      );
+
+      await tester.pumpWidget(buildApp(
+        fastest: buildLocal(),
+        schedules: {'9': closedLine},
+      ));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text('지금은 운행하는 열차가 없습니다'), findsNothing,
+          reason: '실시간 대기 중에는 단정하지 않는다');
+
+      // 실시간이 "없음"으로 확정되면 그때 안내가 뜬다.
+      pending.complete(const []);
+      await tester.pumpAndSettle();
+      expect(find.text('지금은 운행하는 열차가 없습니다'), findsOneWidget);
     });
 
     testWidgets('시트를 열면 기존 선택 시각의 시(hour) 행이 화면 안에 들어온다',

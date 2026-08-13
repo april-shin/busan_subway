@@ -43,6 +43,16 @@ class DepartureQueryTime {
   /// "지금 출발" 여부. true 면 화면은 실시간 도착정보를 사용한다.
   bool get isNow => minutes == null;
 
+  /// 이 조회가 실제로 가리키는 요일 타입. [clock] 은 현재 벽시계.
+  ///
+  /// [isNow] 일 때 [dayType] 을 그대로 믿으면 안 된다 — 위 [nowAt] 주석이 설명한
+  /// 대로 그 상태의 [dayType] 은 계산에 쓰이지 않아 낡은 값이 남아 있을 수 있다.
+  /// "이 조회는 어느 요일 시간표를 봐야 하나"를 묻는 곳은 모두 이 메서드를 쓴다
+  /// (출발시각 시트의 초기 요일 판정, 급행 운행 요일 판정). 규칙을 호출부마다
+  /// 복제하면 두 판정이 어긋나 "시트는 평일을 여는데 탭 판정은 주말 기준"이 된다.
+  DepartureDayType effectiveDayType(DateTime clock) =>
+      isNow ? dayTypeOf(clock) : dayType;
+
   /// [minutes] 는 nullable 이라 null 전달로 "비우기"를 표현할 수 없다 —
   /// `copyWith(minutes: null)` 은 **기존 값 유지**다. "지금 출발"로 되돌리려면
   /// [DepartureQueryTime.nowAt] 를 쓴다(요일까지 함께 정리된다).
