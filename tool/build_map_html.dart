@@ -207,18 +207,44 @@ html, body {
 .action-btn .label {
   font-size: 10px;
 }
-#text-layer {
+/* [래스터 기아 수정 v6, 2026-08] §10_map-math-engineer_pan-flicker-report.md
+   §22.2 가 CDP 실측(LayerTree/DOM/Tracing)으로 확정한 근본 원인: `<svg>` 루트
+   요소는 자기 자신의 인라인 `style.transform` 대입에 반응해 스스로를
+   `InvalidateLayout` 하는 Blink 고유 동작을 가진다 — 동일하게 매 프레임
+   `.style.transform` 을 받는 `<div>`(`#map-container`, backendNodeId 69)는
+   이 무효화가 0건인 반면 `<svg>` 루트(`#text-layer`/`#train-layer`,
+   backendNodeId 70/61)는 각각 15/43회(10초 팬) 걸렸고, `#text-layer` 는 자식
+   655개(`<text>`)의 `SvgTextLayoutAlgorithm::Layout` 폭주(10초에 13,843회)로
+   이어졌다. 자식 프로퍼티(커스텀 상속 `--stroke-w` 등, 실험 A) 어떤 조정으로도
+   이 무효화 자체는 사라지지 않았다(§22.2) — 원인이 자식이 아니라 SVG 루트
+   자신이기 때문이다.
+   해결: 매 프레임 바뀌는 pan/zoom transform 을 `<svg>` 루트가 아니라 그 바깥의
+   `<div>` 래퍼(`#text-layer-wrap`/`#train-layer-wrap`)가 받도록 구조를
+   바꾼다 — `#map-container`(div)가 이미 증명한 안전 패턴과 동일하게 적용한다.
+   내부 `<svg>` 루트(#text-layer/#train-layer) 는 이제 transform 을
+   전혀 받지 않고 뷰포트(0,0)~(2416,1560)에 정적으로 고정된다(viewBox 1:1이라
+   래퍼의 CSS matrix(scale,...,tx,ty) 만으로 이전과 동일한 화면 좌표를 만든다 —
+   좌표 수학 불변, DOM 커밋 대상만 교체). */
+#text-layer-wrap, #train-layer-wrap {
   position: absolute;
   top: 0; left: 0;
   width: 2416px; height: 1560px;
   transform-origin: 0 0;
   will-change: transform;
   pointer-events: none;
+}
+#text-layer, #train-layer {
+  /* 래퍼 div 의 유일한 자식으로, transform 을 받지 않는 고정 뷰포트다.
+     display:block 은 SVG 루트가 기본값(inline)일 때 생기는 인라인 베이스라인
+     오프셋을 없애 래퍼 원점(0,0)에 정확히 맞춘다. */
+  display: block;
+  width: 2416px; height: 1560px;
+  pointer-events: none;
   /* 레이어가 지도 캔버스(2416x1560)로 고정 치수화되면서 UA 기본값(hidden)이
      경계 밖으로 삐져나오는 콘텐츠(말단역 도착 말풍선, 화면 끝 라벨 등)를
-     실제로 잘라내기 시작했다. 컴포지터 전용 transform 특성은 overflow 값과
-     무관하므로 visible로 되돌려 구버전(뷰포트 전체 크기 레이어)과 동일하게
-     클리핑 없이 렌더링한다. */
+     실제로 잘라내기 시작했다. visible로 되돌려 구버전(뷰포트 전체 크기 레이어)과
+     동일하게 클리핑 없이 렌더링한다. (이 overflow 는 SVG 자신의 클리핑
+     특성이라 위 래퍼 div 가 아니라 이 규칙에 있어야 한다.) */
   overflow: visible;
 }
 #text-layer text {
@@ -233,37 +259,51 @@ html, body {
      노이즈 범위) — `InvalidateLayout` 이 자식의 상속 프로퍼티 메커니즘과
      무관하게 `#text-layer`/`#train-layer` **SVG 루트 자신**에 직접 걸리는
      것으로 확정됐다(비교: 동일하게 매 프레임 transform 을 받는 `<div>`
-     `#map-container` 는 0건). 근본 원인이 아니므로 원복한다. */
+     `#map-container` 는 0건). 근본 원인이 아니므로 원복한다(v6 구조 변경으로
+     이 SVG 루트 자체는 이제 transform 을 받지 않게 됐지만, 이 규칙은 자식
+     상속 프로퍼티 실험의 기록이므로 그대로 둔다). */
   stroke-width: var(--stroke-w, 2px);
   paint-order: stroke;
   stroke-linejoin: round;
 }
-#train-layer {
-  position: absolute;
-  top: 0; left: 0;
-  width: 2416px; height: 1560px;
-  transform-origin: 0 0;
-  will-change: transform;
-  pointer-events: none;
-  overflow: visible;
-}
 /* [래스터 기아 수정 v3, 2026-08] 열차 아이콘(#live-trains 의 개별 <g>)을 각각
    독립 컴포지터 레이어로 승격한다. step() 이 매 rAF 마다 위치를 갱신하는데(원칙 2·4),
    이 승격이 없으면 그 갱신이 #train-layer 전체의 공유 래스터 표면에 다시 그려져야
-   한다 — 팬 중에는 #train-layer 자체도 매 프레임 CSS matrix 로 이동하므로, 같은
-   프레임에 "레이어 재배치(컴포지터 전용, 저비용)"와 "레이어 내부 콘텐츠 리페인트
-   (고비용)"가 겹친다. 최대 줌아웃(노출 면적 최대)에서 팬+실시간 열차가 겹치면
-   안드로이드 래스터 스레드가 예산을 초과해 일부 타일이 새 프레임 커밋에 늦게
-   반영되며 라벨/말풍선/툴바가 순간 소실되는 점멸로 이어진다(§10_map-math-engineer_
-   pan-flicker-report.md 격리 측정). 개별 레이어로 분리하면 위치 갱신이 부모의
-   래스터를 건드리지 않는 순수 컴포지트 연산이 되어 이 경쟁이 사라진다. */
+   한다 — v3 당시엔 #train-layer(<svg> 루트) 자신이 팬 중 매 프레임 CSS matrix 로
+   이동했으므로, 같은 프레임에 "레이어 재배치(컴포지터 전용, 저비용)"와 "레이어
+   내부 콘텐츠 리페인트(고비용)"가 겹쳤다. 최대 줌아웃(노출 면적 최대)에서 팬+실시간
+   열차가 겹치면 안드로이드 래스터 스레드가 예산을 초과해 일부 타일이 새 프레임
+   커밋에 늦게 반영되며 라벨/말풍선/툴바가 순간 소실되는 점멸로 이어졌다
+   (§10_map-math-engineer_pan-flicker-report.md 격리 측정). 개별 레이어로 분리하면
+   위치 갱신이 부모의 래스터를 건드리지 않는 순수 컴포지트 연산이 되어 이 경쟁이
+   사라진다.
+   [문서-코드 드리프트 정정, v6 이후] v6(§23~§25)가 #train-layer 를 <div> 래퍼
+   (#train-layer-wrap)로 감싸면서, 팬/줌의 매 프레임 transform 은 이제 그 래퍼가
+   받고 #train-layer(<svg> 루트) 자신은 더 이상 transform 을 받지 않는다 — 위
+   문단의 "#train-layer 자체도 매 프레임 CSS matrix 로 이동"은 v3~v5 시절
+   서술이며 현재는 사실이 아니다. 다만 이 will-change 승격의 존재 이유(열차
+   위치 갱신을 #train-layer 의 공유 래스터 표면과 분리해 컴포지트 전용 경로를
+   타게 하는 것)는 #train-layer-wrap 기준으로도 여전히 유효해 유지한다. */
 #live-trains > g {
   will-change: transform;
 }
 path[data-line] { stroke-width: 5 !important; }
 /* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
 path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
-path[data-line], circle, rect:not(#route-overlay-bg) {
+/* [래스터 기아 수정 v4, 2026-08-13 — 기각·원복, v7 재검증] `text[data-line]`
+   (라벨 dim/undim)을 한때 이 셀렉터에서 뺐던 적이 있다. 당시 근본 원인은
+   `<svg>` 루트(#text-layer/#train-layer) 자신이 매 프레임 `.style.transform`
+   대입에 반응해 스스로 `InvalidateLayout` 하는 것이었고(§10_map-math-engineer_
+   pan-flicker-report.md §22.2), `text[data-line]` 제외는 라벨 655개의 상속
+   프로퍼티 재계산 부담을 줄여 그 증상을 완화하는 우회책이었을 뿐, will-change
+   승격이 근본 원인은 아니었다 — 라벨 dim 전환이 트랜지션 없이 즉시 스냅되는
+   UX 트레이드오프가 있었다.
+   v6(§23~§30)가 `<svg>` 루트를 `<div>` 래퍼로 감싸 이 자기-무효화 경로 자체를
+   제거했으므로(순수 팬에서 InvalidateLayout 0건, §26.2), 그 우회책의 전제가
+   소멸했다고 보고 `text[data-line]` 를 이 트랜지션 셀렉터에 되돌렸다(v7).
+   동일 조건(경로+열차+최대 줌아웃+팬) 재측정으로 EVENTS=0 유지를 확인한 뒤
+   채택했다 — 수치는 §32 참조. */
+path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   transition: opacity 0.3s;
 }
 .dimmed {
@@ -272,11 +312,11 @@ path[data-line], circle, rect:not(#route-overlay-bg) {
 .route-toolbar {
   position: absolute;
   /* [래스터 기아 수정 v4, 2026-08-13] top/left 는 0 에 고정하고 실제 화면 위치는
-     항상 transform(translate)으로만 표현한다. #map-container/#text-layer/
-     #train-layer 가 이미 쓰는 것과 동일한 "고정 원점 + transform" 관용구
-     (위 #text-layer/#train-layer 규칙 참조). will-change 로 독립 컴포지터
-     레이어로 승격해 updateRouteToolbarPosition()/드래그의 매 프레임 위치
-     갱신이 레이아웃을 유발하지 않게 한다 — 아래 updateRouteToolbarPosition
+     항상 transform(translate)으로만 표현한다. #map-container/#text-layer-wrap/
+     #train-layer-wrap 이 이미 쓰는 것과 동일한 "고정 원점 + transform" 관용구
+     (위 #text-layer-wrap/#train-layer-wrap 규칙 참조). will-change 로 독립
+     컴포지터 레이어로 승격해 updateRouteToolbarPosition()/드래그의 매 프레임
+     위치 갱신이 레이아웃을 유발하지 않게 한다 — 아래 updateRouteToolbarPosition
      주석 참조. */
   top: 0;
   left: 0;
@@ -343,15 +383,19 @@ $mapOnlyContent
 <div id="tap-layer"></div>
 </div>
 
+<div id="text-layer-wrap">
 <svg id="text-layer" xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 2416 1560" width="2416" height="1560">
 $textElements
 </svg>
+</div>
 
+<div id="train-layer-wrap">
 <svg id="train-layer" xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 2416 1560" width="2416" height="1560">
   <g id="live-trains"></g>
 </svg>
+</div>
 
 <div id="tooltip" class="tooltip"></div>
 <div id="route-toolbar" class="route-toolbar"></div>
@@ -454,15 +498,23 @@ $textElements
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var textLayer = document.getElementById('text-layer');
   var trainLayer = document.getElementById('train-layer');
+  // [래스터 기아 수정 v6, 2026-08] pan/zoom 의 매 프레임 transform 은 이제
+  // <svg> 루트(textLayer/trainLayer, 위에서 얻은 참조들) 가 아니라 이 두
+  // <div> 래퍼에만 대입한다 — textLayer/trainLayer 변수는 여전히 querySelectorAll/
+  // fontSize/stroke 등 "SVG 콘텐츠 조작" 용도로만 쓰인다(참조 지점은 그대로
+  // 유효 — getBBox()/querySelectorAll 은 SVG 사용자 좌표계 기준이라 어느
+  // 조상이 transform 을 갖든 영향받지 않는다). 아래 applyTransform 참조.
+  var textLayerWrap = document.getElementById('text-layer-wrap');
+  var trainLayerWrap = document.getElementById('train-layer-wrap');
 
   // ============================================================
   // 변환 적용
   // ============================================================
   function applyTransform() {
-    // map-container / text-layer / train-layer 는 모두 뷰포트 원점(0,0)에 고정된
-    // 채 viewBox 1:1(2416x1560)로 렌더링되고, 팬/줌은 이 CSS transform matrix
-    // 하나로만 표현된다. 셋 다 순수 컴포지터 레이어 이동/스케일이라 팬 중
-    // 메인스레드 리페인트가 발생하지 않는다.
+    // map-container / text-layer-wrap / train-layer-wrap 는 모두 뷰포트
+    // 원점(0,0)에 고정된 <div> 이고, 팬/줌은 이 CSS transform matrix 하나로만
+    // 표현된다. 셋 다 순수 컴포지터 레이어 이동/스케일이라 팬 중 메인스레드
+    // 리페인트가 발생하지 않는다.
     //
     // [래스터 기아 수정, 2026-07-29] 이전에는 text-layer/train-layer가
     // width:100%/height:100% + 매 프레임 viewBox 재계산 방식이었다. viewBox
@@ -473,12 +525,21 @@ $textElements
     // 새로 노출된 영역의 타일을 래스터링할 기회(커밋)를 밀어내 안드로이드에서
     // 노선이 잠깐(수 프레임) 완전히 사라지는 점멸이 발생했다(텍스트 라벨은
     // 새 위치에 정상 표시된 채로). CSS transform 방식으로 바꿔 팬 중 재페인트
-    // 자체를 제거한다.
+    // 자체를 제거했었다.
+    //
+    // [래스터 기아 수정 v6, 2026-08] 그러나 CSS transform 방식으로도 점멸이
+    // 완전히 사라지지 않았다 — CDP 실측(§10_map-math-engineer_pan-flicker-
+    // report.md §22.2) 결과, transform 을 받는 주체가 <svg> 루트 자신이면
+    // 그 자체로 매 프레임 InvalidateLayout 을 스스로에게 건다는 것이
+    // 밝혀졌다(동일 조건의 <div> 는 0건). 그래서 transform 대입 대상을
+    // text-layer/train-layer 의 <svg> 루트에서 그 바깥의 <div> 래퍼로
+    // 옮겼다 — 아래 textLayerWrap/trainLayerWrap. 내부 <svg> 는 이제 이
+    // 함수에서 전혀 건드리지 않는다(viewBox 1:1 고정 뷰포트).
     var matrixStr =
         'matrix(' + scale + ',0,0,' + scale + ',' + tx + ',' + ty + ')';
     container.style.transform = matrixStr;
-    textLayer.style.transform = matrixStr;
-    trainLayer.style.transform = matrixStr;
+    textLayerWrap.style.transform = matrixStr;
+    trainLayerWrap.style.transform = matrixStr;
 
     // scale < 1일 때 텍스트 크기/stroke-width 보상 (줌인은 기존대로).
     // [2026-08 핀치 점멸 수정] 2-포인터 핀치 진행 중에는 이 보정을 미룬다.
@@ -2431,8 +2492,8 @@ $textElements
       // attribute 기반 transform 은 #live-trains > g 가 승격 레이어라도 매번
       // Blink 의 "SVG attribute 변경" 무효화 경로를 타 스타일 재계산을 유발한다.
       // style.transform 은 이미 승격된 레이어의 컴포지터 전용 갱신 경로를 타므로
-      // 팬 중 map-container/text-layer/train-layer 재배치와 경쟁하지 않는다
-      // (§10_map-math-engineer_pan-flicker-report.md 참조).
+      // 팬 중 map-container/text-layer-wrap/train-layer-wrap 재배치와 경쟁하지
+      // 않는다(§10_map-math-engineer_pan-flicker-report.md 참조).
       if (trainState.lastRenderedX !== pos.x || trainState.lastRenderedY !== pos.y) {
         trainState.element.style.transform =
           'translate(' + pos.x + 'px,' + pos.y + 'px)';
@@ -2828,8 +2889,8 @@ $textElements
   // → applyTransform → updateRouteToolbarPosition)마다 호출된다. 이전에는
   // routeToolbar.style.left/top 을 직접 썼는데, left/top 은 레이아웃을
   // 유발하는 속성이라 팬 제스처 내내 이 툴바 하나 때문에 매 프레임 메인스레드
-  // 레이아웃 패스가 강제됐다. #map-container/#text-layer/#train-layer 는
-  // 이미 매 프레임 컴포지터 전용 CSS transform 으로 이동하는데, 이 툴바만
+  // 레이아웃 패스가 강제됐다. #map-container/#text-layer-wrap/#train-layer-wrap
+  // 는 이미 매 프레임 컴포지터 전용 CSS transform 으로 이동하는데, 이 툴바만
   // 유일하게 레이아웃 경로를 타고 있었다 — 팬 중 유일한 non-transform 프레임별
   // DOM 쓰기.
   //
@@ -2879,8 +2940,9 @@ $textElements
   // 따라서 이 라벨들만 회피하면 출발역 상류 구간(= 열차가 들어오는 방향)이
   // 가려지지 않는다. 실시간 열차 위치를 조회할 필요 없이 정적 기하만으로
   // 해결되므로 열차 데이터에 의존하지 않는다.
-  // text-layer 는 map-container 와 동일한 CSS transform(matrix(scale,...))을 쓰므로
-  // SVG 사용자 좌표 → 화면 좌표 환산 공식(scale/tx/ty)이 같다.
+  // text-layer-wrap 은 map-container 와 동일한 CSS transform(matrix(scale,...))을
+  // 쓰므로(v6, §22.2 — 내부 <svg> 루트(text-layer) 자신은 transform 을 받지
+  // 않는다) SVG 사용자 좌표 → 화면 좌표 환산 공식(scale/tx/ty)이 여전히 같다.
   function collectAvoidScreenRects() {
     var rects = [];
     function pushBBox(el) {

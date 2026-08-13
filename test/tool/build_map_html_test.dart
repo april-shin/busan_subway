@@ -127,33 +127,30 @@ void main() {
     });
 
     test(
-        '[래스터 기아 v5] text[data-line] 는 opacity transition 셀렉터에서 제외된다',
+        '[래스터 기아 v7] text[data-line] 는 opacity transition 셀렉터에 복원되어 있다',
         () {
-      // [회귀 가드, 2026-08-13] CDP LayerTree+Tracing 실측(chrome://inspect
-      // 대체 — WebView 원격 디버깅 소켓에 직접 CDP로 접속)으로 확인: 팬 중
-      // #text-layer(SVG, 자식 655개)/#train-layer 의 .style.transform 쓰기가
-      // 매 프레임 InvalidateLayout 을 유발해 SvgTextLayoutAlgorithm::Layout 이
-      // 10초 팬에 13843회 호출됐다(정상 팬은 0회여야 함). 원인은
-      // `text[data-line]` 가 `path[data-line], circle, rect:not(...)` 와
-      // 같은 `transition: opacity 0.3s` 셀렉터에 묶여 있던 것 — text 노드가
-      // 수백 개(655)라 이 transition 대상 스타일 재계산이 전체 라벨 레이아웃을
-      // 매 프레임 강제했다. text[data-line] 를 이 셀렉터에서 빼면 동일 조건
-      // 재측정에서 LayoutInvalidationTracking 67232→5304(-92%),
-      // SvgTextLayoutAlgorithm::Layout 13843→5278(-62%) 로 감소한다
-      // (_workspace/10_map-math-engineer_pan-flicker-report.md §13 참조).
-      // ⚠ 잔여 원인 있음(같은 보고서 §13) — 이 테스트는 재발 방지용이지
-      // "점멸 완전 해결" 을 의미하지 않는다.
+      // [회귀 가드, 2026-08 v7] v5(2026-08-13)는 `text[data-line]` 를 이
+      // 셀렉터에서 빼서 라벨 dim/undim 이 트랜지션 없이 즉시 스냅되는 UX
+      // 트레이드오프를 감수했다 — 당시 근본 원인은 <svg> 루트(#text-layer/
+      // #train-layer) 자신이 매 프레임 `.style.transform` 대입에 반응해
+      // 스스로 InvalidateLayout 을 거는 것이었고, text[data-line] 제외는
+      // 라벨 655개의 상속 프로퍼티 재계산 부담을 줄이는 우회책일 뿐이었다.
+      // v6(§23~§30, _workspace/10_map-math-engineer_pan-flicker-report.md)가
+      // <svg> 루트를 <div> 래퍼로 감싸 이 자기-무효화 경로 자체를 제거했으므로
+      // (순수 팬에서 InvalidateLayout 0건, §26.2), 우회책의 전제가 소멸했다고
+      // 보고 되돌렸다(v7, 같은 보고서 §31 이하) — 동일 조건(경로+열차+최대
+      // 줌아웃+팬, 14초/20초 두 길이)재측정에서 EVENTS=0 을 확인한 뒤 채택했다.
       final transitionRuleMatch = RegExp(
               r'([a-zA-Z0-9_,:#()\[\]="\-\s]*?)\{\s*transition:\s*opacity 0\.3s;')
           .firstMatch(htmlContent);
       expect(transitionRuleMatch, isNotNull,
           reason: 'opacity 0.3s transition 규칙을 찾지 못했다');
       final selector = transitionRuleMatch!.group(1)!;
-      expect(selector.contains('text[data-line]'), isFalse,
-          reason: 'text[data-line] 가 opacity transition 셀렉터에 재유입되면 '
-              '#text-layer 전체 라벨 레이아웃 강제 재계산(v5 점멸)이 재발한다');
-      // path/circle/rect 는 여전히 부드러운 dim 전환을 유지해야 한다
-      // (라벨만 즉시 전환 — 트레이드오프는 CLAUDE.md/보고서에 명시).
+      expect(selector, contains('text[data-line]'),
+          reason: 'text[data-line] 가 opacity transition 셀렉터에서 다시 빠지면 '
+              '라벨 dim/undim 이 트랜지션 없이 즉시 스냅되는 v5 트레이드오프가 '
+              '재발한다(전제가 소멸했으므로 이제는 불필요한 회귀다)');
+      // path/circle/rect 는 계속 부드러운 dim 전환을 유지해야 한다.
       expect(selector, contains('path[data-line]'));
       expect(selector, contains('circle'));
       expect(selector, contains('rect:not(#route-overlay-bg)'));
@@ -262,8 +259,11 @@ void main() {
 
       expect(applyBody, isNot(contains("textLayer.setAttribute('viewBox'")));
       expect(applyBody, isNot(contains("trainLayer.setAttribute('viewBox'")));
-      expect(applyBody, contains('textLayer.style.transform = matrixStr'));
-      expect(applyBody, contains('trainLayer.style.transform = matrixStr'));
+      // [v6, 2026-08-13] transform 은 <svg> 루트(textLayer/trainLayer)가 아니라
+      // 그 바깥 <div> 래퍼(textLayerWrap/trainLayerWrap)에 대입한다 — 아래
+      // '[래스터 기아 v6]' 테스트가 이 계약을 전담 가드한다.
+      expect(applyBody, contains('textLayerWrap.style.transform = matrixStr'));
+      expect(applyBody, contains('trainLayerWrap.style.transform = matrixStr'));
       // [2026-08 핀치 점멸 수정 회귀 가드] 2-포인터 핀치 진행 중에는 매 프레임
       // scale 이 바뀌므로, 팬 전용 프레임만 스킵하는 캐시(updateTextCompensation
       // 내부)가 무력화된다. applyTransform 은 핀치 중엔 폰트 보정 호출 자체를
@@ -375,6 +375,107 @@ void main() {
           reason: 'routeToolbar.style.top 직접 쓰기 재유입 — v4 점멸이 재발한다');
     });
 
+    test(
+        '[래스터 기아 v6] text-layer/train-layer 는 <div> 래퍼에 감싸이고, 매 프레임 '
+        'transform 은 <svg> 루트가 아니라 래퍼에만 대입된다',
+        () {
+      // [회귀 가드, 2026-08-13] CDP 실측(§10_map-math-engineer_pan-flicker-
+      // report.md §22.2)으로 확정: <svg> 루트가 자기 자신의 인라인
+      // style.transform 대입에 반응해 스스로 InvalidateLayout 을 거는 것이
+      // 근본 원인이었다 — 동일 조건의 <div>(#map-container)는 0건. v3(개별
+      // will-change 열차 레이어)·v4(툴바 transform 전환)로도 잔여 점멸이
+      // 남았던 이유가 이것이다. 해결책은 pan/zoom transform 을 <svg> 루트가
+      // 아니라 그 바깥의 <div> 래퍼(#text-layer-wrap/#train-layer-wrap)에만
+      // 대입하는 것 — #map-container 가 이미 증명한 안전 패턴과 동일하게
+      // 맞춘다.
+
+      // 1) 래퍼 div 가 마크업에 존재하고, <svg> 루트를 감싼다.
+      final textWrapStart = htmlContent.indexOf('<div id="text-layer-wrap">');
+      final trainWrapStart =
+          htmlContent.indexOf('<div id="train-layer-wrap">');
+      expect(textWrapStart, greaterThan(0),
+          reason: '#text-layer-wrap 래퍼 div 를 찾지 못했다');
+      expect(trainWrapStart, greaterThan(0),
+          reason: '#train-layer-wrap 래퍼 div 를 찾지 못했다');
+
+      final textSvgIdx = htmlContent.indexOf('id="text-layer"', textWrapStart);
+      final textWrapCloseIdx = htmlContent.indexOf('</div>', textSvgIdx);
+      expect(textSvgIdx, greaterThan(textWrapStart),
+          reason: '<svg id="text-layer"> 가 #text-layer-wrap 내부에 있어야 한다');
+      expect(textWrapCloseIdx, greaterThan(textSvgIdx),
+          reason: '#text-layer-wrap 닫힘 태그가 <svg id="text-layer"> 뒤에 있어야 한다');
+      // [코드 리뷰 LOW-1 보강, v6] 위 두 단언만으로는 `<div id="text-layer-
+      // wrap"></div><svg id="text-layer">…` 처럼 래퍼가 이미 비어서 닫히고
+      // svg 가 그 뒤에(래퍼 밖에) 놓인 회귀도 통과시킬 수 있다 — 그 경우
+      // textSvgIdx 이후의 아무 `</div>`(예: #train-layer-wrap 것)에 우연히
+      // 매치되기 때문이다. wrapStart~svgIdx 구간에 `</div>` 가 없어야
+      // "래퍼가 svg 를 감싸는 중" 이라는 전제가 성립한다.
+      final textWrapClosedEarly =
+          htmlContent.indexOf('</div>', textWrapStart);
+      expect(
+          textWrapClosedEarly == -1 || textWrapClosedEarly > textSvgIdx,
+          isTrue,
+          reason: '#text-layer-wrap 이 <svg id="text-layer"> 보다 먼저 닫히면 '
+              '안 된다 (래퍼가 비어 있는 회귀)');
+
+      final trainSvgIdx =
+          htmlContent.indexOf('id="train-layer"', trainWrapStart);
+      final trainWrapCloseIdx = htmlContent.indexOf('</div>', trainSvgIdx);
+      expect(trainSvgIdx, greaterThan(trainWrapStart),
+          reason: '<svg id="train-layer"> 가 #train-layer-wrap 내부에 있어야 한다');
+      expect(trainWrapCloseIdx, greaterThan(trainSvgIdx),
+          reason: '#train-layer-wrap 닫힘 태그가 <svg id="train-layer"> 뒤에 있어야 한다');
+      final trainWrapClosedEarly =
+          htmlContent.indexOf('</div>', trainWrapStart);
+      expect(
+          trainWrapClosedEarly == -1 || trainWrapClosedEarly > trainSvgIdx,
+          isTrue,
+          reason: '#train-layer-wrap 이 <svg id="train-layer"> 보다 먼저 닫히면 '
+              '안 된다 (래퍼가 비어 있는 회귀)');
+
+      // 2) 래퍼 CSS가 #map-container와 동일한 "고정 원점 + transform" 관용구를
+      // 갖는다 (position:absolute, transform-origin:0 0, will-change:transform).
+      final wrapRuleMatch = RegExp(
+        r'#text-layer-wrap,\s*#train-layer-wrap\s*\{([^}]*)\}',
+      ).firstMatch(htmlContent);
+      expect(wrapRuleMatch, isNotNull,
+          reason: '#text-layer-wrap, #train-layer-wrap CSS 규칙을 찾지 못했다');
+      final wrapRule = wrapRuleMatch!.group(1)!;
+      expect(RegExp(r'position\s*:\s*absolute').hasMatch(wrapRule), isTrue,
+          reason: '래퍼는 #map-container 와 동일하게 position:absolute 여야 한다');
+      expect(
+          RegExp(r'transform-origin\s*:\s*0\s+0').hasMatch(wrapRule), isTrue,
+          reason: '래퍼는 transform-origin:0 0 이어야 스케일 기준점이 맞는다');
+      expect(RegExp(r'will-change\s*:\s*transform').hasMatch(wrapRule), isTrue,
+          reason: '래퍼가 독립 컴포지터 레이어로 승격돼야 한다');
+
+      // 3) applyTransform()은 래퍼에만 transform 을 쓰고, <svg> 루트에는
+      // 절대 인라인 transform 을 쓰지 않는다.
+      final applyStart = htmlContent.indexOf('function applyTransform()');
+      final applyEnd =
+          htmlContent.indexOf('function updateTextCompensation()', applyStart);
+      final applyBody = htmlContent.substring(applyStart, applyEnd);
+      expect(applyBody, contains('textLayerWrap.style.transform = matrixStr'));
+      expect(applyBody, contains('trainLayerWrap.style.transform = matrixStr'));
+
+      // 4) <svg> 루트 자신에 대한 style.transform 쓰기가 문서 전체에 재유입되지
+      // 않았는지 확인한다 — "textLayer.style.transform"/"trainLayer.style.
+      // transform" 은 "textLayerWrap.style.transform" 의 부분 문자열이
+      // 아니므로(중간에 'Wrap' 이 끼어 있다) 오탐 없이 정확히 구별된다.
+      expect(htmlContent.contains('textLayer.style.transform'), isFalse,
+          reason: '<svg id="text-layer"> 루트에 직접 transform 을 쓰면 자기-'
+              'InvalidateLayout 이 재발한다(v6 회귀)');
+      expect(htmlContent.contains('trainLayer.style.transform'), isFalse,
+          reason: '<svg id="train-layer"> 루트에 직접 transform 을 쓰면 자기-'
+              'InvalidateLayout 이 재발한다(v6 회귀)');
+
+      // 5) 내부 <svg> 는 여전히 고정 뷰포트(viewBox 1:1, width/height 고정)를
+      // 유지해야 좌표 수학이 그대로 성립한다 — 아래 다른 테스트가 이미
+      // 검증하지만, v6 계약의 핵심 전제이므로 여기서도 명시적으로 재확인한다.
+      expect(htmlContent, contains('id="text-layer" xmlns='));
+      expect(htmlContent, contains('id="train-layer" xmlns='));
+    });
+
     test('text-layer/train-layer가 map-container와 동일한 고정 viewBox(1:1)를 갖는다',
         () {
       // viewBox는 최초 렌더링 시 "0 0 2416 1560"으로 고정되고 이후 JS에서 다시
@@ -465,19 +566,22 @@ void main() {
       // [회귀 가드, 2026-07-29] 두 레이어가 지도 캔버스(2416x1560)로 고정
       // 치수화되면서 UA 기본값(hidden)이 말단역 도착 말풍선·화면 끝 라벨을
       // 실제로 잘라냈다. overflow: visible 이 빠지면(hidden 원복 포함) 같은
-      // 클리핑이 재발하므로 각 레이어의 CSS 규칙 블록에서 값을 직접 고정한다.
-      for (final layer in ['#text-layer', '#train-layer']) {
-        final ruleMatch = RegExp(
-          RegExp.escape(layer) + r'\s*\{([^}]*)\}',
-        ).firstMatch(htmlContent);
-        expect(ruleMatch, isNotNull, reason: '$layer CSS 규칙 블록을 찾지 못했다');
-        expect(
-          RegExp(r'overflow\s*:\s*visible').hasMatch(ruleMatch!.group(1)!),
-          isTrue,
-          reason: '$layer 에 overflow: visible 이 없으면 고정 치수(2416x1560) '
-              '경계 밖 말풍선·라벨이 잘린다',
-        );
-      }
+      // 클리핑이 재발하므로 CSS 규칙 블록에서 값을 직접 고정한다.
+      // [v6, 2026-08-13] overflow 는 SVG 자신의 클리핑 특성이라 <div> 래퍼가
+      // 아니라 내부 <svg id="text-layer">/<svg id="train-layer"> 자신의 규칙에
+      // 있어야 한다 — 두 selector 가 하나의 규칙(`#text-layer, #train-layer`)
+      // 으로 합쳐졌다.
+      final ruleMatch = RegExp(
+        r'#text-layer,\s*#train-layer\s*\{([^}]*)\}',
+      ).firstMatch(htmlContent);
+      expect(ruleMatch, isNotNull,
+          reason: '#text-layer, #train-layer CSS 규칙 블록을 찾지 못했다');
+      expect(
+        RegExp(r'overflow\s*:\s*visible').hasMatch(ruleMatch!.group(1)!),
+        isTrue,
+        reason: '#text-layer/#train-layer 에 overflow: visible 이 없으면 고정 '
+            '치수(2416x1560) 경계 밖 말풍선·라벨이 잘린다',
+      );
     });
 
     test('텍스트 레이어 CSS에 font-size inherit !important가 설정되어 있다', () {
