@@ -110,11 +110,10 @@ void main() {
     expect(trains.map((t) => t.trainNo), ['5200']);
   });
 
-  test('enrich 가 포기한 행은 지도에서 뺀다 (제보 케이스)', () async {
-    // 제보의 실제 인과: recptnDt 지연이 구간 추정값을 넘겨 enrich 가
-    // `corrected <= 0` 으로 포기(null 유지) → 도착정보 화면은 "정보 없음".
-    // 예전에는 지도 전용 추정 폴백이 이 행에 **기준 시각을 now 로 리베이스한**
-    // 새 숫자를 발급해 "1분 후 도착"으로 그렸다.
+  test('enrich 가 포기한 행은 지도에서 뺀다', () async {
+    // recptnDt 지연이 구간 추정값을 넘겨 enrich 가 `corrected <= 0` 으로
+    // 포기(null 유지)하는 경로. 예전에는 지도 전용 추정 폴백이 이 행에
+    // **기준 시각을 now 로 리베이스한** 새 숫자를 발급해 그렸다.
     final container = containerWith([
       arrivalOf(trainNo: '5100', arrivalSeconds: 180),
       arrivalOf(
@@ -128,7 +127,12 @@ void main() {
         reason: '모르는 열차만 빠지고 아는 열차는 남아야 한다');
   });
 
-  test('잔여초가 소진된 열차는 0 초로 그리지 않고 뺀다', () async {
+  test('잔여초가 소진된 열차는 0 초로 그리지 않고 뺀다 (제보 분류)', () async {
+    // 제보 케이스가 속한 분류. 2026-08-13 15:04 실측:
+    //   barvlDt='60' arvlCd='0'(진입) msg3='남성' recptnDt 경과=62초
+    // 지도는 refresh 직후 경과 ≈ 0 인 쌍을 받아 "1분 후 도착"을 표시했고,
+    // 도착정보 화면은 렌더 시점에 경과가 60 을 넘겨 "정보 없음"이었다.
+    // (스크린샷의 arvlCd=1 행은 이제 DTO 가 0 으로 읽어 이 경로에 오지 않는다.)
     // 0 으로 클램프하면 recptnDt 지연이 큰 노선에서 전 열차가 "곧 도착"이 된다.
     final container = containerWith([
       arrivalOf(

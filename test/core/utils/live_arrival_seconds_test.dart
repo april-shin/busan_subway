@@ -9,9 +9,17 @@ import 'package:seoul_subway/domain/entities/arrival_info.dart';
 /// 추정값을 달고 그려지던 불일치가 있었다(2026-08-13 총신대입구(이수) 제보).
 /// 이 테스트가 깨지면 그 불일치가 되살아난 것이다.
 ///
-/// 제보 케이스 자체의 상태는 아래 셋 중 **null**(enrich 가 `corrected <= 0` 으로
-/// 포기)이다 — 0/grace 초과였다면 지도도 같은 쌍을 넘겨받아 "곧 도착"이 됐을 뿐
-/// "1분 후"가 나올 수 없다. 배선 검증은
+/// 제보 케이스의 실제 상태는 아래 셋 중 **expired**(양수인데 잔여초 소진)였다.
+/// 2026-08-13 15:32 실측(총신대입구 7호선, 스크린샷 문구와 동일한 행):
+///   `barvlDt='60'  arvlCd='1'(도착)  arvlMsg2='총신대입구(이수) 도착'`
+/// 화면의 "1분 후 도착"은 API 원본 60 그대로였다 — 지도는 refresh 직후 경과가
+/// 0 에 가까운 쌍을 받아 60 을 표시했고, 도착정보 화면은 렌더 시점에 경과가
+/// 60 을 넘겨 "정보 없음"이 됐다. (지도 전용 폴백이 만든 숫자가 아니다.)
+///
+/// 이 행 자체는 이제 **DTO 단계에서** 0 으로 읽는다 — 도착 상태가 양수
+/// `barvlDt` 보다 우선한다(`arrival_info_dto.dart` 의 `_parseArrivalSeconds`).
+/// 여기 규칙은 그 뒤에도 남는 만료 데이터(다른 노선·다른 코드)의 방어선이다.
+/// 배선 검증은
 /// `test/features/subway_map/presentation/providers/live_train_unknown_gate_test.dart`.
 void main() {
   final base = DateTime(2026, 8, 13, 12, 0, 0);
