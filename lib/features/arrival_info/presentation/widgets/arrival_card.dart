@@ -1,37 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/api_constants.dart';
+import '../../../../core/utils/live_arrival_seconds.dart';
 import '../../../../domain/entities/arrival_info.dart';
-
-/// 표시할 잔여초. null 이면 **알 수 없음**(0초와 구분).
-///
-/// [ArrivalInfo.arrivalSeconds] 의 세 상태를 표시 규칙으로 옮긴다:
-/// - 양수 → `receivedAt` 기준 경과분을 차감한 잔여초. 차감 결과가 0 이하이면 예정
-///   시각이 이미 지난 것이므로 "0초"가 아니라 알 수 없음이다.
-/// - 0("그 역에 있음" 상태) → 데이터 경과가 [ApiConstants.arrivalStateGrace] 이내일
-///   때만 0초. 그 이상 낡았으면 이미 떠난 열차이므로 알 수 없음.
-/// - null → 알 수 없음.
-///
-/// 예전에는 `max(0, seconds - elapsed)` 로 모든 만료·무효 값을 0초로 뭉개, 갱신이
-/// 수 분 지연되는 노선(GTX-A·서해선)에서 전 열차가 "0초"로 보였다.
-int? _liveSeconds(ArrivalInfo arrival) {
-  final seconds = arrival.arrivalSeconds;
-  if (seconds == null) return null;
-
-  // 시계 오차·미래 recptnDt 로 음수 경과가 나오면 카운트다운이 부풀지 않도록 0 하한.
-  final elapsed =
-      max(0, DateTime.now().difference(arrival.receivedAt).inSeconds);
-
-  if (seconds > 0) {
-    final remaining = seconds - elapsed;
-    return remaining > 0 ? remaining : null;
-  }
-
-  // seconds == 0: 잔여초가 아닌 "역에 있음" 상태 → 신선할 때만 유효.
-  return elapsed <= ApiConstants.arrivalStateGrace.inSeconds ? 0 : null;
-}
 
 class ArrivalCard extends StatelessWidget {
   final ArrivalInfo arrival;
@@ -44,7 +14,7 @@ class ArrivalCard extends StatelessWidget {
 
     // receivedAt 기준 경과 시간을 빼서 실시간 카운트다운.
     // liveSeconds == null 은 "알 수 없음"이며 0초와 구분해 표시한다.
-    final liveSeconds = _liveSeconds(arrival);
+    final liveSeconds = liveArrivalSeconds(arrival);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

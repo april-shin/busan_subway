@@ -17,14 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **잔여 증상**: 톱니파가 없어지는 게 아니라 **stall 당 1회의 큰 점프로 뭉쳐진다.** 60초 stall 뒤 원본이 `150→140` 으로 바뀌면 표시는 `90 → 140` 으로 뛴다. 원본이 바뀌면 늘어난 대로 채택한다는 원칙에 부합하는 의도된 동작이다.
 - 표시용 기준쌍을 쓰는 곳은 **말풍선 카운트다운·`step()` 도착 판정·z-order 정렬** 셋이다. **silent 제거/jitter grace 판정은 raw**(`lastArrivalSeconds`/`lastUpdateTime`, 매 refresh 무조건 갱신)를 그대로 쓴다 — "API 가 이 열차를 언제 마지막으로 보고했나"를 재는 용도라 raw 가 맞다.
 - 예외 1: `remainingFromReceivedAt` 의 경과시간 0 하한(미래 `recptnDt` 방어).
-- 예외 2: API 가 `barvlDt` 를 주지 않는 열차는 `live_train_provider.dart` 의 `estimateCache` 가 최초 추정값·추정 시각을 재사용하므로, JS 에 오는 `arrivalSeconds` 자체가 현재역·위치상태가 바뀔 때만 갱신된다.
+- 예외 2: API 가 `barvlDt` 를 주지 않는 열차(8호선 등)는 `enrichArrivalInfoList` 의 이전 추정값 재사용(`live_train_provider.dart` 의 `_lastEnrichedArrivalsProvider`)이 최초 추정값·추정 시각을 물려주므로, JS 에 오는 `arrivalSeconds` 자체가 현재역·위치상태가 바뀔 때만 갱신된다. (2026-08-13 이전에는 지도 전용 `estimateCache` 가 같은 일을 했으나, 도착정보 화면과의 판정 불일치 때문에 제거됐다 — 아래 '모름 판정' 항목 참조.)
 - **위치도 같은 기준쌍을 따른다.** `startTrainAnimation` 은 위치 기준쌍의 입력으로 `trainData` 원본이 아니라 **표시 기준쌍**(`trainState.baseArrival`/`baseReceivedAt`)을 쓴다. 원본을 쓰면 표시는 낡은 `recptnDt` 를, 위치는 새 `recptnDt` 를 물어 아이콘이 카운트다운보다 뒤처진다 — 말풍선이 "곧 도착"인데 열차는 아직 오는 중인 그림이 된다. **두 도메인은 같은 시각에 0 이 되어야 한다.**
 - **도착 발동에 API 원본 게이트를 두지 말 것.** 남은시간이 줄어 0 이 되면 열차도 그때 도착해야 한다(사용자 요구). 원본으로 발동을 막는 장치를 넣으면 이 동기화가 깨진다 — 과거 `ARRIVAL_RAW_GATE_SEC` 시도를 그래서 철회했다. 대신 **위치 일관성 조건**(`atFinalLeg = nextIdx === path.length - 1`)은 둔다. 원칙 3 클램프가 아이콘을 중간역에 붙잡은 채 숫자만 0 이 되면 엉뚱한 역에서 사라지기 때문이며, 정상 케이스에서는 항상 참이라 동기화를 깨지 않는다.
 - **⛔ 정상 도착 열차는 절대 되살아나지 않는다 (요구사항).** `arrivedTrains[trainNo]` 에 `{final: true}` 를 박고, 이후 API 가 무엇을 보고하든 부활시키지 않는다. **값 비교로 이를 대신하려 하지 말 것** — 목표역에 **진입 중인** 열차가 `barvlDt=10, arvlCd=0`(양수)으로 다시 보고되는 것이 실측된다(2026-08-04 방배). "새 원본이 `<=0` 이면 숨김" 류의 판정은 이 경우를 그대로 통과시켜 아이콘 깜빡임 + 도착 스낵바 중복을 낸다.
 - **유령 도착 복구**: 기준쌍이 고정되므로 `realRemaining` 이 실제로 0 까지 내려간다. API 가 원본을 `arrivalSeconds` 초보다 오래 고정하면(장시간 정차·간격조정) 아직 전역에 있는 열차가 도착 처리될 수 있다. 이 경우에 한해 `{raw: N}` 을 기록하고, `showTrains` 가 **원본이 N 에서 바뀌면(= 새 측정치) 되살린다.** 단순히 `true` 만 박으면 API 가 계속 보고하는 한 정리 루프(`!trainNoSet[id]`)가 지우지 못해 **영구히 사라진다.**
   - 두 도착의 구분은 **도착 시점의 API 원본**(`lastArrivalSeconds`)으로 한다 — `> GHOST_ARRIVAL_MIN_SEC`(30초, refresh 주기의 2배)면 유령 후보. 정상 접근 열차는 원본이 벽시계와 함께 줄어 도착 순간엔 통상 refresh 주기 이하이고, stall 열차는 큰 값에 고정돼 있어 두 군이 뚜렷이 갈린다. 이 임계는 **도착 발동이 아니라 부활 가능성**만 가르므로 위 동기화 요구를 깨지 않는다.
   - 페이드아웃(0.6초) 중 부활에 대비해 `arrivalPlaying` 플래그를 둔다. 이 창의 `animationId` 는 주행이 아니라 페이드의 것이라, 조기 `continue` 분기가 살아있는 주행으로 오인하면 열차가 소리 없이 사라진다.
-- **미적용 범위(의도)**: 이 stale 필터는 지도 말풍선에만 있다. Flutter 도착정보 화면(`arrival_card.dart` 의 `_liveSeconds`)은 `ArrivalInfo` 가 refresh 마다 새로 생성돼 열차별 기준쌍을 둘 자리가 없어 톱니파가 남아 있다. 적용하려면 `estimateCache` 같은 키드 캐시가 필요하다.
+- **미적용 범위(의도)**: 이 stale 필터는 지도 말풍선에만 있다. Flutter 도착정보 화면(`arrival_card.dart`)은 `ArrivalInfo` 가 refresh 마다 새로 생성돼 열차별 기준쌍을 둘 자리가 없어 톱니파가 남아 있다. 적용하려면 열차별 키드 캐시가 필요하다.
+- 지도에 오는 열차는 이미 "모름 판정"을 통과한 것이다 — 아래 "모름 판정(지도 진입 게이트)" 절 참조. 이 게이트는 원칙 1 의 일부가 아니라 그 앞단의 데이터 필터다.
 
 **(b) 위치 역산 입력은 stale 응답을 걸러낸다.** **위치 전용 기준쌍**(`posBaseArrival`/`posBaseReceivedAt`)을 두되, 그 입력은 (a)의 표시 기준쌍을 **상속한다**(별도 필드인 이유는 `pathEndKey` 리셋 때문). 직전 값(`lastRawArrival`)과 비교해 **값이 실제로 바뀐 refresh 에서만** 기준쌍을 보정한다.
 - 값이 그대로면(= `recptnDt` 만 갱신된 반복 보고. 신분당선 등 `arvlMsg2` 라운딩) 이전 쌍을 유지한다. 여기서 갱신하면 남은시간이 매 cycle 원복돼 **열차가 무기한 정지**한다.
@@ -43,6 +44,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 구현 위치: `tool/build_map_html.dart` 의 `startTrainAnimation` (`posBaseArrival`/`posBaseReceivedAt` 기준쌍 선택, `cumLen`/`pathTotalLen`/`pathEndKey`/`pointAtLength` + `step()` 의 단조 전진 가드), `lib/features/subway_map/presentation/providers/live_train_provider.dart` 의 `receivedAtEpochMs` 전달(기준 시각이 틀리면 역산 위치가 틀린다).
 - 회귀 테스트: `test/core/utils/train_forward_guard_test.dart` (동작 — Dart 미러 `lib/core/utils/train_forward_guard.dart`), `test/tool/build_map_html_test.dart` (생성 JS 형태).
+
+## 모름 판정 (지도 진입 게이트) — 4원칙 바깥
+
+잔여시간을 알 수 없는 열차의 판정은 `lib/core/utils/live_arrival_seconds.dart` 의 `liveArrivalSeconds` **한 곳**에 있다. 세 경우가 "모름"이다: `arrivalSeconds` 가 null / 양수인데 잔여초가 소진됨 / `0`("역에 있음")인데 `ApiConstants.arrivalStateGrace`(120초)를 넘겨 낡음.
+
+- 도착정보 화면은 **"정보 없음"** 배지를 표시한다.
+- 지도(`liveTrainsProvider`)는 그 열차를 **그리지 않는다** (사용자 결정, 2026-08-13).
+
+**규칙을 화면별로 복제하지 말 것.** 복제돼 있던 탓에, 카드가 "정보 없음"으로 판정한 열차가 지도에는 자체 추정값을 달고 "1분 후 도착"으로 그려졌다(총신대입구(이수) 7호선 제보). 원인은 지도 전용 추정 폴백이 낡은 행에 기준 시각을 `now` 로 리베이스한 새 숫자를 발급한 것이며, 그 폴백은 제거됐다.
+
+- 이 게이트는 **원칙 1~4 의 일부가 아니다** — 어떤 열차를 그릴지 고르는 앞단 필터이고, 원칙은 그려진 열차가 어떻게 움직이는지를 규정한다. 표시 정책을 (B)추정값 표시나 (C)지도에도 "정보 없음" 으로 바꾸는 것은 4원칙 변경 절차 대상이 아니다.
+- `barvlDt` 미제공 노선(8호선 등)은 `enrichArrivalInfoList` 가 추정값과 **추정 시각**을 함께 채우므로 이 게이트에 걸리지 않는다. 이 경로가 죽으면 해당 노선 열차가 지도에서 통째로 사라진다.
+- 회귀 테스트: `test/core/utils/live_arrival_seconds_test.dart`(판정 규칙), `test/features/subway_map/presentation/providers/live_train_unknown_gate_test.dart`(지도 배선 — 게이트 한 줄을 지우면 깨진다).
 
 ### 원칙 2 — 매 frame 남은시간 역산으로 위치 결정
 화면상 열차 위치는 **매 frame 뒤에서부터 남은시간을 역산**하여 결정한다. 전방 보간 (path[0]→path[last] 시간 비례) 금지.

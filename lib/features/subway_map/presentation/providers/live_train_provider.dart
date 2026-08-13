@@ -9,16 +9,15 @@
 //   매 frame 실시간 남은시간을 계산한다. Dart 에서 elapsed 를 선차감하면 JS 가
 //   이중 차감하므로 **절대 금지**. 변경 전 CLAUDE.md 4원칙 섹션 확인.
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart'; // StateProvider (riverpod 3 레거시)
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/constants/dwell_time.dart';
 import '../../../../core/constants/subway_id_mapping.dart';
 import '../../../../core/utils/enrich_arrival_info.dart';
+import '../../../../core/utils/live_arrival_seconds.dart';
 import '../../../../core/utils/expand_path_backward.dart';
 import '../../../../core/utils/path_on_line.dart';
 import '../../../../core/utils/route_branch.dart';
@@ -139,25 +138,6 @@ class LiveTrain {
   int get hashCode =>
       Object.hash(trainNo, lineId, arrivalSeconds, currentStation, isGhost);
 }
-
-/// 추정값 캐시 엔트리: 초단위 도착시간 없는 열차의 최초 추정값과 시점을 보존
-class _EstimateEntry {
-  final int estimate;
-  final DateTime estimatedAt;
-  final String currentStation;
-  final String positionStatus;
-
-  const _EstimateEntry({
-    required this.estimate,
-    required this.estimatedAt,
-    required this.currentStation,
-    required this.positionStatus,
-  });
-}
-
-/// 추정값 캐시: 역 정보 변경 시에만 재추정하여 카운트다운 리셋 방지
-final _estimateCacheProvider =
-    StateProvider<Map<String, _EstimateEntry>>((ref) => {});
 
 /// 네트워크 오류 시 마지막 성공 데이터를 유지하기 위한 캐시.
 ///
@@ -285,10 +265,6 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     stationsById.putIfAbsent(s.id, () => []).add(s);
   }
 
-  final estimateCache = Map<String, _EstimateEntry>.from(
-    ref.read(_estimateCacheProvider),
-  );
-
   // 구간 완주 판정은 "탑승 구간이 출발역에서 시작한다"는 전제 위에서만 유효하다.
   // 열차 경로는 출발역까지 계산되므로, 첫 유효 세그먼트가 다른 역에서 시작하면
   // (출발역이 환승역이라 앞 세그먼트가 1역뿐인 변형) 비교 기준이 어긋나 정상
@@ -328,6 +304,27 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
     // 방향 필터링: 활성 경로 방향과 일치하는 열차만
     final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
+
+    // 잔여시간을 알 수 없는 열차는 **지도에서 뺀다.**
+    //
+    // 판정은 도착정보 화면과 같은 `liveArrivalSeconds` 를 쓴다. 규칙이 두 벌로
+    // 갈라져 있던 탓에, 카드가 "정보 없음"으로 판정한 열차가 지도에서는 추정값을
+    // 달고 "1분 후 도착" 으로 그려지는 불일치가 있었다(2026-08-13 총신대입구 제보).
+    // 지도에는 "정보 없음" 이라는 표시 상태가 없으므로 그리지 않는 쪽으로 통일한다.
+    //
+    // 이 게이트가 과거의 지도 전용 추정 폴백(`_EstimateEntry` 캐시)을 대체한다 —
+    // 그 폴백은 enrich 조차 값을 못 낸 행에 지도만의 숫자를 만들어 넣던 경로였다.
+    // `barvlDt` 미제공 노선(8호선 등)은 `enrichArrivalInfoList` 가 추정값을 채우고
+    // 그때 `receivedAt` 도 추정 시각으로 갱신하므로 여기서 걸러지지 않는다.
+    //
+    // 경로 탐색(findPathOnLine)보다 **앞에** 둔다 — 버릴 행에 그래프 탐색을
+    // 태우지 않기 위함. 판정에 필요한 건 `arrival` 하나뿐이다.
+    //
+    // 알려진 상호작용: 이미 그려져 있던 열차가 이 게이트로 빠지면 JS 의 제거
+    // 분류(`toRemove`)에서 "API 누락"으로 보여, 직전 원본이
+    // `SILENT_REMOVE_THRESHOLD_S`(60초) 이하였다면 도착 이펙트가 발동한다.
+    // 잔여초가 소진돼 걸러지는 경우가 대부분이라 대개는 실제 도착과 일치한다.
+    if (liveArrivalSeconds(arrival) == null) continue;
 
     // 구간 완주 판정 — 태워주지 못하는 열차도 **지우지 않고** 유령으로 남긴다.
     //  - 중간 종착(`내방 → 장암` 경로의 7호선 상행 "도봉산행")
@@ -383,53 +380,12 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       arrival.positionStatus,
     );
 
-    // 도착 예상 초: API 값이 있으면 원본 그대로, 없으면 구간 합산으로 추정.
     // 원칙 1: 매 frame 실시간 남은시간 계산은 JS 측에서 `receivedAtEpochMs`
     // 기준으로 수행한다. 따라서 Dart 는 elapsed 선차감을 하지 않고 값과
     // 기준 시각(recptnDt 또는 추정 시각) 한 쌍을 그대로 통과시킨다.
-    final cacheKey = '${arrival.trainNo}_$lineId';
-    final int arrivalSecs;
-    final int receivedAtEpochMs;
-    if (arrival.arrivalSeconds != null) {
-      // API 제공값 → 캐시 불필요. 기준 시각 = arrival.receivedAt (API recptnDt).
-      estimateCache.remove(cacheKey);
-      arrivalSecs = arrival.arrivalSeconds!;
-      receivedAtEpochMs = arrival.receivedAt.millisecondsSinceEpoch;
-    } else {
-      final cached = estimateCache[cacheKey];
-      if (cached != null &&
-          cached.currentStation == currentName &&
-          cached.positionStatus == arrival.positionStatus) {
-        // 역 정보 동일 → 최초 추정값 재사용. 기준 시각 = 추정 시점.
-        arrivalSecs = cached.estimate;
-        receivedAtEpochMs = cached.estimatedAt.millisecondsSinceEpoch;
-      } else {
-        // 새 열차 또는 역 변경 → 새로 추정.
-        // durations 는 주행시간만. 중간역(durations.length - 1 개)마다
-        // dwellTimeSeconds 를 더해 enrich/API 값과 같은 척도를 유지한다.
-        final durations = pathResult.durations;
-        final int newEstimate;
-        if (durations.isEmpty) {
-          newEstimate = 0;
-        } else {
-          final firstAdj =
-              (durations.first * (1.0 - initialProgress)).round();
-          final travelSecs =
-              firstAdj + durations.skip(1).fold<int>(0, (a, b) => a + b);
-          final dwellStops = math.max(0, durations.length - 1);
-          newEstimate = travelSecs + dwellStops * dwellTimeSeconds;
-        }
-        final now = DateTime.now();
-        estimateCache[cacheKey] = _EstimateEntry(
-          estimate: newEstimate,
-          estimatedAt: now,
-          currentStation: currentName,
-          positionStatus: arrival.positionStatus,
-        );
-        arrivalSecs = newEstimate;
-        receivedAtEpochMs = now.millisecondsSinceEpoch;
-      }
-    }
+    // (위 게이트를 통과했으므로 `arrivalSeconds` 는 non-null 이 보장된다.)
+    final arrivalSecs = arrival.arrivalSeconds!;
+    final receivedAtEpochMs = arrival.receivedAt.millisecondsSinceEpoch;
 
     // 남은시간이 현재 pathToTarget 총시간보다 크면 이전 역을 prepend 해 경로 확장.
     // (순환선 방어 + 30칸 상한은 expandPathBackward 내부에서 처리)
@@ -465,9 +421,9 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       segmentDurations: expanded.durations,
       dwellSeconds: 0,
       // 원칙 1: arrivalSeconds 와 쌍으로 "기준 시각" 을 통과시킨다.
-      //   - API 제공 값: arrival.receivedAt (API recptnDt)
-      //   - 캐시 추정 재사용: 최초 추정 시각
-      //   - 새 추정: 지금 시각
+      // 언제나 `arrival.receivedAt` 하나다 — API 제공 값이면 recptnDt 이고,
+      // enrich 가 채운 추정값이면 enrich 가 추정 시각을 실어 보낸다.
+      // (지도 전용 추정 캐시가 있던 시절의 3갈래 분기는 제거됐다.)
       // JS 는 `realRemaining = arrivalSeconds - (now - receivedAtEpochMs)/1000`
       // 으로 매 frame 실시간 계산. Dart 는 값만 통과.
       receivedAtEpochMs: receivedAtEpochMs,
@@ -477,11 +433,6 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       isGhost: isGhost,
     ));
   }
-
-  // 사라진 열차의 캐시 제거
-  final activeKeys = result.map((t) => '${t.trainNo}_${t.lineId}').toSet();
-  estimateCache.removeWhere((k, _) => !activeKeys.contains(k));
-  ref.read(_estimateCacheProvider.notifier).state = estimateCache;
 
   // 같은 역에 여러 열차가 있는 경우 Y축 오프셋 적용
   final adjusted = _applyOverlapOffset(result);
