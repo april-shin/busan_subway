@@ -126,7 +126,15 @@ html, body {
   font-size: inherit !important;
   font-weight: 800;
   stroke: white;
-  stroke-width: var(--stroke-w, 2px);
+  /* [래스터 기아 실험 A, 2026-08-13] 이전에는 --stroke-w 커스텀 프로퍼티를
+     var()로 참조했다. CSS 커스텀 프로퍼티는 Blink 의 "독립 상속 프로퍼티"
+     최적화 경로를 타지 못해(§10 보고서 §13.4), 조상(#text-layer)의 스타일이
+     바뀔 때마다(팬 중 매 프레임 .style.transform 대입) 가상 확인이 필요한
+     대상으로 남아 라벨 655개 전체가 매 프레임 스타일 재계산 후보에 오를 수
+     있다는 가설이 있었다. font-size 는 이미 네이티브 상속 프로퍼티(inherit
+     키워드)로 동일한 패턴을 쓰고 있어 대조군 삼아, stroke-width 도 커스텀
+     프로퍼티 대신 표준 상속 메커니즘(inherit)으로 통일한다. */
+  stroke-width: inherit !important;
   paint-order: stroke;
   stroke-linejoin: round;
 }
@@ -139,10 +147,23 @@ html, body {
   pointer-events: none;
   overflow: visible;
 }
+/* [래스터 기아 수정 v3, 2026-08] 열차 아이콘(#live-trains 의 개별 <g>)을 각각
+   독립 컴포지터 레이어로 승격한다. step() 이 매 rAF 마다 위치를 갱신하는데(원칙 2·4),
+   이 승격이 없으면 그 갱신이 #train-layer 전체의 공유 래스터 표면에 다시 그려져야
+   한다 — 팬 중에는 #train-layer 자체도 매 프레임 CSS matrix 로 이동하므로, 같은
+   프레임에 "레이어 재배치(컴포지터 전용, 저비용)"와 "레이어 내부 콘텐츠 리페인트
+   (고비용)"가 겹친다. 최대 줌아웃(노출 면적 최대)에서 팬+실시간 열차가 겹치면
+   안드로이드 래스터 스레드가 예산을 초과해 일부 타일이 새 프레임 커밋에 늦게
+   반영되며 라벨/말풍선/툴바가 순간 소실되는 점멸로 이어진다(§10_map-math-engineer_
+   pan-flicker-report.md 격리 측정). 개별 레이어로 분리하면 위치 갱신이 부모의
+   래스터를 건드리지 않는 순수 컴포지트 연산이 되어 이 경쟁이 사라진다. */
+#live-trains > g {
+  will-change: transform;
+}
 path[data-line] { stroke-width: 5 !important; }
 /* GTX-A 등 이중선 노선의 흰색 테두리(원본 1px)가 본체 색상을 덮지 않도록 유지 */
 path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
-path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
+path[data-line], circle, rect:not(#route-overlay-bg) {
   transition: opacity 0.3s;
 }
 .dimmed {
@@ -150,6 +171,16 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 }
 .route-toolbar {
   position: absolute;
+  /* [래스터 기아 수정 v4, 2026-08-13] top/left 는 0 에 고정하고 실제 화면 위치는
+     항상 transform(translate)으로만 표현한다. #map-container/#text-layer/
+     #train-layer 가 이미 쓰는 것과 동일한 "고정 원점 + transform" 관용구
+     (위 #text-layer/#train-layer 규칙 참조). will-change 로 독립 컴포지터
+     레이어로 승격해 updateRouteToolbarPosition()/드래그의 매 프레임 위치
+     갱신이 레이아웃을 유발하지 않게 한다 — 아래 updateRouteToolbarPosition
+     주석 참조. */
+  top: 0;
+  left: 0;
+  will-change: transform;
   display: none;
   flex-direction: column;
   z-index: 99;
@@ -911,7 +942,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // scale > 1(확대) 구간 전체에서 cs 는 항상 1 로 고정되고, scale < TEXT_COMP_FLOOR
   // (최대 축소) 구간에서도 cs 는 TEXT_COMP_FLOOR 로 고정된다. 캐시 키를 scale 로
   // 두면 이 두 구간에서 scale 이 계속 바뀌는데도(확대 제스처 지속, 휠 줌 반복 등)
-  // 매번 "값이 다르다"고 오판해 실제로는 동일한 fontSize/--stroke-w 를 다시
+  // 매번 "값이 다르다"고 오판해 실제로는 동일한 fontSize/strokeWidth 를 다시
   // 쓴다 — 결과가 같은 불필요한 DOM 쓰기이자 text-layer 재래스터 유발 요인.
   // cs 를 키로 쓰면 이런 정체 구간에서 진짜 no-op 이 된다. null 이면 최초 1회
   // 강제 계산.
@@ -1047,8 +1078,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // 위 lastCs 선언부 주석 참조.
     if (cs === lastCs) return;
     textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
-    textLayer.style.setProperty(
-        '--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+    // [래스터 기아 실험 A] --stroke-w 커스텀 프로퍼티 대신 네이티브 상속
+    // 프로퍼티(strokeWidth)를 fontSize 와 동일한 방식으로 직접 대입한다.
+    // 위 #text-layer text 규칙의 stroke-width: inherit !important 와 짝을 이룬다.
+    textLayer.style.strokeWidth = (TEXT_BASE_STROKE_W / cs) + 'px';
     lastCs = cs;
   }
 
@@ -2368,7 +2401,11 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       startY = path[0].y + (path[1].y - path[0].y) * p;
     }
 
-    g.setAttribute('transform', 'translate(' + startX + ',' + startY + ')');
+    // [래스터 기아 수정 v3] SVG `transform` 속성 대신 CSS `style.transform` 을
+    // 쓴다 — 위 `#live-trains > g { will-change: transform }` 주석 참조.
+    // viewBox(2416x1560)와 width/height 가 1:1 이므로 'px' 단위 translate 가
+    // SVG 사용자 단위 기준 attribute-transform 과 동일한 결과를 낸다.
+    g.style.transform = 'translate(' + startX + 'px,' + startY + 'px)';
     // 중간 종착 열차는 흐리게(유령). 갱신 경로는 applyTrainGhostState 가 담당.
     g.setAttribute('opacity', String(trainBaseOpacity(train)));
     return g;
@@ -2659,8 +2696,9 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
         // 고정**된다. 아이콘을 그대로 두면 후퇴도 없고 영구 고정도 없다.
         var singlePointArrived = (trainData.arrivalSeconds || 0) <= 0;
         if (singlePointArrived) {
-          trainState.element.setAttribute('transform',
-            'translate(' + path[0].x + ',' + path[0].y + ')');
+          // [래스터 기아 수정 v3] style.transform 사용 — createTrainIcon 주석 참조.
+          trainState.element.style.transform =
+            'translate(' + path[0].x + 'px,' + path[0].y + 'px)';
           trainState.currentPos = { x: path[0].x, y: path[0].y };
           trainState.pathEndKey =
             Math.round(path[0].x) + ',' + Math.round(path[0].y);
@@ -2944,9 +2982,17 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       // 불필요하게 계속 무효화한다. 위치 계산(4원칙)은 그대로 매 프레임
       // 수행하고, 최종 DOM 반영만 "실제로 달라졌을 때"로 제한한다 — 시각적
       // 결과는 동일하다.
+      //
+      // [래스터 기아 수정 v3] SVG `transform` 속성 대신 CSS `style.transform`
+      // 을 쓴다. 이 step() 은 팬 제스처와 무관하게 매 rAF 계속 도는데(원칙 2·4),
+      // attribute 기반 transform 은 #live-trains > g 가 승격 레이어라도 매번
+      // Blink 의 "SVG attribute 변경" 무효화 경로를 타 스타일 재계산을 유발한다.
+      // style.transform 은 이미 승격된 레이어의 컴포지터 전용 갱신 경로를 타므로
+      // 팬 중 map-container/text-layer/train-layer 재배치와 경쟁하지 않는다
+      // (§10_map-math-engineer_pan-flicker-report.md 참조).
       if (trainState.lastRenderedX !== pos.x || trainState.lastRenderedY !== pos.y) {
-        trainState.element.setAttribute('transform',
-          'translate(' + pos.x + ',' + pos.y + ')');
+        trainState.element.style.transform =
+          'translate(' + pos.x + 'px,' + pos.y + 'px)';
         trainState.lastRenderedX = pos.x;
         trainState.lastRenderedY = pos.y;
       }
@@ -2981,7 +3027,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
 
   function playArrivalEffect(trainState, trainNo) {
     // [H-1, 2026-08 리뷰] 아래 페이드 애니메이션(animate())은 매 프레임
-    // el.setAttribute('transform', currentTransform + ' scale(...)') 로
+    // el.style.transform = currentTransform + ' scale(...)' 로
     // transform 을 **직접** 덮어쓴다. step() 의 조건부 쓰기 최적화가 쓰는
     // lastRenderedX/Y 캐시는 이 우회 경로를 모른 채 페이드 시작 시점 값에
     // 머물러 있으므로, 페이드(0.6초) 도중 유령 도착이 부활해 startTrainAnimation
@@ -3022,7 +3068,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     // 이를 살아있는 주행으로 오인해 페이드를 그대로 두면 열차가 소리 없이 사라진다.
     trainState.arrivalPlaying = true;
     var el = trainState.element;
-    var currentTransform = el.getAttribute('transform') || '';
+    // [래스터 기아 수정 v3] 위치를 style.transform 으로 쓰므로 여기서도
+    // style.transform 을 읽어야 마지막 translate 값을 얻는다(getAttribute는
+    // 더 이상 갱신되지 않는 값을 반환한다).
+    var currentTransform = el.style.transform || '';
 
     // 펄스 확대 + 페이드아웃 애니메이션 (0.6초)
     var duration = 600;
@@ -3041,7 +3090,7 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       var base = (trainState.baseOpacity != null) ? trainState.baseOpacity : 1;
       var opacity = (1 - eased) * base;
 
-      el.setAttribute('transform', currentTransform + ' scale(' + scale + ')');
+      el.style.transform = currentTransform + ' scale(' + scale + ')';
       el.setAttribute('opacity', opacity);
 
       if (progress < 1.0) {
@@ -3332,6 +3381,27 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
   // 경로 선택 툴바
   // ============================================================
 
+  // [래스터 기아 수정 v4, 2026-08-13] 이 함수는 팬 중 매 rAF(scheduleTransform
+  // → applyTransform → updateRouteToolbarPosition)마다 호출된다. 이전에는
+  // routeToolbar.style.left/top 을 직접 썼는데, left/top 은 레이아웃을
+  // 유발하는 속성이라 팬 제스처 내내 이 툴바 하나 때문에 매 프레임 메인스레드
+  // 레이아웃 패스가 강제됐다. #map-container/#text-layer/#train-layer 는
+  // 이미 매 프레임 컴포지터 전용 CSS transform 으로 이동하는데, 이 툴바만
+  // 유일하게 레이아웃 경로를 타고 있었다 — 팬 중 유일한 non-transform 프레임별
+  // DOM 쓰기.
+  //
+  // v3(will-change + style.transform 전환 for #live-trains > g)가 최대
+  // 줌아웃+팬+실시간 열차 조합에서 재측정해도 점멸을 없애지 못한 사실
+  // (§10_map-math-engineer_pan-flicker-report.md §12, 교정된 하네스로 E1/E2
+  // 재분석 시 각 3건의 점멸 이벤트 잔존 확인)과, 점멸 순간 SVG 밖의 HTML
+  // 오버레이(경로 툴바, div)까지 함께 사라진다는 관측(§11_requirements-review-v3.md
+  // §2-6/§3)은 "#train-layer 내부 attribute 쓰기"만으로는 설명되지 않았다.
+  // 이 툴바는 SVG 밖 HTML 요소이면서도 팬 중 유일하게 레이아웃을 유발하는
+  // 프레임별 쓰기였으므로, 같은 문서(WebView 렌더러)의 레이아웃/페인트를
+  // 지연시켜 그 프레임에 새로 노출된 라벨/열차/툴바 타일이 함께 커밋에서
+  // 빠지는 현상과 정합적이다. 아래처럼 transform(translate)로 바꿔 이
+  // 프레임별 쓰기를 컴포지터 전용으로 만든다(툴바 CSS 의 top:0/left:0 고정
+  // + will-change 참조).
   function updateRouteToolbarPosition() {
     if (!toolbarVisible) return;
     // toolbarSvgX/Y가 앵커(출발역 또는 사용자가 드래그한 위치의 SVG 좌표)를
@@ -3352,8 +3422,10 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
     left = Math.max(8, Math.min(maxLeft, left));
     top = Math.max(8, Math.min(maxTop, top));
 
-    routeToolbar.style.left = left + 'px';
-    routeToolbar.style.top = top + 'px';
+    // CSS top/left(레이아웃 유발) 대신 transform(컴포지터 전용)으로 배치.
+    // 툴바 CSS 의 top:0/left:0 이 고정 원점이고, 실제 화면 위치는 이
+    // translate 값이 전부 결정한다.
+    routeToolbar.style.transform = 'translate(' + left + 'px,' + top + 'px)';
   }
 
   // 툴바가 가리면 안 되는 요소들의 화면 좌표 사각형 목록. 겹침 점수 계산용.
@@ -3606,8 +3678,12 @@ path[data-line], text[data-line], circle, rect:not(#route-overlay-bg) {
       newLeft = Math.max(8, Math.min(window.innerWidth - tw - 8, newLeft));
       newTop = Math.max(8, Math.min(window.innerHeight - th - 8, newTop));
 
-      routeToolbar.style.left = newLeft + 'px';
-      routeToolbar.style.top = newTop + 'px';
+      // updateRouteToolbarPosition 과 동일한 이유로 transform 사용(레이아웃
+      // 유발 left/top 대신 컴포지터 전용). getBoundingClientRect() 는 transform
+      // 을 반영한 실제 렌더 위치를 반환하므로 onDragStart/onDragEnd 의 rect 계산은
+      // 변경 없이 그대로 유효하다.
+      routeToolbar.style.transform =
+          'translate(' + newLeft + 'px,' + newTop + 'px)';
     }
 
     function onDragEnd(e) {

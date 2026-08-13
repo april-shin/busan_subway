@@ -126,6 +126,39 @@ void main() {
       );
     });
 
+    test(
+        '[래스터 기아 v5] text[data-line] 는 opacity transition 셀렉터에서 제외된다',
+        () {
+      // [회귀 가드, 2026-08-13] CDP LayerTree+Tracing 실측(chrome://inspect
+      // 대체 — WebView 원격 디버깅 소켓에 직접 CDP로 접속)으로 확인: 팬 중
+      // #text-layer(SVG, 자식 655개)/#train-layer 의 .style.transform 쓰기가
+      // 매 프레임 InvalidateLayout 을 유발해 SvgTextLayoutAlgorithm::Layout 이
+      // 10초 팬에 13843회 호출됐다(정상 팬은 0회여야 함). 원인은
+      // `text[data-line]` 가 `path[data-line], circle, rect:not(...)` 와
+      // 같은 `transition: opacity 0.3s` 셀렉터에 묶여 있던 것 — text 노드가
+      // 수백 개(655)라 이 transition 대상 스타일 재계산이 전체 라벨 레이아웃을
+      // 매 프레임 강제했다. text[data-line] 를 이 셀렉터에서 빼면 동일 조건
+      // 재측정에서 LayoutInvalidationTracking 67232→5304(-92%),
+      // SvgTextLayoutAlgorithm::Layout 13843→5278(-62%) 로 감소한다
+      // (_workspace/10_map-math-engineer_pan-flicker-report.md §13 참조).
+      // ⚠ 잔여 원인 있음(같은 보고서 §13) — 이 테스트는 재발 방지용이지
+      // "점멸 완전 해결" 을 의미하지 않는다.
+      final transitionRuleMatch = RegExp(
+              r'([a-zA-Z0-9_,:#()\[\]="\-\s]*?)\{\s*transition:\s*opacity 0\.3s;')
+          .firstMatch(htmlContent);
+      expect(transitionRuleMatch, isNotNull,
+          reason: 'opacity 0.3s transition 규칙을 찾지 못했다');
+      final selector = transitionRuleMatch!.group(1)!;
+      expect(selector.contains('text[data-line]'), isFalse,
+          reason: 'text[data-line] 가 opacity transition 셀렉터에 재유입되면 '
+              '#text-layer 전체 라벨 레이아웃 강제 재계산(v5 점멸)이 재발한다');
+      // path/circle/rect 는 여전히 부드러운 dim 전환을 유지해야 한다
+      // (라벨만 즉시 전환 — 트레이드오프는 CLAUDE.md/보고서에 명시).
+      expect(selector, contains('path[data-line]'));
+      expect(selector, contains('circle'));
+      expect(selector, contains('rect:not(#route-overlay-bg)'));
+    });
+
     test('highlightLines 함수에 rect 흐림 처리 로직이 포함되어 있다', () {
       // highlightLines 함수 본문 추출
       final hlStart = htmlContent.indexOf('window.highlightLines');
@@ -247,7 +280,13 @@ void main() {
           htmlContent.indexOf('function setInitialView()', applyEnd);
       final compBody = htmlContent.substring(applyEnd, compEnd);
       expect(compBody, contains('textLayer.style.fontSize'));
-      expect(compBody, contains("'--stroke-w'"));
+      // [래스터 기아 실험 A, 2026-08-13] stroke 보정이 `--stroke-w` 커스텀
+      // 프로퍼티에서 네이티브 `style.strokeWidth` 로 바뀌었다(CSS 쪽은
+      // `stroke-width: inherit`). 커스텀 프로퍼티는 Blink 의 독립 상속
+      // 프로퍼티 최적화 경로를 타지 못해, 조상 스타일이 매 프레임 바뀌는 팬
+      // 중에 라벨 655개가 스타일 재계산 후보로 남는다는 가설에 따른 것이다.
+      // 검사 대상은 "보정이 이 함수 안에서 일어난다"는 사실이므로 형태만 교체한다.
+      expect(compBody, contains('textLayer.style.strokeWidth'));
       // 팬 전용 프레임(scale 불변)에서는 폰트/스트로크 보정을 건너뛰어야 한다.
       // [P2, 2026-08 리뷰] no-op 판정 키는 scale 이 아니라 실제로 화면에
       // 쓰일 보정계수(cs)다 — scale>1(확대) 구간·MIN_SCALE 축소 구간처럼
@@ -270,6 +309,70 @@ void main() {
           htmlContent.substring(pointerCancelStart, pointerCancelEnd);
       expect(pointerUpBody, contains('updateTextCompensation()'));
       expect(pointerCancelBody, contains('updateTextCompensation()'));
+    });
+
+    test('[래스터 기아 v3] 열차 아이콘은 개별 컴포지터 레이어 + style.transform으로만 이동한다',
+        () {
+      // [회귀 가드, 2026-08-13] 열차 위치를 SVG transform attribute 로 쓰면
+      // 매 rAF 마다 #train-layer 레이어 내용이 무효화되어, 팬(레이어 이동)과
+      // 재래스터가 같은 프레임에 겹친다. 최대 줌아웃(노출 면적 최대)에서 이
+      // 경쟁이 래스터 예산을 초과해 라벨/말풍선/툴바가 순간 소실됐다(v3 점멸).
+      // 각 열차 <g> 를 will-change 로 개별 컴포지터 레이어로 승격하고 위치는
+      // CSS style.transform 으로만 반영해야 내용 재래스터 없이 이동한다.
+      expect(htmlContent, contains('#live-trains > g {'));
+      expect(htmlContent, contains('will-change: transform'));
+      // step() hot path 는 style.transform 을 쓴다.
+      expect(htmlContent, contains('trainState.element.style.transform ='));
+      // 열차/마커 등 어디서든 attribute transform 쓰기가 재유입되면 안 된다
+      // (getAttribute 읽기 짝도 함께 제거된 상태를 유지해야 혼재 버그가 없다).
+      expect(htmlContent.contains(".setAttribute('transform'"), isFalse,
+          reason: "SVG transform attribute 쓰기 재유입 — v3 점멸이 재발한다");
+      expect(htmlContent.contains(".getAttribute('transform'"), isFalse,
+          reason: 'attribute 읽기 잔존 — style.transform 과 혼재하면 낡은 위치를 읽는다');
+    });
+
+    test(
+        '[래스터 기아 v4] 경로 툴바는 top/left 가 아니라 style.transform 으로 팬을 따라간다',
+        () {
+      // [회귀 가드, 2026-08-13] v3(열차 아이콘 will-change+style.transform)
+      // 적용 후 교정된 측정 하네스(고정 기준선+plateau 검출)로 재분석해도
+      // 최대 줌아웃+팬+실시간 열차 시나리오에서 점멸이 그대로 재현됐다
+      // (_workspace/10_map-math-engineer_pan-flicker-report.md §12).
+      // 점멸 순간 SVG 밖 HTML 오버레이(경로 툴바)까지 함께 사라지는 관측은
+      // "#train-layer 내부 attribute 쓰기"만으로는 설명되지 않는다.
+      //
+      // 재조사 결과 updateRouteToolbarPosition()/드래그 핸들러가 팬 중 매
+      // rAF 마다 routeToolbar.style.left/top(레이아웃 유발)을 썼다 — 같은
+      // 문서(WebView 렌더러)에서 팬 중 유일한 non-transform 프레임별 DOM
+      // 쓰기였다. #map-container/#text-layer/#train-layer 와 동일하게
+      // transform(translate)로 바꿔 컴포지터 전용 쓰기로 통일한다.
+      expect(htmlContent, contains('.route-toolbar {'));
+      final toolbarRuleMatch =
+          RegExp(r'\.route-toolbar\s*\{([^}]*)\}').firstMatch(htmlContent);
+      expect(toolbarRuleMatch, isNotNull, reason: '.route-toolbar CSS 규칙을 찾지 못했다');
+      final toolbarRule = toolbarRuleMatch!.group(1)!;
+      expect(RegExp(r'top\s*:\s*0').hasMatch(toolbarRule), isTrue,
+          reason: '툴바는 top:0 고정 원점 위에서 transform 으로만 이동해야 한다');
+      expect(RegExp(r'left\s*:\s*0').hasMatch(toolbarRule), isTrue,
+          reason: '툴바는 left:0 고정 원점 위에서 transform 으로만 이동해야 한다');
+      expect(RegExp(r'will-change\s*:\s*transform').hasMatch(toolbarRule),
+          isTrue,
+          reason: '툴바를 독립 컴포지터 레이어로 승격해야 한다');
+
+      expect(htmlContent,
+          contains("routeToolbar.style.transform = 'translate(' + left"),
+          reason: 'updateRouteToolbarPosition 이 transform 으로 위치를 반영해야 한다');
+      expect(
+          htmlContent,
+          contains(
+              "routeToolbar.style.transform =\n          'translate(' + newLeft"),
+          reason: '툴바 드래그(onDragMove)도 transform 으로 위치를 반영해야 한다');
+
+      // 레이아웃을 유발하는 left/top 직접 쓰기가 재유입되면 v4 점멸이 재발한다.
+      expect(htmlContent.contains('routeToolbar.style.left ='), isFalse,
+          reason: 'routeToolbar.style.left 직접 쓰기 재유입 — v4 점멸이 재발한다');
+      expect(htmlContent.contains('routeToolbar.style.top ='), isFalse,
+          reason: 'routeToolbar.style.top 직접 쓰기 재유입 — v4 점멸이 재발한다');
     });
 
     test('text-layer/train-layer가 map-container와 동일한 고정 viewBox(1:1)를 갖는다',
@@ -318,10 +421,15 @@ void main() {
             '화면 폰트 크기가 scale=0.5에서 2배, scale=2에서 1/2배로 어긋난다',
       );
 
-      final strokeMatch =
-          RegExp(r"'--stroke-w',\s*\(([^)]+)\)\s*\+\s*'px'")
-              .firstMatch(applyBody);
-      expect(strokeMatch, isNotNull, reason: '--stroke-w 대입식을 찾지 못했다');
+      // [래스터 기아 실험 A, 2026-08-13] `setProperty('--stroke-w', …)` 에서
+      // `style.strokeWidth = …` 로 바뀌었다. 이 테스트가 지키려는 것은 대입
+      // **경로**가 아니라 우변 수식에 `/scale` 이 붙지 않는다는 불변식이므로,
+      // 패턴만 새 형태로 옮기고 단언은 그대로 둔다.
+      final strokeMatch = RegExp(
+        r"textLayer\.style\.strokeWidth\s*=\s*\(([^)]+)\)\s*\+\s*'px'",
+      ).firstMatch(applyBody);
+      expect(strokeMatch, isNotNull,
+          reason: 'textLayer.style.strokeWidth 대입식을 찾지 못했다');
       expect(
         strokeMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
         equals('TEXT_BASE_STROKE_W/cs'),
@@ -677,8 +785,10 @@ void main() {
         reason: 'path[0] 고정은 경로 뒤쪽으로의 후퇴다',
       );
       // 단일 점 분기 1곳에서만 path[0] 으로 이동해야 한다(그건 목표역 = 최전진).
+      // [래스터 기아 수정 v3] 위치는 SVG attribute 대신 CSS style.transform 으로
+      // 쓴다(px 단위) — build_map_html.dart 의 "래스터 기아 수정 v3" 주석 참조.
       expect(
-        "'translate(' + path[0].x + ',' + path[0].y + ')'".allMatches(body).length,
+        "'translate(' + path[0].x + 'px,' + path[0].y + 'px)'".allMatches(body).length,
         1,
       );
 
@@ -700,7 +810,7 @@ void main() {
       // 좌표 이동·도착 이펙트 모두 도착 판정 안에서만 일어나야 한다.
       final arrivedIdx = body.indexOf('if (singlePointArrived) {');
       final moveIdx =
-          body.indexOf("'translate(' + path[0].x + ',' + path[0].y + ')'");
+          body.indexOf("'translate(' + path[0].x + 'px,' + path[0].y + 'px)'");
       expect(moveIdx, greaterThan(arrivedIdx));
     });
 
@@ -824,8 +934,8 @@ void main() {
     });
 
     test('[H-1, 2026-08 리뷰] 도착 이펙트 시작 시 렌더 캐시를 무효화한다', () {
-      // playArrivalEffect.animate() 는 매 프레임 el.setAttribute('transform',
-      // currentTransform + ' scale(...)') 로 transform 을 **직접** 덮어써
+      // playArrivalEffect.animate() 는 매 프레임 el.style.transform =
+      // currentTransform + ' scale(...)' 로 transform 을 **직접** 덮어써
       // step() 의 lastRenderedX/Y 좌표 비교를 완전히 우회한다. 0.6초 페이드
       // 도중 유령 도착이 부활(startTrainAnimation 재시작)하면, stall 열차는
       // 원칙 1 가드가 target 을 최전진 지점(직전 렌더 좌표와 비트 동일)에
