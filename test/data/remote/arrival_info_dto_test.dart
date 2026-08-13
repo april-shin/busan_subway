@@ -72,6 +72,105 @@ void main() {
       expect(entity.arrivalSeconds, isNull);
     });
 
+    group('[D] 양수 barvlDt 라도 조회역 도착 상태가 우선한다', () {
+      // 2026-08-13 총신대입구(이수) 실측: API 가 "이 역에 도착해 있다"고 말하면서
+      // 동시에 barvlDt=60 을 보낸다. 60 을 믿으면 이미 승강장에 서 있는 열차가
+      // "1분 후 도착"으로 표시되고, 60 초 뒤 잔여초가 소진돼 "정보 없음"이 된다.
+      test('arvlCd=1 + 현재역 == 조회역 → 0 (양수 barvlDt 무시)', () {
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '1',
+          statnNm: '총신대입구(이수)',
+          arvlMsg2: '총신대입구(이수) 도착',
+          arvlMsg3: '총신대입구(이수)',
+        );
+        expect(dto.toEntity().arrivalSeconds, 0);
+      });
+
+      test('현재역이 조회역과 다르면 양수 barvlDt 를 그대로 쓴다', () {
+        // 8호선의 광범위 arvlCd=1 오보고 방어 — 수 정거장 떨어진 열차에도
+        // 도착 코드를 주므로, 역이 다르면 도착으로 신뢰하지 않는다.
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '1',
+          statnNm: '총신대입구(이수)',
+          arvlMsg2: '남성 도착',
+          arvlMsg3: '남성',
+        );
+        expect(dto.toEntity().arrivalSeconds, 60);
+      });
+
+      test('"[N]번째 전역" 메시지면 도착으로 신뢰하지 않는다', () {
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '1',
+          statnNm: '모란',
+          arvlMsg2: '[3]번째 전역',
+          arvlMsg3: '모란',
+        );
+        expect(dto.toEntity().arrivalSeconds, 60);
+      });
+
+      test('도착이 아닌 코드(진입 0)는 양수 barvlDt 를 그대로 쓴다', () {
+        // 진입은 아직 잔여시간이 남아 있을 수 있다.
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '0',
+          statnNm: '총신대입구(이수)',
+          arvlMsg2: '총신대입구(이수) 진입',
+          arvlMsg3: '남성',
+        );
+        expect(dto.toEntity().arrivalSeconds, 60);
+      });
+
+      test('"○○ 전역" 은 조회역이 아니므로 양수를 그대로 쓴다', () {
+        // 접미사를 벗기면 역명이 조회역과 같아지지만, 실제 위치는 직전 역이다.
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '1',
+          statnNm: '총신대입구(이수)',
+          arvlMsg2: '전역 도착',
+          arvlMsg3: '총신대입구(이수) 전역',
+        );
+        expect(dto.toEntity().arrivalSeconds, 60);
+      });
+
+      test('접미사가 붙은 arvlMsg3 도 조회역이면 0 으로 읽는다', () {
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '1',
+          statnNm: '총신대입구(이수)',
+          arvlMsg2: '총신대입구(이수) 도착',
+          arvlMsg3: '총신대입구(이수) 도착',
+        );
+        expect(dto.toEntity().arrivalSeconds, 0);
+      });
+
+      test('치환맵 역도 양쪽이 같은 정규화를 거쳐 일치한다 (지제 → 평택지제)', () {
+        // 비교 한쪽에만 resolveDisplayStationName 이 적용되도록 리팩터링되면
+        // 이 테스트가 깨진다.
+        const dto = ArrivalInfoDto(
+          barvlDt: '60',
+          arvlCd: '1',
+          statnNm: '지제',
+          arvlMsg2: '지제 도착',
+          arvlMsg3: '지제 도착',
+        );
+        expect(dto.toEntity().arrivalSeconds, 0);
+      });
+
+      test('대조군: 일반 접근 열차는 영향 없다', () {
+        const dto = ArrivalInfoDto(
+          barvlDt: '180',
+          arvlCd: '99',
+          statnNm: '총신대입구(이수)',
+          arvlMsg2: '3분 후 (남성)',
+          arvlMsg3: '남성',
+        );
+        expect(dto.toEntity().arrivalSeconds, 180);
+      });
+    });
+
     test('barvlDt "0" + arvlCd "1"(도착) → arrivalSeconds 0', () {
       const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '1');
       expect(dto.toEntity().arrivalSeconds, 0);

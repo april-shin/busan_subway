@@ -58,14 +58,41 @@ String _extractPositionStatus(String? raw) {
 /// - 양수: API가 명시한 실제 잔여 초
 /// - 0: 해당 역에 실제 도착한 상태
 /// - null: 정보 없음 → 상위 추정 로직에서 채워야 함
-int? _parseArrivalSeconds(String? barvlDt, String? arvlCd, String arvlMsg2) {
+int? _parseArrivalSeconds(
+  String? barvlDt,
+  String? arvlCd,
+  String arvlMsg2, {
+  required bool atQueriedStation,
+}) {
   if (barvlDt == null) return null;
   final seconds = int.tryParse(barvlDt);
   if (seconds == null) return null;
-  if (seconds > 0) return seconds;
 
-  // barvlDt == 0 인 경우만 처리.
   final code = arvlCd != null ? int.tryParse(arvlCd) : null;
+
+  if (seconds > 0) {
+    // 양수 barvlDt 라도 **도착 상태가 우선**한다.
+    //
+    // API 는 `arvlCd=1`(도착) + `arvlMsg3` 가 조회역 자신인 행에도 양수
+    // `barvlDt` 를 함께 보낸다 — 2026-08-13 총신대입구(이수) 실측:
+    //   `barvlDt='60' arvlCd='1' arvlMsg2='총신대입구(이수) 도착'
+    //    arvlMsg3='총신대입구(이수)'`
+    // 이 60 을 그대로 믿으면 **이미 승강장에 서 있는 열차가 "1분 후 도착"** 으로
+    // 표시된다(지도 말풍선·도착정보 카드 양쪽). 60 초 뒤에는 잔여초가 소진돼
+    // "정보 없음"이 되므로, 사용자에게는 "1분 후 도착 → 정보 없음" 으로 보인다.
+    //
+    // 8호선의 광범위 `arvlCd=1` 오보고(수 정거장 떨어진 열차에도 도착 코드)는
+    // 두 조건으로 막는다: ① 현재역이 조회역과 같을 것 ② `arvlMsg2` 가
+    // "[N]번째 전역..." 형태가 아닐 것. 아래 `barvlDt == 0` 분기의 가드와 같은 취지.
+    if (code == 1 &&
+        atQueriedStation &&
+        parseStationCount(arvlMsg2) == null) {
+      return 0;
+    }
+    return seconds;
+  }
+
+  // 이하 barvlDt == 0 인 경우만 처리.
 
   // arvlCd=1(도착)이어도 메시지가 "[N]번째 전역..." 형태면 실제 도착이 아님
   // (8호선 API의 광범위 arvlCd=1 버그 대응). 이 경우 null로 넘겨 추정에 위임.
@@ -106,6 +133,17 @@ abstract class ArrivalInfoDto with _$ArrivalInfoDto {
       _$ArrivalInfoDtoFromJson(json);
 
   ArrivalInfo toEntity() {
+    // 이 열차가 **조회역 자신에 있는지**. `_parseArrivalSeconds` 의 도착 우선
+    // 판정에 쓴다. 양쪽 다 `resolveDisplayStationName` 을 거친 표시용 역명이라
+    // API 등록명 차이(예: 지제 ↔ 평택지제)로 비교가 어긋나지 않는다.
+    final currentName = _extractStationName(arvlMsg3);
+    final atQueriedStation = currentName.isNotEmpty &&
+        currentName == resolveDisplayStationName(statnNm ?? '') &&
+        // "○○ 전역" 은 조회역이 아니라 그 **직전 역**에 있다는 뜻이다.
+        // `_extractStationName` 이 접미사를 벗기면 역명만으로는 구분이 안 되므로
+        // 위치 상태로 걸러낸다 (이게 없으면 한 정거장 떨어진 열차를 0 으로 읽는다).
+        _extractPositionStatus(arvlMsg3) != '전역';
+
     return ArrivalInfo(
       subwayId: subwayId ?? '',
       // 표시 필드는 API 등록명을 표시용 역명으로 되돌린다(인바운드). 역명 단독
@@ -118,12 +156,17 @@ abstract class ArrivalInfoDto with _$ArrivalInfoDto {
       arrivalMessage: resolveDisplayInText(arvlMsg2 ?? ''),
       destination: resolveDisplayStationName(bstatnNm ?? ''),
       trainType: btrainSttus ?? '일반',
-      arrivalSeconds: _parseArrivalSeconds(barvlDt, arvlCd, arvlMsg2 ?? '')
-          ?? parseTimeFromMessage(arvlMsg2 ?? ''),
+      arrivalSeconds: _parseArrivalSeconds(
+            barvlDt,
+            arvlCd,
+            arvlMsg2 ?? '',
+            atQueriedStation: atQueriedStation,
+          ) ??
+          parseTimeFromMessage(arvlMsg2 ?? ''),
       receivedAt: recptnDt != null
           ? DateTime.tryParse(recptnDt!) ?? DateTime.now()
           : DateTime.now(),
-      currentStationName: _extractStationName(arvlMsg3),
+      currentStationName: currentName,
       // 빈 문자열도 누락으로 간주해 ordkey 로 폴백한다. 신분당선 등 일부 노선이
       // btrainNo 를 빈 문자열로 보내는 케이스가 있어, `??` 만으로는 trainNo 가
       // 흔들려 JS 의 열차 식별(activeTrains 키)이 깨진다. 식별이 깨지면 아이콘이
