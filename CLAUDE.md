@@ -158,6 +158,13 @@ dart run tool/import_official_transfer_guides.dart
 # data/transfer_guides_manual.csv 를 고친 뒤 위 임포터 → 아래 순서로 실행한다.
 dart run tool/import_transfer_guides.dart
 
+# 경의중앙선 역별 시간표 재생성 (코레일 전동열차 시각표 엑셀 → line_schedules.json 의 t)
+# 코레일 "열차운임/시간표" 게시판에서 평일·휴일 xlsx 를 받아 assets/excel/ 에
+# center_line_{wd,we}<시행일 YYMMDD>.xlsx 로 두고 실행한다. 상세는
+# .claude/docs/timetable.md 의 "경의중앙선" 항목(시트↔방향 매핑이 코레일 라벨과 다름).
+python3 tool/build_center_line_timetable.py --dry-run
+python3 tool/build_center_line_timetable.py
+
 # WebView용 HTML 생성 (seoul_metro_map.svg → map.html)
 dart run tool/build_map_html.dart
 ```
