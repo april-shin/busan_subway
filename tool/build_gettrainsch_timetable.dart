@@ -4,7 +4,8 @@
 // 서울교통공사 API(SearchSTNTimeTableByIDService, → tool/build_metro_timetable.dart)가
 // 다루지 못하는 노선(신분당·경춘·경강·공항철도·수인분당·신림·에버라인·인천2·서해·
 // 의정부·우이신설·GTX-A)을 공공데이터포털 getTrainSch 로 수집한다.
-// 김포골드도 조회 가능하나(lineNm="김포도시철도") 기본 대상에서 제외 — 아래 실행 예시 참고.
+// 김포골드(lineNm="김포도시철도")도 기본 대상(_defaultLines)에 포함된다.
+// 이 노선은 노선 대표값(f/l)까지 여기서 도출한다 — _deriveRepresentative 참고.
 //
 // 데이터 출처: 공공데이터포털 "국가철도공단_열차운행시각"
 //   https://apis.data.go.kr/B553766/schedule/getTrainSch
@@ -332,6 +333,145 @@ Future<LineResult> _collectLine(
 
 List<dynamic> _dirsToJson(List<List<int>?> dirs) => [dirs[0], dirs[1]];
 
+/// 노선 대표값(`f`/`l`)을 역별 시간표(`t`)에서 도출할 노선.
+///
+/// `extract_schedules.dart` 는 노선마다 **앵커역 한 곳**의 API 행에서 대표값을
+/// 뽑는데, 그 도구의 `lineConfigs` 에서 `apiLineName` 이 빈 노선은 API 로
+/// 대표값을 만들 수 없어 `_getEstimatedSchedule` 의 **하드코딩 추정치**가 들어간다.
+/// 김포골드가 그렇고, 그 추정치는 실측과 어긋나 있었다 — 평일 `l=23:30` 인데
+/// 실측 막차는 24:58, 주말 `f=06:00` 인데 실측 첫차는 05:26 이다.
+/// `t` 가 유일 소스인 노선은 여기서 `t` 로부터 함께 도출한다.
+///
+/// 같은 상태인 **우이신설·인천1 은 아직 대상이 아니다**(우이신설 평일
+/// `l=00:40` vs 실측 00:58, 인천1 평일 `f=05:00` vs 실측 05:30). 우이신설은 이
+/// 집합에 한 줄 추가하면 되지만, 주말 `p` 가 단일 band `['05:30','00:00',5]` 라
+/// **그 끝이 자정 넘김 벽시계**다 — 지금은 도출 `f` 가 05:30 으로 `p[0]` 시작과
+/// 같아 정렬 분기에 들어가지도 않지만, `f` 가 달라지는 순간 아래 `p[0]` 정렬의
+/// 문자열 비교가 오판한다(그 주석 참고). 인천1 은 수집 도구가 달라
+/// `build_incheon1_timetable.dart` 쪽에 같은 처리가 필요하다.
+///
+/// ⚠ 이 집합의 노선은 `f`/`l` 이 **길이 2 배열**(상행·하행)이어야 한다.
+/// 도출 코드가 idx 0/1 로 접근한다.
+/// 경의중앙은 코레일 엑셀 경로라 `build_center_line_timetable.py` 가 같은 일을 한다.
+///
+/// ⚠ 대상 노선은 `extract_schedules.dart` 의 `_representativeCarryOverLines` 에도
+/// 넣어야 한다. 넣지 않으면 그 도구를 다시 돌릴 때 추정치로 되돌아간다.
+const _deriveRepresentative = {'김포골드'};
+
+/// 자정 넘김 인코딩 경계. 앱 `departure_candidates.dart` 의
+/// `lateNightCutoffMinutes` 와 같은 값이다.
+const _lateNightCutoff = 240;
+
+/// 벽시계 분 → **운영일** 분(자정 넘김은 1440+).
+///
+/// `t` 의 자정 넘김 인코딩은 노선마다 다르다 — getTrainSch 경로는 1440+ 로
+/// 담고(김포골드 24:58 → 1498), 경의중앙 엑셀 경로는 0~1439 로 담는다.
+/// 두 경우를 모두 흡수한다.
+int _operatingMinutes(int m) =>
+    m >= 1440 ? m : (m < _lateNightCutoff ? m + 1440 : m);
+
+/// 분 → 벽시계 "HH:MM"(자정 넘김은 24시간으로 접는다).
+String _wall(int m) {
+  final w = m % 1440;
+  return '${(w ~/ 60).toString().padLeft(2, '0')}:'
+      '${(w % 60).toString().padLeft(2, '0')}';
+}
+
+/// 대표값 도출 실패 목록. 수집 실패(`LineResult.failures`)와 같이 모아 마지막에
+/// 출력하고 `exit(1)` 한다 — 병합 결과는 쓴 뒤에 끝내야 API 호출이 버려지지 않는다.
+final _deriveFailures = <String>[];
+
+/// `t` 에서 방향별 첫차·막차를 도출해 `f`/`l` 을 갱신하고, `p` 첫 band 의
+/// 시작을 도출 첫차에 맞춘다.
+///
+/// - `f` = 정상 시간대(240~1439분) 최소. 심야 인코딩 값을 섞으면 첫차가
+///   자정 직후로 잡힌다.
+/// - `l` = 운영일 기준 최대. 벽시계로 적으면 `DaySchedule.lastTrainMinutes` 의
+///   "첫차 이하면 +1440" 규칙이 운영일 분으로 되돌린다.
+/// - `p` 첫 band 시작: `f` 만 당기고 두면 그 사이를 덮는 band 가 없어
+///   `find_next_departure` 의 배차간격 경로가 null("운행 종료")을 돌려준다.
+///   band 의 **시작만** 옮긴다 — 끝을 `l` 까지 늘리면 실재하지 않는 심야
+///   출발을 배차간격으로 지어낸다(꼬리 갭은 의도적으로 남긴다).
+/// - 한 방향이라도 근거가 없으면 그 방향은 기존 값을 유지한다.
+/// - **입력은 완행(`t`)뿐이다.** 급행(`tE`)은 보지 않는다 — 현재 대상 노선에
+///   급행이 없어 무해하지만, 급행 보유 노선을 넣으면 급행 첫차·막차가 `f`/`l` 에
+///   반영되지 않는다는 뜻이다.
+void _deriveRepresentativeValues(
+    String lineId, String day, Map<String, dynamic> dayObj) {
+  final table = (dayObj['t'] as Map?)?.cast<String, dynamic>();
+  if (table == null || table.isEmpty) return;
+
+  final oldF = ((dayObj['f'] as List?)?.cast<String>() ?? const ['', '']).toList();
+  final oldL = ((dayObj['l'] as List?)?.cast<String>() ?? const ['', '']).toList();
+  final newF = [...oldF];
+  final newL = [...oldL];
+
+  for (var idx = 0; idx < 2; idx++) {
+    final values = <int>[];
+    for (final dirs in table.values) {
+      final list = (dirs as List)[idx];
+      if (list == null) continue;
+      values.addAll((list as List).cast<int>());
+    }
+    final sameDay =
+        values.where((m) => m >= _lateNightCutoff && m < 1440).toList();
+    if (values.isEmpty || sameDay.isEmpty) {
+      if (oldF[idx].isEmpty || oldL[idx].isEmpty) {
+        // 수집 실패와 같은 채널로 보낸다 — 여기서 throw 하면 병합 결과를
+        // 쓰기 전에 죽어 수십 분의 API 호출이 통째로 버려진다.
+        _deriveFailures.add('$lineId.$day idx$idx: 출발이 없고 기존 f/l 도 '
+            '없어 대표값을 정할 수 없습니다');
+        continue;
+      }
+      print('   ⚠ $lineId.$day idx$idx: 출발이 없어 f/l 을 도출하지 못해 '
+          '기존 값을 유지합니다.');
+      continue;
+    }
+    newF[idx] = _wall(sameDay.reduce((a, b) => a < b ? a : b));
+    newL[idx] = _wall(values.map(_operatingMinutes).reduce((a, b) => a > b ? a : b));
+  }
+
+  if (!_listEq(newF, oldF) || !_listEq(newL, oldL)) {
+    print('   $lineId.$day f $oldF → $newF');
+    print('   $lineId.$day l $oldL → $newL');
+  }
+  dayObj['f'] = newF;
+  dayObj['l'] = newL;
+
+  // `p` 는 방향 공용이므로 두 방향 f 중 **이른 쪽**에 맞춘다(늦은 방향은
+  // `currentMinutes < firstTrainMinutes` 게이트가 먼저 막아 준다).
+  final bands = dayObj['p'];
+  if (bands is List && bands.isNotEmpty) {
+    final earliest = newF.reduce((a, b) => a.compareTo(b) <= 0 ? a : b);
+    final first = (bands.first as List).cast<dynamic>();
+    final start = first[0] as String;
+    final end = first[1] as String;
+    if (start != earliest) {
+      // ⚠ 문자열 비교다. `earliest` 는 정상 시간대(04:00~23:59)라 안전하지만,
+      // **첫 band 끝이 자정 넘김 벽시계인 노선**으로 이 집합을 넓히면
+      // `"05:31" >= "00:00"` 이 참이 되어 정렬을 거짓으로 건너뛴다(우이신설
+      // 주말이 단일 band `['05:30','00:00',5]` 라 그 경우다 — 다만 지금은
+      // 도출 `f` 가 `p[0]` 시작과 같아 이 분기에 들어가지 않는다).
+      // 그때는 `parseTimeToMinutes` + `endMinutes` 규칙으로 비교하도록 고칠 것.
+      if (earliest.compareTo(end) >= 0) {
+        print('   ⚠ $lineId.$day: 도출 첫차 $earliest 가 첫 band 끝 $end 이후라 '
+            'p[0] 을 그대로 둡니다.');
+      } else {
+        print('   $lineId.$day p[0] 시작 $start → $earliest (도출 첫차에 맞춤)');
+        first[0] = earliest;
+      }
+    }
+  }
+}
+
+bool _listEq(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 void _mergeInto(Map<String, dynamic> dayObj, String key,
     Map<String, List<List<int>?>> newData) {
   if (newData.isEmpty) return;
@@ -469,6 +609,9 @@ void main(List<String> args) async {
       final dObj = dayObj.cast<String, dynamic>();
       _mergeInto(dObj, 't', r.t[day]!);
       _mergeInto(dObj, 'tE', r.tE[day]!);
+      if (_deriveRepresentative.contains(lineId)) {
+        _deriveRepresentativeValues(lineId, day, dObj);
+      }
     }
     merged++;
   });
@@ -483,9 +626,12 @@ void main(List<String> args) async {
         '데이터없음 ${r.noData}역');
   });
 
-  final allFailures = [for (final r in collected.values) ...r.failures];
+  final allFailures = [
+    for (final r in collected.values) ...r.failures,
+    ..._deriveFailures,
+  ];
   if (allFailures.isNotEmpty) {
-    print('\n⚠ 수집 실패 ${allFailures.length}건 (해당 역·방향 기존 데이터 보존):');
+    print('\n⚠ 실패 ${allFailures.length}건 (해당 역·방향 기존 데이터 보존):');
     for (final f in allFailures) {
       print('  - $f');
     }
