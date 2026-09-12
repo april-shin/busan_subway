@@ -1,7 +1,7 @@
 name: seoul_subway
 description: "서울 지하철 노선도 - 경로 검색 및 실시간 도착 정보"
 publish_to: 'none'
-version: 1.2.0+8
+version: 1.2.1+9
 
 environment:
   sdk: ^3.11.0
@@ -43,6 +43,10 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   collection: ^1.19.1
+  # 벽시계 주입용. 화면이 `DateTime.now()` 대신 `clock.now()` 를 쓰면 위젯에
+  # 테스트 전용 파라미터를 뚫지 않고도 `withClock` 으로 시각을 고정할 수 있다.
+  # (자정 부근에만 깨지던 출발시각 시트 테스트 4건이 이 방식으로 결정적이 됐다.)
+  clock: ^1.1.2
   flutter_dotenv: ^5.2.1
   package_info_plus: ^10.2.1
 

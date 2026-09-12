@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart'; // ProviderListenable (riverpod 3)
@@ -56,7 +57,7 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
   ///
   /// 선택 시각은 "역에 도착하는 기준 시각"으로 해석한다 — 급행 탭에서 08:12를
   /// 고른 뒤 완행 탭으로 가면 08:12 이후 첫 완행이 잡힌다.
-  late DepartureQueryTime _query = DepartureQueryTime.nowAt(DateTime.now());
+  late DepartureQueryTime _query = DepartureQueryTime.nowAt(clock.now());
 
   /// 두 후보의 차이를 보고 탭 라벨/구성을 결정한다.
   ///
@@ -255,7 +256,7 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
       schedules: schedules,
       stations: stations,
       connections: connections,
-      wallClock: DateTime.now(),
+      wallClock: clock.now(),
     );
 
     return Scaffold(
@@ -471,7 +472,7 @@ class _RouteViewState extends ConsumerState<_RouteView> {
           const AsyncValue<List<ArrivalInfo>>.loading();
     }
 
-    final wallClock = DateTime.now();
+    final wallClock = clock.now();
     final departureOptions = _buildDepartureOptions(
       context: departureContext,
       schedule: departureSchedule,
@@ -733,7 +734,7 @@ class _RouteSummaryHeader extends StatelessWidget {
                   const _ChipDivider(),
                   InkWell(
                     onTap: () =>
-                        onQueryChanged(DepartureQueryTime.nowAt(DateTime.now())),
+                        onQueryChanged(DepartureQueryTime.nowAt(clock.now())),
                     borderRadius: AppBorderRadius.xs,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(

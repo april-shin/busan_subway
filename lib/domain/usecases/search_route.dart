@@ -29,7 +29,16 @@ class SearchRoute {
   })  : _stationRepository = stationRepository,
         _timetableDataSource = timetableDataSource;
 
-  Future<RouteResult?> execute(String fromStationId, String toStationId) async {
+  /// [at] — 급행 운행 시간대 게이트의 기준 시각(`GraphBuilder.build` 의 `at`).
+  ///
+  /// 넘기지 않으면 게이트가 없다. 1호선 B급행처럼 하루 몇 편성뿐인 계통이
+  /// 시각과 무관하게 최단경로로 뽑히는 것을 막으려면 화면에서 조회 시각을
+  /// 넘겨야 한다. 자세한 배경은 `ExpressServiceWindow` 문서 참조.
+  Future<RouteResult?> execute(
+    String fromStationId,
+    String toStationId, {
+    DateTime? at,
+  }) async {
     final stations = await _stationRepository.getAllStations();
     final connections = await _stationRepository.getAllConnections();
     final transferTimes = await _stationRepository.getTransferTimes();
@@ -43,6 +52,7 @@ class SearchRoute {
       transferTimes: transferTimes,
       expressSkipEdges: expressSkipEdges,
       headwaySeconds: headwaySeconds,
+      at: at,
     );
 
     final stationMap = {for (final s in stations) s.id: s};
@@ -77,6 +87,8 @@ class SearchRoute {
   /// 총신대입구→마곡나루(4호선→9호선 환승 후 급행)처럼 환승이 낀 경로에서도
   /// 같은 경로의 완행 대안을 함께 보여준다. 자세한 판정 근거는 본문 주석 참조.
   ///
+  /// [at] 은 [execute] 와 같은 급행 운행 시간대 게이트 기준 시각이다.
+  ///
   /// [viaStationIds] 는 출발→도착 사이에 **지정된 순서대로** 반드시 지나야 하는
   /// 경유역 ID 목록이다. 비어 있으면(기본값) 경유 없는 기존 동작과 완전히 동일하다.
   /// 4가지 후보 모두 같은 경유 제약을 받는다.
@@ -90,6 +102,7 @@ class SearchRoute {
     String fromStationId,
     String toStationId, {
     List<String> viaStationIds = const [],
+    DateTime? at,
   }) async {
     final stations = await _stationRepository.getAllStations();
     final connections = await _stationRepository.getAllConnections();
@@ -104,6 +117,7 @@ class SearchRoute {
       transferTimes: transferTimes,
       expressSkipEdges: expressSkipEdges,
       headwaySeconds: headwaySeconds,
+      at: at,
     );
 
     final stationMap = {for (final s in stations) s.id: s};

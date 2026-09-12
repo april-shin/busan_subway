@@ -43,6 +43,11 @@ Future<void> searchAndNavigateToResult(
       selected.departure!.id,
       selected.arrival!.id,
       viaStationIds: selected.waypointStationIds,
+      // 급행 운행 시간대 게이트 기준 = 검색을 누른 시각. 결과 화면에서 출발
+      // 시각을 바꿔도 경로를 다시 계산하지는 않으므로, 그 경우 하루 몇 편성뿐인
+      // 계통(1호선 B급행)은 다시 살아나지 않는다 — 없는 열차를 안내하는 쪽보다
+      // 안전한 방향이라 그대로 둔다.
+      at: DateTime.now(),
     );
 
     if (!context.mounted) return;

@@ -1029,6 +1029,18 @@
       "seconds": 270,
       "skippedStationIds": [
         "135"
+      ],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
       ]
     },
     {
@@ -1051,6 +1063,13 @@
     {
       "lineId": "1",
       "fromStationId": "140",
+      "toStationId": "141",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "140",
       "toStationId": "142",
       "seconds": 168,
       "skippedStationIds": [
@@ -1067,7 +1086,33 @@
         "142",
         "1425",
         "166"
+      ],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
       ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "141",
+      "toStationId": "142",
+      "seconds": 120,
+      "skippedStationIds": []
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "142",
+      "toStationId": "1425",
+      "seconds": 240,
+      "skippedStationIds": []
     },
     {
       "lineId": "1",
@@ -1081,6 +1126,15 @@
         "146",
         "147",
         "148"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "1425",
+      "toStationId": "167",
+      "seconds": 240,
+      "skippedStationIds": [
+        "166"
       ]
     },
     {
@@ -1160,11 +1214,42 @@
     {
       "lineId": "1",
       "fromStationId": "170",
+      "toStationId": "1715",
+      "seconds": 210,
+      "skippedStationIds": [
+        "171"
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "170",
       "toStationId": "172",
       "seconds": 300,
       "skippedStationIds": [
         "171",
         "1715"
+      ],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "1715",
+      "toStationId": "174",
+      "seconds": 330,
+      "skippedStationIds": [
+        "172",
+        "173"
       ]
     },
     {
@@ -1174,6 +1259,18 @@
       "seconds": 210,
       "skippedStationIds": [
         "173"
+      ],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
       ]
     },
     {
@@ -1188,84 +1285,275 @@
       "fromStationId": "175",
       "toStationId": "176",
       "seconds": 150,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "175",
+      "toStationId": "177",
+      "seconds": 270,
+      "skippedStationIds": [
+        "176"
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "176",
       "toStationId": "177",
       "seconds": 150,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "177",
       "toStationId": "178",
       "seconds": 180,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "177",
+      "toStationId": "179",
+      "seconds": 360,
+      "skippedStationIds": [
+        "178"
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "178",
       "toStationId": "179",
       "seconds": 180,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "179",
       "toStationId": "181",
       "seconds": 120,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "179",
+      "toStationId": "183",
+      "seconds": 420,
+      "skippedStationIds": [
+        "181",
+        "182"
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "181",
       "toStationId": "182",
       "seconds": 120,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "182",
       "toStationId": "183",
       "seconds": 180,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "183",
       "toStationId": "184",
       "seconds": 180,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "183",
+      "toStationId": "186",
+      "seconds": 450,
+      "skippedStationIds": [
+        "184",
+        "185"
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "184",
       "toStationId": "185",
       "seconds": 120,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "185",
       "toStationId": "186",
       "seconds": 120,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "186",
       "toStationId": "187",
       "seconds": 210,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "186",
+      "toStationId": "188",
+      "seconds": 390,
+      "skippedStationIds": [
+        "187"
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "187",
       "toStationId": "188",
       "seconds": 240,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",
@@ -1279,14 +1567,47 @@
       "fromStationId": "189",
       "toStationId": "190",
       "seconds": 210,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
+    },
+    {
+      "lineId": "1",
+      "fromStationId": "189",
+      "toStationId": "191",
+      "seconds": 420,
+      "skippedStationIds": [
+        "190"
+      ]
     },
     {
       "lineId": "1",
       "fromStationId": "190",
       "toStationId": "191",
       "seconds": 240,
-      "skippedStationIds": []
+      "skippedStationIds": [],
+      "serviceWindows": [
+        {
+          "isDown": false,
+          "startMinute": 344,
+          "endMinute": 489
+        },
+        {
+          "isDown": true,
+          "startMinute": 1112,
+          "endMinute": 1202
+        }
+      ]
     },
     {
       "lineId": "1",

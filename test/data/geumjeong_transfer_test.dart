@@ -199,9 +199,10 @@ void main() {
 
   test('경부선 → 안산선 경로가 금정 환승 1회로 계산된다', () async {
     // 명학은 금정 바로 북쪽 인접역이라 급행·모드전환이 끼어들지 않아
-    // `transferCount == 1` 을 정확히 고정할 수 있는 조합이다.
-    // (수원 등 남부 역은 급행을 타게 되고 금정이 급행 통과역이라 모드전환까지
-    //  끼어들어 환승이 3회가 된다 — 아래 별도 테스트에서 다룬다.)
+    // `transferCount == 1` 을 정확히 고정할 수 있는 조합이다. 명학은 A·B 어느
+    // 급행도 서지 않는 통과역이라 완행 한 구간이 최적이다.
+    // (수원 등 남부 역은 급행을 타게 되므로 모드전환이 끼어든다 — 아래 별도
+    //  테스트에서 다룬다.)
     final route = await SearchRoute(
       stationRepository:
           StationRepositoryImpl(localDataSource: LocalDataSource()),
@@ -256,11 +257,11 @@ void main() {
           .every((s) => baseLineId(s.lineId) == '1' || s.lineId == '1M'),
       isTrue,
     );
-    // 금정은 급행 통과역이라 급행으로 바로 내릴 수 없다. 실제 경로는
-    // `1M(모드전환) → 1E 급행 수원→군포 → 완행 군포→금정 → 4호선` 으로
-    // 세그먼트가 4개(환승 3회)까지 늘어난다. 우회 회귀의 가드는 위의
-    // "금정에서 갈아탄다" 어서션이므로 여기서는 상한만 둔다.
-    expect(route.transferCount, lessThanOrEqualTo(3));
+    // A급행이 금정에 정차하므로(2019-12-30 개편) 급행으로 바로 내릴 수 있다.
+    // `1M(모드전환) → 1E 급행 수원→금정 → 4호선` 세그먼트 3개 = 환승 2회.
+    // A급행 매핑이 빠지면 `1E 수원→군포 → 완행 군포→금정` 이 끼어들어 3회로
+    // 늘어난다 — 그 회귀를 잡으려고 상한을 2 로 조인다.
+    expect(route.transferCount, lessThanOrEqualTo(2));
     // 우회 경로(사당 경유)는 1시간을 넘었다.
     expect(route.totalTimeSeconds, lessThan(2400));
   });
@@ -277,8 +278,9 @@ void main() {
     );
     expect(graph.getNodeIdsForStation('금정').toSet(),
         containsAll({'${_geumjeong1}_1', '${_geumjeong4}_4'}));
-    // 금정은 경부선 급행 통과역이라 가상 급행 노드는 만들어지지 않는다.
-    expect(graph.containsNode('${_geumjeong1}_1E'), isFalse);
+    // 금정은 A급행(청량리 착발) 정차역이므로 가상 급행 노드가 만들어진다.
+    // 2026-08-31 이전에는 B급행(일 3회) 매핑만 있어 이 노드가 없었다.
+    expect(graph.containsNode('${_geumjeong1}_1E'), isTrue);
   });
 
   test('1호선 금정 역별 시간표가 채워져 있다 (알려진 공백 해소)', () async {
@@ -302,12 +304,20 @@ void main() {
             'dart run tool/build_metro_timetable.dart --lines=1 로 채울 것');
   });
 
-  test('금정은 경부선 급행 통과역이라 skip edge 가 함께 건너뛴다', () async {
-    // 급행 정차 판별의 유일한 유효 신호는 "통과역엔 레코드 자체가 없다" 다
-    // (커밋 86b313e). 실제 급행 3편성 K1902·K1904(상행)·K1945(하행) 기준으로
-    // `data/timetables/1_금정_{상행,하행}.json` 에는 이 편성 레코드가 하나도
-    // 없다 — 명학·당정·구로와 같은 통과역이다. 대조로 군포·안양·의왕·금천구청은
-    // 세 편성 모두 레코드를 갖는다.
+  test('금정은 A급행 정차역이고 B급행 통과역이다', () async {
+    // 경부선 급행은 계통이 둘이다.
+    //   · A급행 — 청량리 착발, 전 구간 경부2선(완행과 같은 선로). 2019-12-30
+    //     개편으로 **금정 정차**. 캐시의 etrnYn=Y 청량리 착발 47편성이 이쪽이다.
+    //   · B급행 — 지상 서울역 착발, 서울역~수원 경부1선. 1선에는 승강장이 없는
+    //     역이 많아 금정·신도림·구로 같은 환승역까지 통과한다. 일 3회
+    //     (K1902·K1904 상행 / K1945 하행).
+    //
+    // ⚠ "통과역엔 레코드 자체가 없다"는 판별 신호는 **B급행만** 잡는다. 금정
+    // 캐시에 그 3편성 레코드가 없는 것은 사실이지만, 그로부터 "금정은 급행
+    // 통과역"을 결론지으면 틀린다 — 2026-08-31 이전 이 테스트가 그랬다.
+    // A급행은 통과역에도 보간 시각이 채워져 있어 캐시로는 정차 패턴을 알 수
+    // 없고, 정차역 목록은 외부 자료를 캐시로 교차검증해 확정했다
+    // (`tool/manual_express_stops.json` 의 A급행 `_comment`).
     //
     // ⚠ `trainArvlTm` 채움 여부는 급행 지표가 **아니다**. 금정은 etrnYn=Y 268편
     // 전부 채워져 있어 정차역처럼 보이지만, 같은 지표로 정차역 세마·진위가
@@ -316,19 +326,22 @@ void main() {
         .getExpressSkipEdges();
     final line1 = edges.where((e) => e.lineId == '1').toList();
 
-    // 금정은 급행 정차역이 아니므로 skip edge 의 끝점이 될 수 없다.
-    expect(
-      line1.where((e) =>
-          e.fromStationId == _geumjeong1 || e.toStationId == _geumjeong1),
-      isEmpty,
-      reason: '금정은 급행 정차역이 아니다',
-    );
+    // A급행: 금정이 skip edge 의 끝점 = 정차역. 안양↔금정↔의왕 으로 이어진다.
+    final anyangToGeumjeong = line1.singleWhere((e) =>
+        e.fromStationId == '170' && e.toStationId == _geumjeong1);
+    expect(anyangToGeumjeong.skippedStationIds, ['171'],
+        reason: 'A급행은 명학만 통과한다');
+    final geumjeongToUiwang = line1.singleWhere((e) =>
+        e.fromStationId == _geumjeong1 && e.toStationId == '174');
+    expect(geumjeongToUiwang.skippedStationIds, ['172', '173'],
+        reason: 'A급행은 군포·당정을 통과한다');
 
-    // 안양(170) → 군포(172) 급행이 명학과 금정을 함께 건너뛴다. 금정을
+    // B급행: 안양(170) → 군포(172) 가 명학과 금정을 함께 건너뛴다. 금정을
     // `skippedStationIds` 에 넣지 않으면 지도 급행 하이라이트가 끊긴다
     // (`subway_map_viewer.dart` 의 `_expressSkippedIndex`).
     final anyangToGunpo = line1.singleWhere(
         (e) => e.fromStationId == '170' && e.toStationId == '172');
     expect(anyangToGunpo.skippedStationIds, ['171', _geumjeong1]);
+
   });
 }

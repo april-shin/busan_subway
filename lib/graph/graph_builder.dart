@@ -1,3 +1,4 @@
+import '../core/utils/line_direction.dart';
 import '../domain/entities/station.dart';
 import '../domain/entities/connection.dart';
 import '../domain/entities/express_skip_edge.dart';
@@ -18,6 +19,14 @@ import 'subway_graph.dart';
 /// - 같은 역의 완행↔급행 노드 사이에 양방향 모드 전환 edge 추가
 ///   (lineId=`{line}M`, isTransfer=true, weight=배차간격/2)
 ///
+/// 급행 운행 시간대 게이트(선택적, [build] 의 `at` 을 넘기면 활성화):
+/// - `serviceWindows` 가 있는 skip edge 는 `at` 이 그 창 안에 들어오는 **방향에
+///   대해서만** 그래프에 실린다. 한 방향만 열리면 그 방향 edge 만 추가된다.
+/// - 두 방향 모두 닫힌 edge 는 노드·모드전환 edge 까지 만들지 않는다 — 급행
+///   노드만 남기면 갈 곳 없는 노드에 모드전환 대기만 붙는다.
+/// - `at` 을 넘기지 않으면 게이트가 없다(= 종전 동작). 시각 개념이 없는 호출과
+///   그래프 단위 테스트가 벽시계에 흔들리지 않게 하기 위한 기본값이다.
+///
 /// 환승 대기 시간 반영(선택적, [headwaySeconds]가 비어있지 않으면 활성화):
 /// - 환승 edge 가중치에 도착 노선 배차간격/2 추가 (방향별 비대칭)
 class GraphBuilder {
@@ -33,17 +42,45 @@ class GraphBuilder {
     required Map<String, int> transferTimes,
     List<ExpressSkipEdge> expressSkipEdges = const [],
     Map<String, int> headwaySeconds = const {},
+    DateTime? at,
   }) {
     final graph = SubwayGraph();
+    final gated = _gateExpressEdges(expressSkipEdges, at);
 
     _addStationNodes(graph, stations);
     _addConnectionEdges(graph, connections);
-    _addExpressNodes(graph, stations, expressSkipEdges);
-    _addExpressSkipEdges(graph, expressSkipEdges);
-    _addModeSwitchEdges(graph, expressSkipEdges, headwaySeconds);
+    _addExpressNodes(graph, stations, gated);
+    _addExpressSkipEdges(graph, gated);
+    _addModeSwitchEdges(graph, gated, headwaySeconds);
     _addTransferEdges(graph, stations, transferTimes, headwaySeconds);
 
     return graph;
+  }
+
+  /// 운행 시간대 게이트를 적용해 살아남은 급행 edge 와 허용 방향을 반환한다.
+  ///
+  /// 방향은 `isDownBetween` 으로 판정한다 — from→to 가 하행이면 to→from 은
+  /// 상행이다. 창이 없는 edge(대부분의 급행)와 `at == null` 은 양방향 통과.
+  List<_GatedExpressEdge> _gateExpressEdges(
+    List<ExpressSkipEdge> edges,
+    DateTime? at,
+  ) {
+    final gated = <_GatedExpressEdge>[];
+    for (final edge in edges) {
+      if (edge.serviceWindows.isEmpty || at == null) {
+        gated.add(_GatedExpressEdge(edge, forward: true, backward: true));
+        continue;
+      }
+      final forwardIsDown =
+          isDownBetween(edge.fromStationId, edge.toStationId, edge.lineId);
+      final forward = edge.runsAt(at, isDown: forwardIsDown);
+      final backward = edge.runsAt(at, isDown: !forwardIsDown);
+      if (!forward && !backward) continue;
+      gated.add(
+        _GatedExpressEdge(edge, forward: forward, backward: backward),
+      );
+    }
+    return gated;
   }
 
   void _addStationNodes(SubwayGraph graph, List<Station> stations) {
@@ -90,7 +127,7 @@ class GraphBuilder {
   void _addExpressNodes(
     SubwayGraph graph,
     List<Station> stations,
-    List<ExpressSkipEdge> expressSkipEdges,
+    List<_GatedExpressEdge> expressSkipEdges,
   ) {
     if (expressSkipEdges.isEmpty) return;
 
@@ -100,7 +137,8 @@ class GraphBuilder {
     };
 
     final addedNodes = <String>{};
-    for (final edge in expressSkipEdges) {
+    for (final gate in expressSkipEdges) {
+      final edge = gate.edge;
       _addExpressNodeIfNeeded(
         graph: graph,
         stationLookup: stationLookup,
@@ -138,13 +176,16 @@ class GraphBuilder {
     ));
   }
 
-  /// 급행 정차역 사이에 양방향 급행 edge를 추가한다.
-  /// lineId는 `{baseLineId}E`.
+  /// 급행 정차역 사이에 급행 edge를 추가한다. lineId는 `{baseLineId}E`.
+  ///
+  /// 운행 시간대 게이트가 한 방향만 허용하면 그 방향 edge 만 추가한다 — 아침
+  /// 상행만 있는 편성이 저녁 하행 경로에 쓰이는 것을 막는다.
   void _addExpressSkipEdges(
     SubwayGraph graph,
-    List<ExpressSkipEdge> expressSkipEdges,
+    List<_GatedExpressEdge> expressSkipEdges,
   ) {
-    for (final e in expressSkipEdges) {
+    for (final gate in expressSkipEdges) {
+      final e = gate.edge;
       final expressLineId = '${e.lineId}E';
       final fromNodeId = '${e.fromStationId}_$expressLineId';
       final toNodeId = '${e.toStationId}_$expressLineId';
@@ -154,12 +195,22 @@ class GraphBuilder {
         continue;
       }
 
-      graph.addBidirectionalEdge(GraphEdge(
-        fromNodeId: fromNodeId,
-        toNodeId: toNodeId,
-        lineId: expressLineId,
-        weightSeconds: e.seconds,
-      ));
+      if (gate.forward) {
+        graph.addEdge(GraphEdge(
+          fromNodeId: fromNodeId,
+          toNodeId: toNodeId,
+          lineId: expressLineId,
+          weightSeconds: e.seconds,
+        ));
+      }
+      if (gate.backward) {
+        graph.addEdge(GraphEdge(
+          fromNodeId: toNodeId,
+          toNodeId: fromNodeId,
+          lineId: expressLineId,
+          weightSeconds: e.seconds,
+        ));
+      }
     }
   }
 
@@ -170,14 +221,15 @@ class GraphBuilder {
   /// - weightSeconds: 해당 노선 배차간격 / 2 (없으면 기본 90초)
   void _addModeSwitchEdges(
     SubwayGraph graph,
-    List<ExpressSkipEdge> expressSkipEdges,
+    List<_GatedExpressEdge> expressSkipEdges,
     Map<String, int> headwaySeconds,
   ) {
     if (expressSkipEdges.isEmpty) return;
 
     // 모드 전환 edge가 필요한 (stationId, baseLineId) 집합
     final modeSwitchTargets = <_ModeSwitchKey>{};
-    for (final e in expressSkipEdges) {
+    for (final gate in expressSkipEdges) {
+      final e = gate.edge;
       modeSwitchTargets.add(_ModeSwitchKey(e.fromStationId, e.lineId));
       modeSwitchTargets.add(_ModeSwitchKey(e.toStationId, e.lineId));
     }
@@ -304,6 +356,22 @@ class GraphBuilder {
       }
     }
   }
+}
+
+/// 운행 시간대 게이트를 통과한 급행 edge 와 그때 허용된 진행 방향.
+///
+/// [forward] 는 `from → to`, [backward] 는 `to → from`. 게이트가 없으면 둘 다
+/// true 라 종전의 양방향 edge 와 같다.
+class _GatedExpressEdge {
+  final ExpressSkipEdge edge;
+  final bool forward;
+  final bool backward;
+
+  const _GatedExpressEdge(
+    this.edge, {
+    required this.forward,
+    required this.backward,
+  });
 }
 
 /// 모드 전환 edge 추가 시 중복 제거용 키.

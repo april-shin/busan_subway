@@ -165,6 +165,8 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
         selected.departure!.id,
         selected.arrival!.id,
         viaStationIds: selected.waypointStationIds,
+        // 급행 운행 시간대 게이트 기준 시각 (`ExpressServiceWindow` 참조).
+        at: DateTime.now(),
       );
 
       // 급행 미정차역 인덱스 갱신 (없으면 빈 맵). 하이라이트 누락 방지용.

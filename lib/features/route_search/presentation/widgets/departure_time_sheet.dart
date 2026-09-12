@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/tokens/app_dimensions.dart';
@@ -81,7 +82,7 @@ class _DepartureTimeSheetState extends State<_DepartureTimeSheet> {
     // "지금 출발" 상태에서는 query.dayType 이 계산에 쓰이지 않아 신뢰할 수 없다.
     // 이 경우 오늘 요일을 기준으로 연다 — 급행 운행 요일 판정
     // (`routeExpressRunsOnDay`)과 같은 규칙을 쓰도록 공유 메서드로 판정한다.
-    final preferred = widget.query.effectiveDayType(DateTime.now());
+    final preferred = widget.query.effectiveDayType(clock.now());
     if (widget.options.forDayType(preferred).isNotEmpty) return preferred;
 
     final fallback = preferred == DepartureDayType.weekday
@@ -207,7 +208,7 @@ class _DepartureTimeSheetState extends State<_DepartureTimeSheet> {
               onTap: () => Navigator.of(context).pop(
                 // 시트에서 토글한 요일은 넘기지 않는다 — "지금 출발"에서는
                 // 의미가 없고, 남겨두면 다음 열람 때 그 요일로 열린다.
-                DepartureQueryTime.nowAt(DateTime.now()),
+                DepartureQueryTime.nowAt(clock.now()),
               ),
             ),
             const Divider(height: 1),
