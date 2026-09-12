@@ -512,14 +512,16 @@ Map<String, dynamic> _getEstimatedSchedule(String lineId) {
 /// 경의중앙·김포골드는 API 가 없어 이 도구가 [_getEstimatedSchedule] 의 **하드코딩
 /// 추정치**를 쓰는데, 그 값이 실제 `t` 와 어긋나 "노선 첫차·막차"라는 이름과 맞지
 /// 않았다 — 경의중앙 평일 05:10~23:40(실측 05:00~00:39), 김포골드 평일 막차
-/// 23:30(실측 24:58)·주말 첫차 06:00(실측 05:26).
+/// 23:30(실측 24:58)·주말 첫차 06:00(실측 05:26), 우이신설 평일 막차 00:40(실측
+/// 00:58), 인천1 평일 첫차 05:00(실측 05:30)·막차 00:30(실측 00:59).
 /// 지금은 각 노선의 `t` 수집 도구가 `f`/`l` 을 도출해 넣으므로 — 경의중앙은
-/// `tool/build_center_line_timetable.py`, 김포골드는
-/// `tool/build_gettrainsch_timetable.dart` 의 `_deriveRepresentative` — 이 도구가
-/// 그 값을 추정치로 되돌리지 않도록 함께 물려받는다.
+/// `tool/build_center_line_timetable.py`, 김포골드·우이신설은
+/// `tool/build_gettrainsch_timetable.dart` 의 `_deriveRepresentative`, 인천1 은
+/// `tool/build_incheon1_timetable.dart` — 이 도구가 그 값을 추정치로 되돌리지
+/// 않도록 함께 물려받는다. 셋 다 공통 로직은 `tool/derive_representative.dart`.
 /// (`p`/`pD` 는 아직 추정치가 유일한 출처지만, `f`/`l` 만 물려받고 `p` 를
 ///  덮어쓰면 두 값이 서로 어긋나므로 같이 보존한다.)
-const _representativeCarryOverLines = {'경의중앙', '김포골드'};
+const _representativeCarryOverLines = {'경의중앙', '김포골드', '우이신설', '인천1'};
 
 /// 기존 `line_schedules.json` 의 역별 시간표(`t`/`tE`)를 새 엔트리에 옮겨 담는다.
 ///

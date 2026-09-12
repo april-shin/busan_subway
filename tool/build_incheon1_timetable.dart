@@ -46,6 +46,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'derive_representative.dart';
+
 const _csvDir = 'tool/data/incheon1';
 
 /// (파일명, 요일키, t 인덱스) — 하선=1(앱 하행), 상선=0(앱 상행)
@@ -222,14 +224,34 @@ void main(List<String> args) {
     exitCode = 1;
     return;
   }
+  final deriveFailures = <String>[];
   for (final day in ['wd', 'we']) {
     final dayObj = target[day];
     if (dayObj is! Map) continue;
-    dayObj.cast<String, dynamic>()['t'] = {
+    final dObj = dayObj.cast<String, dynamic>();
+    dObj['t'] = {
       for (final e in compact[day]!.entries) e.key: [e.value[0], e.value[1]],
     };
+    // 노선 대표값(f/l)도 방금 넣은 t 에서 도출한다. 인천1 은 두 시간표 API 모두
+    // 미제공이라 extract_schedules.dart 가 하드코딩 추정치를 쓰는데, 그 값이
+    // 실측과 어긋나 있었다(평일 첫차 05:00 vs 실측 05:30, 막차 00:30 vs 00:59).
+    // ⚠ extract_schedules.dart 의 _representativeCarryOverLines 에 인천1 이
+    // 들어 있어야 그 도구 재실행 시 추정치로 되돌아가지 않는다.
+    deriveFailures.addAll(deriveRepresentativeValues(
+      lineId: '인천1',
+      day: day,
+      dayObj: dObj,
+    ));
   }
   schedFile.writeAsStringSync(
       const JsonEncoder.withIndent('  ').convert(schedules));
   print('\n병합 완료: 인천1 wd ${compact['wd']!.length}역, we ${compact['we']!.length}역');
+  if (deriveFailures.isNotEmpty) {
+    // 파일은 이미 썼다 — 수집 결과를 버리지 않고 실패만 알린다.
+    print('\n⚠ 대표값 도출 실패 ${deriveFailures.length}건:');
+    for (final f in deriveFailures) {
+      print('  - $f');
+    }
+    exitCode = 1;
+  }
 }

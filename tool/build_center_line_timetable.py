@@ -296,6 +296,27 @@ def wall(m):
     return f'{(m % 1440) // 60:02d}:{(m % 1440) % 60:02d}'
 
 
+def parse_minutes(hhmm):
+    """"HH:MM" → 자정 기준 분."""
+    h, m = hhmm.split(':')
+    return int(h) * 60 + int(m)
+
+
+def band_end_minutes(start, end):
+    """band 끝을 운영일 분으로. `TimePeriod.endMinutes` 를 그대로 미러한다 —
+    "00:00" 은 하루의 끝(1440), 그 외에는 끝이 시작보다 **작을 때만** +1440.
+
+    ⚠ 문자열끼리 비교하면 `"05:31" >= "00:00"` 이 참이 되어 자정 넘김 band 를
+    "이미 지난 band" 로 오판한다. 경의중앙 `p[0]` 끝은 현재 07:00/23:00 이라
+    발동하지 않지만, 우이신설 주말처럼 단일 band 끝이 "00:00" 이 되면 문제가 된다.
+    Dart 판(`tool/derive_representative.dart` 의 `bandEndMinutes`)과 같은 규칙.
+    """
+    e = parse_minutes(end)
+    if e == 0:
+        return 1440
+    return e + 1440 if e < parse_minutes(start) else e
+
+
 def operating_minutes(m):
     """벽시계 분 → **운영일** 분(자정 넘김은 1440+)."""
     if m >= 1440:
@@ -488,18 +509,19 @@ def main():
         # `currentMinutes < firstTrainMinutes` 게이트가 먼저 막아 준다).
         bands = day_obj.get('p')
         if isinstance(bands, list) and bands:
-            earliest = min(new_f)
+            earliest = min(parse_minutes(f) for f in new_f)
             first_end = bands[0][1]
             # `!=` 로 양방향 정렬한다 — 다음 시행분에서 첫차가 늦어졌는데 한쪽만
             # 당기면 `p[0].start` 가 옛 값에 남아 "도출 첫차에 맞춘다"가 깨진다.
             # 단 첫 band 의 끝을 넘기면 band 가 뒤집히므로 그때는 두고 경고한다.
-            if bands[0][0] != earliest:
-                if earliest >= first_end:
-                    print(f'   ⚠ {day}: 도출 첫차 {earliest} 가 첫 band 끝 '
+            if parse_minutes(bands[0][0]) != earliest:
+                if earliest >= band_end_minutes(bands[0][0], first_end):
+                    print(f'   ⚠ {day}: 도출 첫차 {wall(earliest)} 가 첫 band 끝 '
                           f'{first_end} 이후라 p[0] 을 그대로 둡니다.')
                 else:
-                    print(f'   p[0] 시작 {bands[0][0]} → {earliest} (도출 첫차에 맞춤)')
-                    bands[0][0] = earliest
+                    print(f'   p[0] 시작 {bands[0][0]} → {wall(earliest)} '
+                          '(도출 첫차에 맞춤)')
+                    bands[0][0] = wall(earliest)
 
     if unknown:
         # 역 개명·약칭 변경·신설역이면 ABBREV 를 고쳐야 한다. 경고만 하고 넘어가면

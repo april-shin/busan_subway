@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:seoul_subway/domain/entities/line_schedule.dart';
+import 'package:seoul_subway/domain/usecases/find_next_departure.dart';
+
+import '../helpers/compact_schedule_parser.dart';
 
 /// 노선 대표값(`f`/`l`)을 역별 시간표(`t`)에서 **도출하는 노선**들이 그 도출
 /// 결과를 유지하는지 잠근다.
@@ -13,20 +16,24 @@ import 'package:seoul_subway/domain/entities/line_schedule.dart';
 /// 맞지 않는 상태가 오래 있었다:
 /// - 경의중앙: 평일 `05:10`~`23:40` (실측 05:00~00:39)
 /// - 김포골드: 평일 `05:30`~`23:30` (실측 05:26~00:58), 주말 `06:00`~`23:00`
+/// - 우이신설: 평일 막차 `00:40` (실측 00:58), 주말 막차 `00:00` (실측 23:58)
+/// - 인천1: 평일 `05:00`~`00:30` (실측 05:30~00:59), 주말 막차 `23:00` (실측 00:59)
 ///
-/// 지금은 각 노선의 `t` 수집 도구가 함께 도출한다 —
-/// 경의중앙은 `tool/build_center_line_timetable.py`,
-/// 김포골드는 `tool/build_gettrainsch_timetable.dart` 의 `_deriveRepresentative`.
+/// 지금은 각 노선의 `t` 수집 도구가 함께 도출한다 — 경의중앙은
+/// `tool/build_center_line_timetable.py`, 김포골드·우이신설은
+/// `tool/build_gettrainsch_timetable.dart` 의 `_deriveRepresentative`,
+/// 인천1 은 `tool/build_incheon1_timetable.dart`.
+/// Dart 쪽 공통 로직은 `tool/derive_representative.dart` 한 곳에 있다.
 /// 이 테스트는 `tool/extract_schedules.dart` 를 다시 돌렸을 때 추정치로
 /// 되돌아가면 깨진다(그쪽의 `_representativeCarryOverLines` 가 방어선이다).
 ///
 /// ## 소비자 영향은 거의 없다 — 그래도 잠그는 이유
 ///
-/// 두 노선 모두 전 역이 `t` 를 가져 `find_next_departure` 의 역별 시간표 경로를
+/// 네 노선 모두 전 역이 `t` 를 가져 `find_next_departure` 의 역별 시간표 경로를
 /// 타고, 그 경로는 `f`/`l` 을 사실상 보지 않는다. 실측 전수 대조에서 답이
 /// 달라진 것은 **`t` 가 없는 종점 방향**뿐이었다 — 경의중앙 3개(K53 하행·K54
-/// 하행·K55 상행), 김포골드 2개(P01 상행·P10 하행). 그 방향엔 애초에 출발
-/// 열차가 없고, "운행 종료"(null)로 바뀐 조합은 양쪽 다 0건이다.
+/// 하행·K55 상행), 김포골드 2개(P01 상행·P10 하행), 우이신설·인천1 도 각 양
+/// 종점의 진행 불가 방향. 그 방향엔 애초에 출발 열차가 없다.
 /// 그럼에도 잠그는 이유는 첫차·막차를 화면에 쓰는 기능이 생기면 즉시 오답이
 /// 되기 때문이다(2026-08-13 앵커역 정정과 같은 사유).
 ///
@@ -43,9 +50,9 @@ import 'package:seoul_subway/domain/entities/line_schedule.dart';
 /// 규칙으로는 거짓 실패가 나기 때문이다. 여기서는 도출 대상 노선만 보고,
 /// 두 인코딩(1440+ / 0~1439)을 모두 흡수하는 규약을 명시적으로 적용한다.
 ///
-/// **아직 대상이 아닌 노선**(같은 어긋남이 남아 있음): 우이신설(평일 `l=00:40`
-/// vs 실측 00:58), 인천1(평일 `f=05:00` vs 실측 05:30). 고치면 여기 목록에
-/// 추가할 것.
+/// `extract_schedules.dart` 의 `lineConfigs` 에서 `apiLineName` 이 빈 노선
+/// (= API 로 대표값을 만들 수 없어 추정치를 쓰던 노선)은 **정확히 이 넷**이고,
+/// 2026-09-12 로 전부 도출로 전환됐다.
 void main() {
   /// 도출 대상 노선 → 되돌아가면 안 되는 옛 추정치 {요일: [f, l]}.
   const derivedLines = <String, Map<String, List<List<String>>>>{
@@ -66,6 +73,26 @@ void main() {
       ],
       'we': [
         ['06:00', '06:00'],
+        ['23:00', '23:00'],
+      ],
+    },
+    '우이신설': {
+      'wd': [
+        ['05:30', '05:30'],
+        ['00:40', '00:40'],
+      ],
+      'we': [
+        ['05:30', '05:30'],
+        ['00:00', '00:00'],
+      ],
+    },
+    '인천1': {
+      'wd': [
+        ['05:00', '05:00'],
+        ['00:30', '00:30'],
+      ],
+      'we': [
+        ['05:30', '05:30'],
         ['23:00', '23:00'],
       ],
     },
@@ -165,7 +192,7 @@ void main() {
       test('[$lineId $day] 첫 배차 band 가 f 이전을 비워 두지 않는다', () {
         // `f` 만 당기고 `p` 를 두면 그 사이를 덮는 band 가 없어
         // `_findNextByHeadway` → `_findPeriod` 가 null("운행 종료")을 돌려준다.
-        // 두 노선 모두 배차간격 경로가 `t` 없는 종점 방향에서만 쓰이지만,
+        // 네 노선 모두 배차간격 경로가 `t` 없는 종점 방향에서만 쓰이지만,
         // f 와 p 가 어긋난 상태를 데이터에 남기지 않는다.
         //
         // ⛔ 꼬리 갭(마지막 band 끝 ~ `l`)은 **의도적으로 남긴다.** 끝을 `l` 까지
@@ -203,4 +230,64 @@ void main() {
       }
     });
   }
+
+  group('꼬리 갭 — 마지막 band 끝이 `l` 보다 늦어도 메우지 않는다', () {
+    // 우이신설 주말은 `p` 가 단일 band `['05:30','00:00',5]`(끝 = 1440)인데
+    // 도출 `l` 은 23:58(1438)이라 **역전** 상태다. 이 역전이 있어야
+    // `currentMinutes >= lastTrainMinutes` 게이트가 먼저 걸려, 배차 그리드가
+    // 만들던 **유령 출발 00:00** 이 사라진다.
+    //
+    // 도출 전에는 `l=00:00`(추정치)이라 23:58·23:59 조회가 "00:00 출발"을
+    // 돌려줬다 — W01 상행·W13 하행은 종점의 진행 불가 방향이라 편성이 0편인데도.
+    //
+    // 이 테스트가 유일한 방어선이다: 다음 시행분에서 누군가 band 끝을 `l` 에
+    // 맞추면(= 꼬리 갭 메우기) 데이터 형태 검사만으로는 조용히 통과한다.
+    late LineSchedule ui;
+
+    setUpAll(() {
+      ui = parseCompactSchedule(lineOf('우이신설'));
+    });
+
+    // 2026-09-19 는 토요일.
+    final saturday = DateTime(2026, 9, 19);
+
+    for (final target in const [
+      ('W01', false), // 북한산우이 상행 — 종점 바깥
+      ('W13', true), // 신설동 하행 — 종점 바깥
+    ]) {
+      final (stationId, isDown) = target;
+
+      test('[$stationId isDown=$isDown] 막차(23:58) 이후는 운행 종료다', () {
+        for (final minute in const [58, 59]) {
+          final now = DateTime(
+              saturday.year, saturday.month, saturday.day, 23, minute);
+          expect(
+            findNextDeparture(
+              schedule: ui,
+              now: now,
+              isDown: isDown,
+              stationId: stationId,
+            ),
+            isNull,
+            reason: '23:$minute 는 막차 23:58 이후다 — 배차간격이 00:00 출발을 '
+                '지어내면 안 된다',
+          );
+        }
+      });
+
+      test('[$stationId isDown=$isDown] 막차 직전은 막차 시각을 돌려준다', () {
+        final now =
+            DateTime(saturday.year, saturday.month, saturday.day, 23, 57);
+        expect(
+          findNextDeparture(
+            schedule: ui,
+            now: now,
+            isDown: isDown,
+            stationId: stationId,
+          ),
+          DateTime(saturday.year, saturday.month, saturday.day, 23, 58),
+        );
+      });
+    }
+  });
 }
