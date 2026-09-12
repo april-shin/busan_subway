@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""assets/json/line_schedules.json 의 경의중앙선 역별 시간표(`t`)를 코레일 엑셀에서 주입한다.
+"""assets/json/line_schedules.json 의 경의중앙선 시간표를 코레일 엑셀에서 주입한다.
+
+역별 시간표(`t`)가 주 산출물이고, 거기서 노선 대표값 `f`/`l`(첫차·막차)과
+`p` 첫 band 의 시작 시각까지 도출해 함께 기록한다(아래 `derive_first_last`).
 
 경의중앙선(K01~K56)은 두 시간표 API 모두 미제공이라(서울 열린데이터광장은 서울교통공사
 운영 노선만, getTrainSch 는 국가철도공단 제공분만) 코레일이 공개하는 엑셀을 유일 소스로 쓴다.
@@ -280,6 +283,72 @@ def collect(path):
             for idx, table in merged.items()}
 
 
+# ── 노선 대표값(f/l) 도출 ────────────────────────────────────────────────────
+
+# 자정 넘김 인코딩 경계. `t` 는 자정 이후 출발을 1440+ 가 아니라 0~1439 로 담는
+# 노선이 있고 경의중앙이 그렇다(00:39 → 39). 앱도 같은 경계를 쓴다
+# (`departure_candidates.dart` 의 lateNightCutoffMinutes = 240).
+LATE_NIGHT_CUTOFF = 240
+
+
+def wall(m):
+    """분 → 벽시계 "HH:MM"(자정 넘김은 24시간으로 접는다)."""
+    return f'{(m % 1440) // 60:02d}:{(m % 1440) % 60:02d}'
+
+
+def operating_minutes(m):
+    """벽시계 분 → **운영일** 분(자정 넘김은 1440+)."""
+    if m >= 1440:
+        return m
+    return m + 1440 if m < LATE_NIGHT_CUTOFF else m
+
+
+def derive_first_last(table, idx):
+    """한 방향의 (첫차, 막차) 벽시계 문자열. 출발이 없으면 None.
+
+    `f`/`l` 은 원래 `extract_schedules.dart` 가 노선마다 **앵커역 한 곳**에서
+    뽑는 대표값이지만, 경의중앙은 API 가 없어 그 자리에 하드코딩 추정치
+    (평일 05:10~23:40)가 들어 있었다. 실제 `t` 는 05:00 에 시작해 자정을 넘겨
+    끝나므로 이름("노선 첫차·막차")과 값이 어긋났다. 유일 소스인 `t` 에서
+    **노선 전체 최소/최대**로 도출해 그 어긋남을 없앤다.
+
+    ⚠ 사용자에게 보이는 동작은 거의 바뀌지 않는다. 실측(평일·토·일 각
+    56역 × 2방향 × 1440분 = 483,840 조합 전수 대조): 답이 달라진 것은 `t` 가
+    없는 종점 방향 3개(K53 하행·K54 하행·K55 상행)뿐이고 — 평일 1,230건,
+    토·일 각 4,137건 — `t` 를 가진 나머지 53역은 전부 동일하다. **"운행 종료"
+    (null)로 바뀐 조합은 0건이다**(아래 `p[0]` 정렬 덕분. 정렬 전에는 평일
+    30건·휴일 44건이 null 로 떨어졌다). 그 3개 방향엔 실제 출발 열차가 없어
+    배차간격 폴백이 만들어내던 가짜 답이 달라졌을 뿐이다(주말 건수가 큰 것은
+    `p[0]` 시작이 05:30 → 05:04 로 옮겨지며 배차 그리드 위상이 함께 밀리기
+    때문이다).
+
+    `t` 가 있는 역이 영향받지 않는 이유: 그 경로에서 `f` 는 "전날 자정 넘김
+    분을 먼저 볼지"만 정하는데, 경의중앙 `t` 의 자정 넘김은 0~239 이고 1440 을
+    넘는 값이 없어(정확히 1440 인 wd K16 상행·K38 하행은 `cur+1440` 초과가 될
+    수 없어 매칭 불가) 전날 조회가 항상 빈손으로 끝나 오늘 리스트로 폴스루한다.
+    ⚠ 이 작업 초기에 "`f`=05:10 이라 05:00~05:09 조회가 전날로 폴백한다"고
+    진단했으나 **틀렸다**(위 이유). 같은 오진을 반복하지 말 것 — 경의중앙의
+    0~1439 인코딩은 `departure_candidates.dart` 와
+    `line_schedule_anchor_sanity_test.dart` 에 이미 적혀 있던 사실이다.
+
+    고치는 이유는 값 자체의 정확성이다 — 첫차·막차를 화면에 쓰는 기능이
+    생기면 그 즉시 오답이 된다(2026-08-13 앵커역 정정과 같은 사유).
+
+    막차는 벽시계로 적는다("00:39"). `DaySchedule.lastTrainMinutes` 가
+    첫차 이하이면 1440 을 더하므로 운영일 분으로 정확히 복원된다.
+    """
+    values = [m for dirs in table.values() if dirs[idx] for m in dirs[idx]]
+    if not values:
+        return None
+    same_day = [m for m in values if LATE_NIGHT_CUTOFF <= m < 1440]
+    if not same_day:
+        # 전부 심야 인코딩인 방향 — 첫차를 정할 근거가 없다.
+        return None
+    first = min(same_day)
+    last = max(operating_minutes(m) for m in values)
+    return wall(first), wall(last)
+
+
 # ── 병합 ────────────────────────────────────────────────────────────────────
 
 def hhmm(m):
@@ -377,6 +446,60 @@ def main():
         if not isinstance(day_obj, dict):
             sys.exit(f'{LINE_ID}.{day} 객체가 없습니다')
         day_obj['t'] = new_t
+
+        # f/l 도 같은 `t` 에서 도출한다. 방향별로 따로 뽑되, 한 방향이라도
+        # 근거가 없으면 그 방향은 기존 값을 남긴다(없는 값을 지어내지 않는다).
+        old_f = list(day_obj.get('f') or ['', ''])
+        old_l = list(day_obj.get('l') or ['', ''])
+        new_f, new_l = list(old_f), list(old_l)
+        for idx in (0, 1):
+            derived = derive_first_last(new_t, idx)
+            if derived is None:
+                if not old_f[idx] or not old_l[idx]:
+                    # 빈 문자열을 남기면 앱이 parseTimeToMinutes('') 에서 죽는다.
+                    sys.exit(f'{day} idx{idx}: 출발이 없고 기존 f/l 도 없어 '
+                             '값을 정할 수 없습니다')
+                print(f'   ⚠ {day} idx{idx}: 출발이 없어 f/l 을 도출하지 못해 '
+                      '기존 값을 유지합니다.')
+                continue
+            new_f[idx], new_l[idx] = derived
+        if (new_f, new_l) != (old_f, old_l):
+            print(f'   f {old_f} → {new_f}')
+            print(f'   l {old_l} → {new_l}')
+        day_obj['f'] = new_f
+        day_obj['l'] = new_l
+
+        # 첫 배차 band 의 시작을 도출된 첫차에 맞춘다.
+        #
+        # `p` 는 이 노선에서 여전히 추정치지만, `f` 만 당기고 band 를 두면
+        # 그 사이(예: 05:00~05:09)를 덮는 band 가 없어 `_findNextByHeadway` →
+        # `_findPeriod` 가 null 을 돌려준다 = "운행 종료" 오판. 실측으로 평일
+        # 30건·휴일 44건이 그렇게 떨어졌다(모두 `t` 가 없는 종점 방향이라
+        # 실사용 영향은 없지만, f 와 p 가 어긋난 상태 자체를 남기지 않는다).
+        #
+        # band 의 **시작만** 옮기고 배차 간격과 끝은 건드리지 않는다.
+        # ⛔ **꼬리 갭(마지막 band 끝 ~ `l`)은 의도적으로 남긴다.** 평일이면
+        # 23:40~00:39 가 여전히 null 이다. 머리 갭과 달리 여기서 끝을 `l` 까지
+        # 늘리면 배차간격이 **실재하지 않는 심야 출발을 지어낸다**(20분마다
+        # 00:00, 00:20 …). 머리 갭은 "이미 있는 첫차를 못 찾는" 문제라 메우고,
+        # 꼬리 갭은 "없는 열차를 만드는" 문제라 두는 것이다 — 같은 논리로
+        # 끝까지 늘리지 말 것.
+        # `p` 는 방향 공용이므로 두 방향 f 중 **이른 쪽**에 맞춘다(늦은 방향은
+        # `currentMinutes < firstTrainMinutes` 게이트가 먼저 막아 준다).
+        bands = day_obj.get('p')
+        if isinstance(bands, list) and bands:
+            earliest = min(new_f)
+            first_end = bands[0][1]
+            # `!=` 로 양방향 정렬한다 — 다음 시행분에서 첫차가 늦어졌는데 한쪽만
+            # 당기면 `p[0].start` 가 옛 값에 남아 "도출 첫차에 맞춘다"가 깨진다.
+            # 단 첫 band 의 끝을 넘기면 band 가 뒤집히므로 그때는 두고 경고한다.
+            if bands[0][0] != earliest:
+                if earliest >= first_end:
+                    print(f'   ⚠ {day}: 도출 첫차 {earliest} 가 첫 band 끝 '
+                          f'{first_end} 이후라 p[0] 을 그대로 둡니다.')
+                else:
+                    print(f'   p[0] 시작 {bands[0][0]} → {earliest} (도출 첫차에 맞춤)')
+                    bands[0][0] = earliest
 
     if unknown:
         # 역 개명·약칭 변경·신설역이면 ABBREV 를 고쳐야 한다. 경고만 하고 넘어가면

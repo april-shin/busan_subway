@@ -103,7 +103,7 @@ void main() async {
   final encoder = const JsonEncoder.withIndent('  ');
   File(outputPath).writeAsStringSync(encoder.convert(schedules));
   print('\n✓ $outputPath에 ${schedules.length}개 노선 대표값 저장 완료'
-      ' (역별 시간표 $carried개 노선 보존)');
+      ' (기존 값 $carried개 노선 보존)');
 
   dio.close();
 }
@@ -383,7 +383,15 @@ String _minutesToTimeStr(int minutes) {
   return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 }
 
-/// API에 데이터가 없는 노선의 추정치 (컴팩트 포맷)
+/// API에 데이터가 없는 노선의 추정치 (컴팩트 포맷).
+///
+/// ⚠ 경의중앙의 `f`/`l` 은 실제 `t` 와 어긋난 값이다(추정 05:10~23:40 vs 실측
+/// 05:00~00:39). [_representativeCarryOverLines] 덕분에 기존 파일이 있으면
+/// 덮어쓰지 않으므로, 이 값은 **파일이 아예 없을 때의 초기값**으로만 쓰인다.
+/// `f`/`l` 을 고칠 일이 있으면 `tool/build_center_line_timetable.py` 를 실행하는
+/// 쪽이 맞다. **`p`/`pD` 는 그 도구도 도출하지 않으므로**(경의중앙은 56역 전부
+/// `t` 를 보유해 배차간격 경로가 사실상 죽어 있다) 바꾸려면 JSON 을 직접
+/// 패치해야 한다 — 여기 추정치를 고쳐도 carry-over 가 기존 값을 덮어쓴다.
 Map<String, dynamic> _getEstimatedSchedule(String lineId) {
   switch (lineId) {
     case '경의중앙':
@@ -499,16 +507,30 @@ Map<String, dynamic> _getEstimatedSchedule(String lineId) {
   }
 }
 
+/// 대표값(`f`/`l`/`p`/`pD`)까지 기존 파일에서 물려받는 노선.
+///
+/// 경의중앙은 API 가 없어 이 도구가 [_getEstimatedSchedule] 의 **하드코딩 추정치**
+/// (평일 05:10~23:40)를 쓴다. 그런데 실제 `t` 는 05:00 에 시작해 자정을 넘겨
+/// 끝나므로 "노선 첫차·막차"라는 이름과 값이 어긋난다. 지금은
+/// `tool/build_center_line_timetable.py` 가 `t` 에서 `f`/`l` 을 도출해 넣으므로,
+/// 이 도구가 그 값을 추정치로 되돌리지 않도록 함께 물려받는다.
+/// (`p`/`pD` 는 아직 추정치가 유일한 출처지만, `f`/`l` 만 물려받고 `p` 를
+///  덮어쓰면 두 값이 서로 어긋나므로 같이 보존한다.)
+const _representativeCarryOverLines = {'경의중앙'};
+
 /// 기존 `line_schedules.json` 의 역별 시간표(`t`/`tE`)를 새 엔트리에 옮겨 담는다.
 ///
 /// 이 도구는 노선 대표값(`f`/`l`/`p`/`pD`)만 계산한다. 역별 시간표는 별개 수집
 /// 도구들의 산출물이라 여기서 재현할 수 없으므로, 덮어쓰기 전에 반드시 물려받아야
 /// 한다. 물려받지 않으면 한 번 실행으로 23개 노선의 역별 시간표가 사라진다.
 ///
+/// [_representativeCarryOverLines] 의 노선은 대표값까지 물려받는다.
+///
 /// 기존 파일이 없으면(최초 생성) 아무것도 하지 않는다. 파싱에 실패하면 **예외를
 /// 던져 중단한다** — 조용히 빈 손으로 덮어쓰는 것이 가장 위험한 실패다.
 ///
-/// 반환값은 역별 시간표를 물려받은 노선 수(로그용).
+/// 반환값은 무언가를 물려받은 노선 수(로그용). 대부분은 역별 시간표이지만,
+/// [_representativeCarryOverLines] 의 노선은 대표값만으로도 집계된다.
 int _carryOverStationTimetables(
   String path,
   List<Map<String, dynamic>> schedules,
@@ -542,7 +564,10 @@ int _carryOverStationTimetables(
       if (prevDay is! Map<String, dynamic> || newDay is! Map<String, dynamic>) {
         continue;
       }
-      for (final tableKey in const ['t', 'tE']) {
+      final keys = _representativeCarryOverLines.contains(entry['id'])
+          ? const ['t', 'tE', 'f', 'l', 'p', 'pD']
+          : const ['t', 'tE'];
+      for (final tableKey in keys) {
         final table = prevDay[tableKey];
         if (table != null) {
           newDay[tableKey] = table;
