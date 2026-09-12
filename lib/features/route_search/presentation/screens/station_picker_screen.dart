@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/line_colors.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
+import '../../../../core/utils/chosung_search.dart';
 import '../../../../core/utils/same_station.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../settings/presentation/providers/home_station_provider.dart';
@@ -63,7 +64,7 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
               controller: _controller,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: '역 이름을 입력하세요',
+                hintText: '역 이름 또는 초성 검색',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
@@ -86,11 +87,23 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
           Expanded(
             child: stationsAsync.when(
               data: (stations) {
-                final filtered = _query.isEmpty
+                // 초성 검색 지원: 'ㄱㄴ' → 강남. 초성이 섞이지 않은 검색어는
+                // 기존 부분일치와 동작이 같다 — [matchesStationQuery].
+                //
+                // 엄격 매칭이 비면 조합 중인 종성을 떼어 한 번 더 거른다
+                // ('사당' 입력 중 '삳' 한 타에 목록이 비는 것 방지). 결과가
+                // 있을 때는 켜지 않아 평소 매칭 범위는 넓어지지 않는다.
+                var filtered = _query.isEmpty
                     ? stations
                     : stations
-                        .where((s) => s.name.contains(_query))
+                        .where((s) => matchesStationQuery(s.name, _query))
                         .toList();
+                if (filtered.isEmpty && _query.isNotEmpty) {
+                  filtered = stations
+                      .where((s) => matchesStationQuery(s.name, _query,
+                          splitTrailingJamo: true))
+                      .toList();
+                }
 
                 if (filtered.isEmpty) {
                   return Center(

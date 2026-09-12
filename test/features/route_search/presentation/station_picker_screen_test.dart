@@ -106,6 +106,65 @@ void main() {
     );
   }
 
+  group('초성 검색', () {
+    testWidgets('초성만 입력해도 해당 역이 걸린다', (tester) async {
+      await tester.pumpWidget(buildHarness());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'ㅈㅅㅅㄴ');
+      await tester.pumpAndSettle();
+
+      expect(find.text('잠실새내'), findsOneWidget);
+      expect(find.text('여의도'), findsNothing);
+      expect(find.text('종합운동장'), findsNothing);
+    });
+
+    testWidgets('완성형 검색은 기존과 동일하게 동작한다', (tester) async {
+      await tester.pumpWidget(buildHarness());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '여의');
+      await tester.pumpAndSettle();
+
+      expect(find.text('여의도'), findsOneWidget);
+      expect(find.text('잠실새내'), findsNothing);
+    });
+
+    testWidgets('조합 중 종성이 흡수돼도 목록이 비지 않는다', (tester) async {
+      await tester.pumpWidget(buildHarness());
+      await tester.pumpAndSettle();
+
+      // '여의도' 를 치는 도중 ㄷ 이 앞 글자 '의' 의 종성으로 흡수된 상태.
+      // IME 는 이때 'ㄷ' 이 아니라 '여읟' 을 내보낸다.
+      await tester.enterText(find.byType(TextField), '여읟');
+      await tester.pumpAndSettle();
+
+      expect(find.text('여의도'), findsOneWidget);
+      expect(find.text('검색 결과가 없습니다'), findsNothing);
+    });
+
+    testWidgets('겹받침으로 흡수된 조합 중 상태도 복구된다', (tester) async {
+      await tester.pumpWidget(buildHarness());
+      await tester.pumpAndSettle();
+
+      // '잠실새내' 를 치는 도중 ㅅ 이 '실' 의 종성 ㄹ 과 겹쳐 ㄽ 이 된 상태.
+      await tester.enterText(find.byType(TextField), '잠싨');
+      await tester.pumpAndSettle();
+
+      expect(find.text('잠실새내'), findsOneWidget);
+    });
+
+    testWidgets('매칭이 없으면 안내 문구가 그대로 보인다', (tester) async {
+      await tester.pumpWidget(buildHarness());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'ㅋㅋㅋ');
+      await tester.pumpAndSettle();
+
+      expect(find.text('검색 결과가 없습니다'), findsOneWidget);
+    });
+  });
+
   testWidgets('환승역은 중복 제거되어 1개만 표시된다', (tester) async {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
