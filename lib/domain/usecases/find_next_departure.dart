@@ -169,7 +169,39 @@ DateTime? _findNextByHeadway(
     return null;
   }
 
-  return _nextInPeriod(daySchedule, currentMinutes, now, currentMinutes);
+  final inPeriod = _nextInPeriod(
+    daySchedule,
+    currentMinutes,
+    now,
+    currentMinutes,
+  );
+  if (inPeriod != null) return inPeriod;
+
+  // 여기까지 왔다는 건 "첫차는 지났고 막차는 아직인데, 지금을 덮는 배차 band 가
+  // 없다"는 뜻이다. 도달 경로가 **둘**이고 처리가 다르다:
+  //
+  //  (i) `f < p[0].start` — 첫차와 첫 band 사이. 경춘 주말 하행(05:32 vs 06:00),
+  //      경강 상행(05:30 vs 06:00). 여기에 null 을 돌려주면 상위가 **"운행 종료"로
+  //      오판**한다(첫차 직후인데!). 아래에서 다음 band 시작을 준다.
+  //  (ii) `l > p.last.end` — 마지막 band 는 끝났는데 막차는 아직. 경의중앙
+  //      (band 끝 23:40 vs `l` 00:39), 김포골드(23:30 vs 00:58), 경강 주말 하행.
+  //      이 경우 `_findNextPeriod` 도 빈손이라 **여전히 null 이 나간다.**
+  //      배차간격으로 그 구간을 메우면 실재하지 않는 심야 출발을 지어내므로
+  //      의도적으로 두는 쪽이다(`timetable.md` 의 "꼬리 갭" 항목).
+  //
+  // 두 경우 모두 현재는 `t` 가 없는 **종점의 진행 불가 방향**에서만 도달한다 —
+  // 호출부가 구간 출발역을 넘기므로 앱에서는 사실상 발생하지 않는다. 이 보정의
+  // 값어치는 지금 데이터 교정이 아니라, `t` 없는 중간역이 생겼을 때의 방어선이다.
+  //
+  // `_findNextPeriod` 는 band **사이** 공백에도 같은 답을 준다. 현재 데이터에 그런
+  // 공백은 없지만(전 노선·요일 실측 0건), 이는 `_nextInPeriod` 가 그리드를 넘길 때
+  // 이미 쓰는 의미론과 같다 — 좁히면 "그리드로 진입하면 건너뛰고, 공백 한복판에서
+  // 조회하면 운행 종료"라는 두 답이 생긴다.
+  final nextPeriod = _findNextPeriod(daySchedule, currentMinutes);
+  if (nextPeriod != null) {
+    return _minutesToDateTime(now, nextPeriod.startMinutes);
+  }
+  return null;
 }
 
 /// 자정 직후, 전날 운영일에 편성된 "자정 넘김" 배차 period에서 다음 출발을 찾는다.

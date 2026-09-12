@@ -113,6 +113,150 @@ void main() {
     });
   });
 
+  group('findNextDeparture - 첫차와 첫 배차 band 사이 (구간 결함 회귀)', () {
+    /// `f` 가 `p[0].start` 보다 이른 스케줄. 실제 데이터에 있는 형태다 —
+    /// 경춘 주말 하행(f 05:32 vs band 06:00), 경강 상행(05:30 vs 06:00).
+    ///
+    /// 이 구간은 `currentMinutes < firstMin` 분기(첫차 반환)를 이미 지났고,
+    /// `_findPeriod` 는 덮는 band 가 없어 빈손이다. 보정이 없으면 함수 전체가
+    /// null 을 돌려 상위가 **"운행 종료"로 오판**한다 — 첫차 직후인데도.
+    LineSchedule gapSchedule() {
+      return const LineSchedule(
+        lineId: '경강',
+        weekday: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '23:40',
+          periods: [
+            TimePeriod(start: '05:10', end: '07:00', headwayMinutes: 20),
+            TimePeriod(start: '07:00', end: '23:40', headwayMinutes: 10),
+          ],
+        ),
+        // 주말도 같은 형태로 둔다(이 그룹은 평일만 조회한다).
+        weekend: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '23:40',
+          periods: [
+            TimePeriod(start: '05:10', end: '23:40', headwayMinutes: 20),
+          ],
+        ),
+      );
+    }
+
+    test('첫차 이후·첫 band 이전이면 첫 band 시작을 반환한다', () {
+      // 평일 05:05 — 첫차 05:00 은 지났고 첫 band 는 05:10 시작.
+      final now = DateTime(2026, 2, 23, 5, 5); // 월요일
+      final result = findNextDeparture(schedule: gapSchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 23, 5, 10));
+    });
+
+    test('첫차 정각에도 "운행 종료"로 떨어지지 않는다', () {
+      final now = DateTime(2026, 2, 23, 5, 0);
+      final result = findNextDeparture(schedule: gapSchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 23, 5, 10));
+    });
+
+    test('첫차 직전은 종전대로 첫차 시각을 반환한다', () {
+      final now = DateTime(2026, 2, 23, 4, 59);
+      final result = findNextDeparture(schedule: gapSchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 23, 5, 0));
+    });
+
+    test('band 안에서는 종전대로 배차 그리드를 탄다', () {
+      // 05:10 + 20분 그리드 → 05:15 조회 시 05:30.
+      final now = DateTime(2026, 2, 23, 5, 15);
+      final result = findNextDeparture(schedule: gapSchedule(), now: now);
+
+      expect(result, DateTime(2026, 2, 23, 5, 30));
+    });
+
+    test('막차 이후는 종전대로 null 이다 (보정이 이 판정을 덮지 않는다)', () {
+      final now = DateTime(2026, 2, 23, 23, 45);
+      final result = findNextDeparture(schedule: gapSchedule(), now: now);
+
+      expect(result, isNull);
+    });
+
+    test('band 사이 공백에서도 다음 band 시작을 반환한다', () {
+      // 현재 데이터에 band 사이 공백은 없지만(전 노선·요일 실측 0건), 보정이
+      // 그 경우에도 동작한다는 것이 코드 주석의 계약이라 고정한다.
+      // `_nextInPeriod` 가 그리드를 band 끝 너머로 넘길 때 이미 쓰는 의미론과
+      // 같다 — 좁히면 "그리드로 진입하면 건너뛰고, 공백 한복판에서 조회하면
+      // 운행 종료"라는 두 답이 생긴다.
+      const holeSchedule = LineSchedule(
+        lineId: 'test',
+        weekday: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '23:40',
+          periods: [
+            TimePeriod(start: '05:00', end: '06:00', headwayMinutes: 20),
+            TimePeriod(start: '06:30', end: '23:40', headwayMinutes: 10),
+          ],
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '23:40',
+          periods: [
+            TimePeriod(start: '05:00', end: '23:40', headwayMinutes: 20),
+          ],
+        ),
+      );
+
+      // 06:10 — 첫 band(~06:00)는 끝났고 둘째 band 는 06:30 시작.
+      final now = DateTime(2026, 2, 23, 6, 10);
+      final result = findNextDeparture(schedule: holeSchedule, now: now);
+
+      expect(result, DateTime(2026, 2, 23, 6, 30));
+    });
+
+    test('[현재 동작 문서화] 마지막 band 이후·막차 이전은 여전히 null 이다', () {
+      // 이 보정의 대칭 케이스(`l > p.last.end`). 실데이터에 있다 —
+      // 경의중앙 평일(band 끝 23:40 vs `l` 00:39), 김포골드 평일(23:30 vs 00:58).
+      // `_findNextPeriod` 도 빈손이라 null 이 나가며, 이는 **의도된 동작**이다:
+      // 배차간격으로 메우면 실재하지 않는 심야 출발을 지어낸다
+      // (`timetable.md` 의 "꼬리 갭" 항목). 닫게 되면 이 테스트가 먼저 깨진다.
+      const tailSchedule = LineSchedule(
+        lineId: 'test',
+        weekday: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '00:39',
+          periods: [
+            TimePeriod(start: '05:00', end: '23:40', headwayMinutes: 20),
+          ],
+        ),
+        weekend: DaySchedule(
+          firstTrain: '05:00',
+          lastTrain: '23:40',
+          periods: [
+            TimePeriod(start: '05:00', end: '23:40', headwayMinutes: 20),
+          ],
+        ),
+      );
+
+      // 23:45 — band 는 23:40 에 끝났고 막차(00:39)는 아직.
+      final now = DateTime(2026, 2, 23, 23, 45);
+      final result = findNextDeparture(schedule: tailSchedule, now: now);
+
+      expect(result, isNull);
+    });
+
+    test('급행 조회는 이 보정을 타지 않는다 (배차간격 폴백 금지)', () {
+      // 급행은 `_findNextByHeadway` 진입 전에 차단된다 —
+      // `periods` 는 완행 간격이라 없는 급행을 만들기 때문.
+      // 회귀 가드: express_no_headway_fallback_test.dart
+      final now = DateTime(2026, 2, 23, 5, 5);
+      final result = findNextDeparture(
+        schedule: gapSchedule(),
+        now: now,
+        express: true,
+      );
+
+      expect(result, isNull);
+    });
+  });
+
   group('findNextDeparture - 방향별', () {
     LineSchedule makeScheduleWithDown() {
       return const LineSchedule(
