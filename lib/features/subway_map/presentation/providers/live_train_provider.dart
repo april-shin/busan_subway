@@ -271,7 +271,13 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   // 열차를 지워버릴 수 있다. 그 경우 필터를 끈다.
   final routeStartStation =
       stationsById[routeFilter.routeStationIds.firstOrNull ?? '']?.firstOrNull;
-  final branchFilterEnabled = routeStartStation?.name == departureStationName;
+  //
+  // 2호선은 유령 판정에서 **제외한다**(사용자 결정). 순환선이라 행선지
+  // (`bstatnNm`)가 실제 운행 범위를 나타내지 않는다 — 한 바퀴를 계속 도는
+  // 열차도 "성수행" 처럼 임의의 역을 행선지로 보고하므로, 행선지 기준 완주
+  // 판정이 정상 열차를 유령으로 오분류한다.
+  final branchFilterEnabled = routeFilter.lineId != '2' &&
+      routeStartStation?.name == departureStationName;
 
   // 완주 판정 메모 — 같은 행선지의 열차가 여러 대 오므로 행선지별 1회만 계산한다.
   final coverageCache = <String, RouteCoverage>{};

@@ -123,4 +123,50 @@ void main() {
     expect(trains.every((t) => t.isGhost), isTrue);
   });
 
+  test('2호선은 행선지가 하차역 앞이어도 유령으로 그리지 않는다', () async {
+    // 강남 → 삼성(외선, ID 감소 방향). 행선지 "선릉" 은 하차역 앞이라 일반
+    // 판정이면 중간 종착(유령)이지만, 2호선은 판정에서 제외한다.
+    final container = ProviderContainer(
+      overrides: [
+        allStationsProvider.overrideWith((ref) async => stations),
+        allConnectionsProvider.overrideWith((ref) async => connections),
+        arrivalInfoProvider('강남').overrideWith(
+          (ref) async => [
+            ArrivalInfo(
+              subwayId: '1002', // 2호선
+              stationName: '강남',
+              trainLineNm: '선릉행',
+              direction: '외선',
+              arrivalMessage: '곧 도착',
+              destination: '선릉',
+              trainType: '일반',
+              arrivalSeconds: 60,
+              receivedAt: DateTime.now(),
+              trainNo: '2001',
+              currentStationName: '교대',
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(selectedStationsProvider.notifier).setBoth(
+          stationOf('강남', '2'),
+          stationOf('삼성', '2'),
+        );
+    container.read(activeRouteFilterProvider.notifier).state = ActiveRouteFilter(
+      lineId: '2',
+      isDown: true,
+      routeStationIds: [
+        for (final n in ['강남', '역삼', '선릉', '삼성']) stationOf(n, '2').id,
+      ],
+    );
+
+    final trains = await container.read(liveTrainsProvider.future);
+
+    final train = trains.where((t) => t.trainNo == '2001');
+    expect(train, hasLength(1), reason: '2호선 열차가 지도에서 사라지면 안 된다');
+    expect(train.single.isGhost, isFalse, reason: '2호선은 유령 판정 제외');
+  });
 }

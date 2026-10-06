@@ -251,5 +251,24 @@ void main() {
       expect(filter('마천'), isFalse, reason: '지선 분기');
       expect(filter('강동'), isFalse, reason: '중간 종착');
     });
+
+    test('2호선은 행선지와 무관하게 모든 열차를 통과시킨다', () {
+      // 강남 → 삼성(외선). "선릉행" 은 일반 판정이면 중간 종착이지만, 순환선은
+      // 행선지가 운행 범위를 뜻하지 않으므로 판정하지 않는다.
+      expect(
+        coverageOn('선릉', const ['강남', '역삼', '선릉', '삼성'],
+            lineId: '2', isDown: true),
+        RouteCoverage.earlyTerminus,
+        reason: '전제: 일반 판정이라면 중간 종착',
+      );
+      final filter = makeDestinationBranchFilter(
+        routeStationIds: routeIds(const ['강남', '역삼', '선릉', '삼성'], '2'),
+        lineId: '2',
+        isDown: true,
+        stations: stations,
+        connections: connections,
+      );
+      expect(filter('선릉'), isTrue);
+    });
   });
 }
