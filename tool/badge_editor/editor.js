@@ -192,7 +192,11 @@
   // ---------------------------------------------------------------- 패널
   var panel = el('div', { id: 'be-panel' });
   panel.innerHTML =
-    '<div class="be-title">노선 배지 위치 보정</div>' +
+    '<div class="be-head">' +
+      '<div class="be-title">노선 배지 위치 보정</div>' +
+      '<button id="be-side" title="좌/우 반대편으로">⇄</button>' +
+      '<button id="be-collapse" title="접기/펴기">–</button>' +
+    '</div>' +
     '<div class="be-state" id="be-state"></div>' +
     '<div class="be-hint">배지를 드래그해 옮긴다. 방향키 0.5px(Shift 5px) · Del 자동 배치로 · Ctrl+Z 취소 · Ctrl+S 저장. 지도 줌·팬·휠은 그대로.</div>' +
     '<div class="be-legend"><i class="l-manual"></i>수동 보정 <i class="l-bad"></i>위반(경고) <i class="l-sel"></i>선택</div>' +
@@ -210,6 +214,90 @@
     panel.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: t !== 'wheel' ? true : true });
   });
   var $ = function (id) { return document.getElementById(id); };
+
+  // ------------------------------------------------- 패널 위치/접기 (지도 가림 방지)
+  // 제목줄을 잡고 끌면 패널이 움직이고, ⇄ 는 좌/우 끝을 오간다. 접으면 제목만 남는다.
+  // 위치·접힘 상태는 localStorage 에 남겨 새로고침·재빌드 후에도 유지된다.
+  var PANEL_KEY = 'badge-editor.panel';
+  function clampPanel(left, top) {
+    var w = panel.offsetWidth, h = panel.offsetHeight;
+    return {
+      left: Math.max(4, Math.min(window.innerWidth - w - 4, left)),
+      top: Math.max(4, Math.min(window.innerHeight - Math.min(h, 80) - 4, top))
+    };
+  }
+  function applyPanel(st) {
+    panel.classList.toggle('be-collapsed', !!st.collapsed);
+    var btn = $('be-collapse');
+    if (btn) btn.textContent = st.collapsed ? '+' : '–';
+    if (typeof st.left === 'number' && typeof st.top === 'number') {
+      var c = clampPanel(st.left, st.top);
+      panel.style.right = 'auto';
+      panel.style.left = c.left + 'px';
+      panel.style.top = c.top + 'px';
+    }
+  }
+  function panelState() {
+    var st = { collapsed: panel.classList.contains('be-collapsed') };
+    if (panel.style.left && panel.style.left !== 'auto') {
+      st.left = parseFloat(panel.style.left);
+      st.top = parseFloat(panel.style.top);
+    }
+    return st;
+  }
+  function savePanel() {
+    try { localStorage.setItem(PANEL_KEY, JSON.stringify(panelState())); } catch (e) {}
+  }
+  (function restorePanel() {
+    var st = null;
+    try { st = JSON.parse(localStorage.getItem(PANEL_KEY) || 'null'); } catch (e) {}
+    if (st && typeof st === 'object') applyPanel(st);
+  })();
+  $('be-collapse').addEventListener('click', function () {
+    panel.classList.toggle('be-collapsed');
+    $('be-collapse').textContent = panel.classList.contains('be-collapsed') ? '+' : '–';
+    savePanel();
+  });
+  $('be-side').addEventListener('click', function () {
+    var r = panel.getBoundingClientRect();
+    var toLeft = r.left + r.width / 2 > window.innerWidth / 2;
+    applyPanel({
+      collapsed: panel.classList.contains('be-collapsed'),
+      left: toLeft ? 12 : window.innerWidth - panel.offsetWidth - 12,
+      top: r.top
+    });
+    savePanel();
+  });
+  (function dragPanel() {
+    var head = panel.querySelector('.be-head'), from = null;
+    head.addEventListener('pointerdown', function (ev) {
+      if (ev.target.tagName === 'BUTTON') return;      // 버튼 클릭은 드래그가 아니다
+      var r = panel.getBoundingClientRect();
+      from = { x: ev.clientX, y: ev.clientY, left: r.left, top: r.top };
+      panel.classList.add('be-dragging');
+      head.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    });
+    head.addEventListener('pointermove', function (ev) {
+      if (!from) return;
+      applyPanel({
+        collapsed: panel.classList.contains('be-collapsed'),
+        left: from.left + (ev.clientX - from.x),
+        top: from.top + (ev.clientY - from.y)
+      });
+    });
+    ['pointerup', 'pointercancel'].forEach(function (t) {
+      head.addEventListener(t, function (ev) {
+        if (!from) return;
+        from = null;
+        panel.classList.remove('be-dragging');
+        try { head.releasePointerCapture(ev.pointerId); } catch (e) {}
+        savePanel();
+      });
+    });
+  })();
+  // 창 크기가 바뀌면 패널이 화면 밖으로 나가지 않게 당겨 온다.
+  window.addEventListener('resize', function () { applyPanel(panelState()); });
 
   function bannerLines() {
     var out = [];

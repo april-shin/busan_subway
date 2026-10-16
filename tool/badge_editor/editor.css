@@ -11,6 +11,20 @@
   pointer-events: auto; user-select: none; -webkit-user-select: none;
 }
 #be-panel * { box-sizing: border-box; }
+/* 제목줄 = 드래그 손잡이 + 접기/좌우 버튼. 패널이 지도를 가려 작업을 못 하는
+   상황을 막는다(2026-10-16 사용자 제보: 우측이 가려 배지를 못 만짐). */
+#be-panel .be-head { display: flex; align-items: center; gap: 4px; cursor: move; }
+#be-panel .be-head .be-title { flex: 1 1 auto; margin-bottom: 0; }
+#be-panel .be-head button {
+  flex: 0 0 auto; width: 26px; height: 24px; padding: 0; line-height: 1;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+#be-panel.be-collapsed { width: auto; }
+#be-panel.be-collapsed > *:not(.be-head) { display: none; }
+#be-panel.be-collapsed .be-title { white-space: nowrap; }
+#be-panel.be-dragging { opacity: 0.85; }
+/* 경고가 많아도(31건 보정 시 8건 관측) 패널이 화면 높이를 다 먹지 않게 한다. */
+#be-panel #be-warns { max-height: 168px; overflow-y: auto; }
 #be-panel .be-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
 #be-panel .be-state { font-size: 12px; color: #4a4f5a; margin-bottom: 6px; }
 #be-panel .be-state b { color: #1b1d22; }
