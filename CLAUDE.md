@@ -256,6 +256,10 @@ lib/
 
 23개 노선 (1~9호선, 신분당, 경의중앙, 경춘, 공항철도 등). 상세: `.claude/docs/lines-reference.md`
 
+**미개통·근거부족으로 일부러 비워 둔 데이터**는 `.claude/docs/pending-data.md` 에 모아 둔다
+(결정 시점·근거·복구 절차 포함). "왜 이 역은 환승역이 아니지?" 류의 의문이 들면 먼저 볼 것 —
+현재 등재: 평택지제 GTX-A 환승 표시 해제, 기흥 환승시간 근거 약함, 에버라인 기흥→강남대 추정치.
+
 ### 상태 관리
 
 Riverpod 3.x + 코드 생성 (`@riverpod` 어노테이션). `StateProvider`/`StateNotifier` 는
@@ -423,6 +427,7 @@ Expanded → WebViewWidget (전체 화면)
 │       └── SKILL.md
 └── docs/
     ├── lines-reference.md
+    ├── pending-data.md
     ├── svg-pipeline.md
     └── timetable.md
 ```

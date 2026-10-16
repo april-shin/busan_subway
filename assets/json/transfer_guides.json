@@ -587,6 +587,18 @@
     "door": 3,
     "note": null
   },
+  "기흥_수인분당_down_에버라인": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
+  "기흥_수인분당_up_에버라인": {
+    "doorSide": null,
+    "car": 1,
+    "door": 3,
+    "note": null
+  },
   "김포공항_5_down_9": {
     "doorSide": null,
     "car": 1,
@@ -3921,6 +3933,30 @@
     "doorSide": null,
     "car": 3,
     "door": 3,
+    "note": null
+  },
+  "회룡_1_down_의정부": {
+    "doorSide": null,
+    "car": 8,
+    "door": 3,
+    "note": null
+  },
+  "회룡_1_up_의정부": {
+    "doorSide": null,
+    "car": 5,
+    "door": 3,
+    "note": null
+  },
+  "회룡_의정부_down_1": {
+    "doorSide": null,
+    "car": 1,
+    "door": 1,
+    "note": null
+  },
+  "회룡_의정부_up_1": {
+    "doorSide": null,
+    "car": 2,
+    "door": 1,
     "note": null
   },
   "효창공원앞_6_down_경의중앙": {

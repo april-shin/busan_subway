@@ -219,11 +219,14 @@ void main() {
     });
   });
 
-  group('신설 환승역(기흥·회룡)은 역별 시간표가 없어도 배차간격으로 폴백한다', () {
-    // line_schedules.json 의 역별 시간표(`t`)는 E01~E14 / U01~U14 만 갖는다.
-    // E15(기흥)·U15(회룡)는 `t` 에 없으므로 완행 배차간격 폴백을 타야 하며,
-    // 두 노선은 급행이 없어(express_skip_edges.json 미등재) "급행 폴백 금지" 규칙과
-    // 무관하다.
+  group('신설 환승역(기흥·회룡)에서 다음 출발 시각이 나온다', () {
+    // 두 역은 출처가 다르다 — 어느 쪽이든 결과가 나와야 한다.
+    //  - U15(회룡): 2026-10-16 에 `build_gettrainsch_timetable.dart --lines=의정부
+    //    --stations=U15` 로 역별 시간표(`t`)를 넣었다. 즉 **실제 시간표**를 탄다.
+    //  - E15(기흥): 에버라인은 getTrainSch 미지원이라 `t` 가 없다. 완행 **배차간격
+    //    폴백**을 탄다. (`.claude/docs/pending-data.md` 3번 참조)
+    // 두 노선 모두 급행이 없어(express_skip_edges.json 미등재) "급행 폴백 금지"
+    // 규칙과는 무관하다.
     for (final (lineId, stationId, isDown) in [
       ('에버라인', 'E15', true),
       ('의정부', 'U15', true),

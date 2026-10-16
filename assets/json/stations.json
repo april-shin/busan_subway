@@ -1183,10 +1183,9 @@
     "longitude": 127.057,
     "svgX": 1512.0,
     "svgY": 1496.0,
-    "isTransfer": true,
+    "isTransfer": false,
     "transferLines": [
-      "1",
-      "GTX-A"
+      "1"
     ]
   },
   {
