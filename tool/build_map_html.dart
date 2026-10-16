@@ -45,9 +45,15 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'line_badges.dart';
+import 'map_constants.dart';
+
 void main() {
   const svgPath = 'assets/svg/seoul_metro_map.svg';
   const htmlPath = 'assets/html/map.html';
+  const stationsJsonPath = 'assets/json/stations.json';
+  const linesJsonPath = 'assets/json/lines.json';
+  const connectionsJsonPath = 'assets/json/connections.json';
 
   final svgFile = File(svgPath);
   if (!svgFile.existsSync()) {
@@ -55,7 +61,85 @@ void main() {
     exit(1);
   }
 
+  // 라벨 2단(tier) 정책(_workspace/16_requirements_label_zoom.md) — 환승역
+  // 라벨에만 최소 크기 하한을 유지하기 위해 stations.json 의 isTransfer 역
+  // 이름 집합이 필요하다.
+  final stationsJsonFile = File(stationsJsonPath);
+  if (!stationsJsonFile.existsSync()) {
+    stderr.writeln('입력 파일 없음: $stationsJsonPath');
+    exit(1);
+  }
+  final stationsData =
+      jsonDecode(stationsJsonFile.readAsStringSync()) as List<dynamic>;
+  final allStationNames = <String>{};
+  final transferStationNames = <String>{};
+  for (var i = 0; i < stationsData.length; i++) {
+    final station = stationsData[i] as Map<String, dynamic>;
+    final rawName = station['name'];
+    if (rawName is! String) {
+      stderr.writeln(
+        '$stationsJsonPath 의 $i 번째 항목(id=${station['id']})에 문자열 '
+        '"name" 필드가 없음: $rawName',
+      );
+      exit(1);
+    }
+    allStationNames.add(rawName);
+    if (station['isTransfer'] == true) {
+      transferStationNames.add(rawName);
+    }
+  }
+  // [2026-09-22 리뷰 수정] isTransfer 키가 사라지거나 이름이 바뀌면 위 루프가
+  // 조용히 transferStationNames 를 빈 집합으로 채우고, 그 결과 모든 라벨이
+  // 소리 없이 일반역으로 취급되어 라벨 2단(tier) 정책 자체가 증발한다.
+  // 이 상태로 map.html 을 생성하면 안 되므로 빌드를 실패시킨다.
+  if (transferStationNames.isEmpty) {
+    stderr.writeln(
+      '$stationsJsonPath 에서 isTransfer=true 인 역을 하나도 찾지 못함 — '
+      '스키마가 바뀌었거나(isTransfer 키 소실) 데이터가 비어 있을 수 있다. '
+      '라벨 2단(tier) 정책이 증발하는 것을 막기 위해 빌드를 중단한다.',
+    );
+    exit(1);
+  }
+
   var svgContent = svgFile.readAsStringSync();
+
+  // 노선 이름 pill 배지(P2-4, _workspace/18_requirements_line_badges.md) — 종점
+  // 좌표·노선 목록을 lines.json/connections.json/stations.json 에서 도출한다.
+  // 노선 id↔SVG 코드 매핑이나 종점 선정이 데이터와 어긋나면 buildLineBadges 가
+  // StateError 를 던져 빌드가 중단된다(조용히 틀린 배지를 내보내지 않기 위해).
+  for (final path in [linesJsonPath, connectionsJsonPath]) {
+    if (!File(path).existsSync()) {
+      stderr.writeln('입력 파일 없음: $path');
+      exit(1);
+    }
+  }
+  final LineBadgeResult lineBadges;
+  try {
+    // 수동 위치 보정(data/badge_offsets.json, tool/badge_editor.dart 가 기록). 파일이 없거나 비어 있으면
+    // 보정 없음 — 산출물이 보정 기능 도입 전과 바이트 동일하다. 문법이 깨졌으면 StateError 로 빌드를 막는다.
+    final offsetsFile = File(kBadgeOffsetsPath);
+    final badgeOffsets = BadgeOffsets.parse(
+        offsetsFile.existsSync() ? offsetsFile.readAsStringSync() : null);
+    lineBadges = buildLineBadges(
+      svgContent: svgContent,
+      stationsJson: stationsData,
+      linesJson:
+          jsonDecode(File(linesJsonPath).readAsStringSync()) as List<dynamic>,
+      connectionsJson: jsonDecode(File(connectionsJsonPath).readAsStringSync())
+          as List<dynamic>,
+      transferStationNames: transferStationNames,
+      offsets: badgeOffsets,
+    );
+  } on StateError catch (e) {
+    stderr.writeln('노선 배지 생성 실패: ${e.message}');
+    exit(1);
+  }
+  for (final line in lineBadges.summary) {
+    stdout.writeln(line);
+  }
+  if (Platform.environment['LINE_BADGE_VERBOSE'] == '1') {
+    lineBadges.details.forEach(stdout.writeln);
+  }
 
   // SVG 최소 변환
   svgContent = svgContent.replaceFirst(
@@ -76,7 +160,13 @@ void main() {
   }
   final trainImageBase64 = base64Encode(trainImageFile.readAsBytesSync());
 
-  final html = _buildHtml(svgContent, trainImageBase64);
+  final html = _buildHtml(
+    svgContent,
+    trainImageBase64,
+    transferStationNames,
+    allStationNames,
+    lineBadges.svgFragment,
+  );
 
   final htmlFile = File(htmlPath);
   htmlFile.parent.createSync(recursive: true);
@@ -90,12 +180,96 @@ void main() {
   stdout.writeln('  HTML: ${(htmlSize / 1024).toStringAsFixed(1)}KB');
 }
 
-String _buildHtml(String svgContent, String trainImageBase64) {
+String _buildHtml(
+  String svgContent,
+  String trainImageBase64,
+  Set<String> transferStationNames,
+  Set<String> allStationNames,
+  String lineBadgesSvg,
+) {
+  // JS lineIdToDataLine 은 line_badges.dart 의 kLineIdToDataLine 에서 생성한다
+  // (배지 색·기하 검증과 같은 단일 소스).
+  final lineIdToDataLineJs = kLineIdToDataLine.entries
+      .map((e) => "    '${e.key}': ['${e.value}']")
+      .join(',\n');
+
   // text 요소를 별도 레이어로 분리 (줌아웃 시 역명 크기 유지)
   final textPattern = RegExp(r'<text[^>]*>.*?</text>', dotAll: true);
-  final textElements =
-      textPattern.allMatches(svgContent).map((m) => m.group(0)!).join('\n');
+  // [2026-09-22 리뷰 수정] data-station/class 매칭·치환은 반드시 여는 태그
+  // (<text ...>)로 스코프를 한정한다. 이전엔 <text>...</text> 요소 전체를
+  // 대상으로 삼아, 내부 <tspan>(다줄 라벨에 존재)에 class 속성이 있는 경우
+  // "혹시 class 가 있으면 병합" 방어 분기가 tspan 의 class 를 잘못 바꾸고
+  // text 자신에는 tl-major 를 못 붙이는 오동작을 낼 수 있었다.
+  final openTagPattern = RegExp(r'^<text[^>]*>');
+  final dataStationPattern = RegExp(r'data-station="([^"]*)"');
+  // `\s` 앵커를 둬 `data-class="..."` 같은 접미 속성을 class 로 오인하지 않는다.
+  final classPattern = RegExp(r'\sclass="([^"]*)"');
+
+  // 라벨 2단(tier) 정책 — 환승역 라벨에 tl-major 클래스를 부여한다. 원본 SVG
+  // 의 <text> 는 class 속성이 없음(확인됨)이지만, 혹시 있으면 병합 처리한다.
+  var totalLabelCount = 0;
+  var majorLabelCount = 0;
+  final unknownStationNames = <String>{};
+
+  final processedTextEls = textPattern.allMatches(svgContent).map((m) {
+    final el = m.group(0)!;
+    totalLabelCount++;
+
+    final openTagMatch = openTagPattern.firstMatch(el);
+    if (openTagMatch == null) return el; // 방어적 — <text 로 시작하지 않으면 손대지 않는다
+    final openTag = openTagMatch.group(0)!;
+
+    final stationMatch = dataStationPattern.firstMatch(openTag);
+    if (stationMatch == null) return el;
+
+    // 런타임(buildTextTargets)의 정규화(줄바꿈 문자 제거)와 동등하게, 빌드
+    // 타임에는 아직 XML 엔티티로 인코딩된 &#10;/&#13; 도 함께 제거한다.
+    // 내부 공백(예: "사우 (김포시청)")은 stations.json 실제 이름의 일부라
+    // 제거하지 않고, 앞뒤 공백만 trim() 한다.
+    final normalizedName = stationMatch
+        .group(1)!
+        .replaceAll('&#10;', '')
+        .replaceAll('&#13;', '')
+        .replaceAll('\n', '')
+        .replaceAll('\r', '')
+        .trim();
+
+    if (!allStationNames.contains(normalizedName)) {
+      unknownStationNames.add(normalizedName);
+    }
+    if (!transferStationNames.contains(normalizedName)) return el;
+
+    majorLabelCount++;
+    final existingClassMatch = classPattern.firstMatch(openTag);
+    String newOpenTag;
+    if (existingClassMatch == null) {
+      newOpenTag = openTag.replaceFirst('<text', '<text class="tl-major"');
+    } else {
+      final existingClasses = existingClassMatch.group(1)!.trim();
+      if (existingClasses.split(RegExp(r'\s+')).contains('tl-major')) {
+        return el;
+      }
+      final mergedClasses =
+          existingClasses.isEmpty ? 'tl-major' : '$existingClasses tl-major';
+      // classPattern 이 앞 공백까지 포함하므로 치환문에도 공백을 되돌려 넣는다.
+      newOpenTag =
+          openTag.replaceFirst(classPattern, ' class="$mergedClasses"');
+    }
+    return el.replaceFirst(openTag, newOpenTag);
+  }).toList();
+
+  final textElements = processedTextEls.join('\n');
   final mapOnlyContent = svgContent.replaceAll(textPattern, '');
+
+  stdout.writeln(
+    '역명 라벨 tier 분류: 환승역(tl-major) $majorLabelCount / 전체 $totalLabelCount',
+  );
+  if (unknownStationNames.isNotEmpty) {
+    stderr.writeln(
+      '⚠️ stations.json 에 없는 data-station 이름 '
+      '${unknownStationNames.length}건: ${unknownStationNames.join(', ')}',
+    );
+  }
 
   return '''<!DOCTYPE html>
 <html lang="ko">
@@ -247,8 +421,25 @@ html, body {
      특성이라 위 래퍼 div 가 아니라 이 규칙에 있어야 한다.) */
   overflow: visible;
 }
+/* [라벨 2단(tier) 정책, 2026-09-22] _workspace/16_requirements_label_zoom.md —
+   scale<1 에서 모든 라벨(655개)에 동일하게 1/cs 역보정을 걸면 최대
+   줌아웃(scale=0.5)에서 126개 라벨이 겹치는 컴플레인이 발생했다. 사용자
+   확정 정책: 환승역(119개)만 기존처럼 최소 크기 하한(TEXT_COMP_FLOOR)을
+   유지하고, 일반역(536개)은 보정 없이 `12px × scale` 그대로 축소되게 둔다
+   (정적 bbox 시뮬레이션: 겹침 79쌍 → 5쌍). `text.tl-major` 클래스는 빌드
+   타임에 stations.json `isTransfer` 역 이름과 매칭해 부여한다(아래 main()).
+   일반역 값(`--label-fs`/`--stroke-w`)은 상수 12px/2px 뿐이라 JS 가 아예
+   쓰지 않는다 — updateTextCompensation() 은 `--label-fs-major`/
+   `--stroke-w-major` 두 프로퍼티만 갱신한다.
+   [2026-09-22 리뷰 정정] 이 두 커스텀 프로퍼티는 상속 프로퍼티라 값이
+   바뀌면 스타일 재계산 자체는 여전히 text-layer 의 후손 655개 전체에
+   걸린다 — "리페인트 대상이 655개→119개로 줄어든다"는 표현은 부정확했다.
+   실제로 값이 바뀌어 **레이아웃·페인트가 무효화**되는 건 그 프로퍼티를
+   실제로 소비하는(`var(--label-fs-major, …)`/`var(--stroke-w-major, …)`를
+   쓰는) 환승역 119개뿐이다 — 일반역 536개는 계산된 값 자체가 바뀌지 않아
+   레이아웃/페인트 단계까지 가지 않는다. */
 #text-layer text {
-  font-size: inherit !important;
+  font-size: var(--label-fs, 12px) !important;
   font-weight: 800;
   stroke: white;
   /* [래스터 기아 실험 A, 2026-08-13 — 기각·원복] --stroke-w 커스텀 프로퍼티가
@@ -261,11 +452,39 @@ html, body {
      것으로 확정됐다(비교: 동일하게 매 프레임 transform 을 받는 `<div>`
      `#map-container` 는 0건). 근본 원인이 아니므로 원복한다(v6 구조 변경으로
      이 SVG 루트 자체는 이제 transform 을 받지 않게 됐지만, 이 규칙은 자식
-     상속 프로퍼티 실험의 기록이므로 그대로 둔다). */
+     상속 프로퍼티 실험의 기록이므로 그대로 둔다 — 이 기록 덕에 위 2단 정책이
+     커스텀 프로퍼티(`--label-fs-major`)를 추가로 써도 성능 걱정이 없다는
+     근거가 된다: 무효화는 자식 프로퍼티 메커니즘과 무관하기 때문). */
   stroke-width: var(--stroke-w, 2px);
   paint-order: stroke;
   stroke-linejoin: round;
 }
+#text-layer text.tl-major {
+  /* 환승역 라벨만 기존 정책(scale<1 에서 1/cs 역보정, 최대 줌아웃 9px 하한)을
+     유지한다. 기본값 12px/2px 은 updateTextCompensation() 최초 실행 전
+     (또는 scale>=1 구간, cs===1) 의 폴백이며 일반역과 동일하다. */
+  font-size: var(--label-fs-major, 12px) !important;
+  stroke-width: var(--stroke-w-major, 2px);
+}
+/* [노선 이름 pill 배지, 2026-10-06] _workspace/18_requirements_line_badges.md —
+   전 노선 양 종점의 노선색 pill. 정적 SVG 요소 48개이며 빌드 타임에 위치가
+   확정된다(tool/line_badges.dart). 역명 라벨과 같은 #text-layer 에 올려 라벨 뒤(위)에
+   그린다. **줌아웃 크기 보정은 하지 않는다**(사용자 결정, 2026-10-06) — 배지는 지도
+   좌표계에 고정된 크기라 scale 에 비례해 줄어든다(scale 0.5 에서 글자 6px). 환승역
+   라벨의 --label-fs-major 역보정(2026-09-22 tier 정책)과는 무관하다.
+   `#text-layer text` 의 font-size(!important)/stroke 규칙을 덮기 위해 특이도를
+   올려 둔다(배지 글자엔 흰 외곽선 halo 가 없다). 탭/줌/팬을 가로채지 않도록
+   pointer-events 는 none — #text-layer-wrap 도 이미 none 이라 이중 방어다(래퍼 규칙이
+   바뀌어도 배지가 입력을 가로채지 않도록 남겨 둔다). will-change/레이어 승격은 쓰지
+   않는다 — 정적 요소라 부모(#text-layer-wrap)의 래스터에 그대로 포함된다. */
+#text-layer .lb { pointer-events: none; }
+#text-layer .lb text {
+  font-size: ${jsNum(kBadgeFontPx)}px !important;
+  font-weight: 700;
+  font-family: sans-serif;
+  stroke: none;
+}
+#text-layer .lb rect { stroke: white; stroke-width: 1.5px; }
 /* [래스터 기아 수정 v3, 2026-08] 열차 아이콘(#live-trains 의 개별 <g>)을 각각
    독립 컴포지터 레이어로 승격한다. step() 이 매 rAF 마다 위치를 갱신하는데(원칙 2·4),
    이 승격이 없으면 그 갱신이 #train-layer 전체의 공유 래스터 표면에 다시 그려져야
@@ -407,6 +626,7 @@ $mapOnlyContent
 <svg id="text-layer" xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 2416 1560" width="2416" height="1560">
 $textElements
+$lineBadgesSvg
 </svg>
 </div>
 
@@ -427,16 +647,16 @@ $textElements
   // ============================================================
   // 상수
   // ============================================================
-  var CANVAS_W = 2416, CANVAS_H = 1560;
+  var CANVAS_W = ${jsNum(kCanvasW)}, CANVAS_H = ${jsNum(kCanvasH)};
   var MIN_SCALE = 0.5, MAX_SCALE = 5.0;
   var TAP_RADIUS = 12;
-  var TEXT_BASE_FONT_SIZE = 12;
+  var TEXT_BASE_FONT_SIZE = ${jsNum(kTextBaseFontSize)};
   var TEXT_BASE_STROKE_W = 2;
   // 줌아웃 시 라벨을 화면상 완전 고정(12px)하면 최대 줌아웃에서 역명이 심하게
   // 겹친다. 보정 하한(COMP_FLOOR)을 두어 scale 이 이 값 아래로 내려가면 라벨을
   // 서서히 축소한다. 최대 줌아웃(scale=MIN_SCALE=0.5)에서의 화면 폰트 =
   // TEXT_BASE_FONT_SIZE * MIN_SCALE / COMP_FLOOR = 12 * 0.5 / (2/3) = 9px.
-  var TEXT_COMP_FLOOR = 2 / 3;
+  var TEXT_COMP_FLOOR = $kTextCompFloorNum / $kTextCompFloorDen;
   var INITIAL_SCALE = 1.0;
   var INITIAL_CENTER_X = 1040, INITIAL_CENTER_Y = 618;
   var TRAIN_IMG = 'data:image/webp;base64,$trainImageBase64';
@@ -598,14 +818,21 @@ $textElements
   // 그대로 따라가도록 두고(지도 전체와 함께 커지고 작아짐 — 통상적인 핀치 시각
   // 효과이며 판독성 저하는 순간적), 핀치가 끝나는 순간(pointerup/pointercancel)
   // 한 번만 반영해 리페인트를 제스처당 1회로 줄인다.
+  // [라벨 2단(tier) 정책, 2026-09-22] 환승역 라벨(text.tl-major)만 이 보정을
+  // 받는다. 일반역은 CSS 기본값(--label-fs: 12px 상수)을 그대로 쓰므로 여기서
+  // 절대 건드리지 않는다 — [2026-09-22 리뷰 정정] 상속 프로퍼티라 스타일
+  // 재계산 자체는 여전히 655개 전체에 걸리지만, 계산된 값이 실제로 바뀌어
+  // 레이아웃·페인트가 무효화되는 건 그 프로퍼티를 쓰는 환승역 119개뿐이라
+  // 팬/핀치 성능에 유리하다. _workspace/16_requirements_label_zoom.md
   function updateTextCompensation() {
     var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
     // [P2] scale 이 아니라 실제로 화면에 쓰일 보정계수(cs)로 no-op 판정한다 —
     // 위 lastCs 선언부 주석 참조.
     if (cs === lastCs) return;
-    textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
     textLayer.style.setProperty(
-        '--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+        '--label-fs-major', (TEXT_BASE_FONT_SIZE / cs) + 'px');
+    textLayer.style.setProperty(
+        '--stroke-w-major', (TEXT_BASE_STROKE_W / cs) + 'px');
     lastCs = cs;
   }
 
@@ -829,11 +1056,15 @@ $textElements
     // 33% 크게 측정되고, 이 인플레이션이 줌아웃 확장 배율과 곱해져 탭 박스가
     // 인접 역 라벨을 침범한다. (이후 setInitialView→applyTransform 이 현재
     // 줌에 맞는 값으로 다시 설정하므로 임시 고정은 무해.)
-    textLayer.style.fontSize = TEXT_BASE_FONT_SIZE + 'px';
-    // 위에서 fontSize를 직접 덮어썼으므로, updateTextCompensation의 lastCs 캐시가
-    // "이미 현재 cs에 맞게 계산됐다"고 오인해 재계산을 건너뛰지 않도록 무효화한다.
-    // 현재는 buildTextTargets가 최초 applyTransform 이전(lastCs=null인 시점)
-    // 에만 호출되어 무해하지만, 향후 재측정 목적으로 재호출될 경우를 대비한 안전장치.
+    // [라벨 2단(tier) 정책] 역보정을 받는 건 이제 환승역(tl-major)뿐이므로
+    // --label-fs-major 만 기준값(12px)으로 명시 고정한다. 일반역은 CSS 기본값
+    // (--label-fs: 12px 상수)이 이미 기준값이라 건드릴 필요가 없다.
+    textLayer.style.setProperty('--label-fs-major', TEXT_BASE_FONT_SIZE + 'px');
+    // 위에서 --label-fs-major 를 직접 덮어썼으므로, updateTextCompensation의
+    // lastCs 캐시가 "이미 현재 cs에 맞게 계산됐다"고 오인해 재계산을 건너뛰지
+    // 않도록 무효화한다. 현재는 buildTextTargets가 최초 applyTransform 이전
+    // (lastCs=null인 시점)에만 호출되어 무해하지만, 향후 재측정 목적으로
+    // 재호출될 경우를 대비한 안전장치.
     lastCs = null;
     var texts = textLayer.querySelectorAll('text[data-station]');
     for (var i = 0; i < texts.length; i++) {
@@ -856,20 +1087,34 @@ $textElements
           dx0: bbox.x - ax,
           dy0: bbox.y - ay,
           w: bbox.width,
-          h: bbox.height
+          h: bbox.height,
+          major: el.classList.contains('tl-major')
         });
       } catch(e) {}
     }
   }
 
   // 현재 줌 배율에서 라벨의 실제 탭 판정 박스를 계산한다.
-  // scale<1 이면 폰트 역보정으로 라벨이 SVG 좌표계 기준 1/cs 배 커져 있으므로,
-  // 저장해 둔 기준 bbox 를 앵커점 고정으로 동일 배율 확장한다. scale>=1 이면
-  // f=1 로 기존 판정과 동일. 슬롭(TAP_TEXT_PAD)도 배율을 곱해 화면 px 기준
-  // 일정한 여유를 유지한다.
+  // [라벨 2단(tier) 정책] scale<1 에서 폰트 역보정을 받는 건 환승역(tl-major)
+  // 뿐이므로, 일반역은 f=1(역보정 없음 — 화면 폰트가 scale 그대로 줄어듦)로
+  // 고정하고, 환승역만 기존 1/cs 확장을 적용한다. 이전 코드의 f = 1/min(scale,1)
+  // 은 TEXT_COMP_FLOOR 하한을 반영하지 않아, 최대 줌아웃(scale=0.5)에서 실제
+  // 화면 배율(f=1.5)보다 탭 박스가 더 크게(f=2) 잡히는 불일치가 있었다 — 이번
+  // 변경으로 환승역도 실제 렌더 배율과 정확히 일치시킨다.
+  // [2026-09-22 리뷰 수정] 슬롭(TAP_TEXT_PAD)은 bbox 확대 배율 f 와 분리한다.
+  // f 를 그대로 곱하면(구 코드) 일반역(f=1)의 화면 px 슬롭이 변경 전 6px
+  // 상수에서 scale=0.5 일 때 3px 로, 환승역(f=1.5)도 4.5px 로 줄어드는
+  // 회귀가 생긴다 — 최대 줌아웃에서 일반역 세로 히트박스가 12px 까지
+  // 작아졌다. `TAP_TEXT_PAD / Math.min(scale, 1)` 은 tier 와 무관하게 옛
+  // 코드(`TAP_TEXT_PAD * (1/Math.min(scale,1))`)와 scale 전 구간에서 동일한
+  // 값을 내므로, 슬롭은 렌더 배율(f)과 무관해지고 변경 전 동작이 scale 전
+  // 구간에서 그대로 복원된다(회귀 0). 화면 px 로 환산한 슬롭은 scale<1 에서
+  // 6px 상수, scale>=1 에서 6*scale px 이다 — 후자는 변경 전에도 같았다.
   function textTargetRect(t) {
-    var f = 1 / Math.min(scale, 1);
-    var pad = TAP_TEXT_PAD * f;
+    var f = t.major
+        ? 1 / Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR)
+        : 1;
+    var pad = TAP_TEXT_PAD / Math.min(scale, 1);
     var x0 = t.ax + t.dx0 * f - pad;
     var y0 = t.ay + t.dy0 * f - pad;
     return {
@@ -1277,30 +1522,7 @@ $textElements
 
   // 앱 lineId → SVG data-line 코드 매핑
   var lineIdToDataLine = {
-    '1': ['2-1'],
-    '2': ['3-2'],
-    '3': ['4-3'],
-    '4': ['5-4'],
-    '5': ['6-5'],
-    '6': ['7-6'],
-    '7': ['8-7'],
-    '8': ['9-8'],
-    '9': ['10-9'],
-    'SB': ['S'],
-    '경의중앙': ['K'],
-    '경춘': ['G'],
-    '경강': ['KK'],
-    '공항철도': ['A'],
-    '수인분당': ['B'],
-    '신림': ['SL'],
-    '에버라인': ['E'],
-    '인천1': ['I'],
-    '인천2': ['I2'],
-    '김포골드': ['KP'],
-    '서해': ['SH'],
-    '의정부': ['U'],
-    '우이신설': ['W'],
-    'GTX-A': ['1-GA']
+$lineIdToDataLineJs
   };
 
   // ============================================================
@@ -1516,6 +1738,17 @@ $textElements
         texts[i].classList.remove('dimmed');
       } else {
         texts[i].classList.add('dimmed');
+      }
+    }
+
+    // 노선 이름 배지: 강조 노선의 것만 밝게 유지한다(선·라벨 흐림 처리와 일관).
+    // 배지 <text> 에는 data-line 이 없어 위 라벨 루프/brightTexts 쿼리에 잡히지 않는다.
+    var lineBadgeEls = textLayer.querySelectorAll('.lb[data-code]');
+    for (var i = 0; i < lineBadgeEls.length; i++) {
+      if (codeSet[lineBadgeEls[i].getAttribute('data-code')]) {
+        lineBadgeEls[i].classList.remove('dimmed');
+      } else {
+        lineBadgeEls[i].classList.add('dimmed');
       }
     }
 

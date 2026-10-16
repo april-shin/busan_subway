@@ -189,9 +189,10 @@
     "longitude": 127.0125,
     "svgX": 1580.0,
     "svgY": 80.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "1"
+      "1",
+      "의정부"
     ]
   },
   {
@@ -8170,9 +8171,10 @@
     "longitude": 127.0768,
     "svgX": 1376.0,
     "svgY": 1368.0,
-    "isTransfer": false,
+    "isTransfer": true,
     "transferLines": [
-      "수인분당"
+      "수인분당",
+      "에버라인"
     ]
   },
   {
@@ -8775,6 +8777,20 @@
     "isTransfer": false,
     "transferLines": [
       "신림"
+    ]
+  },
+  {
+    "id": "E15",
+    "name": "기흥",
+    "lineId": "에버라인",
+    "latitude": 37.2755,
+    "longitude": 127.0768,
+    "svgX": 1376.0,
+    "svgY": 1368.0,
+    "isTransfer": true,
+    "transferLines": [
+      "수인분당",
+      "에버라인"
     ]
   },
   {
@@ -10263,6 +10279,20 @@
     "svgY": 128.0,
     "isTransfer": false,
     "transferLines": [
+      "의정부"
+    ]
+  },
+  {
+    "id": "U15",
+    "name": "회룡",
+    "lineId": "의정부",
+    "latitude": 37.6505,
+    "longitude": 127.0125,
+    "svgX": 1580.0,
+    "svgY": 80.0,
+    "isTransfer": true,
+    "transferLines": [
+      "1",
       "의정부"
     ]
   },

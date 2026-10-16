@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "badge-editor",
+      "runtimeExecutable": "dart",
+      "runtimeArgs": ["run", "tool/badge_editor.dart", "--port=8765"],
+      "port": 8765
+    }
+  ]
+}

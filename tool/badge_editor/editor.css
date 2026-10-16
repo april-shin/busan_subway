@@ -1,0 +1,53 @@
+/* 노선 배지 수동 보정 편집기 UI — tool/badge_editor.dart 가 서빙할 때만 map.html 에 합성된다.
+   프로덕션 assets/html/map.html 에는 들어가지 않는다. */
+#be-panel {
+  position: fixed; top: 12px; right: 12px; width: 344px;
+  max-height: calc(100vh - 24px); overflow-y: auto; box-sizing: border-box;
+  z-index: 100000; padding: 12px 14px 14px;
+  background: rgba(255, 255, 255, 0.97); color: #1b1d22;
+  font: 13px/1.5 -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  border: 1px solid #c4c8d0; border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  pointer-events: auto; user-select: none; -webkit-user-select: none;
+}
+#be-panel * { box-sizing: border-box; }
+#be-panel .be-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+#be-panel .be-state { font-size: 12px; color: #4a4f5a; margin-bottom: 6px; }
+#be-panel .be-state b { color: #1b1d22; }
+#be-panel .be-hint { font-size: 11.5px; color: #5b616d; margin-bottom: 8px; }
+#be-panel .be-legend { font-size: 11.5px; color: #5b616d; margin: 6px 0 8px; }
+#be-panel .be-legend i { display: inline-block; width: 16px; height: 9px; border-radius: 3px; vertical-align: -1px; margin-right: 3px; background: transparent; }
+#be-panel .be-legend .l-manual { border: 2px dashed #d81b8a; }
+#be-panel .be-legend .l-bad { border: 2px solid #d62828; }
+#be-panel .be-legend .l-sel { border: 2px solid #1565d8; }
+#be-panel .be-row { display: flex; gap: 6px; margin: 8px 0; }
+#be-panel button {
+  flex: 1; font: inherit; font-size: 12.5px; padding: 6px 8px; cursor: pointer;
+  border: 1px solid #b6bbc6; border-radius: 6px; background: #f3f4f7; color: #1b1d22;
+}
+#be-panel button:hover:not(:disabled) { background: #e6e9f0; }
+#be-panel button:disabled { opacity: 0.45; cursor: default; }
+#be-panel button.be-primary { background: #1565d8; border-color: #1565d8; color: #fff; font-weight: 600; }
+#be-panel button.be-primary:hover:not(:disabled) { background: #0f4fb0; }
+#be-panel select { width: 100%; font: inherit; font-size: 12.5px; padding: 4px; margin: 2px 0 8px; }
+#be-panel .be-banner { margin: 6px 0; padding: 7px 9px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+#be-panel .be-banner.err { background: #fdecec; border: 1px solid #e9a3a3; color: #8a1c1c; }
+#be-panel .be-banner.warn { background: #fff6e0; border: 1px solid #e8c879; color: #6b4a00; }
+#be-panel .be-banner.ok { background: #e8f6ec; border: 1px solid #9fd3ae; color: #1d5a31; }
+#be-panel .be-sel { border: 1px solid #d3d7df; border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: #fafbfc; }
+#be-panel .be-sel .nm { font-weight: 700; }
+#be-panel .be-sel .kv { font-size: 12px; color: #3b404a; font-variant-numeric: tabular-nums; }
+#be-panel .be-sel .tag { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 9px; margin-left: 6px; }
+#be-panel .be-sel .tag.manual { background: #fbe0f0; color: #a3105f; }
+#be-panel .be-sel .tag.auto { background: #e6e9f0; color: #3b404a; }
+#be-panel ul { margin: 4px 0 0; padding: 0 0 0 16px; font-size: 12px; }
+#be-panel li.hard { color: #b01e1e; }
+#be-panel li.soft { color: #9a5b00; }
+#be-panel li.good { color: #1d6b38; list-style: none; margin-left: -16px; }
+#be-panel .be-warns { margin: 6px 0; font-size: 12px; }
+#be-panel .be-warns .item { padding: 4px 6px; border-left: 3px solid #d62828; background: #fdf3f3; margin: 3px 0; cursor: pointer; }
+#be-panel details { margin: 6px 0 0; }
+#be-panel summary { cursor: pointer; font-size: 12px; color: #3b404a; }
+#be-panel pre { margin: 4px 0 0; padding: 6px; max-height: 190px; overflow: auto; font: 11px/1.45 ui-monospace, Menlo, monospace; background: #f1f2f5; border-radius: 6px; white-space: pre-wrap; word-break: break-all; user-select: text; -webkit-user-select: text; }
+body.be-dragging, body.be-dragging * { cursor: grabbing !important; user-select: none !important; }
+#badge-editor-overlay * { pointer-events: none; vector-effect: non-scaling-stroke; }

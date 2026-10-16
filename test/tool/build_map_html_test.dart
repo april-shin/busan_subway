@@ -1,6 +1,85 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../tool/line_badges.dart';
+import '../../tool/map_constants.dart';
+
+/// build_map_html.dart 의 빌드 타임 정규화와 같은 규칙 — 아직 XML 엔티티인
+/// `&#10;`/`&#13;` 와 리터럴 개행을 제거하고 앞뒤 공백만 trim 한다. 내부 공백은
+/// 실제 역명의 일부("사우 (김포시청)")라 보존해야 stations.json 과 맞는다.
+String _normalizeStationName(String raw) => raw
+    .replaceAll('&#10;', '')
+    .replaceAll('&#13;', '')
+    .replaceAll('\n', '')
+    .replaceAll('\r', '')
+    .trim();
+
+/// [라벨 2단(tier) 정책, 2026-09-22] tl-major 부착의 기대값을 stations.json
+/// (isTransfer)과 원본 SVG(`<text>` 의 data-station)에서 직접 계산한다.
+///
+/// [2026-09-22 2차 리뷰] 이 계산은 build_map_html.dart 의 매칭 로직을 복제한
+/// 것이라, 그것만으로는 tautological 하다 — 양쪽이 **같은** 정규화 버그를
+/// 가지면 교집합이 똑같이 줄어들어 개수가 일치해 버린다. 그래서 아래
+/// `svgLabelNames`/`allStationNames`/`transferNames` 를 함께 돌려주고,
+/// 테스트에서 "SVG 라벨 이름은 전부 stations.json 에 있다", "isTransfer 역은
+/// 전부 SVG 라벨을 갖는다" 는 **데이터 계약**을 독립적으로 단언한다. 정규화가
+/// 양쪽에서 같이 틀어지면 이 두 계약이 먼저 깨지므로 조용한 통과가 불가능하다.
+({
+  Set<String> transferNames,
+  Set<String> allStationNames,
+  Set<String> svgLabelNames,
+  int svgLabelCount,
+  int expectedMajorCount,
+}) _labelTierExpectation() {
+  final stationsData = jsonDecode(
+    File('assets/json/stations.json').readAsStringSync(),
+  ) as List<dynamic>;
+  final transferNames = <String>{};
+  final allStationNames = <String>{};
+  for (final entry in stationsData) {
+    final station = entry as Map<String, dynamic>;
+    final name = station['name'] as String;
+    allStationNames.add(name);
+    if (station['isTransfer'] == true) {
+      transferNames.add(name);
+    }
+  }
+
+  // 스코프를 `<text>` 여는 태그로 한정한다 — 빌드 스크립트도 텍스트 요소만
+  // 처리하므로, SVG 에 `<circle data-station=...>` 같은 것이 생겨도 기대값이
+  // 어긋나지 않는다.
+  final svgContent = File('assets/svg/seoul_metro_map.svg').readAsStringSync();
+  final labelPattern = RegExp(r'<text[^>]*data-station="([^"]*)"');
+  final svgLabelNames = <String>{};
+  var svgLabelCount = 0;
+  var expectedMajorCount = 0;
+  for (final m in labelPattern.allMatches(svgContent)) {
+    final name = _normalizeStationName(m.group(1)!);
+    svgLabelNames.add(name);
+    svgLabelCount++;
+    if (transferNames.contains(name)) expectedMajorCount++;
+  }
+
+  return (
+    transferNames: transferNames,
+    allStationNames: allStationNames,
+    svgLabelNames: svgLabelNames,
+    svgLabelCount: svgLabelCount,
+    expectedMajorCount: expectedMajorCount,
+  );
+}
+
+/// 여는 태그의 class 속성을 파싱해 tl-major 부착 여부를 판정한다. 문자열
+/// `class="tl-major"` 포함 검사로는 병합형(`class="foo tl-major"`)을 놓치고,
+/// `<tspan>` 에 잘못 붙은 클래스도 걸러내지 못한다.
+bool _hasMajorClass(String openTag) {
+  final classMatch = RegExp(r'\sclass="([^"]*)"').firstMatch(openTag);
+  if (classMatch == null) return false;
+  return classMatch.group(1)!.split(RegExp(r'\s+')).contains('tl-major');
+}
 
 void main() {
   group('build_map_html.dart 생성 결과', () {
@@ -269,14 +348,20 @@ void main() {
       final compEnd =
           htmlContent.indexOf('function setInitialView()', applyEnd);
       final compBody = htmlContent.substring(applyEnd, compEnd);
-      expect(compBody, contains('textLayer.style.fontSize'));
+      // [라벨 2단(tier) 정책, 2026-09-22] 역보정은 더 이상 textLayer.style.
+      // fontSize(전체 655개 라벨이 상속) 를 직접 쓰지 않는다 — 환승역
+      // (text.tl-major) 만 읽는 --label-fs-major/--stroke-w-major 커스텀
+      // 프로퍼티 두 개만 갱신해 일반역은 리페인트 대상에서 제외한다.
+      expect(compBody, isNot(contains('textLayer.style.fontSize =')));
+      expect(compBody, contains("textLayer.style.setProperty("));
+      expect(compBody, contains("'--label-fs-major'"));
       // [래스터 기아 실험 A, 2026-08-13 — 기각·원복] stroke 보정을 `--stroke-w`
       // 커스텀 프로퍼티에서 네이티브 `style.strokeWidth` 로 바꿔 CDP Tracing 으로
       // 검증했으나 개선이 없었다(§10 보고서 §20~§22 — InvalidateLayout 이 자식의
       // 상속 프로퍼티 메커니즘과 무관하게 SVG 루트 자신에 직접 걸림이 확정됨).
-      // 원래의 `--stroke-w` 커스텀 프로퍼티 방식으로 원복한다.
-      expect(compBody, contains("textLayer.style.setProperty("));
-      expect(compBody, contains("'--stroke-w'"));
+      // 커스텀 프로퍼티 방식 자체는 유지하되, 2단 정책으로 이름만
+      // `--stroke-w-major` 로 바뀌었다.
+      expect(compBody, contains("'--stroke-w-major'"));
       // 팬 전용 프레임(scale 불변)에서는 폰트/스트로크 보정을 건너뛰어야 한다.
       // [P2, 2026-08 리뷰] no-op 판정 키는 scale 이 아니라 실제로 화면에
       // 쓰일 보정계수(cs)다 — scale>1(확대) 구간·MIN_SCALE 축소 구간처럼
@@ -492,19 +577,22 @@ void main() {
       // `/ scale`을 추가로 나눈 적이 있다. 그러나 구 viewBox 구현도 이미 동일한
       // scale 배율로 확대되고 있었으므로(뷰포트:viewBox 비율 = scale) 이는 이중
       // 보정이었다 — 브라우저 A/B 실측으로 scale=0.5에서 라벨 2배, scale=2에서
-      // 라벨 1/2배가 되는 회귀가 확정됐다. `contains('textLayer.style.fontSize')`
-      // 같은 문자열 존재 검사만으로는 이 회귀를 잡지 못하므로, 대입 우변 수식을
-      // 정규식으로 추출해 정확한 값 형태(scale 없음)를 고정한다.
+      // 라벨 1/2배가 되는 회귀가 확정됐다. 문자열 존재 검사만으로는 이 회귀를
+      // 잡지 못하므로, 대입 우변 수식을 정규식으로 추출해 정확한 값 형태
+      // (scale 없음)를 고정한다.
+      // [라벨 2단(tier) 정책, 2026-09-22] 이 보정은 환승역(--label-fs-major/
+      // --stroke-w-major)에만 적용된다 — 일반역은 CSS 기본값(12px 상수)뿐이라
+      // 이 수식 자체를 거치지 않는다.
       final applyStart = htmlContent.indexOf('function applyTransform()');
       final applyEnd =
           htmlContent.indexOf('function setInitialView()', applyStart);
       final applyBody = htmlContent.substring(applyStart, applyEnd);
 
-      final fontSizeMatch =
-          RegExp(r"textLayer\.style\.fontSize\s*=\s*\(([^)]+)\)\s*\+\s*'px'")
-              .firstMatch(applyBody);
+      final fontSizeMatch = RegExp(
+        r"setProperty\(\s*'--label-fs-major',\s*\(([^)]+)\)\s*\+\s*'px'",
+      ).firstMatch(applyBody);
       expect(fontSizeMatch, isNotNull,
-          reason: 'textLayer.style.fontSize 대입식을 찾지 못했다');
+          reason: "setProperty('--label-fs-major', ...) 대입식을 찾지 못했다");
       expect(
         fontSizeMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
         equals('TEXT_BASE_FONT_SIZE/cs'),
@@ -513,10 +601,10 @@ void main() {
       );
 
       final strokeMatch = RegExp(
-        r"setProperty\(\s*'--stroke-w',\s*\(([^)]+)\)\s*\+\s*'px'",
+        r"setProperty\(\s*'--stroke-w-major',\s*\(([^)]+)\)\s*\+\s*'px'",
       ).firstMatch(applyBody);
       expect(strokeMatch, isNotNull,
-          reason: "setProperty('--stroke-w', ...) 대입식을 찾지 못했다");
+          reason: "setProperty('--stroke-w-major', ...) 대입식을 찾지 못했다");
       expect(
         strokeMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
         equals('TEXT_BASE_STROKE_W/cs'),
@@ -574,8 +662,138 @@ void main() {
       );
     });
 
-    test('텍스트 레이어 CSS에 font-size inherit !important가 설정되어 있다', () {
-      expect(htmlContent, contains('font-size: inherit !important'));
+    test('텍스트 레이어 CSS가 라벨 2단(tier) font-size 정책을 갖는다', () {
+      // [라벨 2단(tier) 정책, 2026-09-22] _workspace/16_requirements_label_zoom.md
+      // 일반역은 상수 기본값(12px)만 쓰고(인라인 style="font-size:12px"를
+      // 이겨야 하므로 !important 는 유지), 환승역(text.tl-major)만 scale<1
+      // 에서 역보정된 --label-fs-major 를 읽는다.
+      expect(htmlContent, contains('font-size: var(--label-fs, 12px) !important'));
+      expect(htmlContent,
+          contains('font-size: var(--label-fs-major, 12px) !important'));
+      final majorRuleMatch =
+          RegExp(r'#text-layer text\.tl-major\s*\{([^}]*)\}')
+              .firstMatch(htmlContent);
+      expect(majorRuleMatch, isNotNull,
+          reason: '#text-layer text.tl-major CSS 규칙을 찾지 못했다');
+      expect(majorRuleMatch!.group(1)!,
+          contains('stroke-width: var(--stroke-w-major, 2px)'));
+    });
+
+    test('환승역 라벨에는 tl-major 클래스가 붙고, 일반역에는 붙지 않는다', () {
+      // [라벨 2단(tier) 정책, 2026-09-22] stations.json 의 isTransfer 역
+      // 이름과 매칭해 빌드 타임에 부여된다.
+      // [2026-09-22 리뷰 수정] 기대값을 119로 하드코딩하면 환승역 추가/제거
+      // 같은 정상적인 데이터 변경에도 테스트가 깨지고, 실패 메시지가 "매칭
+      // 로직 회귀"라는 오진을 유도한다. stations.json의 isTransfer 이름
+      // 집합과 원본 SVG의 data-station 이름 집합에서 기대값을 계산하되,
+      // 그 계산이 빌드 스크립트의 복제라 tautology 가 되지 않도록 (1) 데이터
+      // 계약 2건과 (2) 라벨 단위 1:1 대조를 함께 단언한다(_labelTierExpectation
+      // 주석 참조).
+      final expectation = _labelTierExpectation();
+
+      // (1) 데이터 계약 — 이 두 단언이 있어야 위 기대값 계산이 tautology 가
+      // 되지 않는다. 정규화가 빌드 스크립트와 테스트 양쪽에서 똑같이 틀어지면
+      // 교집합이 조용히 줄어드는 대신 여기서 먼저 깨진다.
+      expect(
+        expectation.svgLabelNames.difference(expectation.allStationNames),
+        isEmpty,
+        reason: 'SVG data-station 이름이 stations.json 에 없다 — 역명 정규화가 '
+            '틀렸거나 두 데이터가 드리프트했다',
+      );
+      expect(
+        expectation.transferNames.difference(expectation.svgLabelNames),
+        isEmpty,
+        reason: 'isTransfer 역인데 대응하는 SVG 라벨이 없다 — 교집합이 조용히 '
+            '줄어든 상태라 tl-major 개수 비교를 믿을 수 없다',
+      );
+
+      // (2) 라벨 단위 판정 — 개수 비교만으로는 클래스가 <tspan> 에 잘못 붙어도
+      // 총합이 맞아 통과한다. 여는 태그마다 isTransfer 여부와 tl-major 부착을
+      // 1:1로 대조한다.
+      final labelPattern = RegExp(r'<text[^>]*data-station="([^"]*)"[^>]*>');
+      var majorCount = 0;
+      var labelCount = 0;
+      for (final m in labelPattern.allMatches(htmlContent)) {
+        labelCount++;
+        final name = _normalizeStationName(m.group(1)!);
+        final hasMajor = _hasMajorClass(m.group(0)!);
+        if (hasMajor) majorCount++;
+        expect(
+          hasMajor,
+          expectation.transferNames.contains(name),
+          reason: '$name 라벨의 tl-major 부착 여부가 stations.json isTransfer 와 '
+              '다르다',
+        );
+      }
+      expect(labelCount, equals(expectation.svgLabelCount),
+          reason: '생성물의 역명 라벨 수가 원본 SVG 의 <text> 라벨 수와 다르다 — '
+              '<text> 추출/재삽입 경로 회귀를 의심할 것');
+      expect(majorCount, equals(expectation.expectedMajorCount));
+      expect(majorCount, greaterThan(0),
+          reason: 'tl-major 클래스가 하나도 없다 — 라벨 2단(tier) 정책 자체가 '
+              '증발했을 수 있다');
+
+      // 실제 환승역(사당: 2·4호선 환승) 라벨에는 클래스가 붙어야 한다.
+      final sadangMatch =
+          RegExp(r'<text[^>]*data-station="사당"[^>]*>').firstMatch(htmlContent);
+      expect(sadangMatch, isNotNull, reason: '사당 라벨을 찾지 못했다');
+      expect(_hasMajorClass(sadangMatch!.group(0)!), isTrue);
+
+      // 일반역(환승 없음, 예: 1호선 "연천")에는 클래스가 붙지 않아야 한다.
+      final yeoncheonMatch = RegExp(r'<text[^>]*data-station="연천"[^>]*>')
+          .firstMatch(htmlContent);
+      expect(yeoncheonMatch, isNotNull, reason: '연천 라벨을 찾지 못했다');
+      expect(_hasMajorClass(yeoncheonMatch!.group(0)!), isFalse);
+    });
+
+    test('textTargetRect가 라벨 tier 별로 다른 확대 배율(f)을 쓴다', () {
+      // [라벨 2단(tier) 정책, 2026-09-22] 일반역은 역보정이 없으므로 f=1(기준
+      // bbox 그대로), 환승역만 TEXT_COMP_FLOOR 하한을 반영한 f=1/cs 를 쓴다.
+      // 이전 코드(f = 1/Math.min(scale,1))는 TEXT_COMP_FLOOR 하한을 반영하지
+      // 않아 최대 줌아웃에서 탭 박스가 실제 렌더 배율보다 컸다(2026-09-22
+      // 리뷰에서 지적된 부수 결함, 이번 변경으로 함께 수정).
+      final fnStart = htmlContent.indexOf('function textTargetRect(t)');
+      expect(fnStart, greaterThan(0), reason: 'textTargetRect 함수를 찾지 못했다');
+      final fnEnd = htmlContent.indexOf('\n  }', fnStart);
+      final fnBody = htmlContent.substring(fnStart, fnEnd);
+
+      expect(fnBody, contains('t.major'));
+      expect(fnBody, contains('TEXT_COMP_FLOOR'));
+      expect(fnBody, isNot(contains('1 / Math.min(scale, 1)')),
+          reason: 'TEXT_COMP_FLOOR 하한을 반영하지 않는 옛 공식이 재도입되면 '
+              '탭 박스가 실제 렌더 배율과 다시 어긋난다');
+
+      // [HIGH, 2026-09-22 2차 리뷰 수정] 터치 슬롭(pad)은 bbox 확대 배율(f,
+      // tier 별로 다름)과 분리되어야 한다. pad = TAP_TEXT_PAD * f 로 f 를
+      // 그대로 곱하면 화면 px 기준 슬롭이 tier 마다 달라지고, 변경 전
+      // 6px 상수보다 scale=0.5 에서 일반역 3px/환승역 4.5px 로 줄어드는
+      // 회귀가 생긴다. TAP_TEXT_PAD / Math.min(scale, 1) 은 tier 와 무관하게
+      // 옛 코드(TAP_TEXT_PAD * (1/Math.min(scale,1)))와 scale 전 구간에서
+      // 동일한 값을 내 슬롭 회귀를 0으로 만든다(화면 px 로는 scale<1 에서
+      // 6px 상수, scale>=1 에서 6*scale px — 둘 다 변경 전과 같다).
+      final padMatch =
+          RegExp(r'var pad = ([^;]+);').firstMatch(fnBody);
+      expect(padMatch, isNotNull, reason: 'pad 대입식을 찾지 못했다');
+      expect(
+        padMatch!.group(1)!.replaceAll(RegExp(r'\s+'), ''),
+        equals('TAP_TEXT_PAD/Math.min(scale,1)'),
+        reason: 'pad 가 f(tier 별 bbox 확대 배율)에 다시 묶이면 터치 슬롭이 '
+            'tier·scale 에 따라 화면 px 기준으로 들쭉날쭉해진다',
+      );
+      expect(fnBody, isNot(contains('TAP_TEXT_PAD * f')),
+          reason: '슬롭이 다시 f 에 묶이는 옛 공식이 재도입되면 안 된다');
+    });
+
+    test('buildTextTargets가 각 타깃에 major(tl-major 여부)를 저장한다', () {
+      final fnStart = htmlContent.indexOf('function buildTextTargets()');
+      expect(fnStart, greaterThan(0));
+      final fnEnd = htmlContent.indexOf('\n  }', fnStart);
+      final fnBody = htmlContent.substring(fnStart, fnEnd);
+
+      expect(fnBody, contains("major: el.classList.contains('tl-major')"));
+      // 측정 기준값(12px)은 이제 환승역 전용 프로퍼티만 명시 고정하면 된다.
+      expect(fnBody,
+          contains("textLayer.style.setProperty('--label-fs-major', TEXT_BASE_FONT_SIZE + 'px')"));
     });
 
     test('highlightLines 흐림 처리가 열차 레이어를 건드리지 않는다', () {
@@ -1125,6 +1343,678 @@ void main() {
         stepBody,
         isNot(contains('gestureActive && realRemaining')),
       );
+    });
+
+    group('[P2-4, 2026-10-06] 노선 이름 pill 배지', () {
+      // 배지 <g class="lb" ...> 한 개를 파싱한 결과.
+      List<Map<String, dynamic>> parseBadges() {
+        final out = <Map<String, dynamic>>[];
+        final re = RegExp(
+          r'<g class="lb" data-badge-line="([^"]*)" data-code="([^"]*)" '
+          r'transform="translate\(([\d.]+),([\d.]+)\)">'
+          r'<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="([\d.]+)" height="([\d.]+)" '
+          r'rx="[\d.]+" fill="(#[0-9a-fA-F]{6})"/>'
+          r'<text [^>]*fill="(#[0-9a-fA-F]{6})">([^<]*)</text></g>',
+        );
+        for (final m in re.allMatches(htmlContent)) {
+          out.add({
+            'lineId': m.group(1)!,
+            'code': m.group(2)!,
+            'ax': double.parse(m.group(3)!),
+            'ay': double.parse(m.group(4)!),
+            'x': double.parse(m.group(5)!),
+            'y': double.parse(m.group(6)!),
+            'w': double.parse(m.group(7)!),
+            'h': double.parse(m.group(8)!),
+            'fill': m.group(9)!.toLowerCase(),
+            'textFill': m.group(10)!.toLowerCase(),
+            'text': m.group(11)!,
+          });
+        }
+        return out;
+      }
+
+      List<Map<String, dynamic>> readJsonList(String path) =>
+          (jsonDecode(File(path).readAsStringSync()) as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+
+      // 입력 데이터를 한 번 읽어 두고, 조작한 사본으로 buildLineBadges 를 다시 돌린다.
+      final svg = File('assets/svg/seoul_metro_map.svg').readAsStringSync();
+      final stations = readJsonList('assets/json/stations.json');
+      final lines = readJsonList('assets/json/lines.json');
+      final conns = readJsonList('assets/json/connections.json');
+      final transfer = {
+        for (final s in stations)
+          if (s['isTransfer'] == true) s['name'] as String,
+      };
+      LineBadgeResult run({
+        List<Map<String, dynamic>>? st,
+        List<Map<String, dynamic>>? ln,
+        List<Map<String, dynamic>>? cn,
+        Map<String, String>? codes,
+        Map<String, List<String>>? overrides,
+        Map<String, String>? names,
+      }) =>
+          buildLineBadges(
+            svgContent: svg,
+            stationsJson: st ?? stations,
+            linesJson: ln ?? lines,
+            connectionsJson: cn ?? conns,
+            transferStationNames: transfer,
+            lineCodes: codes ?? kLineIdToDataLine,
+            terminalOverrides: overrides ?? kBadgeTerminalOverrides,
+            badgeNames: names ?? kLineBadgeNames,
+          );
+      // 수동 위치 보정(data/badge_offsets.json)이 있으면 그 배지는 "자동 배치 품질 규칙"(앵커 24px·겹침 0)의
+      // 적용 대상이 아니다 — 사람이 일부러 고른 자리라 빌드도 경고만 낸다. 그래서 자동 배치 품질을 재는
+      // 테스트는 [autoBadges] 로 수동 배지를 빼고, 빌드 통계와 대조하는 테스트는 같은 보정으로 돌린 [runWithFile] 을 쓴다.
+      // 보정 파일이 없거나 비어 있으면(현재 기본) 이 둘은 [parseBadges]/[run] 과 같다.
+      BadgeOffsets fileOffsets() {
+        final f = File(kBadgeOffsetsPath);
+        return BadgeOffsets.parse(f.existsSync() ? f.readAsStringSync() : null);
+      }
+
+      LineBadgeResult runWithFile() => buildLineBadges(
+            svgContent: svg,
+            stationsJson: stations,
+            linesJson: lines,
+            connectionsJson: conns,
+            transferStationNames: transfer,
+            offsets: fileOffsets(),
+          );
+      String anchorKey(String lineId, num ax, num ay) =>
+          '$lineId@${(ax * 10).round()},${(ay * 10).round()}';
+
+      Set<String>? manualAnchorsCache;
+      Set<String> manualAnchors() => manualAnchorsCache ??= fileOffsets().byKey.isEmpty
+          ? <String>{}
+          : {
+              for (final p in runWithFile().placements)
+                if (p.manual) anchorKey(p.lineId, p.anchorX, p.anchorY),
+            };
+
+      List<Map<String, dynamic>> autoBadges() => [
+            for (final b in parseBadges())
+              if (!manualAnchors().contains(anchorKey(b['lineId'] as String, b['ax'] as double, b['ay'] as double)))
+                b,
+          ];
+
+      // 역명+노선으로 역 ID 를 찾는다 — ID 재배정에 견디도록 테스트에 ID 를 하드코딩하지 않는다.
+      String idOf(String name, String lineId) => stations
+          .firstWhere((s) => s['name'] == name && s['lineId'] == lineId)['id'] as String;
+      Matcher stateErrorWith(String fragment) =>
+          throwsA(isA<StateError>().having((e) => e.message, 'message', contains(fragment)));
+
+      test('전 노선(lines.json)의 양 종점에 배지가 정확히 2개씩 있다', () {
+        final badges = parseBadges();
+        expect(lines.length, equals(24),
+            reason: '노선 수가 바뀌었다 — 요구사항(24개 노선)과 배지 정책을 재확인할 것');
+        expect(badges.length, equals(lines.length * 2),
+            reason: '정규식이 배지 마크업 형태를 못 읽었거나 배지 수가 다르다');
+        for (final line in lines) {
+          final mine =
+              badges.where((b) => b['lineId'] == line['id']).toList();
+          expect(mine.length, equals(2), reason: '${line['id']} 배지 수');
+          for (final b in mine) {
+            expect(b['text'], equals(kLineBadgeNames[line['id']] ?? line['name']),
+                reason: '${line['id']} 배지 문구는 축약표(kLineBadgeNames) 우선, 없으면 lines.json name');
+          }
+        }
+      });
+
+      test('긴 노선명 축약표는 사용자 승인 2건뿐이다 — 김포골드·우이신설', () {
+        // ⛔ 축약은 **사용자 승인 사안**이다. 배치가 빡빡하다는 이유로 임의로 늘리지 말 것.
+        // 한때 '2'→"2호", '수인분당'→"수인분당", '우이신설'→"우이" 까지 줄여 앵커 상한을 16px 로
+        // 맞춘 적이 있는데(2026-10-06 fix5), "2호" 는 다른 노선이 전부 "N호선" 인 가운데 혼자
+        // 표기가 깨지고 아무도 그렇게 부르지 않아 **철회**했다. 대신 앵커 상한을 24px 로 두면
+        // 공식 명칭 그대로도 미해결 0 이고, 겹침 수치는 오히려 더 좋다(타 노선 선 스침 53.5px→3.5px).
+        // 의정부경전철은 "의정부" 가 실제 역명이라 축약 자체가 불가능하다 — 게이트가 막는다.
+        const expected = {
+          '김포골드': ('김포골드', 60.0), // 배치: lines.json "김포골드라인" 84px → 60px
+          '우이신설': ('우이신설', 60.0), // 가독성: "우이신설경전철" 7자 → 4자 (전 배지 최장이었다)
+        };
+        expect(kLineBadgeNames,
+            equals({for (final e in expected.entries) e.key: e.value.$1}));
+        for (final entry in expected.entries) {
+          final got =
+              parseBadges().where((b) => b['lineId'] == entry.key).toList();
+          expect(got.length, equals(2), reason: '${entry.key} 양 종점');
+          for (final b in got) {
+            expect(b['text'], equals(entry.value.$1));
+            expect(b['w'], equals(entry.value.$2), reason: '글자 폭 합 + 좌우 패딩 12');
+          }
+        }
+        for (final b in parseBadges()
+            .where((b) => !kLineBadgeNames.containsKey(b['lineId']))) {
+          final line = lines.firstWhere((l) => l['id'] == b['lineId']);
+          expect(b['text'], equals(line['name']), reason: '${b['lineId']} 는 축약하지 않는다');
+        }
+      });
+
+      test('배지 문구는 어떤 실제 역명과도 같지 않다 (역명 라벨로 오독 방지)', () {
+        final stationNames = {
+          for (final s in stations) (s['name'] as String).replaceAll(RegExp(r'\s+'), ''),
+        };
+        for (final b in parseBadges()) {
+          expect(stationNames.contains((b['text'] as String).replaceAll(RegExp(r'\s+'), '')),
+              isFalse, reason: '${b['lineId']} 배지 "${b['text']}" 가 역명과 같다');
+        }
+      });
+
+      test('배지↔종점 연결선(줄기)은 하나도 없다 — 생성물에 배지 <line> 0개', () {
+        // 사용자 결정(2026-10-06): 줄기는 노선 선과 굵기·색이 같아 "존재하지 않는 지선"으로 읽힌다.
+        // 점선·짧은 선·화살표 등 어떤 형태로도 되살리지 않는다 — 배지 그룹 안에 <line> 이 없어야 한다.
+        final start = htmlContent.indexOf('<g id="line-badges">');
+        expect(start, greaterThan(0), reason: '배지 그룹을 못 찾았다');
+        final end = htmlContent.indexOf('</g>\n</g>', start);
+        final group = htmlContent.substring(start, end > 0 ? end : htmlContent.length);
+        expect(group, isNot(contains('<line')), reason: '배지 그룹 안에 <line> 줄기');
+        expect(group, isNot(contains('<path')), reason: '배지 그룹 안에 <path> 연결선');
+        expect(group, isNot(contains('stroke-dasharray')), reason: '점선 연결선');
+        expect(RegExp(r'<g class="lb"[^>]*>').allMatches(group).length, equals(48));
+        // 배지 한 개는 <rect> 1 + <text> 1 로만 이뤄진다.
+        expect(RegExp(r'<rect ').allMatches(group).length, equals(48));
+        expect(RegExp(r'<text ').allMatches(group).length, equals(48));
+      });
+
+      test('줄기가 없으므로 pill 은 앵커(노선 선 끝점)에 붙어 있다 — 앵커↔pill 실제 최단 거리 24px 이하', () {
+        // 귀속 단서가 "인접성"(+색)뿐이다. 기준 16 = 줄기 제거 직전 줄기 없이 놓이던 32개 배지의 최대(15.3px) 바로 위.
+        final dists = <double>[];
+        final manual = manualAnchors();
+        for (final b in parseBadges()) {
+          // 앵커가 원점인 좌표계에서 사각형까지의 거리.
+          final x = b['x'] as double, y = b['y'] as double;
+          final w = b['w'] as double, h = b['h'] as double;
+          final dx = math.max(math.max(x, -(x + w)), 0.0);
+          final dy = math.max(math.max(y, -(y + h)), 0.0);
+          final d = math.sqrt(dx * dx + dy * dy);
+          dists.add(d);
+          // 수동 보정 배지는 상한 적용 대상이 아니다(빌드도 경고만 낸다).
+          if (manual.contains(anchorKey(b['lineId'] as String, b['ax'] as double, b['ay'] as double))) continue;
+          expect(d, lessThanOrEqualTo(24.0),
+              reason: '${b['lineId']} 배지가 앵커에서 ${d.toStringAsFixed(1)}px — 연결선 없이 멀리 띄우면 귀속이 모호하다');
+        }
+        expect(dists.length, equals(48));
+        final r = run(); // 보정 없는 자동 배치 알고리즘 자체의 상한
+        expect(r.maxAnchorDistPx, lessThanOrEqualTo(24.0));
+        expect(r.anchorDistsPx.length, equals(48));
+        // 생성물(= 커밋된 보정으로 빌드된 map.html) 독립 계측과 같은 보정으로 돌린 빌드 로그 통계가 일치한다.
+        expect(runWithFile().maxAnchorDistPx, closeTo(dists.reduce(math.max), 0.1));
+        expect(r.summary.any((l) => l.contains('줄기(배지↔종점 연결선): 없음')), isTrue);
+      });
+
+      test('종점 선정 결과를 고정한다 — 알려진 함정 케이스(지선·순환·분리 노선)', () {
+        // 이 단언이 이 기능의 핵심 알고리즘(hop 지름 양 끝)을 지킨다. 앵커-근접 테스트는
+        // "마천 vs 하남검단산" 같은 오판도 통과시키므로 역명으로 직접 못 박는다.
+        final names = run().terminalNames;
+        expect(names['1']!.toSet(), equals({'연천', '신창'}),
+            reason: 'stationIds 첫/끝(연천/광명)이 아니라 본선 양 끝');
+        expect(names['2']!.toSet(), equals({'까치산', '신설동'}),
+            reason: '순환선: 그래프의 차수 1 노드 = 두 지선 끝');
+        expect(names['5']!.toSet(), equals({'방화', '하남검단산'}),
+            reason: '유클리드 최원점이면 마천(지선)이 이긴다');
+        expect(names['6']!.toSet(), equals({'신내', '독바위'}),
+            reason: '차수 1 후보가 신내 하나뿐 → 전 노드 폴백(응암루프 반대 끝)');
+        expect(names['GTX-A']!.toSet(), equals({'운정중앙', '동탄'}),
+            reason: '분리 노선 오버라이드(서울역·수서 허브 회피)');
+        expect(names['경의중앙']!.toSet(), equals({'임진강', '지평'}),
+            reason: '서울역 지선 제외');
+        // 모든 노선이 정확히 2개의 서로 다른 종점을 갖는다.
+        for (final e in names.entries) {
+          expect(e.value.length, equals(2), reason: e.key);
+          expect(e.value.toSet().length, equals(2), reason: '${e.key} 종점 중복');
+        }
+      });
+
+      test('배지 색은 지도에 보이는 SVG 선 색이다 (lines.json colorValue 가 아니다)', () {
+        for (final b in parseBadges()) {
+          final m = RegExp(
+                  '<path\\b[^>]*stroke="(#[0-9a-fA-F]{6})"[^>]*data-line="${RegExp.escape(b['code'] as String)}"')
+              .firstMatch(svg);
+          expect(m, isNotNull, reason: 'data-line ${b['code']} 경로 없음');
+          expect(b['fill'], equals(m!.group(1)!.toLowerCase()),
+              reason: '${b['lineId']} 배지 색이 SVG 선 색과 다르다');
+        }
+      });
+
+      test('글자색: 흰 글씨 대비 3:1 미만(AA-large 미달)만 짙은 글씨, 나머지는 흰 글씨 유지', () {
+        // WCAG 상대휘도 기준을 테스트에서 독립적으로 다시 계산해 구현과 대조한다.
+        double lin(int c) {
+          final v = c / 255;
+          return v <= 0.04045 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+        }
+
+        double lum(String hex) {
+          final h = hex.substring(1);
+          int p(int i) => int.parse(h.substring(i, i + 2), radix: 16);
+          return 0.2126 * lin(p(0)) + 0.7152 * lin(p(2)) + 0.0722 * lin(p(4));
+        }
+
+        double whiteContrast(String hex) => 1.05 / (lum(hex) + 0.05);
+
+        final dark = <String>{};
+        for (final b in parseBadges()) {
+          final fill = b['fill'] as String;
+          final cr = whiteContrast(fill);
+          if (cr < 3.0) {
+            dark.add(b['lineId'] as String);
+            expect(b['textFill'], equals('#1f1f1f'),
+                reason: '${b['lineId']} 흰 글씨 대비 ${cr.toStringAsFixed(2)} < 3.0');
+            expect(contrastRatio(fill, '#1f1f1f'), greaterThanOrEqualTo(4.5),
+                reason: '${b['lineId']} 짙은 글씨는 AA(4.5)를 넘겨야 의미가 있다');
+          } else {
+            // AA(4.5) 미달이어도 흰 글씨 유지 — 노선색+흰 글씨 관습(사용자 결정).
+            expect(b['textFill'], equals('#ffffff'),
+                reason: '${b['lineId']} 흰 글씨 대비 ${cr.toStringAsFixed(2)} >= 3.0 → 흰 글씨');
+          }
+        }
+        // 현 SVG 에서 전환되는 노선을 고정한다(인천1 3.01 은 아슬하게 흰 글씨 유지).
+        expect(dark, equals({'수인분당', '6', '인천2'}));
+        // 구현의 대비 계산이 독립 계산과 일치한다.
+        for (final b in parseBadges()) {
+          expect(contrastRatio(b['fill'] as String, '#ffffff'),
+              closeTo(whiteContrast(b['fill'] as String), 1e-9));
+        }
+      });
+
+      test('contrastRatio/badgeTextColorFor 경계값', () {
+        expect(contrastRatio('#ffffff', '#000000'), closeTo(21, 1e-9));
+        expect(contrastRatio('#123456', '#123456'), closeTo(1, 1e-9));
+        expect(badgeTextColorFor('#000000'), equals('#ffffff'));
+        expect(badgeTextColorFor('#ffffff'), equals('#1f1f1f'));
+        expect(badgeTextColorFor('#d08d1a'), equals('#1f1f1f')); // 6호선 2.80
+        expect(badgeTextColorFor('#6496df'), equals('#ffffff')); // 인천1 3.01
+        expect(badgeTextColorFor('#10a643'), equals('#ffffff')); // 2호선 3.20(AA 미달·유지)
+        // 3.0 을 기준으로 정확히 갈린다: 임계 바로 위/아래 회색.
+        String? firstDark;
+        for (var v = 0; v <= 255; v++) {
+          final hex = '#${v.toRadixString(16).padLeft(2, '0') * 3}';
+          if (badgeTextColorFor(hex) == '#1f1f1f') {
+            firstDark = hex;
+            break;
+          }
+        }
+        expect(firstDark, isNotNull);
+        expect(contrastRatio(firstDark!, '#ffffff'), lessThan(3.0));
+      });
+
+      test('JS lineIdToDataLine 과 배지 data-code 가 같은 매핑(단일 소스)이다', () {
+        final js = RegExp(r"var lineIdToDataLine = \{([^}]*)\}")
+            .firstMatch(htmlContent)!
+            .group(1)!;
+        final jsMap = {
+          for (final m in RegExp(r"'([^']+)': \['([^']+)'\]").allMatches(js))
+            m.group(1)!: m.group(2)!,
+        };
+        expect(jsMap, equals(kLineIdToDataLine));
+        for (final b in parseBadges()) {
+          expect(b['code'], equals(kLineIdToDataLine[b['lineId']]));
+        }
+      });
+
+      test('JS 상수(TEXT_BASE_FONT_SIZE/TEXT_COMP_FLOOR/CANVAS)가 Dart 단일 소스에서 주입된다', () {
+        expect(htmlContent,
+            contains('var TEXT_BASE_FONT_SIZE = ${jsNum(kTextBaseFontSize)};'));
+        expect(htmlContent,
+            contains('var TEXT_COMP_FLOOR = $kTextCompFloorNum / $kTextCompFloorDen;'));
+        expect(htmlContent,
+            contains('var CANVAS_W = ${jsNum(kCanvasW)}, CANVAS_H = ${jsNum(kCanvasH)};'));
+        expect(kTextCompMax, closeTo(1 / kTextCompFloor, 1e-12));
+        // 배지 CSS 글자 크기도 Dart 상수에서 온다.
+        expect(htmlContent, contains('font-size: ${jsNum(kBadgeFontPx)}px !important;'));
+      });
+
+      test('배지는 캔버스(2416x1560) 안에 있고 서로 겹치지 않는다 (배지는 줌아웃 보정 없이 1배 고정)', () {
+        final rects = <String, List<double>>{};
+        var i = 0;
+        for (final b in parseBadges()) {
+          final x0 = (b['ax'] as double) + (b['x'] as double);
+          final y0 = (b['ay'] as double) + (b['y'] as double);
+          final x1 = x0 + (b['w'] as double);
+          final y1 = y0 + (b['h'] as double);
+          expect(x0, greaterThanOrEqualTo(0), reason: '${b['lineId']} 좌측');
+          expect(y0, greaterThanOrEqualTo(0), reason: '${b['lineId']} 상단');
+          expect(x1, lessThanOrEqualTo(kCanvasW), reason: '${b['lineId']} 우측');
+          expect(y1, lessThanOrEqualTo(kCanvasH), reason: '${b['lineId']} 하단');
+          rects['${i++}:${b['lineId']}'] = [x0, y0, x1, y1];
+        }
+        final keys = rects.keys.toList();
+        for (var a = 0; a < keys.length; a++) {
+          for (var c = a + 1; c < keys.length; c++) {
+            final r = rects[keys[a]]!, s = rects[keys[c]]!;
+            final overlap = r[0] < s[2] && s[0] < r[2] && r[1] < s[3] && s[1] < r[3];
+            expect(overlap, isFalse, reason: '${keys[a]} ↔ ${keys[c]} 배지 겹침');
+          }
+        }
+      });
+
+      test('배지는 타 노선 선 위에 얹히지 않고 중심선에서 0.9px 이상 떨어져 있다', () {
+        // 금색 김포골드 pill 이 금갈색 9호선 선 위에 얹혀 "9호선 라벨"로 읽히던 회귀(2차 리뷰 HIGH-1)를
+        // 막는 가드. 선 위 겹침은 배치 비용(soft)이 아니라 요구사항(hard)이라 여기서 못 박는다.
+        final r = run();
+        expect(r.otherLineOverlapPx, lessThan(1),
+            reason: '배지 사각형 안을 지나는 타 노선 선 총 길이(px) — 빌드 로그 "배지↔타노선 선"');
+        // 줄기 제거 후 격자 사이에서 0.0px 밀착이 실제로 나왔다 — 중심선 판정만으로는 선 굵기(3)가 pill 을 덮는다.
+        // 0.9 = 줄기 제거 직전(fix4) 산출물의 최소 이격.
+        expect(r.minOtherLineClearancePx, greaterThanOrEqualTo(0.9),
+            reason: 'pill 과 타 노선 선 중심선의 최소 이격(px)');
+        // 자기 노선 선 위는 허용(종점 바로 옆)이지만 측정은 노출한다.
+        expect(r.ownLineOverlapPx, greaterThanOrEqualTo(0));
+        // 근접(3px 패딩) 합은 로그용 — 겹침보다 클 수는 있어도 작을 수는 없다.
+        expect(r.otherLineNearPx, greaterThanOrEqualTo(r.otherLineOverlapPx));
+        expect(r.summary.any((l) => l.contains('배지↔타노선 선')), isTrue,
+            reason: '빌드 로그에 타 노선 선 겹침이 출력돼야 한다');
+      });
+
+      test('미해결 배지 0개, 환승역 마커(rect)·캔버스 이탈 0건 — 하드 위반이 하나도 남지 않는다', () {
+        // 3차 리뷰 MEDIUM-2/3. 잔여 위반은 빌드 실패(StateError)라 반환된 결과의 unresolvedCount 는 항상 0 이다.
+        final r = run();
+        expect(r.unresolvedCount, equals(0), reason: '하드 위반을 못 피한 배지 수');
+        expect(r.stationRectOverlapCount, equals(0), reason: '배지↔환승역 마커(rect) 겹침 수');
+        expect(r.canvasEscapeCount, equals(0), reason: '캔버스 이탈 배지 수');
+        expect(r.summary.any((l) => l.contains('미해결 배지: 0개')), isTrue,
+            reason: '빌드 로그에 미해결 배지 수가 출력돼야 한다');
+        expect(r.summary.any((l) => l.contains('배지↔환승역마커(rect) 0건') && l.contains('캔버스 이탈 0건')),
+            isTrue, reason: '빌드 로그에 환승역 마커·캔버스 이탈 측정이 출력돼야 한다');
+      });
+
+      test('생성물 기준으로도 배지 사각형이 환승역 마커(SVG <rect>)와 겹치지 않는다 (독립 계측)', () {
+        // 배치기의 stationRects 파싱과 별개로 SVG 원본 <rect> 를 다시 읽어 산출물 좌표와 대조한다.
+        final markers = <List<double>>[];
+        for (final m in RegExp(r'<rect\b[^>]*>').allMatches(svg)) {
+          double? attr(String n) {
+            final a = RegExp('\\b$n="(-?[\\d.]+)"').firstMatch(m.group(0)!);
+            return a == null ? null : double.parse(a.group(1)!);
+          }
+
+          final x = attr('x'), y = attr('y'), w = attr('width'), h = attr('height');
+          if (x != null && y != null && w != null && h != null) markers.add([x, y, x + w, y + h]);
+        }
+        expect(markers.length, greaterThan(40), reason: '환승역 마커 rect 를 못 읽었다(SVG 형태 변경?)');
+        for (final b in autoBadges()) {
+          final x0 = (b['ax'] as double) + (b['x'] as double);
+          final y0 = (b['ay'] as double) + (b['y'] as double);
+          final x1 = x0 + (b['w'] as double), y1 = y0 + (b['h'] as double);
+          for (final k in markers) {
+            final overlap = x0 < k[2] && k[0] < x1 && y0 < k[3] && k[1] < y1;
+            expect(overlap, isFalse, reason: '${b['lineId']} 배지 ↔ 환승역 마커 ${k[0]},${k[1]}');
+          }
+        }
+      });
+
+      test('배지 앵커는 그 노선 역 근처이고, 한 노선의 두 배지는 서로 멀리 떨어져 있다', () {
+        // 독립 검증: 빌드 스크립트의 종점 선정 로직과 무관하게 "앵커가 자기 노선의
+        // 어느 역에서 100px 이내" 이고 "두 배지가 200px 이상 떨어짐" 만 확인한다.
+        final badges = parseBadges();
+        final byLine = <String, List<Map<String, dynamic>>>{};
+        for (final b in badges) {
+          byLine.putIfAbsent(b['lineId'] as String, () => []).add(b);
+          final mine =
+              stations.where((s) => s['lineId'] == b['lineId']).toList();
+          final nearest = mine
+              .map((s) {
+                final dx = (s['svgX'] as num) - (b['ax'] as double);
+                final dy = (s['svgY'] as num) - (b['ay'] as double);
+                return (dx * dx + dy * dy).toDouble();
+              })
+              .reduce((a, c) => a < c ? a : c);
+          expect(nearest, lessThanOrEqualTo(100 * 100),
+              reason: '${b['lineId']} 배지 앵커가 자기 노선 역에서 100px 넘게 떨어짐');
+        }
+        for (final e in byLine.entries) {
+          final a = e.value[0], c = e.value[1];
+          final dx = (a['ax'] as double) - (c['ax'] as double);
+          final dy = (a['ay'] as double) - (c['ay'] as double);
+          expect(dx * dx + dy * dy, greaterThan(200 * 200),
+              reason: '${e.key} 의 두 배지가 같은 끝에 몰렸다 — 양 종점이 아니다');
+        }
+      });
+
+      test('배지는 #text-layer 안에 있고 역명 라벨/탭 대상으로 오인되지 않는다', () {
+        final textLayerStart = htmlContent.indexOf('id="text-layer"');
+        final textLayerEnd = htmlContent.indexOf('</svg>', textLayerStart);
+        final layer = htmlContent.substring(textLayerStart, textLayerEnd);
+        expect(layer, contains('id="line-badges"'));
+        // 배지 마크업은 라벨 뒤(위)에 그려진다.
+        expect(layer.indexOf('id="line-badges"'),
+            greaterThan(layer.lastIndexOf('data-station=')));
+        final badgeBlock = layer.substring(layer.indexOf('id="line-badges"'));
+        // buildTextTargets/highlightLines 가 쓰는 속성이 배지 텍스트에 없어야 한다.
+        expect(badgeBlock, isNot(contains('data-station')));
+        expect(badgeBlock, isNot(contains('data-line=')));
+        // 지도 본문(map-container)에는 배지가 없다.
+        final mapEnd =
+            htmlContent.indexOf('</div>', htmlContent.indexOf('id="tap-layer"'));
+        expect(htmlContent.substring(0, mapEnd), isNot(contains('class="lb"')));
+      });
+
+      test('배지는 줌아웃 크기 보정을 받지 않고(--lb-s/.lb-s 없음), 환승 라벨 보정은 그대로다', () {
+        // 사용자 결정(2026-10-06): 배지는 지도 좌표계 고정 크기. 라벨 tier 정책(2026-09-22)은 유지.
+        expect(htmlContent, isNot(contains('--lb-s')));
+        expect(htmlContent, isNot(contains('lb-s')));
+        final fnStart = htmlContent.indexOf('function updateTextCompensation()');
+        final fnEnd = htmlContent.indexOf('function setInitialView', fnStart);
+        final fn = htmlContent.substring(fnStart, fnEnd);
+        expect(fn, contains("'--label-fs-major'"));
+        expect(fn, contains("'--stroke-w-major'"));
+        expect(fn.split('setProperty').length - 1, equals(2),
+            reason: 'updateTextCompensation 은 라벨용 프로퍼티 2개만 쓴다');
+      });
+
+      test('배지 CSS: 입력 비가로채기 + 레이어 승격 없음', () {
+        expect(htmlContent,
+            matches(RegExp(r'#text-layer \.lb \{ pointer-events: none; \}')));
+        final cssStart = htmlContent.indexOf('#text-layer .lb { pointer-events');
+        final cssEnd = htmlContent.indexOf('#text-layer .lb rect', cssStart);
+        expect(cssEnd, greaterThan(cssStart));
+        expect(htmlContent.substring(cssStart, cssEnd),
+            isNot(contains('will-change')),
+            reason: '정적 48개 요소에 레이어 승격을 쓰지 않는다(래스터 기아 이력)');
+        expect(htmlContent, isNot(contains('transform: scale(var(')));
+      });
+
+      test('경로 강조 시 선택되지 않은 노선의 배지도 흐려진다', () {
+        final fnStart = htmlContent.indexOf('window.highlightLines = function');
+        final fnEnd = htmlContent.indexOf('window.clearLineHighlight', fnStart);
+        final fn = htmlContent.substring(fnStart, fnEnd);
+        expect(fn, contains(".lb[data-code]"));
+        expect(fn, contains('codeSet[lineBadgeEls[i].getAttribute(\'data-code\')]'));
+      });
+
+      group('buildLineBadges 는 데이터가 어긋나면 조용히 통과하지 않고 실패한다', () {
+        test('정상 입력은 통과하고 48개를 낸다', () {
+          expect(run().badgeCount, equals(48));
+        });
+
+        test('(1) 노선이 하나 사라지면(매핑과 불일치) 실패', () {
+          expect(() => run(ln: lines.sublist(1)), stateErrorWith('불일치'));
+        });
+
+        test('(2) 경강선 역 좌표를 엉뚱한 곳으로 옮기면 기하 검증이 실패(보조 검증)', () {
+          final moved = [
+            for (final s in stations)
+              s['lineId'] == '경강' ? {...s, 'svgX': 5.0, 'svgY': 5.0} : s,
+          ];
+          expect(() => run(st: moved), stateErrorWith('기하 검증 실패'));
+        });
+
+        test('(2b) 매핑이 뒤바뀌면(경춘↔경강) 라벨 대조(주 검증)가 먼저 잡는다', () {
+          final swapped = {
+            ...kLineIdToDataLine,
+            '경춘': kLineIdToDataLine['경강']!,
+            '경강': kLineIdToDataLine['경춘']!,
+          };
+          expect(() => run(codes: swapped), stateErrorWith('라벨 대조 실패'));
+        });
+
+        test('(3) 오버라이드 없는 노선이 끊기면 실패 — 3호선 충무로~동대입구 엣지 제거', () {
+          final a = idOf('충무로', '3'), b = idOf('동대입구', '3');
+          final cut = [
+            for (final c in conns)
+              if (!(c['lineId'] == '3' &&
+                  {c['fromStationId'], c['toStationId']}.containsAll({a, b})))
+                c,
+          ];
+          expect(cut.length, equals(conns.length - 1), reason: '엣지 1개만 제거돼야 한다');
+          expect(() => run(cn: cut), stateErrorWith('둘 이상의 구간으로 끊겨'));
+        });
+
+        test('(4) 오버라이드 역이 더 이상 종점(차수 1)이 아니면 실패 — 동탄에 가상 엣지', () {
+          final extended = [
+            ...conns,
+            {'lineId': 'GTX-A', 'fromStationId': idOf('동탄', 'GTX-A'),
+             'toStationId': idOf('성남', 'GTX-A'),
+             'travelTimeSeconds': 60, 'isTransfer': false},
+          ];
+          expect(() => run(cn: extended), stateErrorWith('더 이상 종점'));
+        });
+
+        test('(5) 오버라이드 노선이 연결되면 실패 — 오버라이드를 지우도록 강제', () {
+          final joined = [
+            ...conns,
+            {'lineId': 'GTX-A', 'fromStationId': idOf('서울역', 'GTX-A'),
+             'toStationId': idOf('수서', 'GTX-A'),
+             'travelTimeSeconds': 60, 'isTransfer': false},
+          ];
+          expect(() => run(cn: joined), stateErrorWith('이제 연결돼 있다'));
+        });
+
+        test('(6) 오버라이드 두 역이 같은 구간이면 실패', () {
+          expect(
+            () => run(overrides: {'GTX-A': ['운정중앙', '서울역']}),
+            stateErrorWith('같은 구간'),
+          );
+        });
+
+        test('(7) 오버라이드가 lines.json 에 없는 노선을 가리키면 실패', () {
+          expect(
+            () => run(overrides: {...kBadgeTerminalOverrides, '없는노선': ['가', '나']}),
+            stateErrorWith('lines.json 에 없다'),
+          );
+        });
+
+        test('(8) 오버라이드 역명이 노선에 없으면 실패', () {
+          expect(
+            () => run(overrides: {'GTX-A': ['없는역', '동탄']}),
+            stateErrorWith('정확히 1건이 아님'),
+          );
+        });
+
+        test('(9) 배지 문구가 실제 역명과 같으면 실패 — 의정부경전철 → 의정부(의정부역 실존)', () {
+          expect(
+            () => run(names: {...kLineBadgeNames, '의정부': '의정부'}),
+            stateErrorWith('실제 역명과 같다'),
+          );
+        });
+
+        test('(9b) 공백이 섞여도 역명과 같으면 실패 — "의 정 부"', () {
+          expect(
+            () => run(names: {...kLineBadgeNames, '의정부': '의 정 부'}),
+            stateErrorWith('실제 역명과 같다'),
+          );
+        });
+
+        test('(9c) 축약하지 않은 노선의 원래 이름이 역명과 같아져도 실패 — 나중에 역이 추가된 상황', () {
+          // "김포골드" 라는 이름의 역이 새로 생기면, 축약 문구(김포골드)가 곧바로 충돌한다.
+          final withNewStation = [
+            ...stations,
+            {...stations.first, 'id': 'ZZ99', 'name': '김포골드', 'lineId': '1'},
+          ];
+          expect(() => run(st: withNewStation), stateErrorWith('실제 역명과 같다'));
+        });
+
+        test('(10) 축약표가 lines.json 에 없는 노선을 가리키면 실패', () {
+          expect(
+            () => run(names: {...kLineBadgeNames, '없는노선': '없음'}),
+            stateErrorWith('lines.json 에 없다'),
+          );
+        });
+
+        test('(11) 축약 문구가 비어 있으면 실패', () {
+          expect(
+            () => run(names: {...kLineBadgeNames, '의정부': '  '}),
+            stateErrorWith('비어 있다'),
+          );
+        });
+
+        test('(12) 두 노선이 같은 문구로 축약되면 실패 — 의정부·우이신설 → "경전철"', () {
+          expect(
+            () => run(names: {...kLineBadgeNames, '의정부': '경전철', '우이신설': '경전철'}),
+            stateErrorWith('배지 문구가 같다'),
+          );
+        });
+
+        test('(12b) 축약 문구가 다른 노선의 (축약 안 한) 이름과 같아도 실패', () {
+          // 김포골드 → "의정부경전철" 은 lines.json 의 의정부 노선 이름 그대로다.
+          final uijeongbu = lines.firstWhere((l) => l['id'] == '의정부')['name'] as String;
+          expect(
+            () => run(names: {'김포골드': uijeongbu}),
+            stateErrorWith('배지 문구가 같다'),
+          );
+        });
+
+        test('(12c) 공백만 다른 문구도 같은 문구로 본다 — "경 전 철" vs "경전철"', () {
+          expect(
+            () => run(names: {...kLineBadgeNames, '의정부': '경 전 철', '우이신설': '경전철'}),
+            stateErrorWith('배지 문구가 같다'),
+          );
+        });
+
+        test('(13) 역명 충돌 메시지에 출처(stations.json 의 어느 역인지)가 들어간다', () {
+          final withNewStation = [
+            ...stations,
+            {...stations.first, 'id': 'ZZ99', 'name': '김포골드', 'lineId': '1'},
+          ];
+          expect(() => run(st: withNewStation), stateErrorWith('stations.json 역 "김포골드"(id ZZ99'));
+        });
+
+        test('(15) 공식 명칭 그대로도 전 노선이 풀린다 — 축약은 승인 2건으로 충분하다', () {
+          // 줄기(연결선)로 멀리 보내는 길이 막혀 있어도, 앵커 상한 24px 면 신설동("2호선" 44px)·
+          // 청량리("수인분당선" 72px) 허브가 공식 명칭 그대로 풀린다. 한때 상한을 16px 로 잡고
+          // '2'→"2호" 까지 줄였다가, 다른 노선이 전부 "N호선" 인데 혼자 표기가 깨져 철회한 경위가
+          // [_kMaxAnchorDist] 주석에 있다. 이 테스트는 "축약을 더 늘릴 필요가 없다"를 고정한다.
+          final r = run();
+          expect(r.unresolvedCount, equals(0));
+          expect(r.maxAnchorDistPx, lessThanOrEqualTo(24.0));
+          final texts = RegExp(r'>([^<>]+)</text>')
+              .allMatches(r.svgFragment)
+              .map((m) => m.group(1)!)
+              .toSet();
+          // 승인 2건 외에는 lines.json 의 name 이 그대로 나와야 한다.
+          expect(texts, contains('2호선'));
+          expect(texts, contains('수인분당선'));
+          expect(texts, isNot(contains('2호')));
+        });
+
+        test('(14) 하드 위반을 못 피하는 배지가 있으면 빌드 실패 — 종점 주변을 환승역 마커로 막음', () {
+          // 김포골드 첫 배지 앵커 주변 ±150px 를 덮는 rect 를 SVG 에 추가하면 앵커 16px 안의 모든 후보가
+          // 환승역 마커와 겹친다 → 미해결. (이 변이는 rect 가 하드 위반 집합에 있다는 증거이기도 하다.)
+          final frag = run().svgFragment;
+          final m = RegExp(r'data-badge-line="김포골드"[^>]*transform="translate\(([\d.]+),([\d.]+)\)"')
+              .firstMatch(frag)!;
+          final ax = double.parse(m.group(1)!), ay = double.parse(m.group(2)!);
+          final blocked = svg.replaceFirst(
+            '</svg>',
+            '<rect x="${ax - 150}" y="${ay - 150}" width="300" height="300" fill="none"/></svg>',
+          );
+          expect(blocked, isNot(equals(svg)), reason: '변이 SVG 가 만들어지지 않았다');
+          expect(
+            () => buildLineBadges(
+              svgContent: blocked,
+              stationsJson: stations,
+              linesJson: lines,
+              connectionsJson: conns,
+              transferStationNames: transfer,
+            ),
+            throwsA(isA<StateError>().having(
+              (e) => e.message,
+              'message',
+              allOf(contains('미해결 배지'), contains('김포골드'), contains('환승역 마커('),
+                  contains('조치')),
+            )),
+          );
+        });
+      });
     });
 
     test('[M-2, 2026-08 2차 리뷰] 툴바 드래그의 포인터 전량 클리어가 gestureActive 도 초기화한다', () {

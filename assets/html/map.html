@@ -148,8 +148,25 @@ html, body {
      특성이라 위 래퍼 div 가 아니라 이 규칙에 있어야 한다.) */
   overflow: visible;
 }
+/* [라벨 2단(tier) 정책, 2026-09-22] _workspace/16_requirements_label_zoom.md —
+   scale<1 에서 모든 라벨(655개)에 동일하게 1/cs 역보정을 걸면 최대
+   줌아웃(scale=0.5)에서 126개 라벨이 겹치는 컴플레인이 발생했다. 사용자
+   확정 정책: 환승역(119개)만 기존처럼 최소 크기 하한(TEXT_COMP_FLOOR)을
+   유지하고, 일반역(536개)은 보정 없이 `12px × scale` 그대로 축소되게 둔다
+   (정적 bbox 시뮬레이션: 겹침 79쌍 → 5쌍). `text.tl-major` 클래스는 빌드
+   타임에 stations.json `isTransfer` 역 이름과 매칭해 부여한다(아래 main()).
+   일반역 값(`--label-fs`/`--stroke-w`)은 상수 12px/2px 뿐이라 JS 가 아예
+   쓰지 않는다 — updateTextCompensation() 은 `--label-fs-major`/
+   `--stroke-w-major` 두 프로퍼티만 갱신한다.
+   [2026-09-22 리뷰 정정] 이 두 커스텀 프로퍼티는 상속 프로퍼티라 값이
+   바뀌면 스타일 재계산 자체는 여전히 text-layer 의 후손 655개 전체에
+   걸린다 — "리페인트 대상이 655개→119개로 줄어든다"는 표현은 부정확했다.
+   실제로 값이 바뀌어 **레이아웃·페인트가 무효화**되는 건 그 프로퍼티를
+   실제로 소비하는(`var(--label-fs-major, …)`/`var(--stroke-w-major, …)`를
+   쓰는) 환승역 119개뿐이다 — 일반역 536개는 계산된 값 자체가 바뀌지 않아
+   레이아웃/페인트 단계까지 가지 않는다. */
 #text-layer text {
-  font-size: inherit !important;
+  font-size: var(--label-fs, 12px) !important;
   font-weight: 800;
   stroke: white;
   /* [래스터 기아 실험 A, 2026-08-13 — 기각·원복] --stroke-w 커스텀 프로퍼티가
@@ -162,11 +179,39 @@ html, body {
      것으로 확정됐다(비교: 동일하게 매 프레임 transform 을 받는 `<div>`
      `#map-container` 는 0건). 근본 원인이 아니므로 원복한다(v6 구조 변경으로
      이 SVG 루트 자체는 이제 transform 을 받지 않게 됐지만, 이 규칙은 자식
-     상속 프로퍼티 실험의 기록이므로 그대로 둔다). */
+     상속 프로퍼티 실험의 기록이므로 그대로 둔다 — 이 기록 덕에 위 2단 정책이
+     커스텀 프로퍼티(`--label-fs-major`)를 추가로 써도 성능 걱정이 없다는
+     근거가 된다: 무효화는 자식 프로퍼티 메커니즘과 무관하기 때문). */
   stroke-width: var(--stroke-w, 2px);
   paint-order: stroke;
   stroke-linejoin: round;
 }
+#text-layer text.tl-major {
+  /* 환승역 라벨만 기존 정책(scale<1 에서 1/cs 역보정, 최대 줌아웃 9px 하한)을
+     유지한다. 기본값 12px/2px 은 updateTextCompensation() 최초 실행 전
+     (또는 scale>=1 구간, cs===1) 의 폴백이며 일반역과 동일하다. */
+  font-size: var(--label-fs-major, 12px) !important;
+  stroke-width: var(--stroke-w-major, 2px);
+}
+/* [노선 이름 pill 배지, 2026-10-06] _workspace/18_requirements_line_badges.md —
+   전 노선 양 종점의 노선색 pill. 정적 SVG 요소 48개이며 빌드 타임에 위치가
+   확정된다(tool/line_badges.dart). 역명 라벨과 같은 #text-layer 에 올려 라벨 뒤(위)에
+   그린다. **줌아웃 크기 보정은 하지 않는다**(사용자 결정, 2026-10-06) — 배지는 지도
+   좌표계에 고정된 크기라 scale 에 비례해 줄어든다(scale 0.5 에서 글자 6px). 환승역
+   라벨의 --label-fs-major 역보정(2026-09-22 tier 정책)과는 무관하다.
+   `#text-layer text` 의 font-size(!important)/stroke 규칙을 덮기 위해 특이도를
+   올려 둔다(배지 글자엔 흰 외곽선 halo 가 없다). 탭/줌/팬을 가로채지 않도록
+   pointer-events 는 none — #text-layer-wrap 도 이미 none 이라 이중 방어다(래퍼 규칙이
+   바뀌어도 배지가 입력을 가로채지 않도록 남겨 둔다). will-change/레이어 승격은 쓰지
+   않는다 — 정적 요소라 부모(#text-layer-wrap)의 래스터에 그대로 포함된다. */
+#text-layer .lb { pointer-events: none; }
+#text-layer .lb text {
+  font-size: 12px !important;
+  font-weight: 700;
+  font-family: sans-serif;
+  stroke: none;
+}
+#text-layer .lb rect { stroke: white; stroke-width: 1.5px; }
 /* [래스터 기아 수정 v3, 2026-08] 열차 아이콘(#live-trains 의 개별 <g>)을 각각
    독립 컴포지터 레이어로 승격한다. step() 이 매 rAF 마다 위치를 갱신하는데(원칙 2·4),
    이 승격이 없으면 그 갱신이 #train-layer 전체의 공유 래스터 표면에 다시 그려져야
@@ -308,15 +353,15 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <div id="text-layer-wrap">
 <svg id="text-layer" xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 2416 1560" width="2416" height="1560">
-<text x="2056.0" y="1204.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="1-GA" data-station="수서">수서</text>
-<text x="1828.0" y="1240.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="성남">성남</text>
-<text x="1492.0" y="1360.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="구성">구성</text>
+<text class="tl-major" x="2056.0" y="1204.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="1-GA" data-station="수서">수서</text>
+<text class="tl-major" x="1828.0" y="1240.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="성남">성남</text>
+<text class="tl-major" x="1492.0" y="1360.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="구성">구성</text>
 <text x="1264.0" y="1328.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="동탄">동탄</text>
 <text x="104.0" y="190.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="1-GA" data-station="운정중앙">운정중앙</text>
 <text x="208.0" y="190.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="1-GA" data-station="킨텍스">킨텍스</text>
-<text x="396.0" y="268.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="대곡">대곡</text>
-<text x="720" y="245.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="연신내">연신내</text>
-<text x="1048.0" y="610.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="1-GA" data-station="서울역">서울역</text>
+<text class="tl-major" x="396.0" y="268.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="대곡">대곡</text>
+<text class="tl-major" x="720" y="245.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="1-GA" data-station="연신내">연신내</text>
+<text class="tl-major" x="1048.0" y="610.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="1-GA" data-station="서울역">서울역</text>
 <text x="896.0" y="55.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="연천">연천</text>
 <text x="936.0" y="55.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="전곡">전곡</text>
 <text x="984.0" y="79.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="청산">청산</text>
@@ -331,47 +376,47 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="1436.0" y="95.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="녹양">녹양</text>
 <text x="1488.0" y="95.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="가능">가능</text>
 <text x="1536.0" y="95.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="의정부">의정부</text>
-<text x="1588.0" y="72.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="회룡">회룡</text>
+<text class="tl-major" x="1588.0" y="72.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="회룡">회룡</text>
 <text x="1640.0" y="95.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="망월사">망월사</text>
-<text x="1712.0" y="96.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="도봉산">도봉산</text>
+<text class="tl-major" x="1712.0" y="96.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="도봉산">도봉산</text>
 <text x="1712.0" y="140.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="도봉">도봉</text>
 <text x="1712.0" y="172.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="방학">방학</text>
-<text x="1712.0" y="216.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="창동">창동</text>
+<text class="tl-major" x="1712.0" y="216.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="창동">창동</text>
 <text x="1712.0" y="256.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="녹천">녹천</text>
 <text x="1712.0" y="284.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="월계">월계</text>
 <text x="1712.0" y="316.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="광운대">광운대</text>
-<text x="1712.0" y="348.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="석계">석계</text>
+<text class="tl-major" x="1712.0" y="348.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="석계">석계</text>
 <text x="1704.0" y="380.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="신이문">신이문</text>
 <text x="1680.0" y="404.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="외대앞">외대앞</text>
-<text x="1640.0" y="414.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="회기">회기</text>
-<text x="1584.0" y="411.3333333333333" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="청량리">청량리</text>
+<text class="tl-major" x="1640.0" y="414.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="회기">회기</text>
+<text class="tl-major" x="1584.0" y="411.3333333333333" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="청량리">청량리</text>
 <text x="1528.0" y="406.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="제기동">제기동</text>
-<text x="1485.3333333333333" y="431.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="신설동">신설동</text>
-<text x="1424.0" y="428.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="동묘앞">동묘앞</text>
-<text x="1368.0" y="428.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="동대문">동대문</text>
+<text class="tl-major" x="1485.3333333333333" y="431.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="신설동">신설동</text>
+<text class="tl-major" x="1424.0" y="428.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="동묘앞">동묘앞</text>
+<text class="tl-major" x="1368.0" y="428.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="동대문">동대문</text>
 <text x="1264.0" y="406.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="종로5가">종로5가</text>
-<text x="1149.3333333333333" y="408.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="종로3가">종로3가</text>
+<text class="tl-major" x="1149.3333333333333" y="408.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="종로3가">종로3가</text>
 <text x="1072.0" y="464.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="종각">종각</text>
-<text x="1032.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="시청">시청</text>
+<text class="tl-major" x="1032.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="시청">시청</text>
 <text x="1048.0" y="684.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="남영">남영</text>
-<text x="1048.0" y="840.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="용산">용산</text>
-<text x="928.0" y="892.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="노량진">노량진</text>
-<text x="804.0" y="864.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="대방">대방</text>
-<text x="756.0" y="790.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="신길">신길</text>
+<text class="tl-major" x="1048.0" y="840.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="용산">용산</text>
+<text class="tl-major" x="928.0" y="892.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="노량진">노량진</text>
+<text class="tl-major" x="804.0" y="864.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="대방">대방</text>
+<text class="tl-major" x="756.0" y="790.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="신길">신길</text>
 <text x="720.0" y="816.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="영등포">영등포</text>
-<text x="700.0" y="860.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="신도림">신도림</text>
-<text x="664.0" y="900.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="구로">구로</text>
+<text class="tl-major" x="700.0" y="860.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="신도림">신도림</text>
+<text class="tl-major" x="664.0" y="900.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="구로">구로</text>
 <text x="624.0" y="912.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="구일">구일</text>
 <text x="600.0" y="943.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="개봉">개봉</text>
 <text x="560.0" y="943.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="오류동">오류동</text>
-<text x="516.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="온수">온수</text>
+<text class="tl-major" x="516.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="온수">온수</text>
 <text x="472.0" y="968.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="역곡">역곡</text>
-<text x="456.0" y="1024.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="소사">소사</text>
+<text class="tl-major" x="456.0" y="1024.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="소사">소사</text>
 <text x="400.0" y="1038.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="부천">부천</text>
 <text x="348.0" y="1038.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="중동">중동</text>
 <text x="304.0" y="1038.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="송내">송내</text>
 <text x="260.0" y="1038.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="부개">부개</text>
-<text x="208.0" y="1060.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="부평">부평</text>
+<text class="tl-major" x="208.0" y="1060.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="부평">부평</text>
 <text x="176.0" y="1038.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="백운">백운</text>
 <text x="152.0" y="1096.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="동암">동암</text>
 <text x="152.0" y="1124.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="간석">간석</text>
@@ -380,8 +425,8 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="192.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="제물포">제물포</text>
 <text x="240.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="도원">도원</text>
 <text x="288.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="동인천">동인천</text>
-<text x="344.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="인천">인천</text>
-<text x="648.0" y="1012.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="가산&#10;디지털단지"><tspan x="648.0" dy="0">가산</tspan><tspan x="648.0" dy="14">디지털단지</tspan></text>
+<text class="tl-major" x="344.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="인천">인천</text>
+<text class="tl-major" x="648.0" y="1012.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="가산&#10;디지털단지"><tspan x="648.0" dy="0">가산</tspan><tspan x="648.0" dy="14">디지털단지</tspan></text>
 <text x="664.0" y="1076.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="독산">독산</text>
 <text x="664.0" y="1120.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="금천구청">금천구청</text>
 <text x="608.0" y="1100.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="광명">광명</text>
@@ -389,13 +434,13 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="808.0" y="1180.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="관악">관악</text>
 <text x="808.0" y="1244.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="안양">안양</text>
 <text x="808.0" y="1308.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="명학">명학</text>
-<text x="824.0" y="1364.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="금정">금정</text>
+<text class="tl-major" x="824.0" y="1364.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="금정">금정</text>
 <text x="848.0" y="1424.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="군포">군포</text>
 <text x="864.0" y="1476.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="2-1" data-station="당정">당정</text>
 <text x="928.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="의왕">의왕</text>
 <text x="984.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="성균관대">성균관대</text>
 <text x="1028.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="화서">화서</text>
-<text x="1072.0" y="1508.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="수원">수원</text>
+<text class="tl-major" x="1072.0" y="1508.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="2-1" data-station="수원">수원</text>
 <text x="1108.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="세류">세류</text>
 <text x="1160.0" y="1511.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="병점">병점</text>
 <text x="1208.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="세마">세마</text>
@@ -404,7 +449,7 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="1360.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="진위">진위</text>
 <text x="1408.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="송탄">송탄</text>
 <text x="1460.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="서정리">서정리</text>
-<text x="1512.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="평택지제">평택지제</text>
+<text class="tl-major" x="1512.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="평택지제">평택지제</text>
 <text x="1560.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="평택">평택</text>
 <text x="1608.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="성환">성환</text>
 <text x="1656.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="직산">직산</text>
@@ -418,51 +463,51 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="2088.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="온양온천">온양온천</text>
 <text x="2152.0" y="1486.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="신창">신창</text>
 <text x="1160.0" y="1438.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="2-1" data-station="서동탄">서동탄</text>
-<text x="456.0" y="702.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="까치산">까치산</text>
+<text class="tl-major" x="456.0" y="702.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="까치산">까치산</text>
 <text x="520.0" y="760.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="신정네거리">신정네거리</text>
 <text x="552.0" y="792.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="양천구청">양천구청</text>
 <text x="584.0" y="824.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="도림천">도림천</text>
 <text x="664.0" y="780.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="문래">문래</text>
-<text x="718.0" y="724.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="영등포구청">영등포구청</text>
-<text x="720.0" y="700.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="당산">당산</text>
-<text x="800.0" y="700.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="합정">합정</text>
-<text x="880.0" y="624.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="홍대입구">홍대입구</text>
+<text class="tl-major" x="718.0" y="724.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="영등포구청">영등포구청</text>
+<text class="tl-major" x="720.0" y="700.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="당산">당산</text>
+<text class="tl-major" x="800.0" y="700.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="합정">합정</text>
+<text class="tl-major" x="880.0" y="624.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="홍대입구">홍대입구</text>
 <text x="880.0" y="592.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="신촌">신촌</text>
 <text x="864.0" y="572.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="이대">이대</text>
 <text x="864.0" y="548.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="아현">아현</text>
-<text x="952.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="충정로">충정로</text>
+<text class="tl-major" x="952.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="충정로">충정로</text>
 <text x="1096.0" y="518.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="을지로입구">을지로입구</text>
-<text x="1152.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="을지로3가">을지로3가</text>
-<text x="1248.0" y="536.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="을지로4가">을지로4가</text>
-<text x="1344.0" y="517.3333333333334" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="동대문역사&#10;문화공원"><tspan x="1344.0" dy="0">동대문역사</tspan><tspan x="1344.0" dy="14">문화공원</tspan></text>
-<text x="1440.0" y="540.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="신당">신당</text>
+<text class="tl-major" x="1152.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="을지로3가">을지로3가</text>
+<text class="tl-major" x="1248.0" y="536.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="을지로4가">을지로4가</text>
+<text class="tl-major" x="1344.0" y="517.3333333333334" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="동대문역사&#10;문화공원"><tspan x="1344.0" dy="0">동대문역사</tspan><tspan x="1344.0" dy="14">문화공원</tspan></text>
+<text class="tl-major" x="1440.0" y="540.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="신당">신당</text>
 <text x="1520.0" y="564.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="상왕십리">상왕십리</text>
-<text x="1584.0" y="592.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="왕십리">왕십리</text>
+<text class="tl-major" x="1584.0" y="592.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="왕십리">왕십리</text>
 <text x="1616.0" y="660.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="한양대">한양대</text>
 <text x="1640.0" y="684.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="뚝섬">뚝섬</text>
-<text x="1672.0" y="716.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="성수">성수</text>
-<text x="1848.0" y="744.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="건대입구">건대입구</text>
+<text class="tl-major" x="1672.0" y="716.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="성수">성수</text>
+<text class="tl-major" x="1848.0" y="744.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="건대입구">건대입구</text>
 <text x="1920.0" y="768.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="구의">구의</text>
 <text x="1968.0" y="816.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="강변">강변</text>
 <text x="2008.0" y="916.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="잠실나루">잠실나루</text>
-<text x="1992.0" y="996.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="잠실">잠실</text>
+<text class="tl-major" x="1992.0" y="996.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="잠실">잠실</text>
 <text x="1972.0" y="1054.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="잠실새내">잠실새내</text>
-<text x="1824.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="종합운동장">종합운동장</text>
+<text class="tl-major" x="1824.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="종합운동장">종합운동장</text>
 <text x="1728.0" y="1054.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="삼성">삼성</text>
-<text x="1608.0" y="1056.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="선릉">선릉</text>
+<text class="tl-major" x="1608.0" y="1056.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="선릉">선릉</text>
 <text x="1544.0" y="1054.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="역삼">역삼</text>
-<text x="1464.0" y="1054.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="강남">강남</text>
-<text x="1360.0" y="1056.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="교대">교대</text>
+<text class="tl-major" x="1464.0" y="1054.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="강남">강남</text>
+<text class="tl-major" x="1360.0" y="1056.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="교대">교대</text>
 <text x="1280.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="서초">서초</text>
 <text x="1208.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="방배">방배</text>
-<text x="1128.0" y="1056.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="사당">사당</text>
+<text class="tl-major" x="1128.0" y="1056.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="사당">사당</text>
 <text x="1076.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="낙성대">낙성대</text>
 <text x="1008.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="서울대입구">서울대입구</text>
 <text x="928.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="봉천">봉천</text>
-<text x="868.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="신림">신림</text>
+<text class="tl-major" x="868.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="신림">신림</text>
 <text x="792.0" y="1079.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="3-2" data-station="신대방">신대방</text>
-<text x="736.0" y="1052.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="구로디지털단지">구로디지털단지</text>
-<text x="732.0" y="1014.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="대림">대림</text>
+<text class="tl-major" x="736.0" y="1052.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="구로디지털단지">구로디지털단지</text>
+<text class="tl-major" x="732.0" y="1014.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="대림">대림</text>
 <text x="1688.0" y="652.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="3-2" data-station="용답">용답</text>
 <text x="1544.0" y="492.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="신답">신답</text>
 <text x="1512.0" y="460.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="3-2" data-station="용두">용두</text>
@@ -477,55 +522,55 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="576.0" y="246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="삼송">삼송</text>
 <text x="617.6" y="246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="지축">지축</text>
 <text x="662.4" y="246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="구파발">구파발</text>
-<text x="800.0" y="268.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="불광">불광</text>
+<text class="tl-major" x="800.0" y="268.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="불광">불광</text>
 <text x="860.0" y="246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="녹번">녹번</text>
 <text x="912.0" y="246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="홍제">홍제</text>
 <text x="960.0" y="246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="무악재">무악재</text>
 <text x="1032.0" y="288.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="독립문">독립문</text>
 <text x="1072.0" y="328.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="경복궁">경복궁</text>
-<text x="1104.0" y="360.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="안국">안국</text>
-<text x="1244.0" y="608.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="충무로">충무로</text>
+<text class="tl-major" x="1104.0" y="360.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="안국">안국</text>
+<text class="tl-major" x="1244.0" y="608.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="충무로">충무로</text>
 <text x="1280.0" y="684.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="동대입구">동대입구</text>
-<text x="1360.0" y="728.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="약수">약수</text>
+<text class="tl-major" x="1360.0" y="728.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="약수">약수</text>
 <text x="1376.0" y="780.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="금호">금호</text>
-<text x="1376.0" y="828.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="옥수">옥수</text>
+<text class="tl-major" x="1376.0" y="828.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="옥수">옥수</text>
 <text x="1376.0" y="892.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="압구정">압구정</text>
-<text x="1360.0" y="928.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="신사">신사</text>
+<text class="tl-major" x="1360.0" y="928.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="신사">신사</text>
 <text x="1376.0" y="956.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="잠원">잠원</text>
-<text x="1376.0" y="1020.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="고속터미널">고속터미널</text>
+<text class="tl-major" x="1376.0" y="1020.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="고속터미널">고속터미널</text>
 <text x="1392.0" y="1108.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="남부터미널">남부터미널</text>
-<text x="1456.0" y="1148.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="양재">양재</text>
+<text class="tl-major" x="1456.0" y="1148.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="양재">양재</text>
 <text x="1528.0" y="1126.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="매봉">매봉</text>
-<text x="1624.0" y="1148.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="도곡">도곡</text>
+<text class="tl-major" x="1624.0" y="1148.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="도곡">도곡</text>
 <text x="1696.0" y="1126.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="대치">대치</text>
 <text x="1768.0" y="1126.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="학여울">학여울</text>
 <text x="1872.0" y="1126.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="대청">대청</text>
 <text x="1944.0" y="1126.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="4-3" data-station="일원">일원</text>
-<text x="2116.0" y="1124.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="가락시장">가락시장</text>
+<text class="tl-major" x="2116.0" y="1124.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="가락시장">가락시장</text>
 <text x="2184.0" y="1048.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="4-3" data-station="경찰병원">경찰병원</text>
-<text x="2256.0" y="1004.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="오금">오금</text>
+<text class="tl-major" x="2256.0" y="1004.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="4-3" data-station="오금">오금</text>
 <text x="2048.0" y="96.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="진접">진접</text>
 <text x="2016.0" y="128.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="오남">오남</text>
 <text x="1984.0" y="160.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="별내별가람">별내별가람</text>
 <text x="1952.0" y="192.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="불암산">불암산</text>
 <text x="1904.0" y="214.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="상계">상계</text>
-<text x="1840.0" y="216.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="노원">노원</text>
+<text class="tl-major" x="1840.0" y="216.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="노원">노원</text>
 <text x="1640.0" y="214.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="쌍문">쌍문</text>
 <text x="1592.0" y="214.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="수유">수유</text>
 <text x="1520.0" y="214.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="미아">미아</text>
 <text x="1456.0" y="214.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="미아사거리">미아사거리</text>
 <text x="1400.0" y="214.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="길음">길음</text>
-<text x="1372.0" y="252.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="성신여대입구">성신여대입구</text>
+<text class="tl-major" x="1372.0" y="252.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="성신여대입구">성신여대입구</text>
 <text x="1368.0" y="300.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="한성대입구">한성대입구</text>
 <text x="1368.0" y="348.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="혜화">혜화</text>
 <text x="1184.0" y="606.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="명동">명동</text>
 <text x="1136.0" y="606.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="회현">회현</text>
 <text x="1104.0" y="664.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="숙대입구">숙대입구</text>
-<text x="1112.0" y="748.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="삼각지">삼각지</text>
+<text class="tl-major" x="1112.0" y="748.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="삼각지">삼각지</text>
 <text x="1112.0" y="804.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="신용산">신용산</text>
-<text x="1128.0" y="840.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="이촌">이촌</text>
-<text x="1128.0" y="928.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="동작">동작</text>
-<text x="1128.0" y="992.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="총신대입구(이수)">총신대입구(이수)</text>
+<text class="tl-major" x="1128.0" y="840.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="이촌">이촌</text>
+<text class="tl-major" x="1128.0" y="928.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="동작">동작</text>
+<text class="tl-major" x="1128.0" y="992.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="총신대입구(이수)">총신대입구(이수)</text>
 <text x="1128.0" y="1108.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="남태령">남태령</text>
 <text x="1128.0" y="1140.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="선바위">선바위</text>
 <text x="1112.0" y="1180.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="경마공원">경마공원</text>
@@ -540,17 +585,17 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="712.0" y="1440.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="5-4" data-station="대야미">대야미</text>
 <text x="648.0" y="1478.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="반월">반월</text>
 <text x="600.0" y="1478.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="상록수">상록수</text>
-<text x="552.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="한대앞">한대앞</text>
-<text x="504.0" y="1507.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="중앙">중앙</text>
-<text x="456.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="고잔">고잔</text>
-<text x="416.0" y="1500.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="초지">초지</text>
-<text x="360.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="안산">안산</text>
-<text x="304.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="신길온천">신길온천</text>
-<text x="240.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="정왕">정왕</text>
-<text x="160.0" y="1504.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="오이도">오이도</text>
+<text class="tl-major" x="552.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="한대앞">한대앞</text>
+<text class="tl-major" x="504.0" y="1507.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="중앙">중앙</text>
+<text class="tl-major" x="456.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="고잔">고잔</text>
+<text class="tl-major" x="416.0" y="1500.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="초지">초지</text>
+<text class="tl-major" x="360.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="안산">안산</text>
+<text class="tl-major" x="304.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="신길온천">신길온천</text>
+<text class="tl-major" x="240.0" y="1482.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="5-4" data-station="정왕">정왕</text>
+<text class="tl-major" x="160.0" y="1504.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="5-4" data-station="오이도">오이도</text>
 <text x="336.0" y="420.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="방화">방화</text>
 <text x="336.0" y="476.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="개화산">개화산</text>
-<text x="320.0" y="556.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="6-5" data-station="김포&#10;공항"><tspan x="320.0" dy="0">김포</tspan><tspan x="320.0" dy="14">공항</tspan></text>
+<text class="tl-major" x="320.0" y="556.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="6-5" data-station="김포&#10;공항"><tspan x="320.0" dy="0">김포</tspan><tspan x="320.0" dy="14">공항</tspan></text>
 <text x="336.0" y="584.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="송정">송정</text>
 <text x="336.0" y="624.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="마곡">마곡</text>
 <text x="336.0" y="666.4" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="발산">발산</text>
@@ -561,23 +606,23 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="584.0" y="702.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="오목교">오목교</text>
 <text x="624.0" y="702.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="양평">양평</text>
 <text x="708.0" y="756.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="영등포시장">영등포시장</text>
-<text x="832.0" y="799.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="여의도">여의도</text>
+<text class="tl-major" x="832.0" y="799.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="여의도">여의도</text>
 <text x="896.0" y="799.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="여의나루">여의나루</text>
 <text x="952.0" y="799.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="마포">마포</text>
-<text x="952.0" y="728.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="6-5" data-station="공덕">공덕</text>
+<text class="tl-major" x="952.0" y="728.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="6-5" data-station="공덕">공덕</text>
 <text x="968.0" y="548.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="애오개">애오개</text>
 <text x="968.0" y="460.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="서대문">서대문</text>
 <text x="1024.0" y="406.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="광화문">광화문</text>
-<text x="1360.0" y="620.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="청구">청구</text>
+<text class="tl-major" x="1360.0" y="620.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="청구">청구</text>
 <text x="1440.0" y="598.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="신금호">신금호</text>
 <text x="1504.0" y="598.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="행당">행당</text>
 <text x="1648.0" y="623.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="마장">마장</text>
 <text x="1728.0" y="598.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="답십리">답십리</text>
 <text x="1800.0" y="598.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="6-5" data-station="장한평">장한평</text>
-<text x="1864.0" y="600.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="군자">군자</text>
+<text class="tl-major" x="1864.0" y="600.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="군자">군자</text>
 <text x="1976.0" y="640.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="아차산">아차산</text>
 <text x="2040.0" y="704.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="광나루">광나루</text>
-<text x="2152.0" y="844.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="6-5" data-station="천호">천호</text>
+<text class="tl-major" x="2152.0" y="844.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="6-5" data-station="천호">천호</text>
 <text x="2256.0" y="844.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="강동">강동</text>
 <text x="2256.0" y="804.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="길동">길동</text>
 <text x="2256.0" y="764.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="굽은다리">굽은다리</text>
@@ -590,34 +635,34 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="2328.0" y="740.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="하남시청">하남시청</text>
 <text x="2328.0" y="772.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="하남검단산">하남검단산</text>
 <text x="2256.0" y="884.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="둔촌동">둔촌동</text>
-<text x="2256.0" y="932.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="올림픽공원">올림픽공원</text>
+<text class="tl-major" x="2256.0" y="932.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="올림픽공원">올림픽공원</text>
 <text x="2256.0" y="964.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="방이">방이</text>
 <text x="2256.0" y="1044.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="개롱">개롱</text>
 <text x="2256.0" y="1084.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="거여">거여</text>
 <text x="2256.0" y="1124.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="6-5" data-station="마천">마천</text>
-<text x="2000.0" y="392.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="신내">신내</text>
+<text class="tl-major" x="2000.0" y="392.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="신내">신내</text>
 <text x="1976.0" y="364.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="봉화산">봉화산</text>
 <text x="1912.0" y="328.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="7-6" data-station="화랑대">화랑대</text>
-<text x="1848.0" y="328.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="태릉입구">태릉입구</text>
+<text class="tl-major" x="1848.0" y="328.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="태릉입구">태릉입구</text>
 <text x="1664.0" y="326.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="돌곶이">돌곶이</text>
 <text x="1608.0" y="326.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="상월곡">상월곡</text>
 <text x="1544.0" y="326.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="월곡">월곡</text>
 <text x="1496.0" y="326.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="고려대">고려대</text>
 <text x="1440.0" y="326.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="안암">안암</text>
-<text x="1440.0" y="360.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="7-6" data-station="보문">보문</text>
+<text class="tl-major" x="1440.0" y="360.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="7-6" data-station="보문">보문</text>
 <text x="1424.0" y="388.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="창신">창신</text>
 <text x="1312.0" y="751.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="버티고개">버티고개</text>
 <text x="1264.0" y="751.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="한강진">한강진</text>
 <text x="1200.0" y="751.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="이태원">이태원</text>
 <text x="1152.0" y="751.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="녹사평">녹사평</text>
-<text x="1008.0" y="718.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="효창공원앞">효창공원앞</text>
+<text class="tl-major" x="1008.0" y="718.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="효창공원앞">효창공원앞</text>
 <text x="920.0" y="751.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="대흥">대흥</text>
 <text x="864.0" y="751.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="7-6" data-station="광흥창">광흥창</text>
 <text x="840.0" y="704.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="7-6" data-station="상수">상수</text>
 <text x="776.0" y="640.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="7-6" data-station="망원">망원</text>
 <text x="736.0" y="580.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="마포구청">마포구청</text>
 <text x="736.0" y="540.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="월드컵경기장">월드컵경기장</text>
-<text x="736.0" y="469.3333333333333" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="디지털미디어시티">디지털미디어시티</text>
+<text class="tl-major" x="736.0" y="469.3333333333333" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="디지털미디어시티">디지털미디어시티</text>
 <text x="736.0" y="428.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="증산">증산</text>
 <text x="736.0" y="380.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="새절">새절</text>
 <text x="736.0" y="316.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="응암">응암</text>
@@ -626,21 +671,21 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="712.0" y="292.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="7-6" data-station="구산">구산</text>
 <text x="64.0" y="896.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="석남">석남</text>
 <text x="152.0" y="934.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="산곡">산곡</text>
-<text x="224.0" y="948.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="부평구청">부평구청</text>
+<text class="tl-major" x="224.0" y="948.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="부평구청">부평구청</text>
 <text x="312.0" y="868.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="굴포천">굴포천</text>
 <text x="336.0" y="836.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="삼산체육관">삼산체육관</text>
 <text x="336.0" y="804.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="상동">상동</text>
 <text x="376.0" y="758.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="부천시청">부천시청</text>
 <text x="432.0" y="768.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="신중동">신중동</text>
 <text x="456.0" y="792.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="춘의">춘의</text>
-<text x="464.0" y="856.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="부천종합운동장">부천종합운동장</text>
+<text class="tl-major" x="464.0" y="856.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="부천종합운동장">부천종합운동장</text>
 <text x="448.0" y="892.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="8-7" data-station="까치울">까치울</text>
 <text x="528.0" y="972.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="8-7" data-station="천왕">천왕</text>
 <text x="552.0" y="996.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="8-7" data-station="광명사거리">광명사거리</text>
 <text x="616.0" y="990.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="철산">철산</text>
 <text x="688.0" y="990.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="남구로">남구로</text>
 <text x="776.0" y="992.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="8-7" data-station="신풍">신풍</text>
-<text x="828.0" y="992.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="8-7" data-station="보라매">보라매</text>
+<text class="tl-major" x="828.0" y="992.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="8-7" data-station="보라매">보라매</text>
 <text x="880.0" y="978.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="신대방&#10;삼거리"><tspan x="880.0" dy="0">신대방</tspan><tspan x="880.0" dy="14">삼거리</tspan></text>
 <text x="928.0" y="990.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="장승배기">장승배기</text>
 <text x="976.0" y="990.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="상도">상도</text>
@@ -648,17 +693,17 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="1088.0" y="990.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="남성">남성</text>
 <text x="1264.0" y="990.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="내방">내방</text>
 <text x="1496.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="반포">반포</text>
-<text x="1560.0" y="932.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="논현">논현</text>
+<text class="tl-major" x="1560.0" y="932.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="논현">논현</text>
 <text x="1640.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="학동">학동</text>
-<text x="1752.0" y="900.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="강남구청">강남구청</text>
+<text class="tl-major" x="1752.0" y="900.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="강남구청">강남구청</text>
 <text x="1808.0" y="844.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="청담">청담</text>
 <text x="1856.0" y="796.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="자양">자양</text>
-<text x="1864.0" y="676.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="어린이대공원">어린이대공원</text>
+<text class="tl-major" x="1864.0" y="676.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="어린이대공원">어린이대공원</text>
 <text x="1864.0" y="564.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="중곡">중곡</text>
 <text x="1864.0" y="532.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="용마산">용마산</text>
 <text x="1864.0" y="500.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="사가정">사가정</text>
 <text x="1864.0" y="468.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="면목">면목</text>
-<text x="1864.0" y="424.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="상봉">상봉</text>
+<text class="tl-major" x="1864.0" y="424.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="상봉">상봉</text>
 <text x="1864.0" y="388.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="중화">중화</text>
 <text x="1864.0" y="364.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="먹골">먹골</text>
 <text x="1864.0" y="300.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="공릉">공릉</text>
@@ -667,32 +712,32 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="1800.0" y="188.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="마들">마들</text>
 <text x="1768.0" y="156.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="8-7" data-station="수락산">수락산</text>
 <text x="1840.0" y="94.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="8-7" data-station="장암">장암</text>
-<text x="2070.0" y="313.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="9-8" data-station="별내">별내</text>
+<text class="tl-major" x="2070.0" y="313.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="9-8" data-station="별내">별내</text>
 <text x="2080.0" y="364.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="다산">다산</text>
 <text x="2080.0" y="396.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="동구릉">동구릉</text>
-<text x="2072.0" y="447.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="구리">구리</text>
+<text class="tl-major" x="2072.0" y="447.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="구리">구리</text>
 <text x="2080.0" y="468.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="장자호수공원">장자호수공원</text>
 <text x="2168.0" y="660.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="암사역사공원">암사역사공원</text>
 <text x="2168.0" y="780.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="암사">암사</text>
 <text x="2120.0" y="898.4000000000001" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="강동구청">강동구청</text>
 <text x="2072.0" y="944.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="몽촌토성">몽촌토성</text>
-<text x="2048.0" y="1040.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="석촌">석촌</text>
+<text class="tl-major" x="2048.0" y="1040.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="석촌">석촌</text>
 <text x="2088.0" y="1064.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="송파">송파</text>
 <text x="2160.0" y="1136.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="문정">문정</text>
 <text x="2192.0" y="1168.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="장지">장지</text>
-<text x="2216.0" y="1192.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="복정">복정</text>
+<text class="tl-major" x="2216.0" y="1192.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="복정">복정</text>
 <text x="2256.0" y="1232.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="남위례">남위례</text>
 <text x="2280.0" y="1276.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="산성">산성</text>
 <text x="2280.0" y="1324.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="남한산성입구">남한산성입구</text>
 <text x="2220.0" y="1318.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="9-8" data-station="단대오거리">단대오거리</text>
 <text x="2160.0" y="1318.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="9-8" data-station="신흥">신흥</text>
 <text x="2104.0" y="1304.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="9-8" data-station="수진">수진</text>
-<text x="2056.0" y="1276.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="9-8" data-station="모란">모란</text>
+<text class="tl-major" x="2056.0" y="1276.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="9-8" data-station="모란">모란</text>
 <text x="296.0" y="420.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="개화">개화</text>
-<text x="336.0" y="544.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="김포공항">김포공항</text>
+<text class="tl-major" x="336.0" y="544.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="김포공항">김포공항</text>
 <text x="368.0" y="520.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="공항시장">공항시장</text>
 <text x="408.0" y="536.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="신방화">신방화</text>
-<text x="440.0" y="564.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="마곡나루">마곡나루</text>
+<text class="tl-major" x="440.0" y="564.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="마곡나루">마곡나루</text>
 <text x="464.0" y="592.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="양천향교">양천향교</text>
 <text x="520.0" y="630.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="가양">가양</text>
 <text x="568.0" y="630.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="증미">증미</text>
@@ -701,15 +746,15 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="704.0" y="648.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="신목동">신목동</text>
 <text x="720.0" y="664.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="선유도">선유도</text>
 <text x="780.0" y="740.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="국회의사당">국회의사당</text>
-<text x="865.6" y="831.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="샛강">샛강</text>
+<text class="tl-major" x="865.6" y="831.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="샛강">샛강</text>
 <text x="968.0" y="932.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="10-9" data-station="노들">노들</text>
 <text x="1048.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="흑석">흑석</text>
 <text x="1216.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="구반포">구반포</text>
 <text x="1288.0" y="926.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="신반포">신반포</text>
 <text x="1488.0" y="998.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="사평">사평</text>
-<text x="1560.0" y="1004.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="신논현">신논현</text>
+<text class="tl-major" x="1560.0" y="1004.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="신논현">신논현</text>
 <text x="1632.0" y="998.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="언주">언주</text>
-<text x="1672.0" y="998.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="선정릉">선정릉</text>
+<text class="tl-major" x="1672.0" y="998.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="선정릉">선정릉</text>
 <text x="1776.0" y="998.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="삼성중앙">삼성중앙</text>
 <text x="1832.0" y="1020.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="10-9" data-station="봉은사">봉은사</text>
 <text x="1904.0" y="1103.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="10-9" data-station="삼전">삼전</text>
@@ -750,7 +795,7 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="320.0" y="1334.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="I" data-station="캠퍼스타운">캠퍼스타운</text>
 <text x="376.0" y="1334.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="I" data-station="동막">동막</text>
 <text x="432.0" y="1334.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="I" data-station="동춘">동춘</text>
-<text x="496.0" y="1356.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="원인재">원인재</text>
+<text class="tl-major" x="496.0" y="1356.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="원인재">원인재</text>
 <text x="552.0" y="1332.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I" data-station="신연수">신연수</text>
 <text x="528.0" y="1300.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I" data-station="선학">선학</text>
 <text x="504.0" y="1256.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I" data-station="문학경기장">문학경기장</text>
@@ -768,7 +813,7 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="224.0" y="692.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I" data-station="임학">임학</text>
 <text x="224.0" y="652.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I" data-station="박촌">박촌</text>
 <text x="224.0" y="612.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I" data-station="귤현">귤현</text>
-<text x="208.0" y="548.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="계양">계양</text>
+<text class="tl-major" x="208.0" y="548.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="계양">계양</text>
 <text x="208.0" y="460.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="아라&#10;(북부법원&#10;검찰청)"><tspan x="208.0" dy="0">아라</tspan><tspan x="208.0" dy="14">(북부법원</tspan><tspan x="208.0" dy="14">검찰청)</tspan></text>
 <text x="208.0" y="428.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="신검단중앙">신검단중앙</text>
 <text x="208.0" y="380.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I" data-station="검단&#10;호수공원"><tspan x="208.0" dy="0">검단</tspan><tspan x="208.0" dy="14">호수공원</tspan></text>
@@ -778,7 +823,7 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="48.0" y="468.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I2" data-station="마전">마전</text>
 <text x="72.0" y="516.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I2" data-station="완정">완정</text>
 <text x="96.0" y="540.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I2" data-station="독정">독정</text>
-<text x="160.0" y="580.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="검암">검암</text>
+<text class="tl-major" x="160.0" y="580.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="검암">검암</text>
 <text x="96.0" y="616.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="I2" data-station="검바위">검바위</text>
 <text x="64.0" y="700.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="아시아드&#10;경기장"><tspan x="64.0" dy="0">아시아드</tspan><tspan x="64.0" dy="14">경기장</tspan></text>
 <text x="64.0" y="756.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="서구청">서구청</text>
@@ -796,8 +841,8 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="592.0" y="1244.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="남동구청">남동구청</text>
 <text x="616.0" y="1276.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="인천대공원">인천대공원</text>
 <text x="616.0" y="1316.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="I2" data-station="운연">운연</text>
-<text x="1760.0" y="418.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="G" data-station="중랑">중랑</text>
-<text x="1976.0" y="443.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="G" data-station="망우">망우</text>
+<text class="tl-major" x="1760.0" y="418.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="G" data-station="중랑">중랑</text>
+<text class="tl-major" x="1976.0" y="443.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="G" data-station="망우">망우</text>
 <text x="2032.0" y="352.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="G" data-station="갈매">갈매</text>
 <text x="2096.0" y="288.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="G" data-station="퇴계원">퇴계원</text>
 <text x="2128.0" y="256.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="G" data-station="사릉">사릉</text>
@@ -825,11 +870,11 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="312.0" y="119.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="운정">운정</text>
 <text x="352.0" y="119.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="야당">야당</text>
 <text x="392.0" y="94.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="K" data-station="탄현">탄현</text>
-<text x="420.0" y="124.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="일산">일산</text>
-<text x="420.0" y="156.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="풍산">풍산</text>
-<text x="420.0" y="188.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="백마">백마</text>
+<text class="tl-major" x="420.0" y="124.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="일산">일산</text>
+<text class="tl-major" x="420.0" y="156.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="풍산">풍산</text>
+<text class="tl-major" x="420.0" y="188.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="백마">백마</text>
 <text x="420.0" y="220.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="곡산">곡산</text>
-<text x="448.0" y="310.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="능곡">능곡</text>
+<text class="tl-major" x="448.0" y="310.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="능곡">능곡</text>
 <text x="480.0" y="336.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="행신">행신</text>
 <text x="520.0" y="376.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="강매">강매</text>
 <text x="552.0" y="408.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="K" data-station="한국항공대">한국항공대</text>
@@ -884,16 +929,16 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="1224.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="영통">영통</text>
 <text x="1272.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="청명">청명</text>
 <text x="1328.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="상갈">상갈</text>
-<text x="1376.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="기흥">기흥</text>
+<text class="tl-major" x="1376.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="기흥">기흥</text>
 <text x="1424.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="신갈">신갈</text>
 <text x="1552.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="보정">보정</text>
 <text x="1608.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="죽전">죽전</text>
 <text x="1664.0" y="1358.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="오리">오리</text>
-<text x="1708.0" y="1347.2" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="B" data-station="미금">미금</text>
-<text x="1739.2" y="1308.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="B" data-station="정자">정자</text>
+<text class="tl-major" x="1708.0" y="1347.2" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="B" data-station="미금">미금</text>
+<text class="tl-major" x="1739.2" y="1308.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="B" data-station="정자">정자</text>
 <text x="1808.0" y="1279.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="수내">수내</text>
 <text x="1864.0" y="1279.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="서현">서현</text>
-<text x="1936.0" y="1252.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="B" data-station="이매">이매</text>
+<text class="tl-major" x="1936.0" y="1252.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="B" data-station="이매">이매</text>
 <text x="1984.0" y="1279.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="야탑">야탑</text>
 <text x="2120.0" y="1254.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="B" data-station="태평">태평</text>
 <text x="2160.0" y="1224.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="B" data-station="가천대">가천대</text>
@@ -905,7 +950,7 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="1600.0" y="764.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="B" data-station="서울숲">서울숲</text>
 <text x="1488.0" y="1208.0" style="font-family:sans-serif;font-size:12px" text-anchor="start" data-line="S" data-station="양재시민의숲">양재시민의숲</text>
 <text x="1560.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="S" data-station="청계산입구">청계산입구</text>
-<text x="1668.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="S" data-station="판교">판교</text>
+<text class="tl-major" x="1668.0" y="1246.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="S" data-station="판교">판교</text>
 <text x="1664.0" y="1302.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="S" data-station="동천">동천</text>
 <text x="1608.0" y="1302.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="S" data-station="수지구청">수지구청</text>
 <text x="1552.0" y="1302.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="S" data-station="성복">성복</text>
@@ -963,6 +1008,56 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
 <text x="904.0" y="1116.0" style="font-family:sans-serif;font-size:12px" text-anchor="end" data-line="SL" data-station="서원">서원</text>
 <text x="960.0" y="1151.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="SL" data-station="서울대벤처타운">서울대벤처타운</text>
 <text x="1008.0" y="1126.0" style="font-family:sans-serif;font-size:12px" text-anchor="middle" data-line="SL" data-station="관악산(서울대)">관악산(서울대)</text>
+<g id="line-badges">
+<g class="lb" data-badge-line="1" data-code="2-1" transform="translate(848,40)"><rect x="-48" y="-9" width="44" height="18" rx="9" fill="#052f93"/><text x="-26" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">1호선</text></g>
+<g class="lb" data-badge-line="1" data-code="2-1" transform="translate(2216,1496)"><rect x="4" y="-9" width="44" height="18" rx="9" fill="#052f93"/><text x="26" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">1호선</text></g>
+<g class="lb" data-badge-line="2" data-code="3-2" transform="translate(1480,416)"><rect x="-45" y="19.7" width="44" height="18" rx="9" fill="#10a643"/><text x="-23" y="28.7" dy=".35em" text-anchor="middle" fill="#ffffff">2호선</text></g>
+<g class="lb" data-badge-line="2" data-code="3-2" transform="translate(456,712)"><rect x="18.5" y="6.1" width="44" height="18" rx="9" fill="#10a643"/><text x="40.5" y="15.1" dy=".35em" text-anchor="middle" fill="#ffffff">2호선</text></g>
+<g class="lb" data-badge-line="3" data-code="4-3" transform="translate(56,256)"><rect x="-48" y="-9" width="44" height="18" rx="9" fill="#de6d00"/><text x="-26" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">3호선</text></g>
+<g class="lb" data-badge-line="3" data-code="4-3" transform="translate(2248,1000)"><rect x="-51.4" y="-21.2" width="44" height="18" rx="9" fill="#de6d00"/><text x="-29.4" y="-12.2" dy=".35em" text-anchor="middle" fill="#ffffff">3호선</text></g>
+<g class="lb" data-badge-line="4" data-code="5-4" transform="translate(152,1488)"><rect x="-50" y="-9" width="44" height="18" rx="9" fill="#0099d1"/><text x="-28" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">4호선</text></g>
+<g class="lb" data-badge-line="4" data-code="5-4" transform="translate(2088,72)"><rect x="-3.7" y="-27.3" width="44" height="18" rx="9" fill="#0099d1"/><text x="18.3" y="-18.3" dy=".35em" text-anchor="middle" fill="#ffffff">4호선</text></g>
+<g class="lb" data-badge-line="5" data-code="6-5" transform="translate(328,336)"><rect x="-22" y="-22" width="44" height="18" rx="9" fill="#a95094"/><text x="0" y="-13" dy=".35em" text-anchor="middle" fill="#ffffff">5호선</text></g>
+<g class="lb" data-badge-line="5" data-code="6-5" transform="translate(2320,800)"><rect x="-22" y="4" width="44" height="18" rx="9" fill="#a95094"/><text x="0" y="13" dy=".35em" text-anchor="middle" fill="#ffffff">5호선</text></g>
+<g class="lb" data-badge-line="6" data-code="7-6" transform="translate(744,208)"><rect x="-7.4" y="-39.3" width="44" height="18" rx="9" fill="#d08d1a"/><text x="14.6" y="-30.3" dy=".35em" text-anchor="middle" fill="#1f1f1f">6호선</text></g>
+<g class="lb" data-badge-line="6" data-code="7-6" transform="translate(2008,384)"><rect x="11" y="4.7" width="44" height="18" rx="9" fill="#d08d1a"/><text x="33" y="13.7" dy=".35em" text-anchor="middle" fill="#1f1f1f">6호선</text></g>
+<g class="lb" data-badge-line="7" data-code="8-7" transform="translate(1896,104)"><rect x="4" y="-9" width="44" height="18" rx="9" fill="#657931"/><text x="26" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">7호선</text></g>
+<g class="lb" data-badge-line="7" data-code="8-7" transform="translate(56,904)"><rect x="-52" y="-9" width="44" height="18" rx="9" fill="#657931"/><text x="-30" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">7호선</text></g>
+<g class="lb" data-badge-line="8" data-code="9-8" transform="translate(2064,1264)"><rect x="-35.1" y="-28.7" width="44" height="18" rx="9" fill="#e74e6d"/><text x="-13.1" y="-19.7" dy=".35em" text-anchor="middle" fill="#ffffff">8호선</text></g>
+<g class="lb" data-badge-line="8" data-code="9-8" transform="translate(2112,336)"><rect x="4" y="-9" width="44" height="18" rx="9" fill="#e74e6d"/><text x="26" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">8호선</text></g>
+<g class="lb" data-badge-line="9" data-code="10-9" transform="translate(288,336)"><rect x="-29.9" y="-28.2" width="44" height="18" rx="9" fill="#b58600"/><text x="-7.9" y="-19.2" dy=".35em" text-anchor="middle" fill="#ffffff">9호선</text></g>
+<g class="lb" data-badge-line="9" data-code="10-9" transform="translate(2344,848)"><rect x="-22" y="-22" width="44" height="18" rx="9" fill="#b58600"/><text x="0" y="-13" dy=".35em" text-anchor="middle" fill="#ffffff">9호선</text></g>
+<g class="lb" data-badge-line="SB" data-code="S" transform="translate(1368,928)"><rect x="-64.9" y="-34.9" width="60" height="18" rx="9" fill="#cd2234"/><text x="-34.9" y="-25.9" dy=".35em" text-anchor="middle" fill="#ffffff">신분당선</text></g>
+<g class="lb" data-badge-line="SB" data-code="S" transform="translate(1304,1312)"><rect x="-62.5" y="-22.5" width="60" height="18" rx="9" fill="#cd2234"/><text x="-32.5" y="-13.5" dy=".35em" text-anchor="middle" fill="#ffffff">신분당선</text></g>
+<g class="lb" data-badge-line="경의중앙" data-code="K" transform="translate(1936,576)"><rect x="-46" y="-33.1" width="72" height="18" rx="9" fill="#5f9c82"/><text x="-10" y="-24.1" dy=".35em" text-anchor="middle" fill="#ffffff">경의중앙선</text></g>
+<g class="lb" data-badge-line="경의중앙" data-code="K" transform="translate(40,72)"><rect x="-36" y="-22" width="72" height="18" rx="9" fill="#5f9c82"/><text x="0" y="-13" dy=".35em" text-anchor="middle" fill="#ffffff">경의중앙선</text></g>
+<g class="lb" data-badge-line="경춘" data-code="G" transform="translate(1584,424)"><rect x="-59.1" y="-1.9" width="48" height="18" rx="9" fill="#0ba382"/><text x="-35.1" y="7.1" dy=".35em" text-anchor="middle" fill="#ffffff">경춘선</text></g>
+<g class="lb" data-badge-line="경춘" data-code="G" transform="translate(2376,640)"><rect x="-24" y="4" width="48" height="18" rx="9" fill="#0ba382"/><text x="0" y="13" dy=".35em" text-anchor="middle" fill="#ffffff">경춘선</text></g>
+<g class="lb" data-badge-line="경강" data-code="KK" transform="translate(1672,1256)"><rect x="-56.1" y="6.2" width="48" height="18" rx="9" fill="#004ea7"/><text x="-32.1" y="15.2" dy=".35em" text-anchor="middle" fill="#ffffff">경강선</text></g>
+<g class="lb" data-badge-line="경강" data-code="KK" transform="translate(2376,1496)"><rect x="-24" y="4" width="48" height="18" rx="9" fill="#004ea7"/><text x="0" y="13" dy=".35em" text-anchor="middle" fill="#ffffff">경강선</text></g>
+<g class="lb" data-badge-line="공항철도" data-code="A" transform="translate(1040,616)"><rect x="-74.5" y="-5" width="60" height="18" rx="9" fill="#038fa0"/><text x="-44.5" y="4" dy=".35em" text-anchor="middle" fill="#ffffff">공항철도</text></g>
+<g class="lb" data-badge-line="공항철도" data-code="A" transform="translate(152,872)"><rect x="-30" y="4" width="60" height="18" rx="9" fill="#038fa0"/><text x="0" y="13" dy=".35em" text-anchor="middle" fill="#ffffff">공항철도</text></g>
+<g class="lb" data-badge-line="수인분당" data-code="B" transform="translate(1584,416)"><rect x="-23" y="-40.5" width="72" height="18" rx="9" fill="#ffd400"/><text x="13" y="-31.5" dy=".35em" text-anchor="middle" fill="#1f1f1f">수인분당선</text></g>
+<g class="lb" data-badge-line="수인분당" data-code="B" transform="translate(344,1256)"><rect x="-73.6" y="6.6" width="72" height="18" rx="9" fill="#ffd400"/><text x="-37.6" y="15.6" dy=".35em" text-anchor="middle" fill="#1f1f1f">수인분당선</text></g>
+<g class="lb" data-badge-line="신림" data-code="SL" transform="translate(861.6,816)"><rect x="-31.6" y="22.5" width="48" height="18" rx="9" fill="#0781fa"/><text x="-7.6" y="31.5" dy=".35em" text-anchor="middle" fill="#ffffff">신림선</text></g>
+<g class="lb" data-badge-line="신림" data-code="SL" transform="translate(1072,1136)"><rect x="-15.8" y="-28.9" width="48" height="18" rx="9" fill="#0781fa"/><text x="8.2" y="-19.9" dy=".35em" text-anchor="middle" fill="#ffffff">신림선</text></g>
+<g class="lb" data-badge-line="에버라인" data-code="E" transform="translate(2192,1432)"><rect x="4" y="-9" width="60" height="18" rx="9" fill="#36a805"/><text x="34" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">에버라인</text></g>
+<g class="lb" data-badge-line="에버라인" data-code="E" transform="translate(1376,1368)"><rect x="8" y="6.8" width="60" height="18" rx="9" fill="#36a805"/><text x="38" y="15.8" dy=".35em" text-anchor="middle" fill="#ffffff">에버라인</text></g>
+<g class="lb" data-badge-line="인천1" data-code="I" transform="translate(216,376)"><rect x="-59.3" y="-33" width="68" height="18" rx="9" fill="#6496df"/><text x="-25.3" y="-24" dy=".35em" text-anchor="middle" fill="#ffffff">인천1호선</text></g>
+<g class="lb" data-badge-line="인천1" data-code="I" transform="translate(64,1496)"><rect x="-34" y="4" width="68" height="18" rx="9" fill="#6496df"/><text x="0" y="13" dy=".35em" text-anchor="middle" fill="#ffffff">인천1호선</text></g>
+<g class="lb" data-badge-line="인천2" data-code="I2" transform="translate(56,304)"><rect x="-34" y="-22" width="68" height="18" rx="9" fill="#cf843c"/><text x="0" y="-13" dy=".35em" text-anchor="middle" fill="#1f1f1f">인천2호선</text></g>
+<g class="lb" data-badge-line="인천2" data-code="I2" transform="translate(608,1376)"><rect x="-34" y="4" width="68" height="18" rx="9" fill="#cf843c"/><text x="0" y="13" dy=".35em" text-anchor="middle" fill="#1f1f1f">인천2호선</text></g>
+<g class="lb" data-badge-line="김포골드" data-code="KP" transform="translate(128,504)"><rect x="2.5" y="4.5" width="60" height="18" rx="9" fill="#a18f57"/><text x="32.5" y="13.5" dy=".35em" text-anchor="middle" fill="#ffffff">김포골드</text></g>
+<g class="lb" data-badge-line="김포골드" data-code="KP" transform="translate(328,544)"><rect x="3.3" y="11" width="60" height="18" rx="9" fill="#a18f57"/><text x="33.3" y="20" dy=".35em" text-anchor="middle" fill="#ffffff">김포골드</text></g>
+<g class="lb" data-badge-line="서해" data-code="SH" transform="translate(240,1520)"><rect x="-52" y="-9" width="48" height="18" rx="9" fill="#40a607"/><text x="-28" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">서해선</text></g>
+<g class="lb" data-badge-line="서해" data-code="SH" transform="translate(408,120)"><rect x="3.8" y="-36.8" width="48" height="18" rx="9" fill="#40a607"/><text x="27.8" y="-27.8" dy=".35em" text-anchor="middle" fill="#ffffff">서해선</text></g>
+<g class="lb" data-badge-line="의정부" data-code="U" transform="translate(840,80)"><rect x="-88" y="-9" width="84" height="18" rx="9" fill="#d9750d"/><text x="-46" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">의정부경전철</text></g>
+<g class="lb" data-badge-line="의정부" data-code="U" transform="translate(1488,48)"><rect x="-88" y="-9" width="84" height="18" rx="9" fill="#d9750d"/><text x="-46" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">의정부경전철</text></g>
+<g class="lb" data-badge-line="우이신설" data-code="W" transform="translate(832,128)"><rect x="-67.7" y="-20.3" width="60" height="18" rx="9" fill="#878787"/><text x="-37.7" y="-11.3" dy=".35em" text-anchor="middle" fill="#ffffff">우이신설</text></g>
+<g class="lb" data-badge-line="우이신설" data-code="W" transform="translate(1485.3,416)"><rect x="-6.7" y="-39" width="60" height="18" rx="9" fill="#878787"/><text x="23.3" y="-30" dy=".35em" text-anchor="middle" fill="#ffffff">우이신설</text></g>
+<g class="lb" data-badge-line="GTX-A" data-code="1-GA" transform="translate(56,200)"><rect x="-47.8" y="-29.8" width="54" height="18" rx="9" fill="#9f6181"/><text x="-20.8" y="-20.8" dy=".35em" text-anchor="middle" fill="#ffffff">GTX-A</text></g>
+<g class="lb" data-badge-line="GTX-A" data-code="1-GA" transform="translate(1192,1336)"><rect x="-58" y="-9" width="54" height="18" rx="9" fill="#9f6181"/><text x="-31" y="0" dy=".35em" text-anchor="middle" fill="#ffffff">GTX-A</text></g>
+</g>
 </svg>
 </div>
 
@@ -1154,14 +1249,21 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
   // 그대로 따라가도록 두고(지도 전체와 함께 커지고 작아짐 — 통상적인 핀치 시각
   // 효과이며 판독성 저하는 순간적), 핀치가 끝나는 순간(pointerup/pointercancel)
   // 한 번만 반영해 리페인트를 제스처당 1회로 줄인다.
+  // [라벨 2단(tier) 정책, 2026-09-22] 환승역 라벨(text.tl-major)만 이 보정을
+  // 받는다. 일반역은 CSS 기본값(--label-fs: 12px 상수)을 그대로 쓰므로 여기서
+  // 절대 건드리지 않는다 — [2026-09-22 리뷰 정정] 상속 프로퍼티라 스타일
+  // 재계산 자체는 여전히 655개 전체에 걸리지만, 계산된 값이 실제로 바뀌어
+  // 레이아웃·페인트가 무효화되는 건 그 프로퍼티를 쓰는 환승역 119개뿐이라
+  // 팬/핀치 성능에 유리하다. _workspace/16_requirements_label_zoom.md
   function updateTextCompensation() {
     var cs = Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR);
     // [P2] scale 이 아니라 실제로 화면에 쓰일 보정계수(cs)로 no-op 판정한다 —
     // 위 lastCs 선언부 주석 참조.
     if (cs === lastCs) return;
-    textLayer.style.fontSize = (TEXT_BASE_FONT_SIZE / cs) + 'px';
     textLayer.style.setProperty(
-        '--stroke-w', (TEXT_BASE_STROKE_W / cs) + 'px');
+        '--label-fs-major', (TEXT_BASE_FONT_SIZE / cs) + 'px');
+    textLayer.style.setProperty(
+        '--stroke-w-major', (TEXT_BASE_STROKE_W / cs) + 'px');
     lastCs = cs;
   }
 
@@ -1385,11 +1487,15 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
     // 33% 크게 측정되고, 이 인플레이션이 줌아웃 확장 배율과 곱해져 탭 박스가
     // 인접 역 라벨을 침범한다. (이후 setInitialView→applyTransform 이 현재
     // 줌에 맞는 값으로 다시 설정하므로 임시 고정은 무해.)
-    textLayer.style.fontSize = TEXT_BASE_FONT_SIZE + 'px';
-    // 위에서 fontSize를 직접 덮어썼으므로, updateTextCompensation의 lastCs 캐시가
-    // "이미 현재 cs에 맞게 계산됐다"고 오인해 재계산을 건너뛰지 않도록 무효화한다.
-    // 현재는 buildTextTargets가 최초 applyTransform 이전(lastCs=null인 시점)
-    // 에만 호출되어 무해하지만, 향후 재측정 목적으로 재호출될 경우를 대비한 안전장치.
+    // [라벨 2단(tier) 정책] 역보정을 받는 건 이제 환승역(tl-major)뿐이므로
+    // --label-fs-major 만 기준값(12px)으로 명시 고정한다. 일반역은 CSS 기본값
+    // (--label-fs: 12px 상수)이 이미 기준값이라 건드릴 필요가 없다.
+    textLayer.style.setProperty('--label-fs-major', TEXT_BASE_FONT_SIZE + 'px');
+    // 위에서 --label-fs-major 를 직접 덮어썼으므로, updateTextCompensation의
+    // lastCs 캐시가 "이미 현재 cs에 맞게 계산됐다"고 오인해 재계산을 건너뛰지
+    // 않도록 무효화한다. 현재는 buildTextTargets가 최초 applyTransform 이전
+    // (lastCs=null인 시점)에만 호출되어 무해하지만, 향후 재측정 목적으로
+    // 재호출될 경우를 대비한 안전장치.
     lastCs = null;
     var texts = textLayer.querySelectorAll('text[data-station]');
     for (var i = 0; i < texts.length; i++) {
@@ -1412,20 +1518,34 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
           dx0: bbox.x - ax,
           dy0: bbox.y - ay,
           w: bbox.width,
-          h: bbox.height
+          h: bbox.height,
+          major: el.classList.contains('tl-major')
         });
       } catch(e) {}
     }
   }
 
   // 현재 줌 배율에서 라벨의 실제 탭 판정 박스를 계산한다.
-  // scale<1 이면 폰트 역보정으로 라벨이 SVG 좌표계 기준 1/cs 배 커져 있으므로,
-  // 저장해 둔 기준 bbox 를 앵커점 고정으로 동일 배율 확장한다. scale>=1 이면
-  // f=1 로 기존 판정과 동일. 슬롭(TAP_TEXT_PAD)도 배율을 곱해 화면 px 기준
-  // 일정한 여유를 유지한다.
+  // [라벨 2단(tier) 정책] scale<1 에서 폰트 역보정을 받는 건 환승역(tl-major)
+  // 뿐이므로, 일반역은 f=1(역보정 없음 — 화면 폰트가 scale 그대로 줄어듦)로
+  // 고정하고, 환승역만 기존 1/cs 확장을 적용한다. 이전 코드의 f = 1/min(scale,1)
+  // 은 TEXT_COMP_FLOOR 하한을 반영하지 않아, 최대 줌아웃(scale=0.5)에서 실제
+  // 화면 배율(f=1.5)보다 탭 박스가 더 크게(f=2) 잡히는 불일치가 있었다 — 이번
+  // 변경으로 환승역도 실제 렌더 배율과 정확히 일치시킨다.
+  // [2026-09-22 리뷰 수정] 슬롭(TAP_TEXT_PAD)은 bbox 확대 배율 f 와 분리한다.
+  // f 를 그대로 곱하면(구 코드) 일반역(f=1)의 화면 px 슬롭이 변경 전 6px
+  // 상수에서 scale=0.5 일 때 3px 로, 환승역(f=1.5)도 4.5px 로 줄어드는
+  // 회귀가 생긴다 — 최대 줌아웃에서 일반역 세로 히트박스가 12px 까지
+  // 작아졌다. `TAP_TEXT_PAD / Math.min(scale, 1)` 은 tier 와 무관하게 옛
+  // 코드(`TAP_TEXT_PAD * (1/Math.min(scale,1))`)와 scale 전 구간에서 동일한
+  // 값을 내므로, 슬롭은 렌더 배율(f)과 무관해지고 변경 전 동작이 scale 전
+  // 구간에서 그대로 복원된다(회귀 0). 화면 px 로 환산한 슬롭은 scale<1 에서
+  // 6px 상수, scale>=1 에서 6*scale px 이다 — 후자는 변경 전에도 같았다.
   function textTargetRect(t) {
-    var f = 1 / Math.min(scale, 1);
-    var pad = TAP_TEXT_PAD * f;
+    var f = t.major
+        ? 1 / Math.max(Math.min(scale, 1), TEXT_COMP_FLOOR)
+        : 1;
+    var pad = TAP_TEXT_PAD / Math.min(scale, 1);
     var x0 = t.ax + t.dx0 * f - pad;
     var y0 = t.ay + t.dy0 * f - pad;
     return {
@@ -2072,6 +2192,17 @@ path[data-line][stroke="#ffffff"] { stroke-width: 1 !important; }
         texts[i].classList.remove('dimmed');
       } else {
         texts[i].classList.add('dimmed');
+      }
+    }
+
+    // 노선 이름 배지: 강조 노선의 것만 밝게 유지한다(선·라벨 흐림 처리와 일관).
+    // 배지 <text> 에는 data-line 이 없어 위 라벨 루프/brightTexts 쿼리에 잡히지 않는다.
+    var lineBadgeEls = textLayer.querySelectorAll('.lb[data-code]');
+    for (var i = 0; i < lineBadgeEls.length; i++) {
+      if (codeSet[lineBadgeEls[i].getAttribute('data-code')]) {
+        lineBadgeEls[i].classList.remove('dimmed');
+      } else {
+        lineBadgeEls[i].classList.add('dimmed');
       }
     }
 

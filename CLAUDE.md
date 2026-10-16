@@ -166,8 +166,58 @@ dart run tool/import_transfer_guides.dart
 python3 tool/build_center_line_timetable.py --dry-run
 python3 tool/build_center_line_timetable.py
 
-# WebView용 HTML 생성 (seoul_metro_map.svg → map.html)
+# WebView용 HTML 생성
+#   입력: seoul_metro_map.svg + stations.json + lines.json + connections.json
+#         + data/badge_offsets.json (있을 때만 — 배지 수동 보정)
+#   출력: assets/html/map.html
+# ⚠️ SVG 외에 **assets/json 3개가 모두 입력**이다. 파이프라인 2단계
+# (generate_station_data) 뒤에 돌려야 하고, 그 JSON 을 직접 패치했다면 이
+# 도구를 반드시 재실행할 것. 각 입력의 쓰임:
+#   - stations.json `isTransfer` → 역명 라벨 2단(tier). 환승역 라벨에만
+#     `tl-major` 를 붙여 줌아웃 시 최소 크기 하한을 유지한다.
+#   - lines.json + connections.json → 노선 이름 pill 배지(노선당 양 종점 2개,
+#     총 48개). 종점은 connections 그래프의 hop 지름 양 끝으로 정한다.
+# ⚠️ **이 도구는 입력이 어긋나면 조용히 틀리는 대신 빌드를 실패시킨다.**
+# 의도된 하드페일이며, 아래가 그 조건이다 — 역/노선을 추가·수정한 뒤 지도
+# 빌드가 깨지면 버그가 아니라 이 검증에 걸린 것이다:
+#   - stations.json 에 `isTransfer=true` 인 역이 하나도 없음(스키마 드리프트)
+#   - lines.json 의 노선 id 집합이 `kLineIdToDataLine`(tool/line_badges.dart)
+#     과 불일치하거나, SVG `data-line` 코드 집합과 불일치
+#   - 노선 역들이 해당 `data-line` 선 위에 놓이는 비율이 하한 미달
+#   - 구간이 끊긴 노선(GTX-A 등)에 `kBadgeTerminalOverrides` 항목이 없음
+#   - `data-line` path 에 M/L 외 명령(C/Q/A/Z)이 등장
+#   - **미해결 배지 1개 이상** — 앵커(노선 선 끝점)에서 **24px 이내**에 하드
+#     위반 없는 자리를 못 찾은 배지가 있음. 하드 위반 6종: 타 노선 선 위 /
+#     역명 라벨(f=1.0·1.5) / 역 circle / 환승역 rect / 다른 배지 / 캔버스 이탈.
+#     ⚠️ **배지↔종점을 잇는 연결선(줄기)은 없다**(사용자 결정 2026-10-06) —
+#     줄기가 노선 선과 굵기·색이 같아 화면상 "존재하지 않는 지선"으로 읽혔다.
+#     그래서 pill 을 멀리 보내 해결하는 길이 막혀 있다. 조치 1순위는 배치
+#     데이터 점검이고, `kLineBadgeNames` 축약은 **사용자 승인 사안**이다 —
+#     빡빡하다고 임의로 늘리지 말 것(과거 "2호선"→"2호" 축약을 그래서 철회).
+
+#   - **배지 문구 중복** — 두 노선의 배지 문구가 같음(공백 제거 후 비교)
+#   - `data/badge_offsets.json` 의 JSON 문법/형식/version 오류 (항목 단위
+#     오류나 키 불일치는 실패가 아니라 경고 + 자동 배치 폴백)
+#   - **배지 문구가 실제 역명과 같음** — stations.json 역명 또는 SVG 역명
+#     라벨과 충돌. 배지가 역명 라벨로 오독되는 것을 막는다(예: 의정부경전철
+#     을 "의정부" 로 줄이면 의정부역과 충돌해 실패)
+# 실제 사례: 에버라인에 기흥(E15)을 추가하자 배지 종점이 기흥으로 바뀌었다.
+# 매핑·종점 진단은 `LINE_BADGE_VERBOSE=1 dart run tool/build_map_html.dart`.
 dart run tool/build_map_html.dart
+
+# 노선 배지 위치 수동 보정 (드래그 에디터 + 저장 서버, localhost 전용)
+# 배지를 끌어다 놓고 "저장 + 재빌드" 를 누르면 data/badge_offsets.json 에
+# 기록되고 곧바로 build_map_html 이 돌아 실제 결과를 보여 준다.
+#   - 보정값은 **앵커(노선 선 끝점) 기준 상대 오프셋** `{dx,dy}`. 키는
+#     `노선id|종점역명`(예: `김포골드|양촌`) — 한 노선에 배지가 2개라서다.
+#   - 보정한 배지는 자동 배치 솔버를 건너뛰고 **장애물로만** 쓰인다.
+#   - `data/badge_offsets.json` 은 커밋 대상이고 **직접 편집 대신 이 도구를 쓴다**.
+#     파일이 없거나 비면 산출물이 보정 전과 바이트 동일하다.
+#   - ⚠️ **수동 보정 배지의 하드 위반은 빌드를 실패시키지 않고 경고만** 남긴다
+#     (사람이 고른 자리를 기계가 거부하면 보정 기능이 무의미하므로). 자동 배치
+#     배지의 하드 위반은 종전대로 빌드 실패다. 수동 배지가 자동 배지의 자리를
+#     막으면 자동 쪽 미해결로 실패하며, 메시지에 수동 보정 키가 표시된다.
+dart run tool/badge_editor.dart          # http://localhost:8765
 ```
 
 **중요:** 실 디바이스(iPhone 등) 빌드는 반드시 `--release` 모드를 사용해야 한다. 디버그 빌드는 Dart VM 연결이 필요하므로 앱을 백그라운드로 보냈다 다시 열면 크래시가 발생한다.

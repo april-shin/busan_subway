@@ -4453,6 +4453,13 @@
     "isTransfer": false
   },
   {
+    "fromStationId": "E15",
+    "toStationId": "E01",
+    "lineId": "에버라인",
+    "travelTimeSeconds": 120,
+    "isTransfer": false
+  },
+  {
     "fromStationId": "E01",
     "toStationId": "E02",
     "lineId": "에버라인",
@@ -5196,9 +5203,16 @@
   },
   {
     "fromStationId": "U13",
+    "toStationId": "U15",
+    "lineId": "의정부",
+    "travelTimeSeconds": 72,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "U15",
     "toStationId": "U14",
     "lineId": "의정부",
-    "travelTimeSeconds": 169,
+    "travelTimeSeconds": 84,
     "isTransfer": false
   },
   {
