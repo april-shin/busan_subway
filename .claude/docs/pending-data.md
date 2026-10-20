@@ -38,7 +38,7 @@ GTX-A 평택 연장이 개통하면 ⒞ 로 전환한다. 순서:
    - 1호선 `187` 평택지제에 `isTransfer: true, transferLines: ['1', 'GTX-A']` 복원
    - GTX-A 체인 연결(동탄↔평택지제) 추가
 2. `assets/json/{stations,connections,lines}.json` 을 **직접 패치** — 이 generator 단독
-   재실행은 파괴적이다(785역만 생성, 실제 산출물은 793역). 자세한 이유는
+   재실행은 파괴적이다(786역만 생성, 실제 산출물은 794역). 자세한 이유는
    `.claude/docs/svg-pipeline.md` 와 MEMORY `station-data-pipeline-drift`.
 3. `dart run tool/build_transfer_times.dart`
    — `_nonOfficialCurated` 의 `'평택지제_1_GTX-A': 300` 은 **지우지 않고 남겨 뒀다.**

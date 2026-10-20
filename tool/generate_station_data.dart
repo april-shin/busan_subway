@@ -719,8 +719,17 @@ void main() {
     StationData('K51', '원덕', '경의중앙', 37.4816, 127.5319),
     StationData('K52', '용문', '경의중앙', 37.4781, 127.5833),
     StationData('K53', '지평', '경의중앙', 37.4731, 127.6237),
-    // 서울역 지선 (효창공원앞에서 분기, dead-end)
+    // 서울역 지선 (가좌에서 분기, dead-end): 가좌(K20) – 신촌(K57) – 서울역(K54).
+    // 번호가 물리 순서와 어긋난다(서울역이 K54 로 끝번, 신촌은 K57 로 뒤늦게 추가).
+    // 연결은 아래 '경의중앙' 분기 보정이 가좌 기준으로 다시 놓는다.
     StationData('K54', '서울역', '경의중앙', 37.5547, 126.9706, isTransfer: true, transferLines: ['1', '4', '경의중앙', '공항철도', 'GTX-A']),
+    // 신촌(경의중앙선) — 2호선 신촌(240)과 **별개 역**이다(약 700m 떨어져 있고
+    // 공식 환승이 아니다). 그래서 isTransfer=false, 환승시간 항목도 없다.
+    // 역명은 서울 도착정보 API 등록명 `신촌(경의중앙선)` 과 바이트 단위로 같아야
+    // 한다 — 그냥 `신촌` 으로 질의하면 2호선(1002)만 오고 경의중앙(1063)은 0건이다.
+    // 치환 맵(station_api_name_overrides)에 넣지 말 것: 등록명 = 표시명이라 항등이고,
+    // `신촌` 항목을 넣으면 2호선 질의가 깨진다.
+    StationData('K57', '신촌(경의중앙선)', '경의중앙', 37.5597, 126.9431),
   ];
   stations.addAll(gyeonguiJungang);
 
@@ -1359,18 +1368,41 @@ void main() {
         'isTransfer': false,
       });
     }
-    // Handle 경의중앙선 서울역 지선 (효창공원앞 ↔ 서울역)
-    // 자동 생성된 지평(K53)→K54(서울역) 연결을 제거하고 K24(효창공원앞)→K54(서울역) 추가
+    // Handle 경의중앙선 서울역 지선 (가좌 – 신촌 – 서울역)
+    // 서울역 지선은 **가좌(K20)에서 분기**한다(SVG 도 그렇게 그려져 있다). 효창공원앞은
+    // 본선(공덕–효창공원앞–용산) 위의 역이고 분기점이 아니다.
+    //
+    // 서울역(K54)·신촌(K57)이 번호상 끝(K53 지평 다음)에 붙어 있어 자동 인접 연결이
+    // 지평(K53)–서울역(K54), 서울역(K54)–신촌(K57) 을 엮는다 — 둘 다 제거하고
+    // 가좌–신촌, 신촌–서울역을 놓는다. (과거에는 지평–서울역만 지우고 서울역을
+    // 효창공원앞에 붙이는 워크어라운드였다 — 분기점이 틀렸다.)
+    //
+    // travelTimeSeconds 는 **실측**이다: 코레일 경의선 시각표(assets/excel/
+    // center_line_{wd,we}260901.xlsx, '경의선 상·하행' 시트)에서 열차별
+    // `다음역 도착 − 현재역 출발`(compute_travel_times.dart 규약, dwell 제외)을 양방향
+    // 모아 구한 중앙값이다. 가좌→신촌 180s(상행 180·하행 180, 47편씩, 범위 180~210),
+    // 신촌→서울역 330s(상행 330 47편 전부, 하행 330 46편 + 360 1편).
+    // 시각표 해상도가 30초라 값이 30의 배수다. 신촌·가좌 정차는 양 방향 모두 30s.
     if (lineId == '경의중앙') {
       connectionsList.removeWhere((conn) =>
-          conn['fromStationId'] == 'K53' && conn['toStationId'] == 'K54');
-      connectionsList.add({
-        'fromStationId': 'K24', // 효창공원앞
-        'toStationId': 'K54', // 서울역(경의중앙)
-        'lineId': '경의중앙',
-        'travelTimeSeconds': 180,
-        'isTransfer': false,
-      });
+          (conn['fromStationId'] == 'K53' && conn['toStationId'] == 'K54') ||
+          (conn['fromStationId'] == 'K54' && conn['toStationId'] == 'K57'));
+      connectionsList.addAll([
+        {
+          'fromStationId': 'K20', // 가좌
+          'toStationId': 'K57', // 신촌(경의중앙선)
+          'lineId': '경의중앙',
+          'travelTimeSeconds': 180,
+          'isTransfer': false,
+        },
+        {
+          'fromStationId': 'K57', // 신촌(경의중앙선)
+          'toStationId': 'K54', // 서울역(경의중앙)
+          'lineId': '경의중앙',
+          'travelTimeSeconds': 330,
+          'isTransfer': false,
+        },
+      ]);
     }
     // Handle GTX-A 미개통 구간 (서울역 ↔ 수서): 삼성역 미완공으로 두 구간이
     // 분리 운행된다 — 북부(운정중앙↔서울역) / 남부(수서↔동탄). 실시간 도착 API도

@@ -3627,10 +3627,17 @@
     "isTransfer": false
   },
   {
-    "fromStationId": "K24",
-    "toStationId": "K54",
+    "fromStationId": "K20",
+    "toStationId": "K57",
     "lineId": "경의중앙",
     "travelTimeSeconds": 180,
+    "isTransfer": false
+  },
+  {
+    "fromStationId": "K57",
+    "toStationId": "K54",
+    "lineId": "경의중앙",
+    "travelTimeSeconds": 330,
     "isTransfer": false
   },
   {

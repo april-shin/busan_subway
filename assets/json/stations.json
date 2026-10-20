@@ -7099,6 +7099,19 @@
     ]
   },
   {
+    "id": "K57",
+    "name": "신촌(경의중앙선)",
+    "lineId": "경의중앙",
+    "latitude": 37.5597,
+    "longitude": 126.9431,
+    "svgX": 876.0,
+    "svgY": 500.0,
+    "isTransfer": false,
+    "transferLines": [
+      "경의중앙"
+    ]
+  },
+  {
     "id": "C01",
     "name": "청량리",
     "lineId": "경춘",

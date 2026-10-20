@@ -3681,6 +3681,13 @@
     "svgY": 480.0,
     "distance": 10
   },
+  "신촌(경의중앙선)": {
+    "name": "신촌(경의중앙선)",
+    "dataLine": "K",
+    "svgX": 876.0,
+    "svgY": 500.0,
+    "distance": 12
+  },
   "서강대": {
     "name": "서강대",
     "dataLine": "K",
