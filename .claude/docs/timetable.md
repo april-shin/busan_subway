@@ -193,12 +193,27 @@
     (`express_skip_edges.json`이 실제 정차역만 담는다) `findNextDeparture(express: true)`가 그 항목을
     조회할 경로가 없다 — 무해하지만 `tE` 자체를 정차 패턴의 근거로 쓰면 안 된다.
     정차 패턴의 유일 소스는 `tool/manual_express_stops.json`이다.
-  - **방향 반전 4노선(공항철도·의정부·우이신설·김포골드)**: getTrainSch 하행 라벨이 앱 `isDownBetween`(상행)에
+  - **방향 반전 3노선(공항철도·의정부·김포골드)**: getTrainSch 하행 라벨이 앱 `isDownBetween`(상행)에
     해당하므로 뒤집어 저장(하행→idx0, 상행→idx1). 공항철도는 앱이 하행=서울역 방면(ID감소)으로 반전,
-    의정부·우이신설·김포골드는 앱 일반규칙(ID증가=하행)이 getTrainSch 하행과 반대 방향. 나머지 8개는 정합(하행→idx1).
+    의정부·김포골드는 앱 일반규칙(ID증가=하행)이 getTrainSch 하행과 반대 방향.
+    `_lineNms` 대상 13개 중 나머지 10개는 정합(하행→idx1).
+    ⚠️ **우이신설은 2026-10-20 에 이 목록에서 빠졌다** — `isDownBetween` 에 반전을 넣어
+    앱 규칙 자체가 API 라벨과 같아졌으므로 시간표를 뒤집을 이유가 없어졌다. 반전 목록을
+    바꿀 때는 **규칙·시간표·환승 가이드 셋을 함께** 재생성해야 한다(이중/삼중 보정 주의).
     검증: 공항철도 서울역(A01) 상행154/하행0, 인천공항2터미널(A14) 상행0/하행102.
     김포골드는 양 종점 앵커로 검증 — 양촌(P01)은 API 상행만, 김포공항(P10)은 API 하행만 `trainDptreTm`
     보유(반대 방향은 도착 전용이라 `trainDptreTm=null` → 자동 스킵).
+    - ⚠ **2026-10-20 정정 — 우이신설은 반전 노선이 아니다.** 이전에는 이 목록에 있었으나, 실시간 도착 API
+      (`realtimeStationArrival` 솔샘 실측: 하행=북한산우이행·ID감소 / 상행=신설동행·ID증가)가 앱 일반규칙과
+      정반대임이 드러나 `isDownBetween` 이 우이신설을 **API 라벨 기준으로 반전**(9호선·공항철도와 같은
+      `_apiLabelReversedLines`)하도록 고쳤다. getTrainSch 라벨은 API 라벨과 같은 방향이라 시간표는 **반전 없이**
+      저장된다(하행→idx1) — 기존 저장본(반전)을 뒤집어 재생성했다(`--lines=우이신설`, t 만 idx 교환, 타 노선 diff 0).
+      **진실의 원천은 앱 `isDown`**(= 서울 API 라벨)이고, 시간표·환승 가이드는 그에 맞춰 저장한다.
+      **`isDownBetween` 의 노선별 반전 규칙을 바꾸면 반드시 (1) 시간표 방향 인덱스 (2) 환승 가이드
+      (`data/transfer_guides.csv`, `import_official_transfer_guides.dart` 재실행) 를 함께 재생성할 것** —
+      한쪽만 고치면 출발 시각·"빠른 환승" 칸-문이 반대 방향으로 읽힌다. 앵커 가드:
+      `test/data/timetable_direction_anchor_test.dart`. 의정부·김포골드는 `realtimeStationArrival` 이 응답하지
+      않아(INFO-200) 라벨 대조가 불가능하므로 앱 일반규칙을 유지한다.
   - 역명 표기차(예: 앱 `전대·에버랜드` → API `전대.에버랜드`)는 가운뎃점(·)/마침표(.) 정규화 폴백으로 흡수.
   - 요일: `wkndSe` 평일→`wd`, 주말→`we`. 데이터에 `crtrYmd`(기준일자)·`vldBgngDt`(유효시작일) 포함.
   - 데이터 출처: 공공데이터포털 `getTrainSch` (`apis.data.go.kr/B553766/schedule/getTrainSch`), `.env`의 `KOREA_API_KEY`.

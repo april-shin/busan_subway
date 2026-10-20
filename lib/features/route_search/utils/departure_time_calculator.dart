@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/subway_id_mapping.dart';
+import '../../../core/utils/ghost_train.dart';
 import '../../../core/utils/route_branch.dart';
 import '../../../domain/entities/arrival_info.dart';
 import '../../../domain/entities/connection.dart';
@@ -95,6 +96,13 @@ DepartureContext? resolveDepartureContext(RouteResult routeResult) {
       // 넘겨도 안전하다(`trainPathCoversRoute` 참조). 역 ID 는 가상 급행
       // 노선에서도 base 노선의 것이므로 `baseLine` 과 짝이 맞는다.
       routeStationIds: [for (final s in context.segment.stations) s.id],
+      lineId: context.baseLine,
+      isDown: context.isDown,
+      stations: stations,
+      connections: connections,
+    ),
+    isGhostTrain: makeGhostTrainDetector(
+      boardingStationId: context.segment.stations.first.id,
       lineId: context.baseLine,
       isDown: context.isDown,
       stations: stations,
@@ -224,6 +232,13 @@ List<DateTime> computeSegmentDepartures({
             stations: stations,
             connections: connections,
           ),
+          isGhostTrain: makeGhostTrainDetector(
+            boardingStationId: nextSegment.stations.first.id,
+            lineId: nextRealtimeLineId,
+            isDown: nextIsDown,
+            stations: stations,
+            connections: connections,
+          ),
         );
       }
 
@@ -264,6 +279,11 @@ List<DateTime> computeSegmentDepartures({
 /// false면 급행/완행 구분 없이 가장 빠른 열차를 반환한다.
 /// [staysOnRouteBranch]를 넘기면 행선지가 탑승 구간을 끝까지 태워주지 않는
 /// 열차를 제외한다 (지선 분기 + 중간 종착). null이면 판정 없이 동작한다.
+/// [isGhostTrain]을 넘기면 **탑승역에 오지 않는 유령 열차**를 제외한다 — 종착이
+/// 노선 중간인 열차(회차·셔틀)를 API 가 종착 너머 역에도 도착 예정으로 이어 붙인
+/// 행이다(`ghost_train.dart`). 행선지만 보는 [staysOnRouteBranch] 와 달리 열차의
+/// **현재역**까지 보므로, 탑승역보다 앞에서 끝나는 열차(예: 남태령 하행의 "사당행")를
+/// 잡는다. 이름이 안 읽히거나 경로가 구해지지 않으면 통과시킨다(fail-open).
 DateTime? _getRealtimeDeparture({
   required AsyncValue<List<ArrivalInfo>> arrivalAsync,
   required String lineId,
@@ -272,6 +292,7 @@ DateTime? _getRealtimeDeparture({
   int minArrivalSeconds = 0,
   bool expressOnly = false,
   bool Function(String destination)? staysOnRouteBranch,
+  bool Function(ArrivalInfo arrival)? isGhostTrain,
 }) {
   return arrivalAsync.whenOrNull(
     data: (arrivals) {
@@ -287,6 +308,7 @@ DateTime? _getRealtimeDeparture({
             !staysOnRouteBranch(a.destination)) {
           return false;
         }
+        if (isGhostTrain != null && isGhostTrain(a)) return false;
         return true;
       }).toList();
 

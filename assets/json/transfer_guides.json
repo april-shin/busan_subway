@@ -1567,14 +1567,14 @@
   },
   "보문_우이신설_down_6": {
     "doorSide": null,
-    "car": 1,
-    "door": 1,
+    "car": 2,
+    "door": 2,
     "note": null
   },
   "보문_우이신설_up_6": {
     "doorSide": null,
-    "car": 2,
-    "door": 2,
+    "car": 1,
+    "door": 1,
     "note": null
   },
   "복정_8_down_수인분당": {
@@ -2149,14 +2149,14 @@
   },
   "성신여대입구_우이신설_down_4": {
     "doorSide": null,
-    "car": 2,
-    "door": 1,
+    "car": 1,
+    "door": 2,
     "note": null
   },
   "성신여대입구_우이신설_up_4": {
     "doorSide": null,
-    "car": 1,
-    "door": 2,
+    "car": 2,
+    "door": 1,
     "note": null
   },
   "소사_1_down_서해": {

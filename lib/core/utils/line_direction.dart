@@ -13,7 +13,7 @@ import '../../domain/entities/connection.dart';
 /// - 번호 순서가 물리 순서와 어긋나는 역: [_stationRanks] 로 rank 보정
 /// - 2호선 순환: 인접 역 ID 쌍 기준 + 순환 경계(201↔243) 반전
 /// - 4호선: 진접선(449-452) 특수 처리
-/// - 9호선/공항철도: 서울 API 라벨 기준 규칙 반전
+/// - 9호선/공항철도/우이신설: 서울 API 라벨 기준 규칙 반전
 ///
 /// 가상 급행 노선 ID(`{base}E`, 예: `9E`)는 base 노선과 동일한 방향 규칙을 적용한다.
 /// 이 정규화가 누락되면 9호선 갈아타기 경로(`9E → 9M → 9`)에서 첫 세그먼트가
@@ -61,17 +61,33 @@ bool isDownBetween(String fromId, String toId, String lineId) {
   final from = ranks?[fromId] ?? fromNum.toDouble();
   final to = ranks?[toId] ?? toNum.toDouble();
 
-  if (baseId == '9' || baseId == '공항철도') {
-    // 이 두 노선은 서울 API 라벨이 일반 규칙과 반대다:
-    //   9호선   하행 = 김포공항/개화 方面 (ID 감소) / 상행 = 중앙보훈병원 方面
-    //   공항철도 하행 = 서울역 方面 (A01, ID 감소) / 상행 = 인천공항2터미널 方面
+  if (_apiLabelReversedLines.contains(baseId)) {
+    // 이 세 노선은 서울 API 라벨이 일반 규칙과 반대다:
+    //   9호선    하행 = 김포공항/개화 方面 (ID 감소) / 상행 = 중앙보훈병원 方面
+    //   공항철도  하행 = 서울역 方面 (A01, ID 감소) / 상행 = 인천공항2터미널 方面
+    //   우이신설  하행 = 북한산우이 方面 (W01, ID 감소) / 상행 = 신설동 方面
     // `realtimeStationArrival` 의 updnLine 과 일치시키기 위해 규칙을 뒤집는다.
+    // 우이신설은 2026-10-20 실측(솔샘: 하행=북한산우이행, 상행=신설동행)으로 추가 —
+    // 빠져 있던 동안 방향 게이트가 정반대로 걸려 지도 열차가 전부 안 그려졌다.
+    //
+    // ⚠ 이 규칙을 바꾸면 **시간표 방향 인덱스(`line_schedules.json` 의 `t[0]=상행`,
+    // `t[1]=하행`)와 어긋난다.** 시간표는 앱 `isDown` 을 기준으로 저장되므로
+    // (`tool/build_gettrainsch_timetable.dart` 의 `_reversed` 가 getTrainSch 라벨을
+    // 앱 방향으로 맞춘다) 두 쪽을 같이 고쳐야 한다. 앵커 가드:
+    // `test/data/timetable_direction_anchor_test.dart`.
     return to < from;
   }
 
   // 일반 노선: ID(rank) 증가 = 하행
   return to > from;
 }
+
+/// 서울 API(`realtimeStationArrival`) 의 `updnLine` 이 일반 규칙(ID 증가 = 하행)과
+/// **반대**인 노선. [isDownBetween] 이 이 노선들에서 규칙을 뒤집는다.
+///
+/// 의정부경전철·김포골드라인은 `realtimeStationArrival` 이 응답하지 않아(INFO-200)
+/// 대조할 라벨이 없으므로 여기 넣지 않는다 — 앱 일반 규칙을 그대로 쓴다.
+const _apiLabelReversedLines = {'9', '공항철도', '우이신설'};
 
 /// "역 번호 순서 = 물리 순서" 규칙에서 벗어나는 역의 정렬 rank. `{노선: {역ID: rank}}`.
 ///

@@ -255,8 +255,8 @@ def is_down_between(from_id, to_id, line_id):
     frm = ranks.get(from_id, float(from_num))
     to = ranks.get(to_id, float(to_num))
 
-    if base_id in ('9', '공항철도'):
-        # 서울 API updnLine 라벨 기준 반전. Dart와 동일.
+    if base_id in ('9', '공항철도', '우이신설'):
+        # 서울 API updnLine 라벨 기준 반전. Dart(`_apiLabelReversedLines`)와 동일.
         return to < frm
 
     return to > frm
