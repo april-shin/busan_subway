@@ -1396,6 +1396,17 @@ $lineBadgesSvg
   };
 
   // 툴팁 표시 (DOM API로 XSS 방지)
+  // 오버레이 UI(역 툴팁·경로 툴바)를 둘 수 있는 폭. 펼친 iPhone Duo 에서는
+  // 지도가 오른쪽 세로 상태바 띠 아래까지 깔리므로 Flutter 가 setSafeRight 로
+  // 그 폭을 넘긴다(svg_web_view.dart). 다른 기기는 0 이라 innerWidth 그대로.
+  var safeRight = 0;
+  window.setSafeRight = function(px) {
+    safeRight = Math.max(0, Number(px) || 0);
+  };
+  function overlayWidth() {
+    return window.innerWidth - safeRight;
+  }
+
   window.showTooltip = function(stationJson) {
     var s = JSON.parse(stationJson);
 
@@ -1475,7 +1486,7 @@ $lineBadgesSvg
     var tooltipW = tooltip.offsetWidth;
 
     var left = screenX - tooltipW / 2;
-    left = Math.max(8, Math.min(window.innerWidth - tooltipW - 8, left));
+    left = Math.max(8, Math.min(overlayWidth() - tooltipW - 8, left));
     var top = screenY - tooltip.offsetHeight - 16;
     if (top < 8) top = screenY + 16;
 
@@ -3174,7 +3185,7 @@ $lineIdToDataLineJs
 
     // 앵커역이 화면 밖(특히 위쪽)으로 벗어나도 툴바가 잘리지 않도록 뷰포트
     // 안으로 클램프한다. 드래그 클램프와 동일한 8px 가장자리 마진 규칙.
-    var maxLeft = Math.max(8, window.innerWidth - cachedTbW - 8);
+    var maxLeft = Math.max(8, overlayWidth() - cachedTbW - 8);
     var maxTop = Math.max(8, window.innerHeight - cachedTbH - 8);
     left = Math.max(8, Math.min(maxLeft, left));
     top = Math.max(8, Math.min(maxTop, top));
@@ -3273,7 +3284,7 @@ $lineIdToDataLineJs
       {dx: G, dy: -tbH / 2} // 우
     ];
     var routeRects = collectAvoidScreenRects();
-    var vw = window.innerWidth, vh = window.innerHeight;
+    var vw = overlayWidth(), vh = window.innerHeight;
 
     var best = null, bestScore = Infinity;
     for (var i = 0; i < candidates.length; i++) {
@@ -3433,7 +3444,7 @@ $lineIdToDataLineJs
       // 화면 경계 clamp: 툴바가 화면 밖으로 나가 못 되돌리는 상황 방지
       var tw = routeToolbar.offsetWidth;
       var th = routeToolbar.offsetHeight;
-      newLeft = Math.max(8, Math.min(window.innerWidth - tw - 8, newLeft));
+      newLeft = Math.max(8, Math.min(overlayWidth() - tw - 8, newLeft));
       newTop = Math.max(8, Math.min(window.innerHeight - th - 8, newTop));
 
       // updateRouteToolbarPosition 과 동일한 이유로 transform 사용(레이아웃

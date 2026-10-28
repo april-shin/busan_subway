@@ -77,6 +77,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
   late final Map<String, Station> _stationMap;
   bool _isReady = false;
 
+  // JS 에 마지막으로 넘긴 오른쪽 safe area 폭. 펼친 iPhone Duo 에서만 0 이
+  // 아니다(지도가 세로 상태바 띠까지 깔림 — home_screen.dart).
+  double _safeRight = 0;
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +102,7 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
 
   void _onPageLoaded() {
     _isReady = true;
+    if (_safeRight != 0) _runJs('window.setSafeRight($_safeRight)');
     _injectStationData();
 
     if (widget.routeStationIds.isNotEmpty) {
@@ -539,6 +544,14 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
 
   @override
   Widget build(BuildContext context) {
+    // 오른쪽 safe area 를 JS 툴팁·경로 툴바 배치에 반영한다. 다른 기기에서는
+    // 앱 루트가 이미 소비해 0 이라 아무것도 보내지 않는다.
+    final safeRight = MediaQuery.paddingOf(context).right;
+    if (safeRight != _safeRight) {
+      _safeRight = safeRight;
+      if (_isReady) _runJs('window.setSafeRight($safeRight)');
+    }
+
     // selectedStationsProvider 변경 시 마커 업데이트
     // (Riverpod 공식 패턴: build 내 ref.listen은 부작용 실행용으로 허용)
     ref.listen(selectedStationsProvider, (prev, next) {

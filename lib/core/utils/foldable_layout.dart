@@ -18,7 +18,7 @@
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform, visibleForTesting;
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 /// 펼친 폴더블로 볼 짧은 변 하한(logical px).
 const double kUnfoldedMinShortestSide = 600;
@@ -64,4 +64,26 @@ abstract final class FoldableLayout {
     size: MediaQuery.sizeOf(context),
     isIosPhone: _isIosPhone,
   );
+}
+
+/// 오른쪽 safe area 를 비우고 그 띠를 배경색으로 칠한다.
+///
+/// 펼친 Duo 에서는 앱 최상단 SafeArea 가 오른쪽을 비우지 않으므로(홈 지도를
+/// 상태바 띠까지 깔기 위해), 홈 이외 화면을 이걸로 감싸 기존처럼 띠를 비운다.
+/// 다른 기기는 padding.right 가 이미 0 이라 SafeArea 가 아무것도 하지 않고,
+/// ColoredBox 는 불투명한 Scaffold 에 가려 보이지 않는다. 트리 모양을 늘
+/// 같게 두어 접기/펼치기 때 화면 State 가 버려지지 않게 한다.
+class RightSafeArea extends StatelessWidget {
+  const RightSafeArea({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      // 페이지 전환 중 아래 화면(홈 지도)이 띠로 비치지 않게 칠한다.
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(left: false, top: false, bottom: false, child: child),
+    );
+  }
 }

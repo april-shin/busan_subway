@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/utils/foldable_layout.dart';
 import 'domain/entities/route_result.dart';
 import 'features/arrival_info/presentation/screens/arrival_info_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
@@ -10,6 +11,11 @@ import 'features/route_search/presentation/screens/route_result_screen.dart';
 import 'features/route_search/presentation/screens/station_picker_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/station_detail/presentation/screens/station_detail_screen.dart';
+
+/// 홈 이외 화면: 펼친 Duo 에서 오른쪽 상태바 띠를 기존처럼 비운다
+/// ([RightSafeArea]). 다른 기기에서는 아무 효과 없음.
+GoRouterWidgetBuilder _withRightSafeArea(GoRouterWidgetBuilder builder) =>
+    (context, state) => RightSafeArea(child: builder(context, state));
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -23,15 +29,18 @@ final GoRouter router = GoRouter(
           // purpose == 'waypoint' 일 때 `?index=N` 으로 어느 경유지 칸을 채울지
           // 지정한다. 칸은 검색바의 + 가 미리 만들어 두므로 이 화면은 채우기만
           // 한다. 파싱 실패/누락이면 null → picker 가 빈 칸/맨 뒤로 폴백.
-          builder: (context, state) => StationPickerScreen(
-            purpose: state.pathParameters['purpose']!,
-            waypointIndex:
-                int.tryParse(state.uri.queryParameters['index'] ?? ''),
+          builder: _withRightSafeArea(
+            (context, state) => StationPickerScreen(
+              purpose: state.pathParameters['purpose']!,
+              waypointIndex: int.tryParse(
+                state.uri.queryParameters['index'] ?? '',
+              ),
+            ),
           ),
         ),
         GoRoute(
           path: 'route-result',
-          builder: (context, state) {
+          builder: _withRightSafeArea((context, state) {
             final extra = state.extra;
             // 4종 record: 환승 트레이드오프 + 모드 트레이드오프 판정용.
             // 모든 호출부(home_screen, subway_map_viewer)가 이 형태로 전달한다.
@@ -54,26 +63,30 @@ final GoRouter router = GoRouter(
             return const Scaffold(
               body: Center(child: Text('잘못된 경로입니다')),
             );
-          },
+          }),
         ),
         GoRoute(
           path: 'station/:stationId',
-          builder: (context, state) => StationDetailScreen(
-            stationId: state.pathParameters['stationId']!,
+          builder: _withRightSafeArea(
+            (context, state) => StationDetailScreen(
+              stationId: state.pathParameters['stationId']!,
+            ),
           ),
         ),
         GoRoute(
           // `?stationId=` 는 동명이역(5호선 양평 vs 경의중앙선 양평) 구분용 —
           // 없으면 역명만으로 조회한다(노선 필터 없음).
           path: 'arrivals/:stationName',
-          builder: (context, state) => ArrivalInfoScreen(
-            stationName: state.pathParameters['stationName']!,
-            stationId: state.uri.queryParameters['stationId'],
+          builder: _withRightSafeArea(
+            (context, state) => ArrivalInfoScreen(
+              stationName: state.pathParameters['stationName']!,
+              stationId: state.uri.queryParameters['stationId'],
+            ),
           ),
         ),
         GoRoute(
           path: 'settings',
-          builder: (context, state) => const SettingsScreen(),
+          builder: _withRightSafeArea((context, state) => const SettingsScreen()),
         ),
       ],
     ),
@@ -156,6 +169,11 @@ Widget appRootBuilder(BuildContext context, Widget? child) {
         color: surface,
         child: SafeArea(
           top: false,
+          // 펼친 iPhone Duo 에서만 오른쪽(세로 상태바 띠)을 비우지 않는다 —
+          // 홈 지도가 그 띠까지 깔리도록(HomeScreen). Navigator Overlay·페이지
+          // 전환이 자기 경계에서 클립하므로 지도만 밖으로 내밀 수 없다.
+          // 다른 화면은 [RightSafeArea] 로 기존처럼 띠를 비운다.
+          right: !FoldableLayout.isUnfolded(context),
           child: child,
         ),
       ),

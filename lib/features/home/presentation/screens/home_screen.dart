@@ -21,7 +21,14 @@ class HomeScreen extends StatelessWidget {
     //
     // 배너: 기본은 지도 아래 별도 줄. 펼친 iPhone Duo 에서만 지도를 바닥까지
     // 깔고 배너를 오른쪽 페이지 하단에 겹쳐 띄운다(왼쪽 페이지 하단은 지도).
+    //
+    // 펼친 iPhone Duo 에서는 오른쪽 세로 상태바 띠까지 지도를 깐다(사용자 결정
+    // 2026-10-28). 그때만 앱 최상단 SafeArea(app.dart)가 오른쪽을 비우지 않아
+    // MediaQuery.padding.right(84pt)가 여기까지 내려온다. 지도만 right 를
+    // 무시하고, 검색바(SafeArea)·배너(rightInset)는 띠 안쪽에 둔다.
+    // 다른 기기에서는 padding.right 가 이미 0 이라 기존과 동일하다.
     final unfolded = FoldableLayout.isUnfolded(context);
+    final rightInset = MediaQuery.paddingOf(context).right;
     return Scaffold(
       body: Column(
         children: [
@@ -31,10 +38,11 @@ class HomeScreen extends StatelessWidget {
                 // 바닥 레이어: 지도 전체화면. SafeArea top 존중.
                 // selectedStations 와 독립 — Consumer 밖에 두어 출발/도착
                 // 선택 변경 시 리빌드되지 않도록 리빌드 경계를 유지한다.
-                const Positioned.fill(
+                Positioned.fill(
                   child: SafeArea(
                     bottom: false,
-                    child: SubwayMapScreen(),
+                    right: !unfolded,
+                    child: const SubwayMapScreen(),
                   ),
                 ),
                 // floating 설정 버튼: 좌측 하단.
@@ -101,10 +109,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 if (unfolded)
-                  const Positioned(
-                    right: 0,
+                  Positioned(
+                    right: rightInset,
                     bottom: 0,
-                    child: HomeBannerAd(),
+                    child: const HomeBannerAd(),
                   ),
               ],
             ),
