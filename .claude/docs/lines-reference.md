@@ -36,6 +36,19 @@
 
 ## 노선별 특이사항
 
+- **2호선 성수지선(211 성수 – 244 용답 – 245 신답 – 246 용두 – 250 신설동)은 실시간 도착 API
+  라벨 극성이 앱 규칙과 반대다.** 앱·시간표는 ID 증가(신설동 방향) = 하행인데,
+  `realtimeStationArrival` 의 `updnLine` 은 그 방향을 `내선` 으로 보고한다(2026-10-28 실측,
+  양방향 모두 반대. 본선 35행 중 32 일치·신정지선 일치라 지선 국소 반전).
+  `isDownBetween` 을 **뒤집어 고치지 말 것** — 시간표(`INOUT_TAG`)가 그 규칙에 맞춰져 있어
+  (커밋 75b9e03) 뒤집으면 역방향 조회 버그가 되살아난다. 라벨 쪽을
+  `isApiLabelReversedBetween` / `apiLabelReversedForTrain` 으로 뒤집어 읽는다(커밋 87fbf65).
+  판정 단위는 경로가 아니라 **열차의 접근 쌍**이다 — 분기역 성수(211)는 본선 순환에도 쓰여
+  지선 집합에 넣을 수 없어서, 경로 단위로 걸면 본선 열차까지 뒤집혀 통과한다.
+  상세는 `.claude/docs/timetable.md` 의 "방향 결정 로직". 회귀 가드:
+  `test/core/utils/line_direction_api_label_test.dart`,
+  `test/features/route_search/utils/departure_seongsu_label_test.dart`,
+  `test/features/subway_map/presentation/providers/live_train_seongsu_label_test.dart`.
 - 신분당선은 `'SB'`와 `'신분당'` 두 가지 ID가 모두 색상/이름 맵에 등록되어 있다. `lines.json`에서는 `'SB'`를 사용한다.
 - **5호선 마천 지선(550 둔촌동 ~ 556 마천)은 539(강동)에서 분기한다.** 역 목록이 하남 방면
   종점 549(하남검단산) 다음에 둔촌동을 나열하므로 `generate_station_data.dart` 의 자동 인접
