@@ -18,7 +18,20 @@ dart run tool/build_map_html.dart
 # → assets/html/map.html
 ```
 
-**중요:** 원본 SVG를 수정한 후 반드시 3단계 파이프라인을 순서대로 재실행해야 한다.
+**중요:** 원본 SVG를 수정했다면 **무엇을 고쳤는가**로 돌릴 단계를 정한다. 누가·무엇으로 고쳤는가(손/지도 편집기)는 무관하다.
+
+- **노선 `<path>` 와 환승 `<rect>` 만 고쳤다면 3단계(`build_map_html`)만 돈다.** 편집기(`tool/badge_editor.dart` 의
+  선분·환승마커 모드)는 저장 때 자동으로 돌리고, 손으로 고쳤다면 직접 돌린다. 커밋 `2c73c10`(경춘선 흰 이중선 추가 — 전부 손 편집)과 `1a4f116`(선분·배지는 편집기, 왕십리 `<circle>`→`<rect>` 만 손)이
+  둘 다 손 편집이고 3단계만 돌린 게 옳았던 사례다.
+- **1·2단계는 역 `<circle>`·`<text data-station>` 을 추가·이동·삭제했을 때만 고려한다.** 그때도 `generate_station_data`
+  단독 재생성은 파괴적이므로(역 소실·좌표 파손 전력. 메모리 `station-data-pipeline-drift`) **`stations.json` 직접 패치를 우선**한다.
+
+⚠️ `extract_svg_stations` 는 `rx` 있는 rect 의 중심을 역 좌표 후보로 쓰므로, **환승 마커를 옮기면 SVG 와 `stations.json`
+좌표가 어긋난 채 남는다**(경로 하이라이트·열차 아이콘이 옛 자리). 편집기는 경고만 하고 `stations.json` 을 고치지 않는다 —
+마커를 옮겼다면 해당 역 `svgX/svgY` 를 직접 패치할 것. 어긋남은 **편집기 상단 배너(앵커 역이 없는 마커)에 저장 뒤에도 계속 표시**되고
+(14px 넘게 옮긴 경우), `test/tool/geometry_svg_test.dart` 가 마커↔역 거리 분포(≤0.5px 54 · 0.5~14px 2(김포공항 12.0px · 왕십리 8.94px) · >14px 0)를
+단언해 어느 거리든 커밋 전에 잡는다.
+이 SVG 는 이제 편집기의 쓰기 대상이기도 하다(배지 모드는 `data/badge_offsets.json` 만 쓴다).
 
 ## SVG 좌표 추출 (`extract_svg_stations.dart`)
 

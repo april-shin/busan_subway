@@ -65,3 +65,34 @@
 #be-panel pre { margin: 4px 0 0; padding: 6px; max-height: 190px; overflow: auto; font: 11px/1.45 ui-monospace, Menlo, monospace; background: #f1f2f5; border-radius: 6px; white-space: pre-wrap; word-break: break-all; user-select: text; -webkit-user-select: text; }
 body.be-dragging, body.be-dragging * { cursor: grabbing !important; user-select: none !important; }
 #badge-editor-overlay * { pointer-events: none; vector-effect: non-scaling-stroke; }
+
+/* ---- 모드 탭 (배지 / 선분 / 환승마커) ---- */
+#be-panel .be-tabs { display: flex; gap: 4px; margin: 8px 0 6px; }
+#be-panel .be-tabs .be-tab { padding: 6px 4px; font-weight: 600; }
+#be-panel .be-tabs .be-tab.be-tab-on { background: #1565d8; border-color: #1565d8; color: #fff; }
+#be-panel .be-modenote { display: none; margin: 0 0 6px; padding: 6px 8px; border-radius: 6px; font-size: 11.5px; background: #fff6e0; border: 1px solid #e8c879; color: #6b4a00; }
+#be-panel.be-mode-geo #be-badge-pane { display: none; }
+#be-panel.be-mode-badge #be-geo-pane { display: none; }
+#be-panel.be-collapsed .be-tabs, #be-panel.be-collapsed .be-modenote { display: none; }
+
+/* ---- 지오메트리(선분·환승마커) 패널 ---- */
+#be-geo-pane .gp-row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+#be-geo-pane .gp-row label { font-size: 12px; color: #3b404a; display: inline-flex; gap: 4px; align-items: center; }
+#be-geo-pane .gp-row select { margin: 0; flex: 1 1 auto; width: auto; }
+#be-geo-pane .gp-seg { display: flex; gap: 4px; width: 100%; }
+#be-geo-pane .gp-seg button.on { background: #1565d8; border-color: #1565d8; color: #fff; }
+#be-geo-pane .gp-card { border: 1px solid #d3d7df; border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: #fafbfc; }
+#be-geo-pane .gp-card .nm { font-weight: 700; }
+#be-geo-pane .gp-card .kv { font-size: 12px; color: #3b404a; font-variant-numeric: tabular-nums; }
+#be-geo-pane .gp-off { max-height: 160px; overflow-y: auto; margin: 4px 0; }
+#be-geo-pane .gp-off .item { padding: 3px 6px; margin: 2px 0; border-left: 3px solid #d62828; background: #fdf3f3; cursor: pointer; font-size: 12px; }
+#be-geo-pane .gp-off .item.pre { border-left-color: #9aa0ab; background: #f3f4f7; color: #5b616d; }
+#be-geo-pane .gp-sub { font-size: 12px; font-weight: 600; margin-top: 6px; }
+#be-geo-pane .gp-off-head.bad { color: #b01e1e; font-weight: 600; }
+#be-geo-pane .gp-off-head.good { color: #1d6b38; }
+#be-geo-pane .gp-bad { color: #b01e1e; }
+#be-geo-pane .gp-jointn { font-size: 12px; color: #1565d8; font-weight: 600; }
+#be-geo-pane .gp-card .kv.gp-bad { margin-top: 4px; white-space: normal; }
+#be-geo-pane .gp-off-head.warn { color: #9a5b00; font-weight: 600; }
+#be-geo-pane .gp-off .item.soft { border-left-color: #e0a800; background: #fff8e1; }
+#be-geo-pane .gp-off .item.soft.pre { border-left-color: #c9ccd3; background: #f6f7f9; color: #6b717d; }

@@ -205,9 +205,15 @@ python3 tool/build_center_line_timetable.py
 # 매핑·종점 진단은 `LINE_BADGE_VERBOSE=1 dart run tool/build_map_html.dart`.
 dart run tool/build_map_html.dart
 
-# 노선 배지 위치 수동 보정 (드래그 에디터 + 저장 서버, localhost 전용)
-# 배지를 끌어다 놓고 "저장 + 재빌드" 를 누르면 data/badge_offsets.json 에
-# 기록되고 곧바로 build_map_html 이 돌아 실제 결과를 보여 준다.
+# 지도 편집기 — 배지 위치 보정 + 노선 선분 + 환승 마커 (드래그 에디터 + 저장 서버, localhost 전용)
+# 패널 상단 탭으로 **세 모드**를 오간다. 모드마다 쓰는 파일이 다르다:
+#   - `배지`     → data/badge_offsets.json
+#   - `선분`·`환승마커` → assets/svg/seoul_metro_map.svg (+ 빌드가 다시 쓰는 assets/html/map.html).
+#     SVG 하나를 같이 고치므로 저장도 하나다. 로직은 tool/geometry_svg.dart(순수 함수, test/tool/geometry_svg_test.dart).
+# "저장 + 재빌드" 를 누르면 곧바로 build_map_html 이 돌아 실제 결과를 보여 준다.
+# 서버는 **한 번에 하나만** 띄운다(저장 락이 프로세스 안에서만 유효).
+#
+# [배지 모드]
 #   - 보정값은 **앵커(노선 선 끝점) 기준 상대 오프셋** `{dx,dy}`. 키는
 #     `노선id|종점역명`(예: `김포골드|양촌`) — 한 노선에 배지가 2개라서다.
 #   - 보정한 배지는 자동 배치 솔버를 건너뛰고 **장애물로만** 쓰인다.
@@ -217,6 +223,45 @@ dart run tool/build_map_html.dart
 #     (사람이 고른 자리를 기계가 거부하면 보정 기능이 무의미하므로). 자동 배치
 #     배지의 하드 위반은 종전대로 빌드 실패다. 수동 배지가 자동 배지의 자리를
 #     막으면 자동 쪽 미해결로 실패하며, 메시지에 수동 보정 키가 표시된다.
+#
+# [선분·환승마커 모드] 위치 + 크기(길이 16/20/24/28) + 방향(가로/세로/동그라미) 편집.
+#   - 선분: 정점을 끌면 그 점만, **정점 사이 선(구간)을 끌면 양 끝 정점이 함께 평행 이동**한다. 같은 노선(`data-line`)의
+#     겹친 끝점은 기본으로 같이 움직인다(끄면 2호선 순환 고리 등 이음새가 벌어진다). 흰 이중선(`{code}-1`)은 본체와 같이 간다.
+#   - ⚠️ **환승 마커는 두 종류인데 이 도구는 한쪽만 다룬다.** 알약 `<rect rx=4>` **56개**는 편집 가능하지만,
+#     동그라미 `<circle r=5 fill:white stroke:#333>` **71개**는 **대상이 아니다**(역 dot `<circle r=4.5>` 와 다른 것이다).
+#     그래서 "동그라미를 알약으로" 같은 변환은 **손으로 SVG 를 고쳐야** 한다 — 커밋 `1a4f116` 의 왕십리가 그 사례다
+#     (선분 이동으로 수인분당선이 역에서 8px 떨어져 동그라미로 네 노선을 못 묶게 되자 24×8 알약으로 교체했다).
+#     마커 드리프트 가드(아래 ②)도 `<rect>` 만 본다 — 동그라미를 손으로 옮기면 **무경고**로 stations.json 과 어긋난다.
+#   - **미지원**: 정점 추가·삭제, 베지어, **환승 동그라미 `<circle>`**, 역 dot·라벨 이동. 역은 선과 따로 놀므로
+#     **역 이동은 이 도구로 못 한다**.
+#   - **길이 0 세그먼트 주의**: 4px 격자 스냅이라 정점을 옮기다 이웃과 좌표가 겹칠 수 있다(커밋 `1a4f116` 의 경춘선에서
+#     실제로 4개 생겼다 — G v2-v3·v5-v6 과 흰 이중선 쌍). 렌더에는 무해하지만 **그 구간은 집을 수 없고**(hitSegment 가
+#     건너뛴다) 겹친 두 정점 중 뒤쪽은 클릭 선택이 안 된다(정점 카드의 `다음 정점 →` 로만 간다). 경고는 아직 없다.
+#   - 편집은 SVG 의 path/rect **등장 순서 index** 로 식별한다. 편집기를 연 뒤 SVG 가 바뀌면(git 전환 등) 저장이 409 로 거부된다.
+#   - **저장 실패 시 원복**: 빌드가 하드페일(exit≠0·예외·3분 타임아웃)하면 SVG 와 map.html 을 저장 직전 바이트로 되돌리고
+#     바이트까지 재확인한다(`reverted:true`). 사본은 `.dart_tool/geometry_editor/*.bak`(assets/ 밖 — `assets/svg/` 는 통째로
+#     번들된다). 서버가 저장 도중 죽으면 표식 파일이 남아 다음 접속 때 UI 배너로 알리고, 복구 1순위는 `.bak` 이다.
+#     **표식이 남아 있는 동안 새 저장은 409 로 거부된다**(복구를 확인하고 표식 파일을 지울 때까지 — 저장이 `.bak` 을 덮어
+#     복구 소스를 잃는 것을 막는다).
+#   - **선로 이탈 경고 2단계**: 역(stations.json)이 자기 노선 선로에서 **12px 초과 = 하드**(빨강 — 드래그 중 실시간·저장 직전
+#     confirm·저장 응답), **4px 초과 12px 이하 = 소프트**(노랑 — "눈에 보이게 벌어짐": 선 두께 4px·dot r4.5~5px 이라 dot 이
+#     선에서 분리돼 보인다. 목록·저장 후 배너·로그에만, confirm 은 없다). **둘 다 저장을 막지는 않는다.** 겹친 두 선을 떼려고
+#     한쪽을 8px 올리면 역↔선이 정확히 12.0px 이 되어 하드(`> 12`)는 침묵하므로 소프트가 있다. 하드 수치(12)는 불변이고
+#     `test/tool/geometry_svg_test.dart` 의 가드가 CI 에서 잡는다(소프트는 편집 전에도 20건 안팎 있어 회색 `pre` 로만 보인다).
+#   - **연속 구간(런) 선택**: 구간을 Shift-클릭(정점·구간 모두)하면 같은 선의 인접 구간까지 확장되고, 런을 끌면 모든 정점이
+#     **같은 양을 한 번만** 움직인다(공유 정점 이중 이동 없음). 정점을 하나씩 밀 필요가 없다.
+#   - **마커 드리프트 경고**: 환승 마커를 **끌면** stations.json 좌표와 벌어진다(아래 SVG 파이프라인 주의). 두 겹으로 잡는다:
+#       ① 편집 중·저장 직후 — 앵커된 역과의 거리가 늘었는지(`findMarkerDrift`, 이동량 기준. 12px 가드는 못 잡고 공유 캡슐 3건은
+#       면제). 길이·방향 변경은 중심을 보존하므로 해당 없음.
+#       ② **상시·영속** — 저장된 SVG 에서 **앵커 역이 없는 마커**(`orphanMarkers`)를 `/api/geometry/model` 이 싣고 UI 가 상단
+#       배너·마커 목록에 계속 띄운다(새로고침·새 세션 불문). 현재 56/56 마커가 앵커를 가져 오탐 0 이다. 앵커 반경(14px) 안으로
+#       옮긴 마커(환승역은 14px 이내면 앵커)는 ② 에 안 걸리지만, `test/tool/geometry_svg_test.dart` 가 마커↔역 거리 분포
+#       (≤0.5px 54 · 0.5~14px 2(김포공항 12.0px · 왕십리 8.94px) · >14px 0)를 단언하므로 **어느 거리로 옮겨 커밋해도 CI 가 깨진다.**
+#     ⚠️ 두 신호가 가리키는 해결은 같다: stations.json 의 해당 역 svgX/svgY 를 직접 패치(생성기 단독 재실행 금지)하거나 마커를 원위치.
+#   - **선을 옮기면 수동 보정 배지 42개가 같이 움직인다**(오프셋이 앵커=선 끝점 기준 상대값). 저장 뒤 배너로 올리는 것 둘:
+#     ① "이번 저장으로 새로 생기거나 값이 바뀐 수동 배지 **하드 위반** 경고"(저장 전부터 있던 10건 안팎은 제외),
+#     ② **위반 여부와 무관한 이동량** — "수동 배지 N개(전체 M개 중)가 최대 Mpx 움직였다"(앵커를 저장 전후로 풀어 비교;
+#     path 를 안 건드린 저장은 건너뛴다). 위반 없이 조용히 틀어진 배지가 우려의 본체라서다.
 dart run tool/badge_editor.dart          # http://localhost:8765
 ```
 
@@ -313,7 +358,12 @@ Expanded → WebViewWidget (전체 화면)
 
 원본 SVG → JSON → HTML 3단계 (빌드 명령어 섹션 참조). 상세: `.claude/docs/svg-pipeline.md`
 
-**중요:** SVG 수정 후 반드시 3단계 파이프라인을 순서대로 재실행.
+**중요:** SVG 를 고쳤다면 **무엇을 고쳤는가**로 돌릴 단계를 정한다(누가·무엇으로 고쳤는가는 무관하다 — 손이든 `tool/badge_editor.dart` 든 같다).
+- **노선 `<path>` 와 환승 `<rect>` 만 고쳤다면 3단계(`build_map_html`)만 돈다.** 편집기는 저장 때 자동으로 돌리고, 손으로 고쳤다면 직접 돌린다(예: `2c73c10` 경춘선 흰 이중선 추가는 전부 손 편집, `1a4f116` 은 선분·배지를 편집기로 고치고 왕십리 `<circle>`→`<rect>` 만 손으로 바꾼 혼합 — 둘 다 3단계만 돌린 게 옳았다).
+  ⚠️ `<circle>` 을 지우거나 더하는 변경은 이 칸의 "`<rect>` 만" 에 **들어가지 않는다**(역 좌표 후보가 바뀐다). `1a4f116` 은 알약 중심을 보기 좋은 자리로 두느라 stations.json 과 8.94px 어긋남을 **의도적으로 수용**한 사례이고, 그래서 1·2단계를 돌리면 왕십리 좌표가 끌려간다.
+- **1·2단계(`extract_svg_stations`·`generate_station_data`)는 역 `<circle>`·`<text data-station>` 을 추가·이동·삭제했을 때만 고려한다.** 그때도 단독 재생성은 파괴적(역 소실·좌표 파손 전력 — 메모리 `station-data-pipeline-drift`)이므로 **`stations.json` 직접 패치를 우선**한다.
+
+⚠️ **환승 마커를 이동하면 stations.json 과 어긋난다.** `extract_svg_stations` 는 `rx` 있는 **모든 rect 의 중심을 역 dot 후보**로 쓰므로 캡슐 중심이 일부 역 `svgX/svgY` 의 원천이다(56개 마커 중 54개는 역 좌표 = 마커 중심, 김포공항 12px · 왕십리 8.94px 만 옆). 편집기가 1·2단계를 돌리지 않으니 마커를 끌면 SVG 와 stations.json 이 벌어진 채 남고(경로 하이라이트·열차 아이콘이 옛 자리), 12px 선로 가드는 못 잡는다. 편집기는 경고만 하며 **stations.json 을 고치지 않는다** — 마커를 옮겼다면 해당 역 좌표를 직접 맞출 것.
 
 ### 네트워크 및 캐싱
 
@@ -444,5 +494,6 @@ Expanded → WebViewWidget (전체 화면)
 | 2026-07-31 | 원칙 1 재정의 후속 리뷰 반영: (1) 위치 역산 입력을 표시용과 분리된 **기준쌍**(`posBaseArrival`/`posBaseReceivedAt`)으로 분리하고, `lastRawArrival` 비교로 **API 원본 값이 바뀐 refresh 에서만** 보정하도록 함(사용자 제안) — 초기 구현(가드 단독)은 API 가 같은 `arrivalSeconds` 를 `recptnDt` 만 갱신해 반복 보고하는 노선에서 열차가 무기한 정지하는 결함이 있었고, 중간안(더 늦은 도착이면 무조건 무시)은 실제 지연을 반영하지 못해 아이콘이 앞서 달리는 문제가 있었음. (2) `segDurations` 불일치 분기의 `path[0]`(경로 맨 뒤) 고정 제거 — 후퇴 순간이동이었음. (3) 단일 점 path 분기에서 `currentPos`/`minDistToEnd`/`pathEndKey`/`posBase*` 동기화 — stale `currentPos` 로 인한 후퇴 차단. (4) `distToEnd` NaN 방어. (5) 원칙 3 본문에 "원칙 1 가드가 상한을 override 할 수 있다" 명시, 원칙 1에 보장 범위(경로상 진행도)·`estimateCache` 예외·`ordkey` 폴백 한계 명시. (6) Dart 미러 `lib/core/utils/train_forward_guard.dart` + 동작 회귀 테스트 신설 | CLAUDE.md, tool/build_map_html.dart, assets/html/map.html(재생성), lib/core/utils/train_forward_guard.dart(신규), test/core/utils/train_forward_guard_test.dart(신규), test/tool/build_map_html_test.dart, agents/map-math-engineer.md, skills/subway-map-math/SKILL.md, skills/subway-testing/SKILL.md | subway-code-reviewer + subway-requirements-reviewer 병렬 리뷰에서 HIGH 3건 검출 |
 | 2026-08-04 | **원칙 1-a 신설(사용자 지시)**: 표시용 남은시간도 위치와 같은 stale 필터를 쓰도록 전환. `adoptDisplayBase` 신설 — `lastDisplayRawArrival` 과 비교해 **API 원본이 바뀐 refresh 에서만** 표시 기준쌍(`baseArrival`/`baseReceivedAt`)을 채택하고, 같은 값이 2회 이상 반복 보고되면 새 `recptnDt` 를 무시한다. 나아가 `startTrainAnimation` 의 **위치 기준쌍 입력을 표시 기준쌍으로 상속**시켜 말풍선 0 과 아이콘 도착을 같은 시각으로 동기화. 부작용 방어로 (i) 도착 발동에 위치 일관성 조건(`atFinalLeg`) 추가, (ii) `arrivedTrains` 를 객체로 바꿔 **정상 도착은 `{final:true}` 로 영구 확정(요구사항 — 절대 부활 금지)**, 유령 도착만 `{raw:N}` 으로 기록해 원본이 바뀌면 복구, (iii) 페이드 중 부활 대비 `arrivalPlaying` 플래그. 1차 시도였던 `ARRIVAL_RAW_GATE_SEC`(원본으로 도착을 막는 게이트)는 사용자 의도와 충돌해 철회 | CLAUDE.md, tool/build_map_html.dart, assets/html/map.html(재생성), lib/core/utils/train_forward_guard.dart(`TrainDisplayBase`·`onRefreshFrom` 신설), test/core/utils/train_forward_guard_test.dart, test/tool/build_map_html_test.dart | 사용자 제보: 사당→방배 모니터링 중 도착 예정 초가 계속 늘어남. 실측 결과 열차가 사당 정차 중 `barvlDt=150` 이 1분 이상 고정된 채 `recptnDt` 만 ~16초씩 전진 → 표시 숫자가 톱니파. 사용자 지시: "barvlDt 가 같은값으로 2회차이면 recptnDt을 새값으로 채택하지 않아서 남은시간은 줄어들거고 열차도 그 남은시간에 맞춰서 도착하길 원한거야" |
 | 2026-07-31 | **원칙 1 재정의(사용자 지시)**: "단조 감소 카운트다운" → "열차는 절대 뒤로 가지 않는다(위치 단조 전진)". 남은시간 숫자는 API 원본을 그대로 표시(재조회 시 증가 허용)하고, 대신 아이콘의 경로상 위치를 "경로 끝까지 남은 거리(`minDistToEnd`)" 기준으로 단조 전진 강제. JS 에서 단조 감소 clamp·`trainSlotMemory` 보조키·slotOccupancy·TTL sweep(약 100줄) 전면 제거, `startTrainAnimation` 에 `cumLen`/`pathEndKey`/`pointAtLength` + step() 단조 전진 가드 추가. CLAUDE.md 에 "원칙 적용 순서(2→3→1→4)" 섹션 신설 | CLAUDE.md, tool/build_map_html.dart, assets/html/map.html(재생성), lib/features/subway_map/presentation/providers/live_train_provider.dart(주석), lib/data/remote/dto/arrival_info_dto.dart(주석), test/data/remote/arrival_info_dto_test.dart(주석), agents/map-math-engineer.md, agents/realtime-data-engineer.md, agents/subway-code-reviewer.md, skills/subway-map-math/SKILL.md, skills/realtime-tracking/SKILL.md, skills/subway-code-review/SKILL.md, skills/subway-testing/SKILL.md | 사용자 요청: "남은 숫자는 API 재조회시 뒤로갈수있지만, 열차는 절대로 뒤로가지 않길 바라" — 숫자를 붙잡아 위치를 간접 보장하던 구조에서, 위치를 직접 보장하는 구조로 전환 |
+| 2026-10-28 | **지도 편집기 3모드화**: `tool/badge_editor.dart` 에 `선분`·`환승마커` 모드 추가(정점·구간 드래그, 마커 위치·길이·방향). SVG 가 편집기의 쓰기 대상이 됨 — 저장 실패 시 원복·`svgRev` 낡은 탭 방어·12px(하드)/4px(소프트) 선로 이탈 경고·마커↔stations.json 드리프트(이동량 + 앵커 없는 마커 영속 배너 + CI 거리 분포 가드)·수동 배지 경고 승격 및 이동량 보고·연속 구간(런) 선택·중단 표식 시 저장 409 거부. **"SVG 수정 후 3단계 전부 재실행" 규칙을 "무엇을 고쳤나" 축으로 재정의**(path/rect 만이면 손이든 편집기든 3단계만, 1·2단계는 역 circle/라벨을 건드렸을 때만이고 그때도 stations.json 직접 패치 우선) | CLAUDE.md, .claude/docs/svg-pipeline.md, tool/badge_editor.dart, tool/badge_editor/{editor.js,editor.css,geometry.js}(신규), tool/geometry_svg.dart(신규), test/tool/geometry_svg_test.dart(신규) | 사용자 요청: 노선 선분과 환승 동그라미/알약을 옮길 수 있는 에디터. 리뷰에서 "마커 이동이 stations.json 과 조용히 어긋난다"·"문서가 파이프라인 전체 재실행을 지시한다" 검출 |
 | 2026-07-22 | 원칙 4 문서 현행화(사용자 승인): 코드에 존재하지 않는 `JUMP_THRESHOLD_PX=20` 파라미터와 "stationChanged/headMoved>8px 시 currentPos=null 리셋" 예외 조항을 삭제하고, 실제 구현인 거리 기반 이중 반감기(≤30px→3초, >30px→0.5초, 0.5px 스냅, deltaMs 상한 100ms)로 기술을 교체. 섹션 제목을 "열차는 순간이동하지 않는다"로 평문화 | CLAUDE.md, tool/build_map_html.dart(헤더 주석), agents/map-math-engineer.md, skills/subway-map-math/SKILL.md | build_map_html.dart 전체 리뷰 중 원칙 4 문서-코드 드리프트 발견(HIGH). 코드는 원칙 의도를 충족하므로 문서를 코드에 맞춰 갱신 — 사용자 승인 완료 |
 | 2026-10-28 | **2호선 성수지선 API 라벨 반전(사용자 결정 — 세 안 중 ⓑ)**: 도착 API `updnLine` 이 성수지선에서만 앱 `isDownBetween` 과 정반대인 것을 실측 확인(2026-10-28 15:54, 183질의. 양방향 모두 반대, 본선 35행 중 32·신정지선은 일치). 증상은 지도에서 탈 방향 열차가 전부 탈락하고 반대 방향이 통과 + 출발 시각에 반대 방향 열차의 실시간 값이 찍힘. **ⓐ 삼중 보정(규칙+시간표+환승가이드)을 쓰지 않은 이유**: 우이신설(41471aa)과 달리 성수지선은 시간표(`INOUT_TAG`)가 앱 규칙과 **이미 정합**이라(커밋 75b9e03 이 역방향 조회 버그를 고치며 맞춘 것) 규칙을 뒤집으면 그 버그가 되살아난다. 그래서 `isDownBetween` 은 0줄 두고 `isApiLabelReversedBetween`/`apiLabelReversedForTrain` 으로 **라벨 해석만** 뒤집었다. 판정 단위는 경로가 아니라 **열차의 접근 쌍** — 분기역 성수(211)는 본선 순환에도 쓰여 지선 집합에 넣을 수 없어, 경로 단위로 걸면 본선 열차까지 통과해 hop 상한 없는 `findPathOnLine` 이 순환 42정거장 경로를 잡아 엉뚱한 자리에 그린다. 위치 API(`realtimePosition`)는 극성이 앱과 **이미 일치**해 폴백에는 반전을 걸지 않는다(실측 확인) | lib/core/utils/line_direction.dart, lib/features/subway_map/presentation/providers/live_train_provider.dart, lib/features/route_search/utils/departure_time_calculator.dart, test/core/utils/line_direction_api_label_test.dart, test/features/route_search/utils/departure_seongsu_label_test.dart(신규), test/features/subway_map/presentation/providers/live_train_seongsu_label_test.dart(신규), tool/check_api_direction_labels.dart(신규 — 드리프트 탐지기), .claude/docs/timetable.md, .claude/docs/lines-reference.md | 신설 탐지기 전 노선 실행에서 유일한 불일치로 검출. 우이신설처럼 **조용히 노후화**되던 건을 사용자 제보 전에 잡은 첫 사례다 |

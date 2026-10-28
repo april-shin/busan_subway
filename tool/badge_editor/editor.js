@@ -1,6 +1,10 @@
 /* 노선 배지 수동 보정 편집기 — tool/badge_editor.dart 가 서빙할 때만 map.html 뒤에 합성된다.
  * 프로덕션 assets/html/map.html 에는 이 코드가 들어가지 않는다.
  *
+ * 모드: 패널 상단 탭 `배지 | 선분 | 환승마커`. 이 파일은 패널·탭·모드 전환(`window.BadgeEditorHost`)과 배지 모드를
+ * 맡고, 선분/환승마커 모드는 geometry.js 가 같은 패널에 붙는다. 배지 모드가 아니면 이 파일의 포인터·키 처리는
+ * 전부 물러난다(Host.mode !== 'badge').
+ *
  * 원칙
  * - 지도(배지·라벨·선)는 실제 map.html 그대로다. 이 스크립트는 (1) 배지 <g.lb> 의 위치를 서버 모델로
  *   맞추고 (2) 배지 위 드래그만 가로채며 (3) 편집용 오버레이/패널을 얹는다. 줌·팬·휠은 지도 것을 그대로 쓴다.
@@ -32,7 +36,7 @@
     undo: [], undoStamp: 0,
     solving: false, solveSeq: 0, solveTimer: 0, pendingModel: null,
     solveError: null, fileError: null, fileExists: false,
-    saving: false, noUnloadGuard: false,
+    saving: false,
     mapMismatch: 0, checkBusy: false, checkWant: null,
     log: '', logKind: ''
   };
@@ -164,6 +168,7 @@
 
   function drawOverlay() {
     while (overlay.firstChild) overlay.removeChild(overlay.firstChild);
+    if (window.BadgeEditorHost && window.BadgeEditorHost.mode !== 'badge') return;   // 배지 모드가 아니면 그리지 않는다
     S.badges.forEach(function (b) {
       var c = center(b), x = c.x - b.w / 2, y = c.y - b.h / 2;
       var bad = b.manual && hardOf(b).length > 0;
@@ -193,10 +198,17 @@
   var panel = el('div', { id: 'be-panel' });
   panel.innerHTML =
     '<div class="be-head">' +
-      '<div class="be-title">노선 배지 위치 보정</div>' +
+      '<div class="be-title">지도 편집기</div>' +
       '<button id="be-side" title="좌/우 반대편으로">⇄</button>' +
       '<button id="be-collapse" title="접기/펴기">–</button>' +
     '</div>' +
+    '<div class="be-tabs" id="be-tabs">' +
+      '<button data-mode="badge" class="be-tab">배지</button>' +
+      '<button data-mode="line" class="be-tab">선분</button>' +
+      '<button data-mode="marker" class="be-tab">환승마커</button>' +
+    '</div>' +
+    '<div class="be-modenote" id="be-modenote"></div>' +
+    '<div id="be-badge-pane">' +
     '<div class="be-state" id="be-state"></div>' +
     '<div class="be-hint">배지를 드래그해 옮긴다. 방향키 0.5px(Shift 5px) · Del 자동 배치로 · Ctrl+Z 취소 · Ctrl+S 저장. 지도 줌·팬·휠은 그대로.</div>' +
     '<div class="be-legend"><i class="l-manual"></i>수동 보정 <i class="l-bad"></i>위반(경고) <i class="l-sel"></i>선택</div>' +
@@ -207,13 +219,70 @@
     '<div id="be-sel"></div>' +
     '<div id="be-warns"></div>' +
     '<details id="be-sum"><summary>빌드 요약(현재 배치)</summary><pre id="be-sum-pre"></pre></details>' +
-    '<details id="be-logbox"><summary>저장·재빌드 로그</summary><pre id="be-log-pre"></pre></details>';
+    '<details id="be-logbox"><summary>저장·재빌드 로그</summary><pre id="be-log-pre"></pre></details>' +
+    '</div>' +
+    '<div id="be-geo-pane"></div>';
   document.body.appendChild(panel);
   // 패널 위 입력이 지도 팬/줌으로 새지 않게 한다.
   ['pointerdown', 'pointerup', 'pointermove', 'wheel', 'click', 'dblclick'].forEach(function (t) {
     panel.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: t !== 'wheel' ? true : true });
   });
   var $ = function (id) { return document.getElementById(id); };
+
+  // ------------------------------------------------- 모드 전환 (배지 / 선분 / 환승마커)
+  // geometry.js 가 Host.dirtyOf.line/marker·Host.geoDirtyCount·Host.onMode 에 붙는다. 한 번에 한 모드만 활성이고,
+  // 다른 모드의 편집 상태(미저장 변경)는 버리지 않고 유지한다 — 탭의 ● 와 안내 문구로 알린다.
+  var MODE_KEY = 'be.mode';
+  var Host = window.BadgeEditorHost = {
+    mode: 'badge', panel: panel, $: $, el: el, sv: sv, api: api, toSvg: toSvg, textLayer: textLayer,
+    clone: clone, f1: f1,
+    dirtyOf: { badge: function () { return dirty(); }, line: function () { return false; }, marker: function () { return false; } },
+    // 모드별 **경고 개수**. 배너는 그 모드 pane 안에 있어 다른 모드에서는 숨겨지는데,
+    // 고아 마커처럼 "이 SVG 에 이미 들어 있는 문제" 는 어느 모드로 열든 보여야 한다
+    // (새 탭은 기본이 배지 모드라 배너만 두면 아무도 못 본다). 탭 라벨에 ⚠N 으로 올린다.
+    alertOf: { badge: function () { return 0; }, line: function () { return 0; }, marker: function () { return 0; } },
+    geoDirtyCount: function () { return 0; },   // geometry.js 가 덮어쓴다(저장 안 된 선분+마커 변경 수)
+    badgeDirty: function () { return dirty(); },
+    // 저장 성공 뒤 location.reload() 직전에 세운다. 배지/지오메트리 어느 쪽이 저장하든 **양쪽** beforeunload 가 이 하나를 본다
+    // (모드별로 따로 두면 교차 저장 때 "페이지를 나가시겠습니까?" 가 한 번 더 떠, 머무르면 화면이 디스크와 어긋난다).
+    suppressUnload: false,
+    onMode: [], refreshTabs: null, setMode: null
+  };
+  function modeGroup(m) { return m === 'badge' ? 'badge' : 'geo'; }
+  Host.refreshTabs = function () {
+    var tabs = panel.querySelectorAll('#be-tabs .be-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      var m = tabs[i].getAttribute('data-mode');
+      var base = m === 'badge' ? '배지' : m === 'line' ? '선분' : '환승마커';
+      var d = Host.dirtyOf[m] && Host.dirtyOf[m]();
+      var a = (Host.alertOf[m] && Host.alertOf[m]()) || 0;
+      tabs[i].textContent = base + (a ? ' ⚠' + a : '') + (d ? ' ●' : '');
+      tabs[i].classList.toggle('be-tab-on', Host.mode === m);
+    }
+  };
+  Host.setMode = function (m) {
+    if (m !== 'badge' && m !== 'line' && m !== 'marker') return;
+    if (S.saving || S.drag) return;
+    var prev = Host.mode;
+    Host.mode = m;
+    panel.classList.toggle('be-mode-badge', m === 'badge');
+    panel.classList.toggle('be-mode-geo', m !== 'badge');
+    document.documentElement.style.cursor = '';
+    var note = '';
+    if (modeGroup(prev) !== modeGroup(m)) {
+      if (prev === 'badge' && dirty()) note = '배지 보정이 저장되지 않았다(유지됨 — 배지 탭으로 돌아가면 이어서 편집·저장).';
+      else if (modeGroup(prev) === 'geo' && Host.geoDirtyCount() > 0) note = '선분/환승마커 변경 ' + Host.geoDirtyCount() + '건이 저장되지 않았다(유지됨 — 돌아가면 이어서 편집·저장).';
+    }
+    $('be-modenote').textContent = note;
+    $('be-modenote').style.display = note ? 'block' : 'none';
+    try { sessionStorage.setItem(MODE_KEY, m); } catch (e) { /* 무시 */ }
+    if (typeof drawOverlay === 'function') redraw();
+    Host.onMode.forEach(function (fn) { try { fn(m, prev); } catch (e) { console.error(e); } });
+    Host.refreshTabs();
+  };
+  panel.querySelectorAll('#be-tabs .be-tab').forEach(function (b) {
+    b.addEventListener('click', function () { Host.setMode(b.getAttribute('data-mode')); });
+  });
 
   // ------------------------------------------------- 패널 위치/접기 (지도 가림 방지)
   // 제목줄을 잡고 끌면 패널이 움직이고, ⇄ 는 좌/우 끝을 오간다. 접으면 제목만 남는다.
@@ -392,6 +461,7 @@
       });
     }
     $('be-sum-pre').textContent = S.summary.join('\n') + (S.warnings.length ? '\n\n' + S.warnings.join('\n') : '');
+    if (window.BadgeEditorHost && Host.refreshTabs) Host.refreshTabs();
   }
 
   $('be-pick').addEventListener('change', function (e) { if (e.target.value) select(e.target.value, true); });
@@ -501,6 +571,7 @@
 
   // ---------------------------------------------------------------- 드래그
   function onDown(e) {
+    if (Host.mode !== 'badge') return;
     if (e.button !== 0 || panel.contains(e.target) || S.saving) return;
     var p = toSvg(e);
     if (!p) return;
@@ -519,6 +590,7 @@
     var d = S.drag;
     if (!d) {
       // 호버: 배지 위면 잡을 수 있다는 표시만(이벤트는 지도로 흘려보낸다).
+      if (Host.mode !== 'badge') return;
       if (!e.buttons) {
         var p0 = toSvg(e);
         document.documentElement.style.cursor = (p0 && hitTest(p0)) ? 'grab' : '';
@@ -566,6 +638,7 @@
 
   // ---------------------------------------------------------------- 키보드
   window.addEventListener('keydown', function (e) {
+    if (Host.mode !== 'badge') return;      // 선분/환승마커 모드의 키 처리는 geometry.js
     var tag = (e.target && e.target.tagName) || '';
     var mod = e.metaKey || e.ctrlKey;
     if (mod && (e.key === 's' || e.key === 'S')) { e.preventDefault(); save(); return; }
@@ -596,6 +669,9 @@
   // ---------------------------------------------------------------- 저장
   async function save() {
     if (S.saving || S.solving || S.solveError || S.fileError) return;
+    // 저장 성공 시 페이지를 새로 고치므로 선분/환승마커의 저장 안 된 변경이 같이 사라진다 — 미리 확인한다.
+    if (Host.geoDirtyCount() > 0 && !window.confirm('선분/환승마커에 저장하지 않은 변경 ' + Host.geoDirtyCount() +
+        '건이 있다. 배지를 저장하면 페이지가 새로 고쳐져 그 변경이 사라진다. 계속할까?')) return;
     S.saving = true; S.log = ''; S.logKind = '';
     renderPanel();
     var r;
@@ -613,7 +689,7 @@
     if (r.saved && r.ok) {
       // 실제 재빌드된 map.html 로 다시 불러와 결과를 확인한다(로그는 새로 고친 뒤 패널에 남긴다).
       try { sessionStorage.setItem('beLog', JSON.stringify({ text: 'data/badge_offsets.json 저장 · ' + r.savedCount + '개 수동 보정\n\n' + text, kind: 'ok' })); } catch (e) { /* 무시 */ }
-      S.noUnloadGuard = true;
+      Host.suppressUnload = true;
       location.reload();
       return;
     }
@@ -623,7 +699,7 @@
   }
 
   window.addEventListener('beforeunload', function (e) {
-    if (!S.noUnloadGuard && dirty()) { e.preventDefault(); e.returnValue = ''; }
+    if (!Host.suppressUnload && dirty()) { e.preventDefault(); e.returnValue = ''; }
   });
 
   // ---------------------------------------------------------------- 시작
@@ -653,4 +729,11 @@
     S.mapMismatch = countMismatch(r.model.badges);
     applyModel(r.model);
   })();
+
+  // 저장 후 새로 고침해도 보던 모드로 돌아온다(geometry.js 가 모두 올라온 뒤 적용되도록 한 틱 미룬다).
+  setTimeout(function () {
+    var m = 'badge';
+    try { m = sessionStorage.getItem(MODE_KEY) || 'badge'; } catch (e) { /* 무시 */ }
+    Host.setMode(m);
+  }, 0);
 })();
