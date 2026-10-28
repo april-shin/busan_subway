@@ -6,6 +6,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'app.dart';
 import 'core/constants/app_info.dart';
+import 'core/utils/foldable_layout.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ Future<void> main() async {
 
   await dotenv.load(fileName: '.env');
   await AppInfo.init();
+  await FoldableLayout.init();
   await MobileAds.instance.initialize();
   runApp(
     ProviderScope(

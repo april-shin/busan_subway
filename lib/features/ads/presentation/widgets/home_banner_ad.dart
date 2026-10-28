@@ -6,12 +6,18 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../../../../core/utils/foldable_layout.dart';
+
 /// 화면 하단에 노출되는 AdMob 적응형(앵커드) 배너 광고 위젯.
 /// 홈/경로 결과/도착 정보 화면 하단에 공용으로 사용된다.
 ///
 /// - kDebugMode: Google 공식 테스트 단위 ID 사용
 /// - release  : 발급 후 [_kAndroidReleaseUnitId]/[_kIosReleaseUnitId]에 채워 넣을 것.
 ///   release 단위 ID가 비어 있으면 광고 로드를 시도하지 않고 [SizedBox.shrink]를 반환한다.
+///
+/// 펼친 iPhone Duo([FoldableLayout.isUnfolded])에서는 오른쪽 페이지 폭으로
+/// 요청해 오른쪽에 붙인다. 접기/펼치기로 이 상태가 바뀌면 다시 로드한다.
+/// 다른 기기에서는 기존과 동일하다(화면 폭 전체로 1회 로드).
 class HomeBannerAd extends StatefulWidget {
   const HomeBannerAd({super.key});
 
@@ -34,6 +40,12 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
   bool _loadStarted = false;
+
+  // 마지막 로드를 시작한 시점의 펼침 상태. 바뀌면 폭이 달라지므로 재로드한다.
+  bool _loadedUnfolded = false;
+
+  // 재로드로 무효가 된 진행 중 _loadAd 를 버리기 위한 세대 번호.
+  int _loadGeneration = 0;
 
   // 로드 실패 시 지수 백오프 재시도.
   // 새로 만든 광고 단위는 초기 몇 시간 동안 no-fill(code=3)을 반환할 수 있어,
@@ -78,10 +90,28 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
     super.didChangeDependencies();
     // MediaQuery는 initState 시점에는 안전하지 않을 수 있어
     // didChangeDependencies에서 1회만 로드한다.
+    // 단, 펼친 Duo 를 접거나 펼치면 배너 폭이 바뀌므로 그때만 다시 로드한다.
+    final unfolded = FoldableLayout.isUnfolded(context);
     if (!_loadStarted) {
       _loadStarted = true;
+      _loadedUnfolded = unfolded;
       _loadAd();
+    } else if (unfolded != _loadedUnfolded) {
+      _loadedUnfolded = unfolded;
+      _reload();
     }
+  }
+
+  void _reload() {
+    _loadGeneration++;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _retryCount = 0;
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    _isLoaded = false;
+    // didChangeDependencies 직후 build 가 이어지므로 setState 불필요.
+    _loadAd();
   }
 
   Future<void> _loadAd() async {
@@ -93,12 +123,15 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
       return;
     }
 
-    final width = MediaQuery.of(context).size.width.truncate();
+    final generation = _loadGeneration;
+    final width = _loadedUnfolded
+        ? rightPageWidth(MediaQueryData.fromView(View.of(context))).truncate()
+        : MediaQuery.of(context).size.width.truncate();
     final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
       Orientation.portrait,
       width,
     );
-    if (!mounted) return;
+    if (!mounted || generation != _loadGeneration) return;
     if (size == null) {
       // 적응형 사이즈 계산 실패: 잠시 후 재시도(초기 레이아웃 미확정 등).
       debugPrint('[HomeBannerAd] 적응형 배너 사이즈 계산 실패 (width=$width)');
@@ -113,7 +146,7 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
       listener: BannerAdListener(
         onAdLoaded: (loadedAd) {
           // dispose된 위젯이면 BannerAd도 즉시 해제하여 누수를 방지한다.
-          if (!mounted) {
+          if (!mounted || generation != _loadGeneration) {
             loadedAd.dispose();
             return;
           }
@@ -125,6 +158,7 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
         },
         onAdFailedToLoad: (failedAd, error) {
           failedAd.dispose();
+          if (generation != _loadGeneration) return;
           // release 실기기에서도 원인 파악이 가능하도록 에러 코드를 남긴다.
           // code=3: no-fill(광고 재고 없음/신규 단위), code=1/0: 요청/설정 오류.
           debugPrint(
@@ -189,11 +223,18 @@ class _HomeBannerAdState extends State<HomeBannerAd> {
     if (!_isLoaded || ad == null) {
       return const SizedBox.shrink();
     }
-    return Container(
+    final banner = Container(
       color: Theme.of(context).colorScheme.surface,
       width: ad.size.width.toDouble(),
       height: ad.size.height.toDouble(),
       child: AdWidget(ad: ad),
+    );
+    if (!_loadedUnfolded) return banner;
+    // 펼친 Duo: 오른쪽 페이지 하단에 붙인다. heightFactor 로 높이는 배너만큼.
+    return Align(
+      alignment: Alignment.centerRight,
+      heightFactor: 1,
+      child: banner,
     );
   }
 }

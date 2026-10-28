@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/tokens/app_dimensions.dart';
+import '../../../../core/utils/foldable_layout.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../route_search/presentation/utils/route_result_navigator.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
@@ -17,6 +18,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // AppBar 없음. Scaffold 배경색(surface)이 상태바 영역을 채우고,
     // 지도는 SafeArea top 안쪽(상태바 아래)부터 시작한다 — 몰입형 아님.
+    //
+    // 배너: 기본은 지도 아래 별도 줄. 펼친 iPhone Duo 에서만 지도를 바닥까지
+    // 깔고 배너를 오른쪽 페이지 하단에 겹쳐 띄운다(왼쪽 페이지 하단은 지도).
+    final unfolded = FoldableLayout.isUnfolded(context);
     return Scaffold(
       body: Column(
         children: [
@@ -95,10 +100,16 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (unfolded)
+                  const Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: HomeBannerAd(),
+                  ),
               ],
             ),
           ),
-          const HomeBannerAd(),
+          if (!unfolded) const HomeBannerAd(),
         ],
       ),
     );
