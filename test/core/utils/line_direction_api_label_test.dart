@@ -22,6 +22,10 @@ import 'package:seoul_subway/domain/entities/station.dart';
 /// 아래 표의 각 행은 같은 날 실측한 `(질의역, 행선지 bstatnNm, updnLine)` 이다.
 /// 방향 판정은 `질의역 → 행선지` 로 한다 — 열차가 가는 쪽이 곧 라벨이 가리키는 방향.
 ///
+/// ⚠ 이 파일 전체가 **lock-in 이지 탐지기가 아니다.** 아래 실측 표는 2026-10-20 시점의
+/// 스냅샷을 고정할 뿐이라, API 라벨이 나중에 바뀌어도 계속 통과한다. 라벨 변화를
+/// 잡으려면 `dart run tool/check_api_direction_labels.dart` 를 주기적으로 돌릴 것.
+///
 /// 의정부경전철·김포골드라인은 `realtimeStationArrival` 이 INFO-200 으로 응답하지
 /// 않아(실측 2026-10-20: 탑석·송산·…·발곡, 양촌·구래·…·김포공항 전수) 대조할 라벨이
 /// 없다. 그래서 반전 대상이 아니며 일반 규칙(ID 증가 = 하행)을 유지한다.
@@ -71,11 +75,19 @@ void main() {
   });
 
   group('반전하지 않는 노선 — 일반 규칙(ID 증가 = 하행) 유지', () {
+    // ⚠ 이 고정은 탐지기가 아니다 — API 가 반대 라벨을 주기 시작해도 이 테스트는
+    // 통과한다(현재 동작을 잠글 뿐이다). 의정부·김포골드는 getTrainSch 기준으로는 반전
+    // 저장돼 있어 "라벨 ≠ 앱 규칙" 일 가능성이 있으므로, API 가 열리면 같은 버그가 된다.
+    // 주기적으로 `dart run tool/check_api_direction_labels.dart` 를 돌릴 것
+    // (전 노선 라벨 대조 · 수동 실행 도구 · 네트워크/API 키 필요라 flutter test 에는 없다).
     test('의정부경전철: API 미제공 노선이라 반전 대상 아님', () {
       expect(isDownBetween('U01', 'U02', '의정부'), isTrue);
       expect(isDownBetween('U02', 'U01', '의정부'), isFalse);
     });
 
+    // ⚠ 위 의정부 케이스와 같다 — 이 고정은 탐지기가 아니다. API 가 반대 라벨을 주기
+    // 시작해도 이 테스트는 통과한다. 주기적으로
+    // `dart run tool/check_api_direction_labels.dart` 를 돌릴 것.
     test('김포골드라인: API 미제공 노선이라 반전 대상 아님', () {
       expect(isDownBetween('P01', 'P02', '김포골드'), isTrue);
       expect(isDownBetween('P02', 'P01', '김포골드'), isFalse);
@@ -154,6 +166,85 @@ void main() {
         }
       }
       expect(checked, greaterThan(100));
+    });
+  });
+
+  group('2호선 성수지선 — 라벨만 반전(규칙은 유지)', () {
+    // 성수(211) ─ 용답(244) ─ 신답(245) ─ 용두(246) ─ 신설동(250) 4역 셔틀.
+    //
+    // 2026-10-28 15:54 실측(`tool/check_api_direction_labels.dart --verbose`):
+    //   내선 | 현재=용두   → 조회=신설동 | 행선=신설동
+    //   외선 | 현재=신설동 → 조회=용두   | 행선=성수지선
+    // 앱 규칙은 ID 증가(신설동 방향) = 하행이라 양방향 모두 라벨과 반대다.
+    //
+    // 고치는 방법으로 **규칙을 뒤집지 않았다**(사용자 결정 2026-10-28). 시간표
+    // (`INOUT_TAG`)는 앱 규칙과 이미 맞아 있어(커밋 75b9e03) 규칙을 뒤집으면
+    // 시간표가 다시 반대 방향을 읽는다. 그래서 라벨 해석만 뒤집는다.
+
+    test('규칙(isDownBetween)은 그대로다 — 시간표 인덱스를 흔들지 않는다', () {
+      // ID 증가 = 하행. 이 값이 바뀌면 `line_schedules.json` 의 t[0]/t[1] 이
+      // 어긋나고 75b9e03 이 고친 역방향 조회 버그가 되살아난다.
+      expect(isDownBetween('246', '250', '2'), isTrue, reason: '용두→신설동 = 하행');
+      expect(isDownBetween('250', '246', '2'), isFalse, reason: '신설동→용두 = 상행');
+      expect(isDownBetween('211', '244', '2'), isTrue, reason: '성수→용답 = 하행');
+    });
+
+    test('지선 구간은 라벨 반전 대상이다', () {
+      expect(isApiLabelReversedBetween('246', '250', '2'), isTrue);
+      expect(isApiLabelReversedBetween('250', '246', '2'), isTrue);
+      expect(isApiLabelReversedBetween('211', '244', '2'), isTrue,
+          reason: '분기역 성수에서 지선으로 들어가는 쌍도 포함');
+      expect(isApiLabelReversedBetween('244', '245', '2'), isTrue);
+    });
+
+    test('본선·신정지선은 반전 대상이 아니다', () {
+      expect(isApiLabelReversedBetween('201', '202', '2'), isFalse, reason: '본선');
+      expect(isApiLabelReversedBetween('211', '212', '2'), isFalse,
+          reason: '성수는 본선 순환에도 쓰인다 — 본선 쪽 쌍은 오염되면 안 된다');
+      expect(isApiLabelReversedBetween('234', '247', '2'), isFalse, reason: '신정지선');
+      expect(isApiLabelReversedBetween('249', '251', '2'), isFalse, reason: '까치산');
+    });
+
+    test('다른 노선은 전부 false — 이 함수는 2호선 지선 전용이다', () {
+      for (final l in ['1', '3', '4', '5', '9', '공항철도', '우이신설', '경의중앙']) {
+        expect(isApiLabelReversedBetween('100', '101', l), isFalse, reason: l);
+      }
+    });
+
+    test('가상 급행 노선 ID(2E)도 base 로 정규화된다', () {
+      expect(isApiLabelReversedBetween('246', '250', '2E'), isTrue);
+    });
+
+    test('숫자가 아닌 ID 는 false (안전한 기본값)', () {
+      expect(isApiLabelReversedBetween('W01', 'W02', '2'), isFalse);
+    });
+
+    test('isApiLabelReversedOnRoute 는 첫 인접 쌍만 본다', () {
+      // isDownDirection(segment) 이 stations[0], stations[1] 로 방향을 정하므로
+      // 같은 쌍을 봐야 짝이 맞는다.
+      expect(isApiLabelReversedOnRoute('2', ['246', '250']), isTrue);
+      expect(isApiLabelReversedOnRoute('2', ['201', '202', '244']), isFalse,
+          reason: '뒤쪽에 지선 ID 가 있어도 첫 쌍이 본선이면 본선이다');
+      expect(isApiLabelReversedOnRoute('2', ['246']), isFalse, reason: '역 1개');
+      expect(isApiLabelReversedOnRoute('2', const []), isFalse, reason: '빈 목록');
+    });
+
+    test('라벨 반전을 적용하면 실측 라벨과 앱 방향이 맞는다', () {
+      // 지도·출발시각 게이트가 하는 계산 그대로.
+      bool gateAccepts(String label, String fromId, String toId) {
+        var labelDown = label == '하행' || label == '외선';
+        if (isApiLabelReversedOnRoute('2', [fromId, toId])) labelDown = !labelDown;
+        return labelDown == isDownBetween(fromId, toId, '2');
+      }
+
+      // 용두 → 신설동 을 타는 사용자: API 가 "내선" 으로 보고한 열차가 맞는 열차.
+      expect(gateAccepts('내선', '246', '250'), isTrue);
+      expect(gateAccepts('외선', '246', '250'), isFalse, reason: '반대 방향은 걸러야 한다');
+      // 신설동 → 용두 를 타는 사용자: "외선" 이 맞는 열차.
+      expect(gateAccepts('외선', '250', '246'), isTrue);
+      expect(gateAccepts('내선', '250', '246'), isFalse);
+      // 본선은 반전 없이 종전대로.
+      expect(gateAccepts('내선', '201', '202'), isTrue, reason: '본선 ID 증가 = 내선/상행');
     });
   });
 }

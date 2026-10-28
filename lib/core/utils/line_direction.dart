@@ -89,6 +89,88 @@ bool isDownBetween(String fromId, String toId, String lineId) {
 /// 대조할 라벨이 없으므로 여기 넣지 않는다 — 앱 일반 규칙을 그대로 쓴다.
 const _apiLabelReversedLines = {'9', '공항철도', '우이신설'};
 
+/// 앱 `isDown` 과 서울 API `updnLine` 라벨의 극성이 **구간 단위로** 어긋나는 구간인지.
+///
+/// [_apiLabelReversedLines] 는 **노선 단위** 반전이고 [isDownBetween] 의 결과 자체를
+/// 뒤집는다. 그래서 그 목록에 넣으려면 같은 `isDown` 을 쓰는 **시간표 방향 인덱스도
+/// 함께** 뒤집어야 한다. 2호선 성수지선은 그 조건이 맞지 않는다 — 시간표
+/// (`INOUT_TAG`)는 앱 규칙과 **이미 맞아 있고**(`tool/build_metro_timetable.dart`
+/// 의 "앱 `_isLine2DownBetween` 과 정합", 커밋 75b9e03) **실시간 라벨만** 반대다.
+/// 규칙을 뒤집으면 75b9e03 이 고친 시간표 역방향 조회 버그가 되살아난다.
+/// 그래서 규칙은 그대로 두고 **라벨 해석만** 구간 단위로 뒤집는다(사용자 결정
+/// 2026-10-28, 세 안 중 ⓑ).
+///
+/// 근거 — 2026-10-28 15:54 실측(`tool/check_api_direction_labels.dart --verbose`):
+/// ```
+/// 내선 | 현재=용두   → 조회=신설동 | 행선=신설동     (앱: 246→250 증가 = 하행)
+/// 외선 | 현재=신설동 → 조회=용두   | 행선=성수지선   (앱: 250→246 감소 = 상행)
+/// ```
+/// 양방향 모두 반대다. 같은 측정에서 본선은 35행 중 32건 일치, 신정지선도 일치라
+/// **지선 국소 반전**이 맞다.
+///
+/// ⚠ 쓰는 곳은 실시간 라벨을 앱 방향과 비교하는 **두 곳뿐**이다 — 지도 방향 게이트
+/// (`live_train_provider`)와 출발 시각 후보 필터(`departure_time_calculator`).
+/// 시간표 조회·경로 탐색·환승 가이드는 이 함수를 타지 않는다. 여기에 노선을 더하기
+/// 전에 "그 노선 시간표가 앱 규칙과 맞아 있는가" 를 먼저 확인할 것 — 맞지 않으면
+/// 이 함수가 아니라 [_apiLabelReversedLines] 쪽이다.
+///
+/// 회귀 가드: `test/core/utils/line_direction_api_label_test.dart`.
+bool isApiLabelReversedBetween(String fromId, String toId, String lineId) {
+  final baseId = lineId.endsWith('E')
+      ? lineId.substring(0, lineId.length - 1)
+      : lineId;
+  if (baseId != '2') return false;
+
+  final fromNum = _parseNumericId(fromId);
+  final toNum = _parseNumericId(toId);
+  if (fromNum == null || toNum == null) return false;
+
+  // ⚠ [_isLine2DownBetween] 의 지선 분기와 **같은 조건**이어야 한다. 한쪽만 고치면
+  // 규칙과 라벨 해석이 어긋나 지금과 정확히 반대 방향으로 깨진다.
+  return _line2SeongsuBranchIds.contains(fromNum) ||
+      _line2SeongsuBranchIds.contains(toNum);
+}
+
+/// 탑승 구간(역 ID 목록)의 **첫 인접 쌍**으로 [isApiLabelReversedBetween] 을 본다.
+///
+/// 첫 인접 쌍을 쓰는 이유는 비교 상대인 `isDown` 이 `isDownDirection(segment)` =
+/// `isDownBetween(stations[0], stations[1])` 로 정해지기 때문이다 — 같은 쌍을 봐야
+/// 짝이 맞는다. 역이 2개 미만이면 방향 자체가 정해지지 않으므로 false.
+bool isApiLabelReversedOnRoute(String lineId, List<String> stationIds) {
+  if (stationIds.length < 2) return false;
+  return isApiLabelReversedBetween(stationIds[0], stationIds[1], lineId);
+}
+
+/// 열차 한 대의 **접근 쌍**(현재역 → 탑승역)이 라벨 반전 구간인지.
+///
+/// [isApiLabelReversedOnRoute] 를 경로에 통째로 적용하면 **분기역**에서 깨진다.
+/// 성수(211)는 본선 순환에도 쓰여 지선 집합에 넣을 수 없는데(넣으면 본선 간선이
+/// 오염된다), 성수 출발 지선 경로는 경로 단위로 "반전" 이라 그 역에 들어오는
+/// **본선** 열차의 라벨까지 뒤집혀 통과한다. 2호선은 행선지 기반 지선 필터가 꺼져
+/// 있어(사용자 결정 — 순환선이라 행선지가 운행 범위를 뜻하지 않는다) 걸러 줄
+/// 장치가 방향 게이트뿐이다.
+///
+/// 그래서 열차마다 자기 접근 쌍으로 본다. 이 값이 경로의 반전 여부와 **다르면**
+/// 그 열차는 이 경로의 열차가 아니다(지선 경로에 본선 열차, 또는 그 반대) —
+/// 호출부가 방향을 보기 전에 떨군다.
+///
+/// 현재역을 모르거나 탑승역과 같으면 접근 쌍이 성립하지 않아 false 를 돌려준다.
+/// 분기역에서 이는 "그 열차를 그리지 않는다" 를 뜻한다 — 승강장에 선 지선 열차
+/// 하나를 놓치더라도, 본선 열차를 지선 경로에 그리는 쪽이 더 나쁘다(반전 도입
+/// 전에도 떨어지던 행이라 회귀는 아니다).
+bool apiLabelReversedForTrain({
+  required String lineId,
+  required String? currentStationId,
+  required String? boardingStationId,
+}) {
+  if (currentStationId == null ||
+      boardingStationId == null ||
+      currentStationId == boardingStationId) {
+    return false;
+  }
+  return isApiLabelReversedBetween(currentStationId, boardingStationId, lineId);
+}
+
 /// "역 번호 순서 = 물리 순서" 규칙에서 벗어나는 역의 정렬 rank. `{노선: {역ID: rank}}`.
 ///
 /// 대부분의 노선은 역 번호가 물리 순서대로 붙어 있어 번호 비교만으로 방향이
