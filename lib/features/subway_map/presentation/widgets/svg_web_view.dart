@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -72,10 +73,46 @@ class SvgWebView extends ConsumerStatefulWidget {
   }
 }
 
-class _SvgWebViewState extends ConsumerState<SvgWebView> {
+class _SvgWebViewState extends ConsumerState<SvgWebView>
+    with WidgetsBindingObserver {
+  static const _mapAsset = 'assets/html/map.html';
+
+  /// 복구 재로드 사이 최소 간격. 로드 직후 프로세스가 다시 죽는 상황(메모리
+  /// 부족 지속)에서 종료 → 재로드 → 종료가 쉼 없이 반복되는 것을 막는다. 이
+  /// 간격 안의 요청은 버리지 않고 남은 시간만큼 미뤘다가 다시 시도한다.
+  static const _minReloadInterval = Duration(seconds: 3);
+
+  /// 연속 재로드 상한. 넘으면 멈추고 다음 포그라운드 복귀 때 다시 시도한다.
+  static const _maxReloadAttempts = 3;
+
+  /// 마지막 재로드 뒤 이만큼 무사했으면 연속 횟수를 새로 센다.
+  static const _reloadAttemptsResetAfter = Duration(minutes: 1);
+
+  /// 포그라운드 복귀 시점에 로드가 이만큼 넘게 끝나지 않고 있으면 실패로 보고
+  /// 다시 로드한다(타이머가 아니라 복귀 때만 검사한다).
+  static const _loadWatchdog = Duration(seconds: 10);
+
+  /// 포그라운드 복귀 시 페이지 생존 점검의 1회 응답 대기 상한.
+  static const _aliveCheckTimeout = Duration(seconds: 3);
+
   late final WebViewController _controller;
   late final Map<String, Station> _stationMap;
   bool _isReady = false;
+
+  // 복구 재로드 상태.
+  DateTime _lastLoadAt = DateTime.now();
+  int _reloadAttempts = 0;
+  Timer? _reloadTimer;
+  bool _aliveCheckRunning = false;
+
+  /// 백그라운드에서 종료 알림을 받아 포그라운드 복귀까지 재로드를 미룬 상태.
+  bool _reloadPending = false;
+
+  /// 지금 진행 중인 로드가 복구 재로드인지. `_onPageLoaded` 가 소비한다.
+  bool _recovering = false;
+
+  /// 복구 재로드를 시작할 때 화면에 있던(= 죽은 페이지에 이미 그렸던) 열차 목록.
+  List<LiveTrain>? _trainsAtReload;
 
   // JS 에 마지막으로 넘긴 오른쪽 safe area 폭. 펼친 iPhone Duo 에서만 0 이
   // 아니다(지도가 세로 상태바 띠까지 깔림 — home_screen.dart).
@@ -95,12 +132,144 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) => _onPageLoaded(),
+          onWebResourceError: _onWebResourceError,
         ),
       )
-      ..loadFlutterAsset('assets/html/map.html');
+      ..loadFlutterAsset(_mapAsset);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _reloadTimer?.cancel();
+    super.dispose();
+  }
+
+  // ============================================================
+  // 웹 콘텐츠 프로세스 종료 복구
+  // ============================================================
+  //
+  // 앱이 백그라운드에 있는 동안 OS 가 메모리 회수를 위해 WebView 의 웹 콘텐츠
+  // 프로세스만 따로 죽일 수 있다(iOS WKWebView 에서 흔하다). Flutter 쪽은
+  // 살아 있으므로 앱은 그대로 복귀하지만 WebView 는 배경색만 남은 빈 화면이
+  // 되고, 스스로 복구되지 않는다. 지도를 다시 로드하면 `_onPageLoaded` 가
+  // 경로·마커·열차를 현재 위젯 상태로 복원한다(줌/팬 위치는 잃는다).
+
+  /// iOS 는 프로세스 종료를 이 콜백으로 알린다.
+  void _onWebResourceError(WebResourceError error) {
+    if (error.errorType != WebResourceErrorType.webContentProcessTerminated) {
+      return;
+    }
+    _reloadMapWhenForeground();
+  }
+
+  /// 포그라운드면 바로 재로드하고, 아니면 사용자가 돌아올 때까지 미룬다.
+  /// 백그라운드에서는 다시 띄워도 메모리 압박으로 곧 또 죽기 쉽다.
+  void _reloadMapWhenForeground() {
+    // 죽은 페이지로 JS 를 보내지 않는다.
+    _isReady = false;
+    // lifecycleState 가 null 이면 아직 통지 전 — 전면으로 본다.
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+      _reloadPending = true;
+      return;
+    }
+    _reloadMap();
+  }
+
+  /// 포그라운드로 돌아올 때마다 지도를 점검한다 — 미뤄 둔 재로드를 실행하고,
+  /// 종료 콜백이 오지 않은 경우에 대비해 페이지가 살아 있는지 직접 물어본다.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _reloadAttempts = 0;
+    if (_reloadPending) {
+      _reloadMap();
+    } else {
+      _reloadMapIfDead();
+    }
+  }
+
+  Future<void> _reloadMapIfDead() async {
+    if (!_isReady) {
+      // 로드 중. 정상이면 onPageFinished 가 마무리하지만, 로드가 실패했거나
+      // 재시도 상한에 걸려 멈춘 상태면 여기서 다시 시작한다.
+      final stalled = _reloadTimer == null &&
+          DateTime.now().difference(_lastLoadAt) > _loadWatchdog;
+      if (stalled) _reloadMap();
+      return;
+    }
+    if (_aliveCheckRunning) return;
+    _aliveCheckRunning = true;
+    final loadAtStart = _lastLoadAt;
+    var alive = false;
+    try {
+      // 복귀 직후 응답이 한 번 늦었다고 멀쩡한 페이지를 재로드하면 줌·위치를
+      // 잃는다. 두 번 연속 실패해야 죽은 것으로 본다.
+      for (var attempt = 0; attempt < 2 && !alive; attempt++) {
+        try {
+          final result = await _controller
+              .runJavaScriptReturningResult('window.showTrains ? 1 : 0')
+              .timeout(_aliveCheckTimeout);
+          alive = result is num ? result == 1 : '$result' == '1';
+          // 응답은 왔는데 지도가 없다 = 빈 페이지. 다시 물어볼 필요가 없다.
+          if (!alive) break;
+        } catch (_) {
+          // 타임아웃·실행 오류 — 한 번 더 물어본다.
+        }
+      }
+    } finally {
+      _aliveCheckRunning = false;
+    }
+    // 대기 중에 종료 콜백이 먼저 처리했으면(재로드 중이거나 이미 끝났으면)
+    // 겹치지 않는다.
+    if (!mounted || alive || !_isReady || _lastLoadAt != loadAtStart) return;
+    _reloadMap();
+  }
+
+  void _reloadMap() {
+    if (!mounted) return;
+    _reloadTimer?.cancel();
+    _reloadTimer = null;
+
+    final now = DateTime.now();
+    final sinceLast = now.difference(_lastLoadAt);
+    if (sinceLast > _reloadAttemptsResetAfter) _reloadAttempts = 0;
+    // 상한에 걸리면 멈춘다. _isReady=false 로 남으므로 다음 포그라운드 복귀의
+    // 워치독 분기가 다시 시작한다.
+    if (_reloadAttempts >= _maxReloadAttempts) {
+      _isReady = false;
+      return;
+    }
+    if (sinceLast < _minReloadInterval) {
+      _isReady = false;
+      _reloadTimer = Timer(_minReloadInterval - sinceLast, () {
+        _reloadTimer = null;
+        if (mounted) _reloadMapWhenForeground();
+      });
+      return;
+    }
+
+    _lastLoadAt = now;
+    _reloadAttempts++;
+    _reloadPending = false;
+    _recovering = true;
+    // 연속 재로드에서는 처음 죽었을 때의 목록을 유지한다.
+    _trainsAtReload ??= widget.liveTrains;
+    _isReady = false;
+    // 툴팁은 새 페이지에 복원하지 않으므로 탭 상태도 함께 비운다.
+    ref.read(tappedStationProvider.notifier).state = null;
+    _controller.loadFlutterAsset(_mapAsset).catchError((Object e) {
+      if (kDebugMode) {
+        debugPrint('지도 재로드 오류: $e');
+      }
+    });
   }
 
   void _onPageLoaded() {
+    final recovering = _recovering;
+    _recovering = false;
     _isReady = true;
     if (_safeRight != 0) _runJs('window.setSafeRight($_safeRight)');
     _injectStationData();
@@ -124,8 +293,15 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     // 기존 선택된 역 마커 복원 (출발/경유/도착)
     _setSelectionMarkers(ref.read(selectedStationsProvider));
 
-    // 초기 열차 데이터 표시
-    if (widget.liveTrains.isNotEmpty) {
+    // 초기 열차 데이터 표시.
+    // 복구 재로드에서는 죽기 전에 이미 그렸던 목록을 다시 넣지 않고 다음
+    // refresh(15초 이내)에 맡긴다. 새 페이지는 도착 확정 기억(`arrivedTrains`)이
+    // 비어 있어, 백그라운드 이전의 낡은 목록을 넣으면 이미 도착 처리된 열차가
+    // 다시 그려져 도착 알림이 중복된다. 로드 중에 새 목록이 왔으면 그건 넣는다.
+    final staleTrains = _trainsAtReload;
+    _trainsAtReload = null;
+    if (widget.liveTrains.isNotEmpty &&
+        !identical(widget.liveTrains, staleTrains)) {
       _showTrains(widget.liveTrains);
     }
 
@@ -139,7 +315,20 @@ class _SvgWebViewState extends ConsumerState<SvgWebView> {
     // 기다려야 값이 나온다. 그래서 `valueOrNull` 로 동기 스냅샷을 찍으면 첫
     // 실행에서 항상 null → 서울역이 뜨는 회귀가 있었다. `.future` 로 로드
     // 완료를 기다린 뒤 pan.
-    if (widget.panTarget == null) {
+    //
+    // 콜드 스타트에는 panTarget 이 항상 null 이다. null 이 아닌 채 여기 오는
+    // 것은 복구 재로드(또는 경로 계산이 페이지 로드보다 먼저 끝난 경우)이며,
+    // 그때는 didUpdateWidget 이 팬할 기회가 없었으므로 경로로 즉시 맞춘다.
+    // 경로가 없어도 복구 중이고 출발역이 골라져 있으면 그 역으로 되돌린다
+    // (출발역 선택 때 포커싱했던 자리).
+    final panTarget = widget.panTarget;
+    final departure =
+        recovering ? ref.read(selectedStationsProvider).departure : null;
+    if (panTarget != null) {
+      _panTo(panTarget.x, panTarget.y, durationMs: 0);
+    } else if (departure != null) {
+      _panTo(departure.svgX, departure.svgY, durationMs: 0);
+    } else {
       _panToHomeStationAsync();
     }
   }
