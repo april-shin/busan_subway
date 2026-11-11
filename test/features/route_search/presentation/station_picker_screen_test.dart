@@ -93,7 +93,7 @@ void main() {
   /// 최근검색 쌍을 직접 주입하는 하네스(SharedPreferences 우회).
   Widget buildHarnessWithRecent({
     required String purpose,
-    ({Station departure, Station arrival})? recent,
+    List<RecentSearchPair> recent = const [],
   }) {
     return ProviderScope(
       overrides: [
@@ -273,7 +273,9 @@ void main() {
   });
 
   group('최근 검색 섹션', () {
-    final recentPair = (departure: testStations[2], arrival: testStations[4]);
+    final recentPair = [
+      (departure: testStations[2], arrival: testStations[4]),
+    ];
 
     testWidgets('출발역 선택 화면에서 이력이 있고 검색어가 비면 섹션이 노출된다',
         (tester) async {
@@ -319,9 +321,27 @@ void main() {
       expect(find.text('최근 검색'), findsNothing);
     });
 
-    testWidgets('이력이 없으면(null) 섹션이 노출되지 않는다', (tester) async {
+    testWidgets('이력이 3건이면 3행을 모두 보여준다', (tester) async {
       await tester.pumpWidget(
-        buildHarnessWithRecent(purpose: 'departure', recent: null),
+        buildHarnessWithRecent(
+          purpose: 'departure',
+          recent: [
+            (departure: testStations[2], arrival: testStations[4]),
+            (departure: testStations[4], arrival: testStations[2]),
+            (departure: testStations[0], arrival: testStations[2]),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('최근 검색'), findsOneWidget);
+      expect(find.byIcon(Icons.history), findsNWidgets(3));
+      expect(find.byIcon(Icons.arrow_forward), findsNWidgets(3));
+    });
+
+    testWidgets('이력이 없으면(빈 목록) 섹션이 노출되지 않는다', (tester) async {
+      await tester.pumpWidget(
+        buildHarnessWithRecent(purpose: 'departure'),
       );
       await tester.pumpAndSettle();
 

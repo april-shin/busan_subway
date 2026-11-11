@@ -79,11 +79,6 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
               onChanged: (value) => setState(() => _query = value),
             ),
           ),
-          // 최근 검색 이력(마지막 1건): 출발/도착 선택 화면에서 검색어 입력 전에만
-          // 노출한다. 'home'(지도 시작점) purpose 에는 표시하지 않는다.
-          if (_query.isEmpty &&
-              (widget.purpose == 'departure' || widget.purpose == 'arrival'))
-            const _RecentSearchSection(),
           Expanded(
             child: stationsAsync.when(
               data: (stations) {
@@ -122,10 +117,20 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
                 // 별개 항목으로 남는다 — 자세한 규칙은 [uniqueStationsByLocation].
                 final unique = uniqueStationsByLocation(filtered);
 
+                // 최근 검색 이력(최신순 최대 3건): 출발/도착 선택 화면에서 검색어
+                // 입력 전에만 노출한다. 'home'(지도 시작점) purpose 에는 표시하지
+                // 않는다. 목록의 첫 항목으로 넣어 함께 스크롤시킨다 — 고정 영역에
+                // 두면 키보드가 올라온 작은 화면에서 역 목록 자리를 다 차지한다.
+                final showRecent = _query.isEmpty &&
+                    (widget.purpose == 'departure' ||
+                        widget.purpose == 'arrival');
+                final offset = showRecent ? 1 : 0;
+
                 return ListView.builder(
-                  itemCount: unique.length,
+                  itemCount: unique.length + offset,
                   itemBuilder: (context, index) {
-                    final station = unique[index];
+                    if (index < offset) return const _RecentSearchSection();
+                    final station = unique[index - offset];
                     return _StationTile(
                       station: station,
                       onTap: () => _selectStation(station),
@@ -167,18 +172,18 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
   }
 }
 
-/// 최근 검색(마지막 1건) 이력 섹션.
+/// 최근 검색(최신순 최대 [maxRecentSearches]건) 이력 섹션.
 ///
 /// [recentSearchStationsProvider]를 watch 하여 유효한 출발→도착 쌍이 있을 때만
-/// 카드를 렌더한다(이력 없음/삭제된 역/로딩/에러 → 숨김). 탭하면 두 역을 원자적
-/// 으로 선택한 뒤 곧바로 경로 결과 화면으로 이동한다.
+/// 행을 렌더한다(이력 없음/삭제된 역/로딩/에러 → 숨김). 행을 탭하면 두 역을
+/// 원자적으로 선택한 뒤 곧바로 경로 결과 화면으로 이동한다.
 class _RecentSearchSection extends ConsumerWidget {
   const _RecentSearchSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pair = ref.watch(recentSearchStationsProvider).asData?.value;
-    if (pair == null) return const SizedBox.shrink();
+    final pairs = ref.watch(recentSearchStationsProvider).asData?.value;
+    if (pairs == null || pairs.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,35 +203,38 @@ class _RecentSearchSection extends ConsumerWidget {
                 ),
           ),
         ),
-        InkWell(
-          onTap: () => _onTap(context, ref, pair.departure, pair.arrival),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.space16,
-              vertical: AppSpacing.space12,
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.history, size: 20, color: Colors.grey[600]),
-                const SizedBox(width: AppSpacing.space12),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Flexible(child: _StationLabel(station: pair.departure)),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.space8,
+        for (final pair in pairs)
+          InkWell(
+            onTap: () => _onTap(context, ref, pair.departure, pair.arrival),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.space16,
+                vertical: AppSpacing.space12,
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.history, size: 20, color: Colors.grey[600]),
+                  const SizedBox(width: AppSpacing.space12),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: _StationLabel(station: pair.departure),
                         ),
-                        child: Icon(Icons.arrow_forward, size: 16),
-                      ),
-                      Flexible(child: _StationLabel(station: pair.arrival)),
-                    ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.space8,
+                          ),
+                          child: Icon(Icons.arrow_forward, size: 16),
+                        ),
+                        Flexible(child: _StationLabel(station: pair.arrival)),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
         const Divider(height: 1),
       ],
     );
