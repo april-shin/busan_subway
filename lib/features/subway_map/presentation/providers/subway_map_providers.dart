@@ -79,6 +79,23 @@ class SelectedStationsNotifier extends StateNotifier<SelectedStations> {
     state = SelectedStations(departure: departure, arrival: arrival);
   }
 
+  /// 출발·경유·도착을 한 번의 상태 전이로 설정한다 — 즐겨찾기 태그 탭용.
+  ///
+  /// [setBoth] 와 같은 이유(중간 stale `isComplete` 방지)로 원자적이어야 하고,
+  /// 즐겨찾기는 경유역까지 저장하므로 이전 경유역 대신 [waypoints] 로 갈아끼운다.
+  /// [maxWaypoints] 를 넘는 뒤쪽 경유역은 버린다.
+  void setRoute(
+    Station departure,
+    Station arrival, {
+    List<Station> waypoints = const [],
+  }) {
+    state = SelectedStations(
+      departure: departure,
+      arrival: arrival,
+      waypoints: List.unmodifiable(waypoints.take(maxWaypoints)),
+    );
+  }
+
   /// [index] 자리에 **빈 경유지 칸**을 끼워 넣는다. 기존 [index] 이후 경유지는
   /// 한 칸씩 밀린다. 검색바의 + 버튼이 쓰는 연산이다.
   ///
@@ -189,6 +206,14 @@ final selectedStationsProvider =
 );
 
 final tappedStationProvider = StateProvider<Station?>((ref) => null);
+
+/// 홈 화면 검색 카드의 아래쪽 경계 y(논리 px = WebView CSS px, WebView 원점 기준).
+///
+/// 지도(WebView)는 카드가 떠 있다는 것을 모르므로 JS 의 `window.setSafeTop` 으로
+/// 알려 경로 툴바가 카드 밑으로 들어가지 않게 한다. 홈 화면이 카드 높이를 측정해
+/// 쓰고, `SvgWebView` 가 `ref.listen` 으로 읽는다(리빌드 없이 값 변경만 전달).
+/// 카드가 없는 상태의 기본값은 0(= 기존 8px 마진 동작).
+final mapSafeTopProvider = StateProvider<double>((ref) => 0);
 
 /// 현재 활성 경로의 출발역 세그먼트 필터 정보.
 ///

@@ -9,6 +9,7 @@ import '../../../../domain/entities/station.dart';
 import '../../../../domain/usecases/search_route.dart';
 import '../../../route_search/presentation/providers/recent_search_provider.dart';
 import '../../../route_search/presentation/providers/timetable_providers.dart';
+import '../../../route_search/presentation/utils/route_result_navigator.dart';
 import '../../../route_search/utils/departure_time_calculator.dart'
     show baseLineId;
 import '../../../route_search/utils/direction_resolver.dart';
@@ -57,6 +58,13 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
   // 결과 화면 진입 시 모드 트레이드오프 비교를 위해 함께 전달한다.
   RouteResult? _fastestExpressRoute;
   RouteResult? _fastestLocalRoute;
+
+  /// 위 경로들을 계산한 시점의 출발·경유·도착 — 결과 화면 즐겨찾기 별 버튼용.
+  ///
+  /// 선택이 완성→완성으로 바뀌면 경로는 비동기 재계산 중에도 옛 값으로 남는다.
+  /// 그 사이 '결과'를 누르면 현재 선택이 아니라 이 값을 넘겨, 화면에 보이는
+  /// 경로와 별 버튼의 등록 대상이 어긋나지 않게 한다.
+  SelectedStations? _routeSelection;
   String _activeRouteMode = 'fastest';
   int _computeRevision = 0;
   List<LiveTrain> _liveTrains = const [];
@@ -119,6 +127,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _leastTransferRoute = null;
       _fastestExpressRoute = null;
       _fastestLocalRoute = null;
+      _routeSelection = null;
       _activeRouteMode = 'fastest';
       ref.read(activeRouteFilterProvider.notifier).state = null;
       if (_highlightedLineIds.isNotEmpty ||
@@ -196,6 +205,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _leastTransferRoute = leastTransfer;
       _fastestExpressRoute = fastestExpress;
       _fastestLocalRoute = fastestLocal;
+      _routeSelection = selected;
       _activeRouteMode = 'fastest';
 
       final lineIds = _getLineIdsForMode(_activeRouteMode);
@@ -220,6 +230,7 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
       _leastTransferRoute = null;
       _fastestExpressRoute = null;
       _fastestLocalRoute = null;
+      _routeSelection = null;
       ref.read(activeRouteFilterProvider.notifier).state = null;
       setState(() {
         _highlightedLineIds = const {};
@@ -341,13 +352,15 @@ class _SubwayMapViewerState extends ConsumerState<SubwayMapViewer> {
     if (mode == 'result') {
       if (_fastestRoute != null) {
         final selected = ref.read(selectedStationsProvider);
-        context.go('/route-result', extra: (
+        final RouteResultExtra extra = (
           fastest: _fastestRoute!,
           leastTransfer: _leastTransferRoute,
           fastestExpress: _fastestExpressRoute,
           fastestLocal: _fastestLocalRoute,
           departureStationName: selected.departure!.name,
-        ));
+          searchedStations: _routeSelection,
+        );
+        context.go('/route-result', extra: extra);
       }
       return;
     }

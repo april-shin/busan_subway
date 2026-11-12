@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_info.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
+import '../../../favorites/presentation/widgets/favorite_settings_list.dart';
 import '../providers/home_station_provider.dart';
 import '../widgets/feedback_tile.dart';
 
@@ -45,6 +46,12 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ],
           ),
+
+          const SizedBox(height: AppSpacing.space20),
+
+          // ─── 즐겨찾기 (추가·삭제·순서 변경·수정) ─────────
+          const _SectionHeader('즐겨찾기'),
+          const FavoriteSettingsList(),
 
           const SizedBox(height: AppSpacing.space20),
 

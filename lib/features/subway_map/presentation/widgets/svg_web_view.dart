@@ -118,6 +118,10 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
   // 아니다(지도가 세로 상태바 띠까지 깔림 — home_screen.dart).
   double _safeRight = 0;
 
+  // JS 에 마지막으로 넘긴 위쪽 safe 경계(홈 검색 카드 아래쪽 y). 값의 출처는
+  // [mapSafeTopProvider] 이고 `ref.listen` 으로만 읽어 위젯을 리빌드하지 않는다.
+  double _safeTop = 0;
+
   @override
   void initState() {
     super.initState();
@@ -272,6 +276,9 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
     _recovering = false;
     _isReady = true;
     if (_safeRight != 0) _runJs('window.setSafeRight($_safeRight)');
+    // 재로드(복구)된 새 페이지는 JS 상태가 초기화돼 있으므로 현재 값을 다시 보낸다.
+    _safeTop = ref.read(mapSafeTopProvider);
+    if (_safeTop != 0) _runJs('window.setSafeTop($_safeTop)');
     _injectStationData();
 
     if (widget.routeStationIds.isNotEmpty) {
@@ -740,6 +747,14 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
       _safeRight = safeRight;
       if (_isReady) _runJs('window.setSafeRight($safeRight)');
     }
+
+    // 홈 검색 카드 높이 변화를 JS 에 전달(툴바가 카드 밑으로 들어가지 않게).
+    // 값이 실제로 바뀔 때만 호출하며, 로드 전이면 _onPageLoaded 가 현재 값을 보낸다.
+    ref.listen(mapSafeTopProvider, (prev, next) {
+      if (next == _safeTop) return;
+      _safeTop = next;
+      if (_isReady) _runJs('window.setSafeTop($next)');
+    });
 
     // selectedStationsProvider 변경 시 마커 업데이트
     // (Riverpod 공식 패턴: build 내 ref.listen은 부작용 실행용으로 허용)

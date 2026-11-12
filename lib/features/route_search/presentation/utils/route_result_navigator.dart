@@ -2,9 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../domain/entities/route_result.dart';
 import '../../../../domain/usecases/search_route.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../providers/timetable_providers.dart';
+
+/// `/route-result` 로 넘기는 `state.extra` 의 모양.
+///
+/// 라우터(`lib/app.dart`)와 모든 호출부가 이 typedef 하나를 공유한다. record 는
+/// 구조적 타입이라 호출부가 필드를 빠뜨려도 `extra: Object?` 로는 컴파일되고
+/// 실행 중에야 "잘못된 경로입니다" 가 뜬다 — 호출부가 값을 이 타입 변수로 먼저
+/// 받아 두면 필드 누락·개명이 컴파일 오류가 된다.
+typedef RouteResultExtra = ({
+  RouteResult fastest,
+  RouteResult? leastTransfer,
+  RouteResult? fastestExpress,
+  RouteResult? fastestLocal,
+  String departureStationName,
+
+  /// 이 결과를 계산한 선택 — 결과 화면 즐겨찾기 별 버튼의 판정 키.
+  SelectedStations? searchedStations,
+});
 
 /// 현재 선택된 출발/도착역으로 경로를 계산해 결과 화면(`/route-result`)으로
 /// 이동한다.
@@ -54,23 +72,25 @@ Future<void> searchAndNavigateToResult(
     Navigator.of(context).pop();
 
     if (fastest != null) {
-      context.go('/route-result', extra: (
+      final RouteResultExtra extra = (
         fastest: fastest,
         leastTransfer: leastTransfer,
         fastestExpress: fastestExpress,
         fastestLocal: fastestLocal,
         departureStationName: selected.departure!.name,
-      ));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('경로를 찾을 수 없습니다')),
+        searchedStations: selected,
       );
+      context.go('/route-result', extra: extra);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('경로를 찾을 수 없습니다')));
     }
   } catch (e) {
     if (!context.mounted) return;
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('경로 검색 실패: $e')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('경로 검색 실패: $e')));
   }
 }

@@ -313,6 +313,7 @@ riverpod 3 에서 레거시로 이동해 `package:flutter_riverpod/legacy.dart` 
 
 - `allStationsProvider` — 번들 JSON에서 전체 역 목록 로드
 - `selectedStationsProvider` — 출발/경유/도착역 선택용 `StateNotifier<SelectedStations>` (수동 작성, 비생성). 경유역은 `waypoints` 리스트로 최대 `maxWaypoints`(3)개
+- `favoriteRoutesProvider` / `resolvedFavoriteRoutesProvider` — 즐겨찾기 경로(출발·경유·도착 id + 별칭, 최대 5개, 배열 순서=표시 순서). SharedPreferences `pref_favorite_routes`. 최근 검색(`recentSearchProvider`)과는 별개. 홈 태그·경로 결과 별 버튼·설정 목록이 쓴다(`lib/features/favorites/`)
 - `tappedStationProvider` — 지도 탭 상호작용용 `StateProvider<Station?>`
 - `arrivalInfoProvider(stationName)` — 실시간 도착 정보 family 프로바이더
 - `activeRouteFilterProvider` — 활성 경로의 첫 세그먼트 노선+방향 필터 (`StateProvider<ActiveRouteFilter?>`)
@@ -327,8 +328,8 @@ riverpod 3 에서 레거시로 이동해 `package:flutter_riverpod/legacy.dart` 
 | 경로 | 스크린 | 비고 |
 |---|---|---|
 | `/` | HomeScreen | 지도 + 검색바 |
-| `/pick-station/:purpose` | StationPickerScreen | purpose = `departure` / `arrival` / `waypoint` / `home`(지도 시작점). `waypoint` 는 쿼리 `?index=N`(대상 슬롯) + `?insert=true`(그 자리에 삽입, 없으면 교체) |
-| `/route-result` | RouteResultScreen | `RouteResult`를 `state.extra`로 전달 |
+| `/pick-station/:purpose` | StationPickerScreen | purpose = `departure` / `arrival` / `waypoint` / `home`(지도 시작점) / `favorite-departure`·`favorite-arrival`(설정의 즐겨찾기 편집 — `context.push<Station>` 으로 열면 고른 역을 pop 결과로 돌려주고 `selectedStationsProvider` 는 건드리지 않음). `waypoint` 는 쿼리 `?index=N`(대상 슬롯) + `?insert=true`(그 자리에 삽입, 없으면 교체) |
+| `/route-result` | RouteResultScreen | `RouteResult`를 `state.extra`로 전달. extra 의 `searchedStations` 는 그 결과를 **계산한** 출발·경유·도착(즐겨찾기 별 판정 키 — 지도 툴바 '결과'는 재계산 중이면 현재 선택과 다를 수 있어 뷰어의 `_routeSelection` 을 넘긴다) |
 | `/station/:stationId` | StationDetailScreen | |
 | `/arrivals/:stationName` | ArrivalInfoScreen | 15초마다 자동 새로고침 |
 

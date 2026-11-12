@@ -13,6 +13,7 @@ import '../../../../domain/entities/route_result.dart';
 import '../../../../domain/entities/station.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
 import '../../../arrival_info/presentation/providers/arrival_providers.dart';
+import '../../../favorites/presentation/widgets/favorite_star_button.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../providers/timetable_providers.dart';
 import '../../utils/departure_candidates.dart';
@@ -36,6 +37,13 @@ class RouteResultScreen extends ConsumerStatefulWidget {
   final RouteResult? fastestLocal;
   final String departureStationName;
 
+  /// 이 결과를 계산한 출발·경유·도착 — 즐겨찾기 별 버튼의 판정 키.
+  ///
+  /// `RouteResult` 에는 사용자가 고른 경유역이 남지 않으므로(세그먼트의 역은
+  /// 환승 노선별 레코드라 id 도 다를 수 있다) 호출부가 계산에 쓴 선택을 함께
+  /// 넘긴다. null 이거나 미완성이면 별 버튼을 그리지 않는다.
+  final SelectedStations? searchedStations;
+
   const RouteResultScreen({
     super.key,
     required this.fastest,
@@ -43,6 +51,7 @@ class RouteResultScreen extends ConsumerStatefulWidget {
     this.fastestExpress,
     this.fastestLocal,
     required this.departureStationName,
+    this.searchedStations,
   });
 
   @override
@@ -262,6 +271,15 @@ class _RouteResultScreenState extends ConsumerState<RouteResultScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('경로 검색 결과'),
+        actions: [
+          if (widget.searchedStations case final searched?
+              when searched.isComplete)
+            FavoriteStarButton(
+              departure: searched.departure!,
+              arrival: searched.arrival!,
+              waypoints: [for (final w in searched.waypoints) ?w],
+            ),
+        ],
         // 탭이 하나로 줄면 TabBar 를 걸지 않는다. `_tabController` 는 length 2
         // 로 남아 있어도 붙는 위젯이 없으면 무해하고, 다시 둘로 늘면 그대로
         // 재사용된다.

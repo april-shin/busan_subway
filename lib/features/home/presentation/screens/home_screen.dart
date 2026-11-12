@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../core/utils/foldable_layout.dart';
 import '../../../ads/presentation/widgets/home_banner_ad.dart';
+import '../../../favorites/presentation/widgets/favorite_tag_bar.dart';
 import '../../../route_search/presentation/utils/route_result_navigator.dart';
 import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 import '../../../subway_map/presentation/screens/subway_map_screen.dart';
 import '../widgets/search_bar_widget.dart';
+import '../widgets/height_reporter.dart';
 import '../widgets/settings_fab.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -63,46 +65,61 @@ class HomeScreen extends StatelessWidget {
                     bottom: false,
                     child: Consumer(
                       builder: (context, ref, _) {
-                        final selectedStations =
-                            ref.watch(selectedStationsProvider);
-                        final notifier =
-                            ref.read(selectedStationsProvider.notifier);
-                        return RouteSearchBar(
-                          departure: selectedStations.departure,
-                          arrival: selectedStations.arrival,
-                          waypoints: selectedStations.waypoints,
-                          onDepartureTap: () =>
-                              context.go('/pick-station/departure'),
-                          onArrivalTap: () =>
-                              context.go('/pick-station/arrival'),
-                          // 경유지 칸 탭 = 역 선택 화면으로. 빈 칸은 "고르기",
-                          // 채워진 칸은 "바꾸기" — 둘 다 그 index 를 채운다.
-                          onWaypointTap: (index) => context
-                              .go('/pick-station/waypoint?index=$index'),
-                          onWaypointClear: notifier.removeWaypointAt,
-                          // + 버튼 = 화면 이동 없이 빈 칸만 추가.
-                          // 상한 도달 시 null 을 넘겨 모든 + 를 숨긴다.
-                          onAddSlotAt: selectedStations.canAddWaypoint
-                              ? notifier.insertWaypointSlot
-                              : null,
-                          onSwap: () {
-                            ref.read(selectedStationsProvider.notifier).swap();
-                          },
-                          onSearchRoute: selectedStations.isComplete
-                              ? () => searchAndNavigateToResult(context, ref)
-                              : null,
-                          // 취소(X): 각 입력창 내부 우측에서 해당 역만 취소.
-                          // 선택된 역이 있을 때만 콜백을 전달해 X 를 노출한다.
-                          onClearDeparture: selectedStations.departure != null
-                              ? () => ref
+                        final selectedStations = ref.watch(
+                          selectedStationsProvider,
+                        );
+                        final notifier = ref.read(
+                          selectedStationsProvider.notifier,
+                        );
+                        // 카드 높이를 지도에 알린다(경로 툴바가 카드 밑으로
+                        // 들어가지 않게). SafeArea 안쪽 높이 = 지도 WebView(같은
+                        // SafeArea top 안쪽에서 시작) 원점 기준 아래쪽 경계 y.
+                        return HeightReporter(
+                          onHeight: (h) =>
+                              ref.read(mapSafeTopProvider.notifier).state = h,
+                          child: RouteSearchBar(
+                            departure: selectedStations.departure,
+                            arrival: selectedStations.arrival,
+                            waypoints: selectedStations.waypoints,
+                            onDepartureTap: () =>
+                                context.go('/pick-station/departure'),
+                            onArrivalTap: () =>
+                                context.go('/pick-station/arrival'),
+                            // 경유지 칸 탭 = 역 선택 화면으로. 빈 칸은 "고르기",
+                            // 채워진 칸은 "바꾸기" — 둘 다 그 index 를 채운다.
+                            onWaypointTap: (index) => context.go(
+                              '/pick-station/waypoint?index=$index',
+                            ),
+                            onWaypointClear: notifier.removeWaypointAt,
+                            // + 버튼 = 화면 이동 없이 빈 칸만 추가.
+                            // 상한 도달 시 null 을 넘겨 모든 + 를 숨긴다.
+                            onAddSlotAt: selectedStations.canAddWaypoint
+                                ? notifier.insertWaypointSlot
+                                : null,
+                            onSwap: () {
+                              ref
                                   .read(selectedStationsProvider.notifier)
-                                  .setDeparture(null)
-                              : null,
-                          onClearArrival: selectedStations.arrival != null
-                              ? () => ref
-                                  .read(selectedStationsProvider.notifier)
-                                  .setArrival(null)
-                              : null,
+                                  .swap();
+                            },
+                            onSearchRoute: selectedStations.isComplete
+                                ? () => searchAndNavigateToResult(context, ref)
+                                : null,
+                            // 취소(X): 각 입력창 내부 우측에서 해당 역만 취소.
+                            // 선택된 역이 있을 때만 콜백을 전달해 X 를 노출한다.
+                            onClearDeparture: selectedStations.departure != null
+                                ? () => ref
+                                    .read(selectedStationsProvider.notifier)
+                                    .setDeparture(null)
+                                : null,
+                            onClearArrival: selectedStations.arrival != null
+                                ? () => ref
+                                    .read(selectedStationsProvider.notifier)
+                                    .setArrival(null)
+                                : null,
+                            // 즐겨찾기 태그 줄: 도착역 칸 아래. 자체 Consumer 라
+                            // 즐겨찾기 변경이 검색바·지도를 다시 그리지 않는다.
+                            footer: const FavoriteTagBar(),
+                          ),
                         );
                       },
                     ),

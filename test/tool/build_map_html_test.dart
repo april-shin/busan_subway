@@ -2038,5 +2038,67 @@ void main() {
           reason: 'onDragStart/onDragEnd 두 클리어 지점 모두 gestureActive 를 '
               '초기화해야 한다');
     });
+
+    // 홈 검색 카드가 지도 위에 떠 있어 경로 툴바가 카드 밑으로 들어가던 문제.
+    // Flutter 가 카드 아래쪽 경계를 setSafeTop 으로 넘기고, 툴바의 세 위치
+    // 결정 지점(클램프·스마트 배치·드래그)이 모두 같은 하한(overlayTop)을 쓴다.
+    test('setSafeTop 이 툴바 위쪽 하한(안전 영역)으로 쓰인다', () {
+      expect(htmlContent, contains('window.setSafeTop = function(px)'));
+      expect(htmlContent, contains('var safeTop = 0;'),
+          reason: '초기값 0 = 기존 8px 동작');
+      expect(htmlContent, contains('return safeTop + 8;'));
+
+      // 값이 바뀌면 이미 떠 있는 툴바를 다시 배치한다.
+      final setter = htmlContent.indexOf('window.setSafeTop = function(px)');
+      final setterEnd = htmlContent.indexOf('function overlayTop()', setter);
+      final setterBody = htmlContent.substring(setter, setterEnd);
+      // L2: NaN·Infinity·음수는 0 으로.
+      expect(setterBody, contains('isFinite(n) && n > 0 ? n : 0'));
+      // L1: 드래그 중에는 값만 저장.
+      expect(setterBody, contains('if (toolbarDragging) return;'));
+      // M2: 미이동이면 스마트 배치 재선택, 이동했으면 오프셋 보존 클램프만.
+      expect(setterBody, contains('if (toolbarUserMoved) updateRouteToolbarPosition();'));
+      expect(setterBody, contains('else repickToolbarOffset();'));
+      expect(htmlContent, contains('toolbarDragging = true;'));
+      // 드래그 종료가 플래그를 풀고, 보류했던 재배치를 반영한다. 선언문
+      // (`var toolbarDragging = false;`)에 매치되지 않게 onDragEnd 본문만 본다.
+      final endFn = htmlContent.indexOf('function onDragEnd(e)');
+      final dragEndBody = htmlContent.substring(
+        endFn,
+        htmlContent.indexOf('gestureActive = false;', endFn),
+      );
+      expect(dragEndBody, contains('toolbarDragging = false;'));
+      expect(dragEndBody, contains('updateRouteToolbarPosition();'));
+      // 새로 띄울 때도 플래그를 푼다(pointerup/cancel 유실 대비).
+      final show = htmlContent.indexOf('toolbarUserMoved = false; // 새로 띄우면');
+      expect(
+        htmlContent.substring(show, show + 400),
+        contains('toolbarDragging = false;'),
+      );
+
+      final upd = htmlContent.indexOf('function updateRouteToolbarPosition()');
+      final updEnd = htmlContent.indexOf('function collectAvoidScreenRects', upd);
+      final updBody = htmlContent.substring(upd, updEnd);
+      // M1: 하한 > 상한이면 뷰포트 안(상한)을 우선 — 툴바가 화면 밖으로 밀리지 않게.
+      expect(updBody,
+          contains('var maxTop = Math.max(8, window.innerHeight - cachedTbH - 8);'));
+      expect(updBody, contains('var minTop = Math.min(overlayTop(), maxTop);'));
+      expect(updBody, contains('top = Math.max(minTop, Math.min(maxTop, top));'));
+      expect(updBody, isNot(contains('top = Math.max(8, Math.min(maxTop, top));')));
+
+      // 스마트 배치(겹침 점수): 카드 영역으로 잘리는 후보를 벌점으로 회피.
+      final pick = htmlContent.indexOf('function pickToolbarOffset');
+      final pickEnd = htmlContent.indexOf('window.showRouteToolbar', pick);
+      expect(htmlContent.substring(pick, pickEnd),
+          contains('Math.max(box.top, overlayTop())'));
+
+      // 사용자 드래그 클램프.
+      final drag = htmlContent.indexOf('function onDragMove');
+      final dragEnd = htmlContent.indexOf('function onDragEnd', drag);
+      final dragBody = htmlContent.substring(drag, dragEnd);
+      expect(dragBody, contains('var dragMaxTop = Math.max(8, window.innerHeight - th - 8);'));
+      expect(dragBody, contains('var dragMinTop = Math.min(overlayTop(), dragMaxTop);'));
+      expect(dragBody, isNot(contains('newTop = Math.max(8,')));
+    });
   });
 }

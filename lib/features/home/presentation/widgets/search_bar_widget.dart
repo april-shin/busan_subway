@@ -68,6 +68,12 @@ class RouteSearchBar extends StatelessWidget {
   /// null 을 넘겨 추가 UI 를 숨긴다.
   final void Function(int index)? onAddSlotAt;
 
+  /// 입력칸들 아래(카드 전체 폭)에 붙는 영역 — 즐겨찾기 태그 줄 자리.
+  ///
+  /// 호출부가 자체 Consumer 위젯을 넘겨, 그 상태 변화가 검색바나 지도를
+  /// 다시 그리지 않게 한다. 보여 줄 것이 없으면 그 위젯이 스스로 자리를 비운다.
+  final Widget? footer;
+
   const RouteSearchBar({
     super.key,
     this.departure,
@@ -82,6 +88,7 @@ class RouteSearchBar extends StatelessWidget {
     this.onWaypointTap,
     this.onWaypointClear,
     this.onAddSlotAt,
+    this.footer,
   });
 
   @override
@@ -116,84 +123,97 @@ class RouteSearchBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _StationField(
-                  label: '출발',
-                  station: departure,
-                  icon: Icons.trip_origin,
-                  iconColor: Colors.blue,
-                  onTap: onDepartureTap,
-                  onClear: onClearDeparture,
-                ),
-                // 경유역: 출발 다음, 도착 앞에 방문 순서대로.
-                // 각 경유 필드의 + 는 자기 **다음** 자리(i+1)에 새 칸을 끼워 넣는다.
-                for (var i = 0; i < waypoints.length; i++) ...[
-                  const SizedBox(height: AppSpacing.space4),
+      child: _withFooter(
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   _StationField(
-                    label: '경유',
-                    station: waypoints[i],
-                    icon: Icons.adjust,
-                    iconColor: waypointColor,
-                    onTap: onWaypointTap == null
-                        ? null
-                        : () => onWaypointTap!(i),
-                    onClear: onWaypointClear == null
-                        ? null
-                        : () => onWaypointClear!(i),
-                    // 빈 칸(station == null)도 X 로 지울 수 있어야 실수로 만든
-                    // 칸을 되돌릴 수 있다. 출발/도착과 다른 점.
-                    clearableWhenEmpty: true,
+                    label: '출발',
+                    station: departure,
+                    icon: Icons.trip_origin,
+                    iconColor: Colors.blue,
+                    onTap: onDepartureTap,
+                    onClear: onClearDeparture,
+                  ),
+                  // 경유역: 출발 다음, 도착 앞에 방문 순서대로.
+                  // 각 경유 필드의 + 는 자기 **다음** 자리(i+1)에 새 칸을 끼워 넣는다.
+                  for (var i = 0; i < waypoints.length; i++) ...[
+                    const SizedBox(height: AppSpacing.space4),
+                    _StationField(
+                      label: '경유',
+                      station: waypoints[i],
+                      icon: Icons.adjust,
+                      iconColor: waypointColor,
+                      onTap: onWaypointTap == null
+                          ? null
+                          : () => onWaypointTap!(i),
+                      onClear: onWaypointClear == null
+                          ? null
+                          : () => onWaypointClear!(i),
+                      // 빈 칸(station == null)도 X 로 지울 수 있어야 실수로 만든
+                      // 칸을 되돌릴 수 있다. 출발/도착과 다른 점.
+                      clearableWhenEmpty: true,
+                      onAddStop: onAddSlotAt == null
+                          ? null
+                          : () => onAddSlotAt!(i + 1),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.space4),
+                  // 도착 필드의 + 는 맨 뒤 경유역으로 추가(= 도착 바로 위).
+                  // 도착역 뒤에는 정차할 곳이 없어 이 필드만 위로 삽입한다.
+                  _StationField(
+                    label: '도착',
+                    station: arrival,
+                    icon: Icons.place,
+                    iconColor: Colors.red,
+                    onTap: onArrivalTap,
+                    onClear: onClearArrival,
                     onAddStop: onAddSlotAt == null
                         ? null
-                        : () => onAddSlotAt!(i + 1),
+                        : () => onAddSlotAt!(waypoints.length),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.space4),
-                // 도착 필드의 + 는 맨 뒤 경유역으로 추가(= 도착 바로 위).
-                // 도착역 뒤에는 정차할 곳이 없어 이 필드만 위로 삽입한다.
-                _StationField(
-                  label: '도착',
-                  station: arrival,
-                  icon: Icons.place,
-                  iconColor: Colors.red,
-                  onTap: onArrivalTap,
-                  onClear: onClearArrival,
-                  onAddStop: onAddSlotAt == null
-                      ? null
-                      : () => onAddSlotAt!(waypoints.length),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.space8),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.swap_vert),
-                onPressed: onSwap,
-                tooltip: '출발/도착 바꾸기',
-                visualDensity: VisualDensity.compact,
               ),
-              if (onSearchRoute != null)
+            ),
+            const SizedBox(width: AppSpacing.space8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: onSearchRoute,
-                  tooltip: '경로 검색',
-                  color: Theme.of(context).colorScheme.primary,
+                  icon: const Icon(Icons.swap_vert),
+                  onPressed: onSwap,
+                  tooltip: '출발/도착 바꾸기',
                   visualDensity: VisualDensity.compact,
                 ),
-            ],
-          ),
-        ],
+                if (onSearchRoute != null)
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: onSearchRoute,
+                    tooltip: '경로 검색',
+                    color: Theme.of(context).colorScheme.primary,
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  /// 입력칸 줄 아래에 [footer] 를 붙인다. 없으면 입력칸 줄 그대로.
+  Widget _withFooter(Widget fields) => footer == null
+      ? fields
+      : Column(
+          mainAxisSize: MainAxisSize.min,
+          // 태그 줄(내용 폭만큼인 가로 스크롤)이 카드 가운데가 아니라 입력칸과
+          // 같은 왼쪽에서 시작하게 한다.
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [fields, footer!],
+        );
 }
 
 /// 입력창 내부 우측 액션 아이콘(+ / X).
@@ -221,11 +241,7 @@ class _FieldAction extends StatelessWidget {
         message: tooltip,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4),
-          child: Icon(
-            icon,
-            size: AppIconSize.sm,
-            color: _fieldActionColor,
-          ),
+          child: Icon(icon, size: AppIconSize.sm, color: _fieldActionColor),
         ),
       ),
     );

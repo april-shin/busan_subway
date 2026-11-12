@@ -708,6 +708,7 @@ $lineBadgesSvg
   // 사용자가 툴바를 직접 드래그해 옮겼는지. true 면 스마트 재배치를 하지 않아
   // 사용자가 고른 위치를 존중한다.
   var toolbarUserMoved = false;
+  var toolbarDragging = false; // 툴바 드래그 진행 중(setSafeTop 재배치 보류용)
   // 현재 경로에 포함된 역 ID 집합(highlightRoute 가 채움). 툴바 스마트 배치에서
   // "밝은 라벨 - 경로역 = 출발역 상류 역" 을 구하는 데 쓴다.
   var currentRouteSet = {};
@@ -1405,6 +1406,31 @@ $lineBadgesSvg
   };
   function overlayWidth() {
     return window.innerWidth - safeRight;
+  }
+
+  // 오버레이 UI 를 둘 수 있는 위쪽 경계(뷰포트 CSS px, WebView 원점 기준).
+  // 홈 화면은 지도 위에 Flutter 검색 카드가 떠 있어 카드 밑으로 들어간 경로
+  // 툴바("최단경로" 버튼)가 가려진다. Flutter 가 카드 아래쪽 경계를 setSafeTop
+  // 으로 넘기면(svg_web_view.dart) 툴바 클램프·스마트 배치·드래그 클램프가 이
+  // 값 + 8px 를 하한으로 쓴다. 초기값 0 이면 기존 동작(8px)과 동일하다.
+  // 툴바가 이미 떠 있으면 새 하한으로 다시 배치한다(카드 높이 변화 대응):
+  // 사용자가 옮기지 않았으면 스마트 배치를 다시 고르고(카드가 커져 출발역·경로
+  // 위로 밀리는 것 방지), 옮겼으면 오프셋을 보존한 채 클램프만 다시 한다.
+  // 드래그 중에는 값만 저장한다 — 재배치하면 드래그 전 오프셋으로 transform 이
+  // 덮여 한 프레임 튀고, 드래그 종료 이후 클램프부터 새 하한을 쓴다.
+  // NaN·Infinity·음수는 0(기존 동작)으로 취급한다.
+  var safeTop = 0;
+  window.setSafeTop = function(px) {
+    var n = Number(px);
+    var v = isFinite(n) && n > 0 ? n : 0;
+    if (v === safeTop) return;
+    safeTop = v;
+    if (toolbarDragging) return;
+    if (toolbarUserMoved) updateRouteToolbarPosition();
+    else repickToolbarOffset();
+  };
+  function overlayTop() {
+    return safeTop + 8;
   }
 
   window.showTooltip = function(stationJson) {
@@ -3186,9 +3212,13 @@ $lineIdToDataLineJs
     // 앵커역이 화면 밖(특히 위쪽)으로 벗어나도 툴바가 잘리지 않도록 뷰포트
     // 안으로 클램프한다. 드래그 클램프와 동일한 8px 가장자리 마진 규칙.
     var maxLeft = Math.max(8, overlayWidth() - cachedTbW - 8);
+    // 위쪽 하한은 검색 카드 아래(overlayTop). 카드가 뷰포트를 거의 채워 하한 >
+    // 상한이 되면 뷰포트 안(상한)을 우선한다 — 하한을 우선하면 툴바가 화면 밖으로
+    // 밀려 닫기 버튼도 못 누른다.
     var maxTop = Math.max(8, window.innerHeight - cachedTbH - 8);
+    var minTop = Math.min(overlayTop(), maxTop);
     left = Math.max(8, Math.min(maxLeft, left));
-    top = Math.max(8, Math.min(maxTop, top));
+    top = Math.max(minTop, Math.min(maxTop, top));
 
     // CSS top/left(레이아웃 유발) 대신 transform(컴포지터 전용)으로 배치.
     // 툴바 CSS 의 top:0/left:0 이 고정 원점이고, 실제 화면 위치는 이
@@ -3304,7 +3334,7 @@ $lineIdToDataLineJs
       // 뷰포트 밖 잘림 면적을 가산 — 화면을 벗어나는 배치는 회피한다.
       // (클램프되면 앵커에서 멀어져 어차피 경로를 가릴 수 있음)
       var visW = Math.max(0, Math.min(box.right, vw - 8) - Math.max(box.left, 8));
-      var visH = Math.max(0, Math.min(box.bottom, vh - 8) - Math.max(box.top, 8));
+      var visH = Math.max(0, Math.min(box.bottom, vh - 8) - Math.max(box.top, overlayTop()));
       score += (tbW * tbH) - (visW * visH);
 
       if (score < bestScore) { bestScore = score; best = c; }
@@ -3358,6 +3388,9 @@ $lineIdToDataLineJs
 
     toolbarVisible = true;
     toolbarUserMoved = false; // 새로 띄우면 스마트 배치 재적용 허용
+    // pointerup/cancel 이 유실돼 플래그가 남았더라도 setSafeTop 재배치가
+    // 영영 건너뛰어지지 않게 한다.
+    toolbarDragging = false;
     routeToolbar.style.display = 'flex';
     cachedTbW = routeToolbar.offsetWidth;
     cachedTbH = routeToolbar.offsetHeight;
@@ -3422,6 +3455,7 @@ $lineIdToDataLineJs
       gestureActive = false;
 
       var rect = routeToolbar.getBoundingClientRect();
+      toolbarDragging = true;
       dragState = {
         pointerId: e.pointerId,
         startX: e.clientX,
@@ -3445,7 +3479,10 @@ $lineIdToDataLineJs
       var tw = routeToolbar.offsetWidth;
       var th = routeToolbar.offsetHeight;
       newLeft = Math.max(8, Math.min(overlayWidth() - tw - 8, newLeft));
-      newTop = Math.max(8, Math.min(window.innerHeight - th - 8, newTop));
+      // 하한(카드 아래) > 상한이면 뷰포트 안을 우선(updateRouteToolbarPosition 과 동일).
+      var dragMaxTop = Math.max(8, window.innerHeight - th - 8);
+      var dragMinTop = Math.min(overlayTop(), dragMaxTop);
+      newTop = Math.max(dragMinTop, Math.min(dragMaxTop, newTop));
 
       // updateRouteToolbarPosition 과 동일한 이유로 transform 사용(레이아웃
       // 유발 left/top 대신 컴포지터 전용). getBoundingClientRect() 는 transform
@@ -3476,7 +3513,11 @@ $lineIdToDataLineJs
       toolbarDx = rect.left - anchorScreenX;
       toolbarDy = rect.top - anchorScreenY;
       toolbarUserMoved = true; // 이후 스마트 재배치가 덮어쓰지 않도록 고정
+      toolbarDragging = false;
       dragState = null;
+      // 드래그 중에 받은 setSafeTop(재배치 보류)을 여기서 반영한다 — 하지 않으면
+      // 다음 팬·줌까지 툴바가 검색 카드 밑에 걸쳐 남는다.
+      updateRouteToolbarPosition();
       // 맵 pan state 완전 클리어: 다음 맵 터치가 깨끗하게 pan을 시작하도록 보장
       for (var __k in pointers) if (pointers.hasOwnProperty(__k)) delete pointers[__k];
       isDragging = false;

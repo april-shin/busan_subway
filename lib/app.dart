@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/utils/foldable_layout.dart';
-import 'domain/entities/route_result.dart';
 import 'features/arrival_info/presentation/screens/arrival_info_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/route_search/presentation/screens/route_result_screen.dart';
+import 'features/route_search/presentation/utils/route_result_navigator.dart';
 import 'features/route_search/presentation/screens/station_picker_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/station_detail/presentation/screens/station_detail_screen.dart';
@@ -26,6 +26,10 @@ final GoRouter router = GoRouter(
       routes: [
         GoRoute(
           path: 'pick-station/:purpose',
+          // purpose == 'favorite-departure' / 'favorite-arrival' 은 설정의
+          // 즐겨찾기 편집용 — `context.push<Station>` 으로 열면 고른 역을 pop
+          // 결과로 돌려주고 전역 출발/도착 선택은 바꾸지 않는다.
+          //
           // purpose == 'waypoint' 일 때 `?index=N` 으로 어느 경유지 칸을 채울지
           // 지정한다. 칸은 검색바의 + 가 미리 만들어 두므로 이 화면은 채우기만
           // 한다. 파싱 실패/누락이면 null → picker 가 빈 칸/맨 뒤로 폴백.
@@ -44,25 +48,17 @@ final GoRouter router = GoRouter(
             final extra = state.extra;
             // 4종 record: 환승 트레이드오프 + 모드 트레이드오프 판정용.
             // 모든 호출부(home_screen, subway_map_viewer)가 이 형태로 전달한다.
-            if (extra
-                is ({
-                  RouteResult fastest,
-                  RouteResult? leastTransfer,
-                  RouteResult? fastestExpress,
-                  RouteResult? fastestLocal,
-                  String departureStationName,
-                })) {
+            if (extra is RouteResultExtra) {
               return RouteResultScreen(
                 fastest: extra.fastest,
                 leastTransfer: extra.leastTransfer,
                 fastestExpress: extra.fastestExpress,
                 fastestLocal: extra.fastestLocal,
                 departureStationName: extra.departureStationName,
+                searchedStations: extra.searchedStations,
               );
             }
-            return const Scaffold(
-              body: Center(child: Text('잘못된 경로입니다')),
-            );
+            return const Scaffold(body: Center(child: Text('잘못된 경로입니다')));
           }),
         ),
         GoRoute(
@@ -86,7 +82,9 @@ final GoRouter router = GoRouter(
         ),
         GoRoute(
           path: 'settings',
-          builder: _withRightSafeArea((context, state) => const SettingsScreen()),
+          builder: _withRightSafeArea(
+            (context, state) => const SettingsScreen(),
+          ),
         ),
       ],
     ),

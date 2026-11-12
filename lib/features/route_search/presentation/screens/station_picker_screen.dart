@@ -45,8 +45,8 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
   Widget build(BuildContext context) {
     final stationsAsync = ref.watch(allStationsProvider);
     final title = switch (widget.purpose) {
-      'departure' => '출발역 선택',
-      'arrival' => '도착역 선택',
+      'departure' || 'favorite-departure' => '출발역 선택',
+      'arrival' || 'favorite-arrival' => '도착역 선택',
       'waypoint' => '경유역 선택',
       'home' => '지도 시작점 선택',
       _ => '역 선택',
@@ -150,6 +150,11 @@ class _StationPickerScreenState extends ConsumerState<StationPickerScreen> {
 
   void _selectStation(Station station) {
     switch (widget.purpose) {
+      // 설정의 즐겨찾기 추가/수정: 고른 역을 pop 결과로 돌려줄 뿐, 홈 화면의
+      // 현재 출발/도착(selectedStationsProvider)은 건드리지 않는다.
+      case 'favorite-departure' || 'favorite-arrival':
+        Navigator.of(context).pop(station);
+        return;
       case 'departure':
         ref.read(selectedStationsProvider.notifier).setDeparture(station);
       case 'arrival':
