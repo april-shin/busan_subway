@@ -5,7 +5,7 @@
 //   서비스: SearchSTNTimeTableByIDService (OA-101)
 //   http://openapi.seoul.go.kr:8088/{KEY}/json/SearchSTNTimeTableByIDService
 //        /{start}/{end}/{STATION_CD}/{WEEK_TAG}/{INOUT_TAG}
-//   - KEY: .env 의 SEOUL_GENERAL_API_KEY
+//   - KEY: .env 의 BUSAN_GENERAL_API_KEY
 //   - WEEK_TAG: 1=평일, 2=토요일, 3=일요일/공휴일
 //   - INOUT_TAG: 1=상행, 2=하행
 //   역코드(STATION_CD)는 SearchInfoBySubwayNameService/{역명} 응답에서 취득한다.
@@ -309,11 +309,11 @@ void main(List<String> args) async {
     exit(1);
   }
   // 주석(#) 줄은 건너뛰고, 값의 양쪽 따옴표도 제거한다.
-  final keyMatch = RegExp(r'^\s*SEOUL_GENERAL_API_KEY\s*=\s*(.+)$',
+  final keyMatch = RegExp(r'^\s*BUSAN_GENERAL_API_KEY\s*=\s*(.+)$',
           multiLine: true)
       .firstMatch(envFile.readAsStringSync());
   if (keyMatch == null) {
-    print('.env 에 SEOUL_GENERAL_API_KEY 가 없습니다.');
+    print('.env 에 BUSAN_GENERAL_API_KEY 가 없습니다.');
     exit(1);
   }
   _apiKey = keyMatch.group(1)!.trim().replaceAll(RegExp('^["\']|["\']\$'), '');

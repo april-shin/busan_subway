@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// 서울 지하철 앱 전역 TextTheme.
+/// 부산 지하철 앱 전역 TextTheme.
 ///
 /// 정책:
 ///   - fontFamily 명시 X — Typography.material2021(android) 가 Roboto 메트릭을

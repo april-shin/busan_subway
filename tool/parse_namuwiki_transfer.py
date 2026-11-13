@@ -3,7 +3,7 @@
 
 ⚠⚠⚠ 2026-08 기준 주 소스가 아니다 (보조 스크립트로 격하).
     환승 가이드의 주 소스는 서울교통공사 공식 "서울 도시철도 환승정보"
-    데이터셋(공공데이터포털 15098252, `tool/data/seoul_metro_transfer_guides_official.csv`)
+    데이터셋(공공데이터포털 15098252, `tool/data/busan_metro_transfer_guides_official.csv`)
     이며, `tool/import_official_transfer_guides.dart` 가 그 데이터로
     `data/transfer_guides.csv` 를 생성한다. 대조 검증(336건) 결과 나무위키
     값은 공식과 45%(153건) 불일치했다 — **결과가 공식과 충돌하면 공식이

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/estimate_train_position.dart';
+import 'package:busan_subway/core/utils/estimate_train_position.dart';
 
 void main() {
   group('estimateTrainPosition - 검증 예시 (요구사항 고정)', () {

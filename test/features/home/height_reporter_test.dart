@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/features/home/presentation/widgets/height_reporter.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/features/home/presentation/widgets/height_reporter.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 
 void main() {
   testWidgets('첫 레이아웃 높이를 보고하고, 같은 높이로 리빌드하면 재보고하지 않는다', (tester) async {

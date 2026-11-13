@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/upstream_stations.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
+import 'package:busan_subway/core/utils/upstream_stations.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
 
 /// 두 역을 잇는 비환승 연결 하나를 만든다(양끝 id·노선).
 Connection _c(String from, String to, String line) => Connection(

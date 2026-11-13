@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_query_time.dart';
+import 'package:busan_subway/features/route_search/utils/departure_query_time.dart';
 
 void main() {
   // 2026-02-23 은 월요일. 아래 테스트들은 이 날짜를 기준으로 요일을 오프셋한다.

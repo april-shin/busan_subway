@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/route_search/utils/direction_resolver.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/route_search/utils/direction_resolver.dart';
 
 void main() {
   Station makeStation(String id, String lineId) {
@@ -65,67 +65,44 @@ void main() {
     });
   });
 
-  group('isDownDirection - 2호선 순환', () {
-    test('내선(상행): ID 증가 방향 (201→202)', () {
+  group('isDownDirection - 부산 2호선·4호선 (선형, 예외 없음)', () {
+    test('2호선: ID 증가 = 하행 (201→202→205)', () {
       final segment = makeSegment(lineId: '2', stationIds: ['201', '202', '205']);
-      expect(isDownDirection(segment), isFalse);
+      expect(isDownDirection(segment), isTrue);
     });
 
-    test('외선(하행): ID 감소 방향 (210→209)', () {
+    test('2호선: ID 감소 = 상행 (210→209→205)', () {
       final segment = makeSegment(lineId: '2', stationIds: ['210', '209', '205']);
-      expect(isDownDirection(segment), isTrue);
+      expect(isDownDirection(segment), isFalse);
     });
 
-    test('순환 경계: 내선 243→201 (큰 감소 = 내선, 상행)', () {
-      // 243에서 201로 가는 건 내선 방향 (step = 201-243 = -42, |step|>21 → 반전)
+    test('2호선: 양 끝 243→201 도 순환 반전 없이 상행', () {
       final segment = makeSegment(lineId: '2', stationIds: ['243', '201', '202']);
-      // step = 201 - 243 = -42, abs > 21, step < -21 → false (내선)
       expect(isDownDirection(segment), isFalse);
     });
 
-    test('순환 경계: 외선 201→243 (큰 증가 = 외선, 하행)', () {
-      // 201에서 243으로 가는 건 외선 방향 (step = 243-201 = 42, |step|>21 → 반전)
+    test('2호선: 201→243 은 하행', () {
       final segment = makeSegment(lineId: '2', stationIds: ['201', '243', '242']);
-      // step = 243 - 201 = 42, abs > 21, step > 21 → true (외선)
-      expect(isDownDirection(segment), isTrue);
-    });
-  });
-
-  group('isDownDirection - 4호선', () {
-    test('본선 내부: ID 증가 = 하행(오이도 방향)', () {
-      // 당고개(402) → 창동(406)
-      final segment = makeSegment(lineId: '4', stationIds: ['402', '406']);
       expect(isDownDirection(segment), isTrue);
     });
 
-    test('본선 내부: ID 감소 = 상행(진접 방향)', () {
-      // 창동(406) → 당고개(402)
-      final segment = makeSegment(lineId: '4', stationIds: ['406', '402']);
-      expect(isDownDirection(segment), isFalse);
+    test('4호선: ID 증가 = 하행(안평 방향), 감소 = 상행(미남 방향)', () {
+      expect(
+          isDownDirection(makeSegment(lineId: '4', stationIds: ['401', '406'])),
+          isTrue);
+      expect(
+          isDownDirection(makeSegment(lineId: '4', stationIds: ['406', '401'])),
+          isFalse);
     });
 
-    test('진접선 내부: ID 증가 = 하행(남쪽, 오이도 방향)', () {
-      // 진접(449) → 오남(450): 남쪽 이동 = 하행
-      final segment = makeSegment(lineId: '4', stationIds: ['449', '450']);
-      expect(isDownDirection(segment), isTrue);
-    });
-
-    test('진접선 내부: ID 감소 = 상행(북쪽, 진접 방향)', () {
-      // 오남(450) → 진접(449): 북쪽 이동 = 상행
-      final segment = makeSegment(lineId: '4', stationIds: ['450', '449']);
-      expect(isDownDirection(segment), isFalse);
-    });
-
-    test('진접선 → 본선: 하행(남쪽, 오이도 방향)', () {
-      // 불암산(452) → 상계(402): ID 감소하지만 남쪽 이동 = 하행
-      final segment = makeSegment(lineId: '4', stationIds: ['452', '402']);
-      expect(isDownDirection(segment), isTrue);
-    });
-
-    test('본선 → 진접선: 상행(북쪽, 진접 방향)', () {
-      // 상계(402) → 불암산(452): ID 증가하지만 북쪽 이동 = 상행
-      final segment = makeSegment(lineId: '4', stationIds: ['402', '452']);
-      expect(isDownDirection(segment), isFalse);
+    test('동해선·부산김해선도 ID 증가 = 하행', () {
+      expect(
+          isDownDirection(makeSegment(lineId: '동해', stationIds: ['801', '805'])),
+          isTrue);
+      expect(
+          isDownDirection(
+              makeSegment(lineId: '부산김해', stationIds: ['921', '901'])),
+          isFalse);
     });
   });
 

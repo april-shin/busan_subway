@@ -30,7 +30,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:seoul_subway/core/utils/transfer_guide_key.dart';
+import 'package:busan_subway/core/utils/transfer_guide_key.dart';
 
 const _csvPath = 'data/transfer_guides.csv';
 const _jsonPath = 'assets/json/transfer_guides.json';

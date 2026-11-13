@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/app.dart' show appRootBuilder;
-import 'package:seoul_subway/core/theme/app_theme.dart';
+import 'package:busan_subway/app.dart' show appRootBuilder;
+import 'package:busan_subway/core/theme/app_theme.dart';
 
 /// Android 15(API 35)+ edge-to-edge 회귀 가드.
 ///

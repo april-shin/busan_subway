@@ -5,14 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:seoul_subway/core/constants/app_info.dart';
-import 'package:seoul_subway/domain/entities/favorite_route.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/favorites/presentation/providers/favorite_routes_provider.dart';
-import 'package:seoul_subway/features/favorites/presentation/widgets/favorite_settings_list.dart';
-import 'package:seoul_subway/features/route_search/presentation/screens/station_picker_screen.dart';
-import 'package:seoul_subway/features/settings/presentation/screens/settings_screen.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/core/constants/app_info.dart';
+import 'package:busan_subway/domain/entities/favorite_route.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/favorites/presentation/providers/favorite_routes_provider.dart';
+import 'package:busan_subway/features/favorites/presentation/widgets/favorite_settings_list.dart';
+import 'package:busan_subway/features/route_search/presentation/screens/station_picker_screen.dart';
+import 'package:busan_subway/features/settings/presentation/screens/settings_screen.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const gangnam = Station(

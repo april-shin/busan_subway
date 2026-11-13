@@ -2,21 +2,21 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/core/network/network_info.dart';
-import 'package:seoul_subway/data/local/cache_manager.dart';
-import 'package:seoul_subway/data/remote/dto/arrival_info_dto.dart';
-import 'package:seoul_subway/data/remote/seoul_api_data_source.dart';
-import 'package:seoul_subway/data/repositories/arrival_repository_impl.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/core/network/network_info.dart';
+import 'package:busan_subway/data/local/cache_manager.dart';
+import 'package:busan_subway/data/remote/dto/arrival_info_dto.dart';
+import 'package:busan_subway/data/remote/busan_api_data_source.dart';
+import 'package:busan_subway/data/repositories/arrival_repository_impl.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
 
-class MockSeoulApiDataSource extends Mock implements SeoulApiDataSource {}
+class MockBusanApiDataSource extends Mock implements BusanApiDataSource {}
 
 class MockCacheManager extends Mock implements CacheManager {}
 
 class MockNetworkInfo extends Mock implements NetworkInfo {}
 
 void main() {
-  late MockSeoulApiDataSource mockApi;
+  late MockBusanApiDataSource mockApi;
   late MockCacheManager mockCache;
   late MockNetworkInfo mockNetwork;
   late ArrivalRepositoryImpl repository;
@@ -36,7 +36,7 @@ void main() {
   ];
 
   setUp(() {
-    mockApi = MockSeoulApiDataSource();
+    mockApi = MockBusanApiDataSource();
     mockCache = MockCacheManager();
     mockNetwork = MockNetworkInfo();
     repository = ArrivalRepositoryImpl(

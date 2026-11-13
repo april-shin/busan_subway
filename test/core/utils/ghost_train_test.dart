@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/ghost_train.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/ghost_train.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 /// 유령 열차(종착 너머 도착 예정) 위상 판정 검증.
 ///
@@ -88,7 +88,7 @@ void main() {
     });
   });
 
-  group('실제 노선 데이터 — 2026-10-20 실측 재현', () {
+  group('실제 노선 데이터 — 부산 1호선·3호선', () {
     late List<Station> stations;
     late List<Connection> connections;
 
@@ -110,14 +110,13 @@ void main() {
         .id;
 
     ArrivalInfo row({
-      required String subwayId,
       required String destination,
       required String current,
       String direction = '하행',
       int arrivalSeconds = 100,
     }) =>
         ArrivalInfo(
-          subwayId: subwayId,
+          subwayId: '',
           stationName: '',
           trainLineNm: '$destination행',
           direction: direction,
@@ -125,7 +124,7 @@ void main() {
           destination: destination,
           trainType: '일반',
           arrivalSeconds: arrivalSeconds,
-          receivedAt: DateTime(2026, 10, 20, 21, 0),
+          receivedAt: DateTime(2026, 11, 13, 21, 0),
           currentStationName: current,
         );
 
@@ -144,249 +143,91 @@ void main() {
           connections: overrideConnections ?? connections,
         );
 
-    group('4호선 남태령 하행', () {
+    group('1호선 동래 하행(ID 증가 = 노포 방향)', () {
       late TrainTopology Function(ArrivalInfo) classify;
       setUp(() {
-        classify =
-            classifier(boarding: '남태령', lineId: '4', isDown: true);
+        classify = classifier(boarding: '동래', lineId: '1', isDown: true);
       });
 
-      test('사당행은 현재역이 어디든 유령 (총신대입구(이수)·이촌·사당)', () {
-        for (final cur in ['총신대입구(이수)', '이촌', '동작', '사당']) {
-          expect(
-            classify(row(subwayId: '1004', destination: '사당', current: cur)),
-            TrainTopology.beyondTerminus,
-            reason: '현재역 $cur',
-          );
-        }
+      test('부전행(동래 이전 종착)은 현재역이 어디든 유령', () {
+        expect(classify(row(destination: '부전', current: '서면')),
+            TrainTopology.beyondTerminus);
+        expect(classify(row(destination: '부전', current: '범내골')),
+            TrainTopology.beyondTerminus);
       });
 
-      test('안산·오이도행은 정상', () {
-        expect(
-          classify(row(subwayId: '1004', destination: '안산', current: '사당')),
-          TrainTopology.onRoute,
-        );
-        expect(
-          classify(
-              row(subwayId: '1004', destination: '오이도', current: '동작')),
-          TrainTopology.onRoute,
-        );
+      test('노포행은 정상', () {
+        expect(classify(row(destination: '노포', current: '서면')),
+            TrainTopology.onRoute);
       });
 
-      test('남태령행·선바위행처럼 탑승역 이후가 종착인 열차도 정상', () {
-        expect(
-          classify(
-              row(subwayId: '1004', destination: '남태령', current: '사당')),
-          TrainTopology.onRoute,
-        );
-        expect(
-          classify(row(subwayId: '1004', destination: '과천', current: '사당')),
-          TrainTopology.onRoute,
-        );
+      test('동래행·온천장행처럼 탑승역 이후가 종착인 열차도 정상', () {
+        expect(classify(row(destination: '동래', current: '교대')),
+            TrainTopology.onRoute);
+        expect(classify(row(destination: '온천장', current: '교대')),
+            TrainTopology.onRoute);
       });
 
-      test('passed — 현재역이 이미 남태령 지난 실제 열차는 숨기지 않는다', () {
-        expect(
-          classify(
-              row(subwayId: '1004', destination: '오이도', current: '선바위')),
-          TrainTopology.passed,
-        );
+      test('passed — 현재역이 이미 동래를 지난 열차는 숨기지 않는다', () {
+        final t = classify(row(destination: '노포', current: '명륜'));
+        expect(t, TrainTopology.passed);
       });
 
       test('방향 모순(현재역이 행선지 뒤)은 판정 불가 — 통과', () {
-        expect(
-          classify(row(subwayId: '1004', destination: '사당', current: '선바위')),
-          TrainTopology.undetermined,
-        );
+        expect(classify(row(destination: '서면', current: '온천장')),
+            isNot(TrainTopology.beyondTerminus));
       });
 
       test('이름이 노선에 없으면 통과', () {
-        expect(
-          classify(row(subwayId: '1004', destination: '사당', current: '')),
-          TrainTopology.undetermined,
-        );
-        expect(
-          classify(
-              row(subwayId: '1004', destination: '없는역', current: '사당')),
-          TrainTopology.undetermined,
-        );
+        expect(classify(row(destination: '없는역', current: '서면')),
+            TrainTopology.undetermined);
       });
     });
 
-    group('3호선 지축 상행', () {
-      late TrainTopology Function(ArrivalInfo) classify;
-      setUp(() {
-        classify = classifier(boarding: '지축', lineId: '3', isDown: false);
-      });
-
-      test('구파발행(현재역 불광)은 유령, 대화행은 정상', () {
-        expect(
-          classify(row(
-              subwayId: '1003',
-              destination: '구파발',
-              current: '불광',
-              direction: '상행')),
-          TrainTopology.beyondTerminus,
-        );
-        expect(
-          classify(row(
-              subwayId: '1003',
-              destination: '대화',
-              current: '연신내',
-              direction: '상행')),
-          TrainTopology.onRoute,
-        );
-      });
-    });
-
-    group('3호선 하행 — 수서행이 가락시장·경찰병원에 잡히는 유령', () {
-      test('수서행은 수서 너머 탑승역에서 유령, 오금행은 정상', () {
-        for (final boarding in ['가락시장', '경찰병원']) {
-          final classify =
-              classifier(boarding: boarding, lineId: '3', isDown: true);
-          expect(
-            classify(
-                row(subwayId: '1003', destination: '수서', current: '대청')),
-            TrainTopology.beyondTerminus,
-            reason: boarding,
-          );
-          expect(
-            classify(
-                row(subwayId: '1003', destination: '오금', current: '대치')),
-            TrainTopology.onRoute,
-            reason: boarding,
-          );
-        }
-      });
-    });
-
-    group('분기 노선 — 다른 지선 열차는 정상, 그 너머만 유령', () {
-      test('5호선 하행: 강동 분기 — 탑승역(상일동)에 마천행은 안 온다', () {
-        final classify =
-            classifier(boarding: '상일동', lineId: '5', isDown: true);
-        expect(
-          classify(row(subwayId: '1005', destination: '마천', current: '강동')),
-          TrainTopology.beyondTerminus,
-        );
-        expect(
-          classify(
-              row(subwayId: '1005', destination: '하남검단산', current: '강동')),
-          TrainTopology.onRoute,
-        );
-        // 탑승역이 분기 앞쪽이면 두 지선 열차 모두 정상.
-        final beforeFork =
-            classifier(boarding: '천호', lineId: '5', isDown: true);
-        for (final dest in ['마천', '하남검단산', '상일동']) {
-          expect(
-            beforeFork(
-                row(subwayId: '1005', destination: dest, current: '군자')),
-            TrainTopology.onRoute,
-            reason: dest,
-          );
-        }
-      });
-
-      test('1호선 하행 분기점 구로: 경인·경부 양쪽 열차 모두 정상', () {
-        // 탑승역 구로 — 인천행·천안행·광명행(금천구청 분기) 모두 구로를 지난다.
-        final classify =
-            classifier(boarding: '구로', lineId: '1', isDown: true);
-        for (final dest in ['인천', '천안', '광명', '병점', '서동탄']) {
-          expect(
-            classify(
-                row(subwayId: '1001', destination: dest, current: '영등포')),
-            TrainTopology.onRoute,
-            reason: dest,
-          );
-        }
-      });
-
-      test('1호선 하행: 구로행이 구로 너머(금천구청)에 이어 붙으면 유령', () {
-        final classify =
-            classifier(boarding: '금천구청', lineId: '1', isDown: true);
-        expect(
-          classify(row(subwayId: '1001', destination: '구로', current: '용산')),
-          TrainTopology.beyondTerminus,
-        );
-        // 광명행은 금천구청을 지난다(분기점) — 정상.
-        expect(
-          classify(row(subwayId: '1001', destination: '광명', current: '구로')),
-          TrainTopology.onRoute,
-        );
-      });
-
-      test('경의중앙 하행: 가좌 분기 — 서울역 지선 탑승역에는 용문행이 안 온다', () {
-        final classify =
-            classifier(boarding: '서울역', lineId: '경의중앙', isDown: true);
-        expect(
-          classify(
-              row(subwayId: '1063', destination: '용문', current: '곡산')),
-          TrainTopology.beyondTerminus,
-        );
-        // 분기점 가좌 탑승 — 서울역행·용문행 모두 지난다.
-        final gajwa =
-            classifier(boarding: '가좌', lineId: '경의중앙', isDown: true);
-        for (final dest in ['서울역', '용문']) {
-          expect(
-            gajwa(row(subwayId: '1063', destination: dest, current: '곡산')),
-            TrainTopology.onRoute,
-            reason: dest,
-          );
-        }
+    group('3호선 상행(ID 감소 = 수영 방향)', () {
+      test('거제 탑승 상행: 수영행은 정상, 거제 앞(종합운동장)에서 끝나는 열차는 유령', () {
+        final classify = classifier(boarding: '거제', lineId: '3', isDown: false);
+        // 상행 경로 사직(308) → 종합운동장(307) → 거제(306) → 연산(305) → 수영(301).
+        expect(classify(row(destination: '수영', current: '사직', direction: '상행')),
+            TrainTopology.onRoute);
+        expect(classify(row(destination: '종합운동장', current: '사직', direction: '상행')),
+            TrainTopology.beyondTerminus);
       });
     });
 
     group('fail-open 경계', () {
-      test('2호선은 판정하지 않는다 (순환선 — route_branch 와 같은 제외 정책)', () {
-        final classify = classifier(
-          boarding: '강남',
-          lineId: '2',
-          isDown: true,
-        );
-        expect(
-          classify(row(subwayId: '1002', destination: '성수', current: '잠실')),
-          TrainTopology.undetermined,
-        );
+      test('2호선도 다른 노선과 같이 판정한다 (부산은 순환선 예외가 없다)', () {
+        final classify = classifier(boarding: '서면', lineId: '2', isDown: true);
+        // 하행 지게골(215) → 전포(218) 종착: 탑승역 서면(219)은 그 너머라 유령.
+        expect(classify(row(destination: '전포', current: '지게골')),
+            TrainTopology.beyondTerminus);
       });
 
       test('stations/connections 미로딩이면 판정하지 않는다', () {
         final classify = makeTrainTopologyClassifier(
-          boardingStationId: idOf('남태령', '4'),
-          lineId: '4',
+          boardingStationId: idOf('동래', '1'),
+          lineId: '1',
           isDown: true,
           stations: const [],
           connections: const [],
         );
-        expect(
-          classify(row(subwayId: '1004', destination: '사당', current: '이촌')),
-          TrainTopology.undetermined,
-        );
+        expect(classify(row(destination: '부전', current: '서면')),
+            TrainTopology.undetermined);
       });
 
       test('makeGhostTrainDetector 는 beyondTerminus 만 true', () {
         final isGhost = makeGhostTrainDetector(
-          boardingStationId: idOf('남태령', '4'),
-          lineId: '4',
+          boardingStationId: idOf('동래', '1'),
+          lineId: '1',
           isDown: true,
           stations: stations,
           connections: connections,
         );
-        expect(
-            isGhost(row(
-                subwayId: '1004', destination: '사당', current: '이촌')),
-            isTrue);
+        expect(isGhost(row(destination: '부전', current: '서면')), isTrue);
         // passed / undetermined / onRoute 는 모두 false.
-        expect(
-            isGhost(row(
-                subwayId: '1004', destination: '오이도', current: '선바위')),
-            isFalse);
-        expect(
-            isGhost(row(
-                subwayId: '1004', destination: '사당', current: '선바위')),
-            isFalse);
-        expect(
-            isGhost(row(
-                subwayId: '1004', destination: '안산', current: '사당')),
-            isFalse);
+        expect(isGhost(row(destination: '노포', current: '명륜')), isFalse);
+        expect(isGhost(row(destination: '노포', current: '서면')), isFalse);
+        expect(isGhost(row(destination: '없는역', current: '서면')), isFalse);
       });
     });
   });

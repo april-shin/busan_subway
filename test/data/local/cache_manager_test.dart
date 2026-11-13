@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:seoul_subway/data/local/cache_manager.dart';
+import 'package:busan_subway/data/local/cache_manager.dart';
 
 void main() {
   late CacheManager cacheManager;

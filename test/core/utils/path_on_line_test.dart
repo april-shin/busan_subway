@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/path_on_line.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/path_on_line.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 void main() {
   final stations = [
@@ -172,24 +172,10 @@ void main() {
     });
   });
 
-  group('findPathOnLine - isDown 방향 제한 (순환선)', () {
-    // 4역짜리 가짜 순환선 구성:
-    //  201 - 202 - 203 - 204 - 201 (순환)
+  group('findPathOnLine - isDown 방향 제한 (선형 노선)', () {
+    // 4역짜리 선형 노선: 201 - 202 - 203 - 204 (부산 규약: ID 증가 = 하행).
     // 모든 연결은 단일 노선(lineId='2')으로 구성해 양방향 엣지가 생기도록 한다.
-    //
-    // 2호선 방향 로직(_isLine2DownBetween):
-    //  step > 0 이고 |step|<=21 → 내선(false)
-    //  step < 0 이고 |step|<=21 → 외선(true)
-    // 따라서:
-    //  201→202 step=1 → 내선(false)
-    //  202→203 step=1 → 내선(false)
-    //  203→204 step=1 → 내선(false)
-    //  204→201 step=-3 → 외선(true)
-    //  201→204 step=3 → 내선(false) (|step|<=21)
-    //
-    // 주의: 본 테스트는 가짜 4역 순환선이기 때문에 실제 2호선의 순환 경계(201↔243)
-    // 로직(|step|>21)에는 영향을 받지 않는다. BFS의 방향 제한 동작만 검증한다.
-    final cycleStations = [
+    final lineStations = [
       const Station(
         id: '201', name: 'A', lineId: '2',
         latitude: 0, longitude: 0, svgX: 0, svgY: 0,
@@ -208,123 +194,63 @@ void main() {
       ),
     ];
 
-    final cycleConnections = [
+    final lineConnections = [
       const Connection(
         fromStationId: '201', toStationId: '202',
         lineId: '2', travelTimeSeconds: 60,
       ),
       const Connection(
         fromStationId: '202', toStationId: '203',
-        lineId: '2', travelTimeSeconds: 60,
+        lineId: '2', travelTimeSeconds: 70,
       ),
       const Connection(
         fromStationId: '203', toStationId: '204',
-        lineId: '2', travelTimeSeconds: 60,
-      ),
-      const Connection(
-        fromStationId: '204', toStationId: '201',
-        lineId: '2', travelTimeSeconds: 60,
+        lineId: '2', travelTimeSeconds: 80,
       ),
     ];
 
-    test('isDown=null (양방향): A→C 최단경로 (3역)', () {
-      final result = findPathOnLine(
-        fromStationName: 'A',
-        toStationName: 'C',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-      );
-      expect(result, isNotNull);
-      // A(201) → B(202) → C(203) — 양방향 BFS는 최단경로 택함
-      expect(result!.points.length, 3);
-      expect(result.durations, [60, 60]);
-    });
+    PathWithDurations? find(String from, String to, {bool? isDown}) =>
+        findPathOnLine(
+          fromStationName: from,
+          toStationName: to,
+          lineId: '2',
+          stations: lineStations,
+          connections: lineConnections,
+          isDown: isDown,
+        );
 
-    test('isDown=false (내선 전용): A→C 경로는 내선으로 2홉', () {
-      // 내선 엣지만 허용: 201→202, 202→203, 203→204 (모두 step=1, 내선)
-      // 204→201 은 외선이므로 차단됨. A→C 최단: 201→202→203
-      final result = findPathOnLine(
-        fromStationName: 'A',
-        toStationName: 'C',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-        isDown: false,
-      );
+    test('isDown=null (양방향): A→C 3역, 구간 시간 보존', () {
+      final result = find('A', 'C');
       expect(result, isNotNull);
       expect(result!.points.length, 3);
+      expect(result.durations, [60, 70]);
     });
 
-    test('isDown=true (외선 전용): A→C는 외선 우회(4홉 필요)', () {
-      // 외선 엣지만 허용: 204→201, 203→202, 202→201, 201→204(없음)
-      // 방향 제한 규칙에 따라 각 connection은 방향에 부합하는 한쪽 엣지만 추가됨.
-      //   201-202 (step=1 내선) → isDown=true이면 반대 엣지 즉 202→201만 등록
-      //   202-203 (step=1 내선) → 203→202만 등록
-      //   203-204 (step=1 내선) → 204→203만 등록
-      //   204-201 (step=-3 외선) → 204→201만 등록
-      // 따라서 외선 전용 인접 그래프: 202→201, 203→202, 204→203, 204→201
-      // A(201) → C(203) 탐색 시 201에서 나가는 엣지가 없어 경로 없음 (null).
-      final result = findPathOnLine(
-        fromStationName: 'A',
-        toStationName: 'C',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-        isDown: true,
-      );
-      // A에서 외선 방향으로 나가는 엣지가 없으므로 C에 도달 불가
-      expect(result, isNull);
-    });
-
-    test('isDown=true (외선): D→A는 외선으로 직접 도달', () {
-      // 외선 인접: 204→201 존재. D(204)→A(201) 성공.
-      final result = findPathOnLine(
-        fromStationName: 'D',
-        toStationName: 'A',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-        isDown: true,
-      );
+    test('isDown=true (하행): A→D 는 ID 증가 방향이라 도달', () {
+      final result = find('A', 'D', isDown: true);
       expect(result, isNotNull);
-      expect(result!.points.length, 2);
-      expect(result.durations, [60]);
+      expect(result!.points.length, 4);
+      expect(result.durations, [60, 70, 80]);
     });
 
-    test('isDown=false (내선): D→A는 내선으로 갈 수 없음', () {
-      // 내선 인접: 201→202, 202→203, 203→204 (204→201은 외선이라 차단)
-      // D(204)에서 내선으로 나가는 엣지가 없음 → 경로 없음
-      final result = findPathOnLine(
-        fromStationName: 'D',
-        toStationName: 'A',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-        isDown: false,
-      );
-      expect(result, isNull);
+    test('isDown=false (상행): A→C 는 거슬러 갈 수 없어 null', () {
+      expect(find('A', 'C', isDown: false), isNull);
     });
 
-    test('isDown null vs 지정: 같은 쌍에서 결과가 다를 수 있음', () {
-      final bidirectional = findPathOnLine(
-        fromStationName: 'D',
-        toStationName: 'A',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-      );
-      final inner = findPathOnLine(
-        fromStationName: 'D',
-        toStationName: 'A',
-        lineId: '2',
-        stations: cycleStations,
-        connections: cycleConnections,
-        isDown: false,
-      );
-      // 양방향은 경로를 찾고, 내선 전용은 찾지 못함
-      expect(bidirectional, isNotNull);
-      expect(inner, isNull);
+    test('isDown=false (상행): D→A 는 ID 감소 방향이라 도달', () {
+      final result = find('D', 'A', isDown: false);
+      expect(result, isNotNull);
+      expect(result!.points.length, 4);
+      expect(result.durations, [80, 70, 60]);
+    });
+
+    test('isDown=true (하행): D→A 는 거슬러 갈 수 없어 null — 순환 우회가 없다', () {
+      expect(find('D', 'A', isDown: true), isNull);
+    });
+
+    test('isDown null vs 지정: 반대 방향 지정은 양방향이 찾은 경로를 못 찾는다', () {
+      expect(find('D', 'A'), isNotNull);
+      expect(find('D', 'A', isDown: true), isNull);
     });
   });
 }

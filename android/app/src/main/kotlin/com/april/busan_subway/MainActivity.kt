@@ -1,4 +1,4 @@
-package com.april.seoul_subway
+package com.april.busan_subway
 
 import io.flutter.embedding.android.FlutterActivity
 

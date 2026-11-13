@@ -1,6 +1,6 @@
 // 홈 화면(HomeScreen)이 floating 검색바 스타일로 개편된 이후의 스모크 테스트.
 //
-// 예전에는 `SeoulSubwayApp` 전체를 pump 하여 `MaterialApp.title`("서울 지하철")
+// 예전에는 `BusanSubwayApp` 전체를 pump 하여 `MaterialApp.title`("부산 지하철")
 // 텍스트를 찾았지만, 그 title은 OS 작업전환 화면 등에만 쓰일 뿐 실제
 // 위젯 트리에는 렌더되지 않는다 — AppBar가 있던 과거에도 사실상 잘못된
 // 검증이었고, AppBar를 제거한 지금은 더더욱 통과할 수 없다.
@@ -13,17 +13,17 @@
 //     CircularProgressIndicator만 그리므로, WebView(SvgWebView)가 실제로
 //     로드되지 않는다. WebView는 테스트 환경(flutter test)에서 플랫폼
 //     채널이 없어 초기화가 불안정하므로 이렇게 우회한다.
-//   - .env / SEOUL_API_KEY 등 런타임 환경변수는 이 화면 트리에서 직접
+//   - .env / BUSAN_SUBWAY_API_KEY 등 런타임 환경변수는 이 화면 트리에서 직접
 //     쓰이지 않으므로 별도 처리가 필요 없다.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/home/presentation/screens/home_screen.dart';
-import 'package:seoul_subway/features/home/presentation/widgets/search_bar_widget.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/home/presentation/screens/home_screen.dart';
+import 'package:busan_subway/features/home/presentation/widgets/search_bar_widget.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 
 void main() {
   /// `allStationsProvider`를 영원히 resolve되지 않는 Future로 고정해

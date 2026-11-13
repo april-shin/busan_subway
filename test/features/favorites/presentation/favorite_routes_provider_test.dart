@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/entities/favorite_route.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/favorites/presentation/providers/favorite_routes_provider.dart';
-import 'package:seoul_subway/features/route_search/presentation/providers/recent_search_provider.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/favorite_route.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/favorites/presentation/providers/favorite_routes_provider.dart';
+import 'package:busan_subway/features/route_search/presentation/providers/recent_search_provider.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _key = 'pref_favorite_routes';

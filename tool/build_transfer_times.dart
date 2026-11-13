@@ -6,7 +6,7 @@
 //
 // 데이터 출처:
 //   1) 서울교통공사 공식 "환승역거리 소요시간 정보"
-//      (tool/data/seoul_metro_transfer_times_20251231.csv, 공공누리 1유형)
+//      (tool/data/busan_metro_transfer_times_20251231.csv, 공공누리 1유형)
 //      → 서울교통공사 관할(1~8호선) 환승쌍의 실측 환승거리(m).
 //   2) 공식이 커버하지 않는 비(非)서교공 환승(9호선·신분당·경의중앙·수인분당·
 //      공항철도·경춘·인천1/2·GTX-A·신림 등)은 아래 _nonOfficialCurated 수기 추정값.
@@ -73,7 +73,7 @@ const Map<String, int> _nonOfficialCurated = {
   '구리_8_경의중앙': 240,
   '구성_GTX-A_수인분당': 360,
   // 기흥 수인분당↔에버라인: 공식 서교공 환승거리 CSV(1~8호선 관할)에 없다. 근거였던
-  // 공식 "서울 도시철도 환승정보"(tool/data/seoul_metro_transfer_guides_official.csv
+  // 공식 "서울 도시철도 환승정보"(tool/data/busan_metro_transfer_guides_official.csv
   // 954·955행)의 하차문→승차문 소요시간은 **07:00 = 420초**인데, 두 행이 하차/승차
   // 위치가 서로 다른데도 값이 같아(1호차3문 → 1호차2문 / 4호차4문) 실측이 아닌
   // 공칭값으로 판단된다. 같은 CSV 의 회룡 4행이 205·243·320·415초로 전부 다른 것과
@@ -151,7 +151,7 @@ const Map<String, int> _nonOfficialCurated = {
   '회룡_1_의정부': 290,
 };
 
-const String _csvPath = 'tool/data/seoul_metro_transfer_times_20251231.csv';
+const String _csvPath = 'tool/data/busan_metro_transfer_times_20251231.csv';
 const String _stationsPath = 'assets/json/stations.json';
 const String _outPath = 'assets/json/transfer_times.json';
 

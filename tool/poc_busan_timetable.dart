@@ -14,7 +14,7 @@ import 'package:dio/dio.dart';
 void main() async {
   final env = File('.env').readAsStringSync();
   final apiKey =
-      RegExp(r'SEOUL_SUBWAY_API_KEY=(.+)').firstMatch(env)!.group(1)!.trim();
+      RegExp(r'BUSAN_SUBWAY_API_KEY=(.+)').firstMatch(env)!.group(1)!.trim();
 
   final dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 20),

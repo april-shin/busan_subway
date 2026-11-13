@@ -19,14 +19,14 @@
 ///   (`orphanMarkers` — 앵커 역이 없는 마커, 저장 뒤 새로고침해도 남는 영속 드리프트 신호)(`tool/geometry_svg.dart`).
 /// - `POST /api/geometry/check` : 편집 중인 정점으로 12px/4px 이탈 역을, 편집 중인 마커의 stations.json 어긋남을 즉시 판정한다
 ///   (규칙은 `tool/geometry_svg.dart` 한 곳 — main 에서 서는 CI 가드는 `test/tool/geometry_svg_test.dart`).
-/// - `POST /api/geometry/save` : 백업 → `assets/svg/seoul_metro_map.svg` 갱신(tmp+rename) → 빌드 →
+/// - `POST /api/geometry/save` : 백업 → `assets/svg/busan_metro_map.svg` 갱신(tmp+rename) → 빌드 →
 ///   **빌드가 실패하면 SVG(와 map.html)를 백업으로 되돌린다**(깨진 지도를 디스크에 남기지 않는다).
 ///
 /// 안전:
 /// - **127.0.0.1 에만 바인딩**한다(외부 노출 없음). Host 헤더가 localhost 계열이 아니면 거부(DNS rebinding
 ///   방어), POST 는 `application/json` + 같은 Origin 만 받는다(타 사이트의 CSRF 방어).
 /// - **쓰기 경로는 고정**이다: 배지 모드는 `data/badge_offsets.json`, 선분/환승마커 모드는
-///   `assets/svg/seoul_metro_map.svg` 하나(+ 빌드가 다시 쓰는 `assets/html/map.html`). 임의 경로를 받는 API 가 없다
+///   `assets/svg/busan_metro_map.svg` 하나(+ 빌드가 다시 쓰는 `assets/html/map.html`). 임의 경로를 받는 API 가 없다
 ///   (서버가 고정 경로에 고정 포맷으로 직렬화하고, 요청 본문은 숫자 좌표·크기만 읽는다).
 /// - 보정할 때만 띄우는 도구다 — 앱 번들(`assets/`)이나 `lib/` 어디에서도 참조하지 않는다.
 /// - **서버는 한 번에 하나만** 띄운다. 저장 락(`_buildBusy`)이 프로세스 안에서만 유효해, 서버가 둘이면 두 빌드가
@@ -46,7 +46,7 @@ const _kDefaultPort = 8765;
 const _kMaxBody = 1 << 20;
 const _kHtmlPath = 'assets/html/map.html';
 const _kBuildScript = 'tool/build_map_html.dart';
-const _kSvgPath = 'assets/svg/seoul_metro_map.svg';
+const _kSvgPath = 'assets/svg/busan_metro_map.svg';
 const _kStationsPath = 'assets/json/stations.json';
 const _kLinesPath = 'assets/json/lines.json';
 
@@ -236,7 +236,7 @@ class _EditorApp {
         if (s['isTransfer'] == true) s['name'] as String,
     };
     return solveLineBadges(
-      svgContent: _file('assets/svg/seoul_metro_map.svg').readAsStringSync(),
+      svgContent: _file('assets/svg/busan_metro_map.svg').readAsStringSync(),
       stationsJson: stations,
       linesJson: json('assets/json/lines.json') as List<dynamic>,
       connectionsJson: json('assets/json/connections.json') as List<dynamic>,
@@ -553,7 +553,7 @@ class _EditorApp {
     }
   }
 
-  /// 고정 경로(`assets/svg/seoul_metro_map.svg`)에 tmp → rename 으로 쓴다. tmp 는 assets/ 밖(.dart_tool)에 둔다.
+  /// 고정 경로(`assets/svg/busan_metro_map.svg`)에 tmp → rename 으로 쓴다. tmp 는 assets/ 밖(.dart_tool)에 둔다.
   void _atomicWrite(File target, List<int> bytes) {
     final dir = Directory('${root.path}/$_kGeoWorkDir')..createSync(recursive: true);
     final tmp = File('${dir.path}/${target.uri.pathSegments.last}.tmp');
@@ -619,7 +619,7 @@ class _EditorApp {
   /// 복구 안내(원복 실패·중단 흔적 공통). **1순위는 `.bak`** 이다 — 같은 저장 직전 사본이라 세션 중 먼저 성공한
   /// 미커밋 저장을 건드리지 않는다. `git checkout` 은 마지막 커밋 이후 다른 저장이 전혀 없을 때만 안전하다(있으면 그것까지 날린다).
   String get _recoveryHint =>
-      '복구: cp $_kGeoWorkDir/seoul_metro_map.svg.bak $_kSvgPath && dart run $_kBuildScript   '
+      '복구: cp $_kGeoWorkDir/busan_metro_map.svg.bak $_kSvgPath && dart run $_kBuildScript   '
       '(.bak 은 마지막 저장 직전 사본). 마지막 커밋 이후 저장한 변경이 없을 때만 git checkout -- $_kSvgPath $_kHtmlPath 도 된다. '
       '복구를 확인한 뒤 $_kGeoWorkDir/save_in_progress 를 지울 것.';
 
@@ -683,7 +683,7 @@ class _EditorApp {
     // ① 백업 — 메모리(원복의 기준) + assets/ 밖 디스크 사본(서버가 죽었을 때의 보험).
     final origHtmlBytes = htmlFile.readAsBytesSync();
     final work = Directory('${root.path}/$_kGeoWorkDir')..createSync(recursive: true);
-    File('${work.path}/seoul_metro_map.svg.bak').writeAsBytesSync(origSvgBytes, flush: true);
+    File('${work.path}/busan_metro_map.svg.bak').writeAsBytesSync(origSvgBytes, flush: true);
     File('${work.path}/map.html.bak').writeAsBytesSync(origHtmlBytes, flush: true);
     final marker = File('${work.path}/save_in_progress')..writeAsStringSync('${DateTime.now().toIso8601String()}\n', flush: true);
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/express_skip_edge.dart';
+import 'package:busan_subway/domain/entities/express_skip_edge.dart';
 
 void main() {
   group('ExpressSkipEdge', () {

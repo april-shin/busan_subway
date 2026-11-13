@@ -96,7 +96,7 @@ TrainTopology classifyTrainTopology({
 /// 탑승역 기준으로 도착정보 한 행의 [TrainTopology] 를 돌려주는 함수를 만든다.
 ///
 /// [boardingStationId] 는 탑승역의 역 ID(경로 세그먼트의 첫 역), [lineId] 는
-/// **base 노선 ID**(가상 급행 `9E` 가 아닌 `9`), [isDown] 은 탑승 방향이다.
+/// **base 노선 ID**(가상 급행 `{base}E` 가 아닌 base), [isDown] 은 탑승 방향이다.
 ///
 /// 도달성은 [lineId] 의 비환승 연결로 만든 **방향 인접 리스트**
 /// (`buildLineAdjacency`)에서 구하고, 출발점별 BFS 결과를 메모한다 — 같은 현재역의
@@ -104,9 +104,6 @@ TrainTopology classifyTrainTopology({
 ///
 /// 항상 [TrainTopology.undetermined] 를 돌려주는 경우(fail-open):
 ///  - [stations]/[connections] 미로딩
-///  - 2호선 — 순환선이라 행선지(`bstatnNm`)가 실제 운행 범위를 뜻하지 않고
-///    ("성수행" 입고), 순환 인접 리스트에서는 모든 역이 서로 도달 가능해 규칙이
-///    성립하지 않는다. `route_branch.dart`·지도 유령 판정과 같은 제외 정책이다.
 TrainTopology Function(ArrivalInfo arrival) makeTrainTopologyClassifier({
   required String boardingStationId,
   required String lineId,
@@ -114,8 +111,7 @@ TrainTopology Function(ArrivalInfo arrival) makeTrainTopologyClassifier({
   required List<Station> stations,
   required List<Connection> connections,
 }) {
-  if (lineId == '2' ||
-      boardingStationId.isEmpty ||
+  if (boardingStationId.isEmpty ||
       stations.isEmpty ||
       connections.isEmpty) {
     return (_) => TrainTopology.undetermined;

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_time_calculator.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/route_search/utils/departure_time_calculator.dart';
 
 /// 출발 시각만 뽑는 테스트용 축약자.
 ///
@@ -36,18 +36,18 @@ void main() {
           lineName: '2호선',
           stations: const [
             Station(
-              id: '201',
-              name: '강남',
-              lineId: '2',
-              latitude: 37.49,
-              longitude: 127.02,
-            ),
-            Station(
               id: '202',
               name: '교대',
               lineId: '2',
               latitude: 37.49,
               longitude: 127.01,
+            ),
+            Station(
+              id: '201',
+              name: '강남',
+              lineId: '2',
+              latitude: 37.49,
+              longitude: 127.02,
             ),
           ],
           durationSeconds: 120,
@@ -157,7 +157,7 @@ void main() {
 
     test('실시간 도착정보가 있으면 시간표보다 우선한다', () {
       final arrivals = [
-        makeArrival(subwayId: '1002', arrivalSeconds: 60),
+        makeArrival(subwayId: '2', arrivalSeconds: 60),
       ];
 
       final result = computeDepartureTime(
@@ -173,7 +173,7 @@ void main() {
 
     test('실시간 매칭 없으면 시간표 기반으로 반환한다', () {
       final arrivals = [
-        makeArrival(subwayId: '1003', arrivalSeconds: 60), // 3호선, 매칭 안됨
+        makeArrival(subwayId: '3', arrivalSeconds: 60), // 3호선, 매칭 안됨
       ];
 
       final result = computeDepartureTime(
@@ -189,8 +189,8 @@ void main() {
 
     test('arrivalSeconds가 0 이하인 항목은 무시한다', () {
       final arrivals = [
-        makeArrival(subwayId: '1002', arrivalSeconds: 0),
-        makeArrival(subwayId: '1002', arrivalSeconds: -5),
+        makeArrival(subwayId: '2', arrivalSeconds: 0),
+        makeArrival(subwayId: '2', arrivalSeconds: -5),
       ];
 
       final result = computeDepartureTime(
@@ -205,7 +205,7 @@ void main() {
 
     test('arrivalSeconds가 null인 항목은 무시한다', () {
       final arrivals = [
-        makeArrival(subwayId: '1002', arrivalSeconds: null),
+        makeArrival(subwayId: '2', arrivalSeconds: null),
       ];
 
       final result = computeDepartureTime(
@@ -220,9 +220,9 @@ void main() {
 
     test('매칭되는 도착정보가 있으면 가장 빠른 열차 기준으로 시각을 반환한다', () {
       final arrivals = [
-        makeArrival(subwayId: '1002', arrivalSeconds: 180),
-        makeArrival(subwayId: '1002', arrivalSeconds: 60),
-        makeArrival(subwayId: '1002', arrivalSeconds: 300),
+        makeArrival(subwayId: '2', arrivalSeconds: 180),
+        makeArrival(subwayId: '2', arrivalSeconds: 60),
+        makeArrival(subwayId: '2', arrivalSeconds: 300),
       ];
 
       final result = computeDepartureTime(
@@ -234,9 +234,9 @@ void main() {
       expect(result, fixedNow.add(const Duration(seconds: 60)));
     });
 
-    test('subwayId를 lineId로 변환하여 매칭한다 (1002 -> 2호선)', () {
+    test('subwayId 가 lineId 와 같으면 매칭한다 (매핑 맵이 비어 있어 원문 비교)', () {
       final arrivals = [
-        makeArrival(subwayId: '1002', arrivalSeconds: 120),
+        makeArrival(subwayId: '2', arrivalSeconds: 120),
       ];
 
       final result = computeDepartureTime(
@@ -305,7 +305,7 @@ void main() {
 
       final arrivals = [
         ArrivalInfo(
-          subwayId: '1003',
+          subwayId: '3',
           stationName: '교대',
           trainLineNm: '3호선',
           direction: '하행',
@@ -316,7 +316,7 @@ void main() {
           receivedAt: fixedNow,
         ),
         ArrivalInfo(
-          subwayId: '1003',
+          subwayId: '3',
           stationName: '교대',
           trainLineNm: '3호선',
           direction: '상행',
@@ -361,7 +361,7 @@ void main() {
 
       final arrivals = [
         ArrivalInfo(
-          subwayId: '1003',
+          subwayId: '3',
           stationName: '충무로',
           trainLineNm: '3호선',
           direction: '상행',
@@ -407,7 +407,7 @@ void main() {
       // 하행 도착정보만 있으나 경로는 상행(ID 감소)
       final arrivals = [
         ArrivalInfo(
-          subwayId: '1003',
+          subwayId: '3',
           stationName: '남부터미널',
           trainLineNm: '3호선',
           direction: '하행',
@@ -944,7 +944,7 @@ void main() {
       final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{
         '충무로': AsyncData([
           ArrivalInfo(
-            subwayId: '1003',
+            subwayId: '3',
             stationName: '충무로',
             trainLineNm: '3호선',
             direction: '하행',
@@ -979,7 +979,7 @@ void main() {
       final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{
         '충무로': AsyncData([
           ArrivalInfo(
-            subwayId: '1003',
+            subwayId: '3',
             stationName: '충무로',
             trainLineNm: '3호선',
             direction: '하행',
@@ -1053,7 +1053,7 @@ void main() {
       final transferArrivals = <String, AsyncValue<List<ArrivalInfo>>>{
         '충무로': AsyncData([
           ArrivalInfo(
-            subwayId: '1003',
+            subwayId: '3',
             stationName: '충무로',
             trainLineNm: '3호선',
             direction: '상행',
@@ -1118,10 +1118,10 @@ void main() {
     test('첫 방향성 세그먼트의 역·방향·급행여부·base 노선을 반환한다', () {
       final context = resolveDepartureContext(makeRouteResult(lineId: '2'));
       expect(context, isNotNull);
-      expect(context!.segment.stations.first.id, '201');
+      expect(context!.segment.stations.first.id, '202');
       expect(context.express, isFalse);
       expect(context.baseLine, '2');
-      // 2호선 순환: ID 증가(201 → 202)는 내선(상행)이므로 isDown=false
+      // 부산: ID 감소(202 → 201)는 상행이므로 isDown=false
       expect(context.isDown, isFalse);
     });
 
@@ -1172,7 +1172,7 @@ void main() {
     test('실시간 도착정보가 있으면 realtime', () {
       final result = computeDepartureTimeDetailed(
         arrivalAsync: AsyncData([
-          makeArrival(subwayId: '1002', arrivalSeconds: 120),
+          makeArrival(subwayId: '2', arrivalSeconds: 120),
         ]),
         routeResult: makeRouteResult(lineId: '2'),
         now: fixedNow,

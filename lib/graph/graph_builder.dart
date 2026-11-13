@@ -36,6 +36,9 @@ class GraphBuilder {
   /// 배차간격 fallback (headwaySeconds에 노선이 없을 때).
   static const int _defaultHeadwaySeconds = 180;
 
+  /// 급행↔완행 모드 전환에 대기가 없는(같은 승강장 환승) base 노선. 현재 없음.
+  static const Set<String> _zeroWaitModeSwitchLines = {};
+
   SubwayGraph build({
     required List<Station> stations,
     required List<Connection> connections,
@@ -53,6 +56,7 @@ class GraphBuilder {
     _addExpressSkipEdges(graph, gated);
     _addModeSwitchEdges(graph, gated, headwaySeconds);
     _addTransferEdges(graph, stations, transferTimes, headwaySeconds);
+    _addCrossNameTransferEdges(graph, stations, connections, headwaySeconds);
 
     return graph;
   }
@@ -242,11 +246,10 @@ class GraphBuilder {
         continue;
       }
 
-      // 9호선·1호선은 같은 플랫폼에서 급행↔완행 환승이 가능하여 모드 전환 대기 0초.
-      // - 9호선: 정책상 "급행 환승시간 0분" (사용자 합의)
-      // - 1호선 경인선/경부선: 용산·구로·부평·수원 등 주요 급행 정차역은 섬식
-      //   승강장으로 완행과 동일 승강장·방향에 정차하므로 물리적 대기 없음.
-      final waitSeconds = (key.baseLineId == '9' || key.baseLineId == '1')
+      // 급행↔완행 모드 전환 대기 = 배차간격의 절반(기댓값). 같은 승강장에서
+      // 갈아타 대기가 없는 노선이 생기면 [_zeroWaitModeSwitchLines] 에 넣는다.
+      // (서울 시절 9호선·1호선이 그 경우였다. 부산 데이터에는 급행이 없다.)
+      final waitSeconds = _zeroWaitModeSwitchLines.contains(key.baseLineId)
           ? 0
           : (headwaySeconds[key.baseLineId] ?? _defaultHeadwaySeconds) ~/ 2;
       final modeLineId = '${key.baseLineId}M';
@@ -354,6 +357,66 @@ class GraphBuilder {
           }
         }
       }
+    }
+  }
+
+  /// `connections.json` 의 `isTransfer` 연결 중 **두 역 이름이 다른 것**을 환승
+  /// edge 로 추가한다.
+  ///
+  /// [_addTransferEdges] 는 같은 이름의 환승역 레코드끼리만 잇는다. 그런데 노선마다
+  /// 역명이 다른 환승역이 있다 — 부산 2호선 `벡스코(시립미술관)`(205) ↔ 동해선
+  /// `벡스코`(810). 이 연결이 없으면 두 노선 사이 환승이 그래프에서 통째로 빠진다.
+  /// 이름이 같은 연결은 [_addTransferEdges] 가 이미 이었으므로 건너뛴다(중복 방지).
+  ///
+  /// 연결은 방향별 레코드(`from → to`, `lineId` = from 쪽 노선)라 레코드마다 단방향
+  /// edge 하나를 만든다. 환승 도보시간은 연결의 `travelTimeSeconds`, 대기는
+  /// [_addTransferEdges] 와 같은 규칙(도착 노선 배차간격/2, [headwaySeconds] 가
+  /// 비어 있으면 0)을 따른다.
+  void _addCrossNameTransferEdges(
+    SubwayGraph graph,
+    List<Station> stations,
+    List<Connection> connections,
+    Map<String, int> headwaySeconds,
+  ) {
+    final stationsById = <String, List<Station>>{};
+    for (final s in stations) {
+      stationsById.putIfAbsent(s.id, () => []).add(s);
+    }
+
+    for (final c in connections) {
+      if (!c.isTransfer) continue;
+      final fromCandidates = stationsById[c.fromStationId];
+      final toCandidates = stationsById[c.toStationId];
+      if (fromCandidates == null || toCandidates == null) continue;
+
+      final from = fromCandidates.firstWhere(
+        (s) => s.lineId == c.lineId,
+        orElse: () => fromCandidates.first,
+      );
+      // 도착 쪽은 출발 노선과 **다른** 노선의 레코드여야 환승이다.
+      final to = toCandidates.firstWhere(
+        (s) => s.lineId != from.lineId,
+        orElse: () => toCandidates.first,
+      );
+      if (from.name == to.name || from.lineId == to.lineId) continue;
+
+      final fromNodeId = '${from.id}_${from.lineId}';
+      final toNodeId = '${to.id}_${to.lineId}';
+      if (!graph.containsNode(fromNodeId) || !graph.containsNode(toNodeId)) {
+        continue;
+      }
+
+      final toWait = headwaySeconds.isNotEmpty
+          ? (headwaySeconds[to.lineId] ?? _defaultHeadwaySeconds) ~/ 2
+          : 0;
+      graph.addEdge(GraphEdge(
+        fromNodeId: fromNodeId,
+        toNodeId: toNodeId,
+        lineId: 'transfer',
+        weightSeconds: c.travelTimeSeconds + toWait,
+        isTransfer: true,
+        transferWalkSeconds: c.travelTimeSeconds,
+      ));
     }
   }
 }

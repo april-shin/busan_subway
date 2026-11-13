@@ -156,7 +156,7 @@
     다르므로(예: 종로3가 FR 130 vs 앱 131) 역명+노선으로 매칭 후 앱 역ID로 키잉한다.
     역명 표기차(예: 총신대입구(이수)→4호선 "총신대입구"/7호선 "이수")는 괄호제거/괄호내용 폴백으로 흡수.
   - 데이터 출처: 서울 열린데이터광장 `SearchSTNTimeTableByIDService` (OA-101),
-    역코드는 `SearchInfoBySubwayNameService`. `.env`의 `SEOUL_GENERAL_API_KEY` 사용.
+    역코드는 `SearchInfoBySubwayNameService`. `.env`의 `BUSAN_GENERAL_API_KEY` 사용.
   - `we`는 WEEK_TAG=3(일요일/공휴일) 데이터. **토요일(WEEK_TAG=2)은 미반영** — 컴팩트 스키마가
     주말 1종(`we`)만 지원하는 한계.
   - 재생성: `dart run tool/build_metro_timetable.dart` (기본 1~8) / `--lines=9` 등으로 노선 지정.

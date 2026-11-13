@@ -115,6 +115,23 @@ API 갱신으로 열차의 목표 위치(target)가 갑자기 바뀌어도, 아�
 
 ## 빌드 및 개발 명령어
 
+> ⚠️ **부산 전환(2026-11-13) — 아래 명령 중 일부는 실행 금지.**
+> 정적 데이터와 지도 SVG 의 **유일 소스는 `tool/build_busan_data.py`** 다
+> (입력 `tool/data/busan_humetro_{cyberstation,travel_times}.txt` → `assets/json/*.json` 8개 +
+> `assets/svg/busan_metro_map.svg`). 데이터를 바꾸려면 입력 txt 나 스크립트를 고친 뒤
+> `python3 tool/build_busan_data.py && dart run tool/build_map_html.dart` 를 돌린다.
+> - **서울 시절 생성기는 돌리지 말 것** — 부산 에셋을 서울 기반 산출물로 덮는다:
+>   `extract_svg_stations`, `generate_station_data`, `build_transfer_times`,
+>   `import_official_transfer_guides`, `import_transfer_guides`, `build_*_timetable*`, `extract_express_skip_edges`.
+>   (`tool/data/busan_metro_transfer_*.csv`, `data/transfer_guides*.csv`, `data/timetables/` 는 이름과 달리 서울 데이터다.)
+> - **SVG 는 생성물이다.** 지도 편집기(`tool/badge_editor.dart`)의 선분·환승마커 모드로 SVG 를 고치면
+>   `build_busan_data.py` 재실행 때 사라진다. 배지 모드(`data/badge_offsets.json`)는 안전하다.
+> - **실시간 기능은 꺼져 있다**(`lib/core/constants/feature_flags.dart` 의 `FeatureFlags.realtimeEnabled`).
+>   4원칙 코드는 그대로 남아 있지만, 플래그가 const 라 배선 회귀 테스트(`live_train_unknown_gate_test`,
+>   `live_train_ghost_test` 등 31건)는 `skip` 상태다 — 플래그를 켤 때 부산 픽스처로 복원할 것.
+> - 아래 본문과 `.claude/docs/` 의 노선·시간표·환승 설명은 대부분 서울 시절 내용이다.
+>   부산 데이터의 근거와 한계는 `.claude/docs/pending-data.md` 의 "부산 전환" 절을 볼 것.
+
 ```bash
 # 코드 생성 (freezed, json_serializable, riverpod_generator)
 # build_runner 2.15+ 에서 --delete-conflicting-outputs 는 제거됨(기본 동작화).
@@ -144,7 +161,7 @@ dart run tool/generate_station_data.dart
 dart run tool/build_transfer_times.dart
 
 # 환승 가이드("빠른 환승" 칸-문) CSV 재생성 — 서울교통공사 공식 "서울 도시철도
-# 환승정보"(tool/data/seoul_metro_transfer_guides_official.csv, 공공데이터포털
+# 환승정보"(tool/data/busan_metro_transfer_guides_official.csv, 공공데이터포털
 # 15098252) + data/transfer_guides_manual.csv(공식 미커버 구간, 수기/나무위키
 # 유래) → data/transfer_guides.csv 로 병합한다. data/transfer_guides.csv 는
 # 여전히 assets/json/transfer_guides.json 의 유일 소스이지만, 이제 그 자체가
@@ -167,7 +184,7 @@ python3 tool/build_center_line_timetable.py --dry-run
 python3 tool/build_center_line_timetable.py
 
 # WebView용 HTML 생성
-#   입력: seoul_metro_map.svg + stations.json + lines.json + connections.json
+#   입력: busan_metro_map.svg + stations.json + lines.json + connections.json
 #         + data/badge_offsets.json (있을 때만 — 배지 수동 보정)
 #   출력: assets/html/map.html
 # ⚠️ SVG 외에 **assets/json 3개가 모두 입력**이다. 파이프라인 2단계
@@ -208,7 +225,7 @@ dart run tool/build_map_html.dart
 # 지도 편집기 — 배지 위치 보정 + 노선 선분 + 환승 마커 (드래그 에디터 + 저장 서버, localhost 전용)
 # 패널 상단 탭으로 **세 모드**를 오간다. 모드마다 쓰는 파일이 다르다:
 #   - `배지`     → data/badge_offsets.json
-#   - `선분`·`환승마커` → assets/svg/seoul_metro_map.svg (+ 빌드가 다시 쓰는 assets/html/map.html).
+#   - `선분`·`환승마커` → assets/svg/busan_metro_map.svg (+ 빌드가 다시 쓰는 assets/html/map.html).
 #     SVG 하나를 같이 고치므로 저장도 하나다. 로직은 tool/geometry_svg.dart(순수 함수, test/tool/geometry_svg_test.dart).
 # "저장 + 재빌드" 를 누르면 곧바로 build_map_html 이 돌아 실제 결과를 보여 준다.
 # 서버는 **한 번에 하나만** 띄운다(저장 락이 프로세스 안에서만 유효).
@@ -271,9 +288,9 @@ dart run tool/badge_editor.dart          # http://localhost:8765
 
 프로젝트 루트의 `.env` 파일 (`pubspec.yaml` assets에 등록됨):
 ```
-SEOUL_SUBWAY_API_KEY=<data.seoul.go.kr에서 발급받은 실시간 지하철 API 키>
+BUSAN_SUBWAY_API_KEY=<data.seoul.go.kr에서 발급받은 실시간 지하철 API 키>
 ```
-실시간 도착정보 데이터소스(`seoul_api_data_source.dart`)가 `SEOUL_SUBWAY_API_KEY` 를 읽는다. 앱 런타임에 키를 검증하며, 미설정/placeholder 값이면 예외를 던진다.
+실시간 도착정보 데이터소스(`busan_api_data_source.dart`)가 `BUSAN_SUBWAY_API_KEY` 를 읽는다. 앱 런타임에 키를 검증하며, 미설정/placeholder 값이면 예외를 던진다.
 
 ## 아키텍처
 
@@ -299,7 +316,7 @@ lib/
 - **환승 시간 키 형식:** `"{역이름}_{lineId1}_{lineId2}"` (`transfer_times.json` 내)
 ### 노선 정보
 
-23개 노선 (1~9호선, 신분당, 경의중앙, 경춘, 공항철도 등). 상세: `.claude/docs/lines-reference.md`
+6개 노선 — 1~4호선, 동해선(`동해`), 부산김해경전철(`부산김해`). 전부 단순 선형(지선·순환·급행 없음). (`.claude/docs/lines-reference.md` 는 서울 시절 문서)
 
 **미개통·근거부족으로 일부러 비워 둔 데이터**는 `.claude/docs/pending-data.md` 에 모아 둔다
 (결정 시점·근거·복구 절차 포함). "왜 이 역은 환승역이 아니지?" 류의 의문이 들면 먼저 볼 것 —
@@ -340,7 +357,7 @@ riverpod 3 에서 레거시로 이동해 `package:flutter_riverpod/legacy.dart` 
 ```
 Expanded → WebViewWidget (전체 화면)
   └─ HTML 페이지 (assets/html/map.html)
-      ├─ <svg> 원본 (seoul_metro_map.svg 인라인, 한국어 텍스트 포함)
+      ├─ <svg> 원본 (busan_metro_map.svg 인라인, 한국어 텍스트 포함)
       ├─ 경로 하이라이트 (SVG overlay <g>)
       ├─ 출발/도착 마커 (SVG <circle>)
       ├─ 툴팁 (HTML div, position:absolute)
@@ -396,7 +413,7 @@ Expanded → WebViewWidget (전체 화면)
 
 `hive_flutter`는 pubspec.yaml에 등록되어 있으나 현재 코드에서 사용되지 않음.
 
-## 하네스: 서울 지하철 앱 개발
+## 하네스: 부산 지하철 앱 개발
 
 **목표:** 7인 전문가 에이전트 팀으로 앱 개발 작업(기능 구현, 버그 수정, UI/지도 개선, 알고리즘 최적화)을 체계적으로 수행
 

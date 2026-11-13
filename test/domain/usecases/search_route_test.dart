@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/express_skip_edge.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/transfer_guide.dart';
-import 'package:seoul_subway/domain/repositories/station_repository.dart';
-import 'package:seoul_subway/domain/usecases/search_route.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/express_skip_edge.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/transfer_guide.dart';
+import 'package:busan_subway/domain/repositories/station_repository.dart';
+import 'package:busan_subway/domain/usecases/search_route.dart';
 
 class MockStationRepository extends Mock implements StationRepository {}
 
@@ -409,26 +409,23 @@ void main() {
       });
 
       test(
-          '양쪽 모두 급행 미정차(B→E) — 9호선 모드 전환 0초 정책으로 급행 환승 경로가 더 빠름',
+          '양쪽 모두 급행 미정차(B→E) — 모드 전환이 배차/2 대기라 급행 환승 이득 없음',
           () async {
         stub9();
 
         // B(903)·E(906) 모두 급행 미정차역.
         // 완행 단독: B→C→D→E = 200×3 + dwell 60 = 660초
-        // 급행 환승(9호선 모드 전환 0초):
-        //   B→A(200) + 0 + A_E→D_E(150) + 0 + D→E(200) = 550초 < 660
-        // → fastestExpress 가 _E edge 포함 경로로 노출됨 (이득이 있음).
+        // 급행 환승: B→A(200) + 모드전환 90(기본 배차 180/2) + A_E→D_E(150) + 90
+        //   + D→E(200) = 730초 > 660 — 모드 전환이 배차/2 대기를 물어 이득이 없다.
+        //   (0초 예외 노선이 있던 서울 9호선에서는 550초라 급행 환승이 더 빨랐다.)
         final result = await searchRoute.executeAll('903', '906');
 
         expect(result.fastest, isNotNull);
-        expect(result.fastestExpress, isNotNull,
-            reason: '9호선 모드 전환 0초이므로 양쪽 미정차여도 급행 환승이 더 빠를 수 있음');
-        expect(
-          result.fastestExpress!.segments.any((s) => s.lineId == '9E'),
-          isTrue,
-          reason: 'fastestExpress 는 반드시 9E 세그먼트를 포함해야 함',
-        );
-        expect(result.fastestLocal, isNotNull);
+        expect(result.fastest!.totalTimeSeconds, 660);
+        expect(result.fastest!.segments.any((s) => s.lineId == '9E'), isFalse,
+            reason: '완행 단독이 최단');
+        expect(result.fastestExpress, isNull,
+            reason: '모드 전환 대기(배차/2) 때문에 급행 환승 이득이 없으면 노출하지 않는다');
       });
 
       test('급행 미운영 노선(2/3호선): fastestExpress null, fastestLocal 도 null', () async {
@@ -1160,10 +1157,9 @@ void main() {
             reason: '1E 세그먼트 후 환승 가이드는 base(`1`) 키로 매칭되어야 함');
       });
 
-      test('4-tuple 키가 매칭되면 해당 가이드를 반영한다 (상행 방향)', () async {
-        // 201(시청) → 203(을지로3가): 2호선 내선(상행, up) 방향.
-        // isDownBetween(202, 203, "2")는 step=1 → step<0 아님 → false (up).
-        // 키: "을지로3가_2_up_3"
+      test('4-tuple 키가 매칭되면 해당 가이드를 반영한다 (하행 방향)', () async {
+        // 201(시청) → 203(을지로3가): 2호선 ID 증가 = 하행(down) 방향.
+        // 키: "을지로3가_2_down_3"
         const guide = TransferGuide(
           doorSide: DoorSide.right,
           car: 5,
@@ -1171,7 +1167,7 @@ void main() {
           note: '충무로 방면 가까움',
         );
         when(() => mockRepo.getTransferGuides())
-            .thenAnswer((_) async => {'을지로3가_2_up_3': guide});
+            .thenAnswer((_) async => {'을지로3가_2_down_3': guide});
 
         final result = await searchRoute.execute('201', '317');
 
@@ -1180,11 +1176,11 @@ void main() {
         expect(result.transferGuides.first, equals(guide));
       });
 
-      test('반대 방향(down) 키로만 등록된 경우 매칭되지 않고 null', () async {
+      test('반대 방향(up) 키로만 등록된 경우 매칭되지 않고 null', () async {
         const guide = TransferGuide(doorSide: DoorSide.right, car: 5);
         // 서로 다른 키 (방향 반전)
         when(() => mockRepo.getTransferGuides())
-            .thenAnswer((_) async => {'을지로3가_2_down_3': guide});
+            .thenAnswer((_) async => {'을지로3가_2_up_3': guide});
 
         final result = await searchRoute.execute('201', '317');
 
@@ -1208,7 +1204,7 @@ void main() {
         expect(result.transferGuides.first, equals(guide));
       });
 
-      test('2호선 감소(외선, down) 방향 세그먼트는 key에 "_down_"이 포함된다', () async {
+      test('2호선 감소(상행, up) 방향 세그먼트는 key에 "_up_"이 포함된다', () async {
         // 2호선을 거꾸로 내려오는 경로를 구성하기 위해 역 추가 및 연결 구성.
         final stationsExtra = [
           ...testStations,
@@ -1220,7 +1216,7 @@ void main() {
               longitude: 127.0),
         ];
         final connectionsReverse = [
-          // 204 → 203 → 202 → 201 (step 감소 = 외선/down)
+          // 204 → 203 → 202 → 201 (ID 감소 = 상행/up)
           const Connection(
               fromStationId: '204',
               toStationId: '203',
@@ -1242,11 +1238,11 @@ void main() {
         when(() => mockRepo.getAllConnections())
             .thenAnswer((_) async => connectionsReverse);
 
-        // 204 → 317: 2호선 외선(204→203) → 을지로3가 환승 → 3호선
-        // 이전 세그먼트 끝 두 역: 204→203 (step=-1 → down)
+        // 204 → 317: 2호선 상행(204→203) → 을지로3가 환승 → 3호선
+        // 이전 세그먼트 끝 두 역: 204→203 (ID 감소 → up)
         const guide = TransferGuide(doorSide: DoorSide.right, car: 4);
         when(() => mockRepo.getTransferGuides())
-            .thenAnswer((_) async => {'을지로3가_2_down_3': guide});
+            .thenAnswer((_) async => {'을지로3가_2_up_3': guide});
 
         final result = await searchRoute.execute('204', '317');
 
@@ -1284,7 +1280,7 @@ void main() {
       test('executeAll 결과의 fastest에도 transferGuides가 포함된다', () async {
         const guide = TransferGuide(car: 3, door: 2);
         when(() => mockRepo.getTransferGuides())
-            .thenAnswer((_) async => {'을지로3가_2_up_3': guide});
+            .thenAnswer((_) async => {'을지로3가_2_down_3': guide});
 
         final result = await searchRoute.executeAll('201', '317');
 
@@ -1294,36 +1290,34 @@ void main() {
       });
 
       group('목적 노선 방향 (v2 5-tuple 키)', () {
-        // 사당역 4호선 → 2호선 픽스처. **역 ID·이름은 실 번들 데이터와 일치한다**
-        // (나무위키와 대조하는 사람이 오도되지 않도록 정합화).
+        // 서면역 1호선 → 2호선 픽스처(부산). 역 ID·이름은 실 번들 데이터와 일치한다.
+        // 환승 후 목적 노선(2호선) 방향에 따라 가이드가 갈리는 경우를 4-tuple 키로는
+        // 한 값으로 뭉개지므로 5-tuple 키로 분리한다.
         //
-        // 실제 나무위키 데이터상 이 환승은 **2호선 내선/외선에 따라 빠른환승 칸이
-        // 갈린다**(4-tuple 키로는 한 값으로 뭉개져 오안내가 났던 케이스).
-        //
-        // 방향 계산 근거:
-        //   - 4호선 424(총신대입구) → 425(사당): 둘 다 본선(<449) & ID 증가 → down.
-        //   - 2호선 226(사당) → 227(낙성대): step +1, |step| ≤ 21 → up = 내선.
-        //   - 2호선 226(사당) → 225(방배): step -1 → down = 외선.
+        // 방향 계산 근거(부산: 전 노선 ID 증가 = 하행):
+        //   - 1호선 118(범내골) → 119(서면): ID 증가 → down.
+        //   - 2호선 219(서면) → 218(전포): ID 감소 → up.
+        //   - 2호선 219(서면) → 220(부암): ID 증가 → down.
         final sadangStations = [
-          const Station(id: '424', name: '총신대입구(이수)', lineId: '4',
+          const Station(id: '118', name: '범내골', lineId: '1',
               latitude: 0, longitude: 0),
-          const Station(id: '425', name: '사당', lineId: '4',
+          const Station(id: '119', name: '서면', lineId: '1',
               latitude: 0, longitude: 0,
-              isTransfer: true, transferLines: ['2', '4']),
-          const Station(id: '226', name: '사당', lineId: '2',
+              isTransfer: true, transferLines: ['1', '2']),
+          const Station(id: '219', name: '서면', lineId: '2',
               latitude: 0, longitude: 0,
-              isTransfer: true, transferLines: ['2', '4']),
-          const Station(id: '227', name: '낙성대', lineId: '2',
+              isTransfer: true, transferLines: ['1', '2']),
+          const Station(id: '218', name: '전포', lineId: '2',
               latitude: 0, longitude: 0),
-          const Station(id: '225', name: '방배', lineId: '2',
+          const Station(id: '220', name: '부암', lineId: '2',
               latitude: 0, longitude: 0),
         ];
         final sadangConnections = [
-          const Connection(fromStationId: '424', toStationId: '425',
-              lineId: '4', travelTimeSeconds: 120),
-          const Connection(fromStationId: '226', toStationId: '227',
+          const Connection(fromStationId: '118', toStationId: '119',
+              lineId: '1', travelTimeSeconds: 120),
+          const Connection(fromStationId: '219', toStationId: '218',
               lineId: '2', travelTimeSeconds: 120),
-          const Connection(fromStationId: '225', toStationId: '226',
+          const Connection(fromStationId: '220', toStationId: '219',
               lineId: '2', travelTimeSeconds: 120),
         ];
 
@@ -1333,33 +1327,33 @@ void main() {
           when(() => mockRepo.getAllConnections())
               .thenAnswer((_) async => sadangConnections);
           when(() => mockRepo.getTransferTimes())
-              .thenAnswer((_) async => {'사당_4_2': 180});
+              .thenAnswer((_) async => {'서면_1_2': 180});
         });
 
-        test('목적 방향이 다른 두 경로가 서로 다른 가이드를 받는다 (2호선 내선/외선)',
+        test('목적 방향이 다른 두 경로가 서로 다른 가이드를 받는다 (2호선 상행/하행)',
             () async {
           const inner = TransferGuide(
-              doorSide: DoorSide.left, car: 4, door: 1, note: '내선(낙성대 방향)');
+              doorSide: DoorSide.left, car: 4, door: 1, note: '내선(전포 방향)');
           const outer = TransferGuide(
-              doorSide: DoorSide.right, car: 10, door: 4, note: '외선(방배 방향)');
+              doorSide: DoorSide.right, car: 10, door: 4, note: '외선(부암 방향)');
           when(() => mockRepo.getTransferGuides()).thenAnswer((_) async => {
-                '사당_4_down_2_up': inner,
-                '사당_4_down_2_down': outer,
+                '서면_1_down_2_up': inner,
+                '서면_1_down_2_down': outer,
               });
 
-          // 총신대입구 → 낙성대: 환승 후 2호선 내선(up).
-          final toNakseongdae = await searchRoute.execute('424', '227');
+          // 총신대입구 → 전포: 환승 후 2호선 상행(up).
+          final toNakseongdae = await searchRoute.execute('118', '218');
           expect(toNakseongdae, isNotNull);
           expect(toNakseongdae!.transferGuides.length, 1);
           expect(toNakseongdae.transferGuides.first, equals(inner),
-              reason: '목적 노선이 내선(up)이므로 "사당_4_down_2_up" 가이드여야 함');
+              reason: '목적 노선이 상행(up)이므로 "서면_1_down_2_up" 가이드여야 함');
 
-          // 총신대입구 → 방배: 환승 후 2호선 외선(down).
-          final toBangbae = await searchRoute.execute('424', '225');
+          // 총신대입구 → 부암: 환승 후 2호선 하행(down).
+          final toBangbae = await searchRoute.execute('118', '220');
           expect(toBangbae, isNotNull);
           expect(toBangbae!.transferGuides.length, 1);
           expect(toBangbae.transferGuides.first, equals(outer),
-              reason: '목적 노선이 외선(down)이므로 "사당_4_down_2_down" 가이드여야 함');
+              reason: '목적 노선이 하행(down)이므로 "서면_1_down_2_down" 가이드여야 함');
 
           expect(toNakseongdae.transferGuides.first,
               isNot(equals(toBangbae.transferGuides.first)),
@@ -1370,10 +1364,10 @@ void main() {
           const fallback = TransferGuide(
               doorSide: DoorSide.left, car: 3, note: '방향 무관');
           when(() => mockRepo.getTransferGuides())
-              .thenAnswer((_) async => {'사당_4_down_2': fallback});
+              .thenAnswer((_) async => {'서면_1_down_2': fallback});
 
-          final toNakseongdae = await searchRoute.execute('424', '227');
-          final toBangbae = await searchRoute.execute('424', '225');
+          final toNakseongdae = await searchRoute.execute('118', '218');
+          final toBangbae = await searchRoute.execute('118', '220');
 
           expect(toNakseongdae!.transferGuides.first, equals(fallback));
           expect(toBangbae!.transferGuides.first, equals(fallback),
@@ -1384,30 +1378,30 @@ void main() {
             () async {
           const outer = TransferGuide(doorSide: DoorSide.right, car: 10);
           when(() => mockRepo.getTransferGuides())
-              .thenAnswer((_) async => {'사당_4_down_2_down': outer});
+              .thenAnswer((_) async => {'서면_1_down_2_down': outer});
 
-          // 총신대입구 → 낙성대는 목적 방향이 up(내선) 이라 down 키에 매칭되면 안 된다.
-          final toNakseongdae = await searchRoute.execute('424', '227');
+          // 총신대입구 → 전포는 목적 방향이 up(상행) 이라 down 키에 매칭되면 안 된다.
+          final toNakseongdae = await searchRoute.execute('118', '218');
           expect(toNakseongdae!.transferGuides.first, isNull);
 
-          // 같은 데이터로 방향이 맞는 경로(외선)는 정상 매칭.
-          final toBangbae = await searchRoute.execute('424', '225');
+          // 같은 데이터로 방향이 맞는 경로(하행)는 정상 매칭.
+          final toBangbae = await searchRoute.execute('118', '220');
           expect(toBangbae!.transferGuides.first, equals(outer));
         });
 
         test('구체 키와 폴백 키가 모두 있으면 구체 키가 우선한다', () async {
-          const specific = TransferGuide(car: 4, note: '내선 전용');
+          const specific = TransferGuide(car: 4, note: '상행 전용');
           const fallback = TransferGuide(car: 6, note: '방향 무관');
           when(() => mockRepo.getTransferGuides()).thenAnswer((_) async => {
-                '사당_4_down_2_up': specific,
-                '사당_4_down_2': fallback,
+                '서면_1_down_2_up': specific,
+                '서면_1_down_2': fallback,
               });
 
-          final toNakseongdae = await searchRoute.execute('424', '227');
+          final toNakseongdae = await searchRoute.execute('118', '218');
           expect(toNakseongdae!.transferGuides.first, equals(specific));
 
-          // 구체 키가 없는 반대 방향(외선)은 폴백으로 내려간다.
-          final toBangbae = await searchRoute.execute('424', '225');
+          // 구체 키가 없는 반대 방향(하행)은 폴백으로 내려간다.
+          final toBangbae = await searchRoute.execute('118', '220');
           expect(toBangbae!.transferGuides.first, equals(fallback));
         });
       });
@@ -1450,8 +1444,8 @@ void main() {
         when(() => mockRepo.getTransferTimes())
             .thenAnswer((_) async => {'을지로3가_2_Z': 180});
         when(() => mockRepo.getTransferGuides()).thenAnswer((_) async => {
-              '을지로3가_2_up_Z_up': specific,
-              '을지로3가_2_up_Z': fallback,
+              '을지로3가_2_down_Z_up': specific,
+              '을지로3가_2_down_Z': fallback,
             });
 
         final result = await searchRoute.execute('201', 'ZB');

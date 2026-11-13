@@ -8,7 +8,7 @@
 // - Flutter 는 iOS 에서 접힘선(`MediaQuery.displayFeatures`)을 주지 않는다
 //   (Duo 실측: `[]`). 그래서 접힘선은 화면 가로 중앙으로 가정한다.
 // - 화면 폭만으로는 iPad·가로모드 iPhone 과 구분되지 않아, 네이티브 idiom
-//   (`AppDelegate.swift` 의 `seoul_subway/device` 채널)이 phone 이면서 짧은 변이
+//   (`AppDelegate.swift` 의 `busan_subway/device` 채널)이 phone 이면서 짧은 변이
 //   [kUnfoldedMinShortestSide] 이상일 때만 펼친 Duo 로 본다.
 //   일반 iPhone 은 가로로 돌려도 짧은 변이 440pt 이하, 접힌 Duo 는 466pt,
 //   펼친 Duo 는 669pt(실측)다.
@@ -41,7 +41,7 @@ double rightPageWidth(MediaQueryData view) =>
     view.size.width / 2 - view.padding.right;
 
 abstract final class FoldableLayout {
-  static const _channel = MethodChannel('seoul_subway/device');
+  static const _channel = MethodChannel('busan_subway/device');
 
   static bool _isIosPhone = false;
 

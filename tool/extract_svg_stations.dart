@@ -20,7 +20,7 @@ import 'package:xml/xml.dart';
 const _maxMatchingDistance = 50.0;
 
 void main() {
-  final inputPath = 'assets/svg/seoul_metro_map.svg';
+  final inputPath = 'assets/svg/busan_metro_map.svg';
   final outputPath = 'assets/json/svg_station_coords.json';
 
   final inputFile = File(inputPath);

@@ -8,7 +8,7 @@
 // 로직을 파이썬으로 이중 구현해야 해서 `lib/core/utils/line_direction.dart`
 // 와 드리프트할 위험이 있고, (2) 나무위키 값 자체가 공식 데이터와 대조 시
 // 45%(336건 중 153건) 불일치했다. 공식 데이터셋(공공데이터포털 15098252
-// `서울교통공사_서울 도시철도 환승정보`, `tool/data/seoul_metro_transfer_guides_official.csv`)
+// `서울교통공사_서울 도시철도 환승정보`, `tool/data/busan_metro_transfer_guides_official.csv`)
 // 을 주 소스로 전환한다.
 //
 // 이 도구를 **Dart** 로 쓴 핵심 이유: `lib/core/utils/line_direction.dart`
@@ -64,10 +64,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:seoul_subway/core/utils/line_direction.dart';
+import 'package:busan_subway/core/utils/line_direction.dart';
 
 const _officialCsvPath =
-    'tool/data/seoul_metro_transfer_guides_official.csv';
+    'tool/data/busan_metro_transfer_guides_official.csv';
 const _manualCsvPath = 'data/transfer_guides_manual.csv';
 const _outputCsvPath = 'data/transfer_guides.csv';
 

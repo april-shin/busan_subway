@@ -6,14 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/entities/favorite_route.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/repositories/station_repository.dart';
-import 'package:seoul_subway/features/favorites/presentation/providers/favorite_routes_provider.dart';
-import 'package:seoul_subway/features/favorites/presentation/widgets/favorite_tag_bar.dart';
-import 'package:seoul_subway/features/home/presentation/screens/home_screen.dart';
-import 'package:seoul_subway/features/home/presentation/widgets/search_bar_widget.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/favorite_route.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/repositories/station_repository.dart';
+import 'package:busan_subway/features/favorites/presentation/providers/favorite_routes_provider.dart';
+import 'package:busan_subway/features/favorites/presentation/widgets/favorite_tag_bar.dart';
+import 'package:busan_subway/features/home/presentation/screens/home_screen.dart';
+import 'package:busan_subway/features/home/presentation/widgets/search_bar_widget.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _MockStationRepository extends Mock implements StationRepository {}

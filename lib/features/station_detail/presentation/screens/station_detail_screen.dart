@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/feature_flags.dart';
 import '../../../../core/constants/line_colors.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../domain/entities/station.dart';
@@ -127,21 +128,25 @@ class _StationDetailBody extends StatelessWidget {
               }).toList(),
             ),
           ],
-          const SizedBox(height: AppSpacing.space24),
-          ElevatedButton.icon(
-            onPressed: () {
-              // stationId 를 함께 넘겨 동명이역(양평 등)의 도착 정보가
-              // 섞이지 않게 한다.
-              context.go('/arrivals/${station.name}?stationId=${station.id}');
-            },
-            icon: const Icon(Icons.access_time),
-            label: const Text('실시간 도착 정보 보기'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.space12,
+          // 실시간 기능이 꺼져 있으면 도착정보 진입점을 숨긴다.
+          if (FeatureFlags.realtimeEnabled) ...[
+            const SizedBox(height: AppSpacing.space24),
+            ElevatedButton.icon(
+              onPressed: () {
+                // stationId 를 함께 넘겨 동명이역(좌천·동래)의 도착 정보가
+                // 섞이지 않게 한다.
+                context
+                    .go('/arrivals/${station.name}?stationId=${station.id}');
+              },
+              icon: const Icon(Icons.access_time),
+              label: const Text('실시간 도착 정보 보기'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.space12,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

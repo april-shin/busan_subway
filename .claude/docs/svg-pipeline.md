@@ -1,6 +1,6 @@
 # SVG 데이터 파이프라인
 
-원본 SVG(`seoul_metro_map.svg`)에서 앱 에셋을 생성하는 3단계 파이프라인:
+원본 SVG(`busan_metro_map.svg`)에서 앱 에셋을 생성하는 3단계 파이프라인:
 
 ```bash
 # 1단계: SVG에서 역 좌표 추출
@@ -41,7 +41,7 @@ dart run tool/build_map_html.dart
 
 ## HTML 빌드 (`build_map_html.dart`)
 
-- **입력 4개 + 선택 1개**: `assets/svg/seoul_metro_map.svg` +
+- **입력 4개 + 선택 1개**: `assets/svg/busan_metro_map.svg` +
   `assets/json/stations.json` + `assets/json/lines.json` +
   `assets/json/connections.json`, 그리고 있을 때만 읽는
   `data/badge_offsets.json`(배지 수동 보정)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/transfer_guide.dart';
-import 'package:seoul_subway/features/route_search/presentation/widgets/transfer_row.dart';
+import 'package:busan_subway/domain/entities/transfer_guide.dart';
+import 'package:busan_subway/features/route_search/presentation/widgets/transfer_row.dart';
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(

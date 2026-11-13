@@ -1,6 +1,7 @@
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/feature_flags.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../core/theme/tokens/app_radii.dart';
 import '../../utils/departure_candidates.dart';
@@ -203,7 +204,9 @@ class _DepartureTimeSheetState extends State<_DepartureTimeSheet> {
             ListTile(
               leading: const Icon(Icons.my_location, size: AppIconSize.md),
               title: const Text('지금 출발'),
-              subtitle: const Text('실시간 도착정보 사용'),
+              subtitle: const Text(
+                FeatureFlags.realtimeEnabled ? '실시간 도착정보 사용' : '현재 시각 기준',
+              ),
               selected: widget.query.isNow,
               onTap: () => Navigator.of(context).pop(
                 // 시트에서 토글한 요일은 넘기지 않는다 — "지금 출발"에서는

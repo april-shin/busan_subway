@@ -1,11 +1,11 @@
 ---
 name: flutter-architecture
-description: "서울 지하철 앱의 Flutter 아키텍처 설계, Riverpod 프로바이더 구현, Clean Architecture 계층 구조, go_router 라우팅, Freezed 데이터 모델 작업을 수행. 새 기능 추가, 프로바이더 생성, 라우팅 변경, 아키텍처 리팩토링, 상태관리 최적화 요청 시 이 스킬을 사용. 기존 아키텍처 수정, 계층 구조 변경, 프로바이더 최적화, 리빌드 최소화 작업에도 적용."
+description: "부산 지하철 앱의 Flutter 아키텍처 설계, Riverpod 프로바이더 구현, Clean Architecture 계층 구조, go_router 라우팅, Freezed 데이터 모델 작업을 수행. 새 기능 추가, 프로바이더 생성, 라우팅 변경, 아키텍처 리팩토링, 상태관리 최적화 요청 시 이 스킬을 사용. 기존 아키텍처 수정, 계층 구조 변경, 프로바이더 최적화, 리빌드 최소화 작업에도 적용."
 ---
 
 # Flutter Architecture
 
-서울 지하철 앱의 Clean Architecture + Riverpod 기반 아키텍처 가이드.
+부산 지하철 앱의 Clean Architecture + Riverpod 기반 아키텍처 가이드.
 
 ## 계층 구조
 

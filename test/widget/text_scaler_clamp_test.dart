@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/app.dart' show appRootBuilder;
+import 'package:busan_subway/app.dart' show appRootBuilder;
 
 /// lib/app.dart 의 builder 에서 수행하는 textScaler clamp 로직을 직접 추출해
 /// 단위 테스트로 검증한다.

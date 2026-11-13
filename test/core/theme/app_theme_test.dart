@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/theme/app_theme.dart';
+import 'package:busan_subway/core/theme/app_theme.dart';
 
 void main() {
   // AppTheme.light 는 getter 이므로 매 테스트에서 fresh 하게 얻는다.

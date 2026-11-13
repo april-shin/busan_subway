@@ -11,11 +11,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:seoul_subway/core/constants/subway_id_mapping.dart';
-import 'package:seoul_subway/core/utils/fallback_arrivals_from_positions.dart';
-import 'package:seoul_subway/data/remote/dto/train_position_dto.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/constants/subway_id_mapping.dart';
+import 'package:busan_subway/core/utils/fallback_arrivals_from_positions.dart';
+import 'package:busan_subway/data/remote/dto/train_position_dto.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 Future<void> main(List<String> args) async {
   final targetStation = args.isNotEmpty ? args[0] : '천호';
@@ -82,10 +82,10 @@ Future<void> main(List<String> args) async {
 String _readApiKey() {
   final env = File('.env').readAsLinesSync();
   for (final line in env) {
-    if (line.startsWith('SEOUL_SUBWAY_API_KEY')) {
+    if (line.startsWith('BUSAN_SUBWAY_API_KEY')) {
       return line.split('=')[1].trim();
     }
   }
-  stderr.writeln('.env 에 SEOUL_SUBWAY_API_KEY 가 없습니다');
+  stderr.writeln('.env 에 BUSAN_SUBWAY_API_KEY 가 없습니다');
   exit(1);
 }

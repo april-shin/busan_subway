@@ -6,10 +6,13 @@ import '../../../subway_map/presentation/providers/subway_map_providers.dart';
 
 part 'home_station_provider.g.dart';
 
+/// 홈 역을 지정하지 않았을 때 지도가 처음 보여 줄 역 이름(부산 도심 환승역).
+const String kDefaultHomeStationName = '서면';
+
 /// 사용자가 지정한 지도 초기 중심역(홈 역) 의 Station ID 를 보관한다.
 ///
-/// 저장은 `SharedPreferences` 에 문자열로 이뤄지며, 값이 없으면 null (기본값 =
-/// 서울역, JS `INITIAL_CENTER_X/Y` 로 결정).
+/// 저장은 `SharedPreferences` 에 문자열로 이뤄지며, 값이 없으면 null 이다. 이때
+/// 지도는 [kDefaultHomeStationName] 역으로 팬한다(`svg_web_view.dart`).
 ///
 /// [`Station.id`](../../../../domain/entities/station.dart) 는
 /// `"{stationId}_{lineId}"` 포맷이므로 노선 특정 없이 이름만 저장하면

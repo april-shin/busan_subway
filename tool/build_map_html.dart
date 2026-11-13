@@ -1,6 +1,6 @@
 /// 원본 SVG를 HTML 템플릿에 인라인 삽입하여 WebView용 map.html을 생성하는 스크립트.
 ///
-/// 입력: assets/svg/seoul_metro_map.svg
+/// 입력: assets/svg/busan_metro_map.svg
 /// 출력: assets/html/map.html
 ///
 /// SVG 최소 변환:
@@ -49,7 +49,7 @@ import 'line_badges.dart';
 import 'map_constants.dart';
 
 void main() {
-  const svgPath = 'assets/svg/seoul_metro_map.svg';
+  const svgPath = 'assets/svg/busan_metro_map.svg';
   const htmlPath = 'assets/html/map.html';
   const stationsJsonPath = 'assets/json/stations.json';
   const linesJsonPath = 'assets/json/lines.json';
@@ -1501,7 +1501,10 @@ $lineBadgesSvg
     actions.appendChild(makeBtn('\u25c9', '출발', '#2196F3', function() { window._setDeparture(s.id); }));
     actions.appendChild(makeBtn('⬦', '경유', '#FF9800', function() { window._addWaypoint(s.id); }));
     actions.appendChild(makeBtn('\u26b2', '도착', '#F44336', function() { window._setArrival(s.id); }));
-    actions.appendChild(makeBtn('\u23f0', '도착정보', '#4CAF50', function() { window._viewArrivalInfo(s.name); }));
+    // 실시간 기능이 꺼져 있으면 Flutter 가 showArrivalInfo=false 를 보낸다(FeatureFlags.realtimeEnabled).
+    if (s.showArrivalInfo !== false) {
+      actions.appendChild(makeBtn('\u23f0', '도착정보', '#4CAF50', function() { window._viewArrivalInfo(s.name); }));
+    }
 
     tooltip.appendChild(actions);
     tooltip.style.display = 'block';

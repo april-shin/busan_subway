@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
 
 void main() {
   group('Connection', () {

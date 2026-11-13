@@ -2,13 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/same_station.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/same_station.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 /// 역 선택 화면의 중복 제거 계약 검증.
 ///
-/// 핵심 회귀: 이름만으로 합치면 이름이 같고 위치는 다른 **동명이역**(5호선 양평
-/// vs 경의중앙선 양평)의 뒤쪽 레코드가 목록에서 사라져 검색으로 선택할 방법이
+/// 핵심 회귀: 이름만으로 합치면 이름이 같고 위치는 다른 **동명이역**(부산 좌천 1호선/동해선, 동래 1·4호선/동해선)의 뒤쪽 레코드가 목록에서 사라져 검색으로 선택할 방법이
 /// 없어진다. 동시에 진짜 환승역은 계속 한 항목으로 합쳐져야 한다.
 void main() {
   Station station(
@@ -183,7 +182,7 @@ void main() {
       ];
     });
 
-    test('양평만 2건으로 남고 나머지 동명 역은 모두 1건', () {
+    test('동명이역(좌천 2건, 동래 2건)만 여러 건으로 남고 나머지 환승역은 1건으로 합쳐진다', () {
       final result = uniqueStationsByLocation(stations);
       final countByName = <String, int>{};
       for (final s in result) {
@@ -193,15 +192,25 @@ void main() {
       final multi = Map.fromEntries(
         countByName.entries.where((e) => e.value > 1),
       );
-      expect(multi, {'양평': 2});
+      expect(multi, {'좌천': 2, '동래': 2});
     });
 
-    test('두 양평의 노선이 각각 5호선 / 경의중앙', () {
-      final yangpyeong = uniqueStationsByLocation(stations)
-          .where((s) => s.name == '양평')
+    test('좌천은 1호선·동해선이 각각 별개 역으로 남는다', () {
+      final jwacheon = uniqueStationsByLocation(stations)
+          .where((s) => s.name == '좌천')
           .toList();
+      expect(jwacheon.map((s) => s.lineId), unorderedEquals(['1', '동해']));
+    });
 
-      expect(yangpyeong.map((s) => s.lineId), containsAll(['5', '경의중앙']));
+    test('동래는 동해선이 분리되고 1·4호선은 한 항목으로 합쳐진다', () {
+      final dongnae = uniqueStationsByLocation(stations)
+          .where((s) => s.name == '동래')
+          .toList();
+      expect(dongnae, hasLength(2));
+      final byLine = {for (final s in dongnae) s.lineId: s};
+      expect(byLine.keys, containsAll(['1', '동해']));
+      // 1호선 대표 항목이 1·4호선 환승을 모두 안고 있다.
+      expect(byLine['1']!.transferLines, containsAll(['1', '4']));
     });
 
     test('전체 역 이름 종류는 모두 목록에 남는다', () {
@@ -210,7 +219,7 @@ void main() {
       expect(result.map((s) => s.name).toSet(), allNames);
     });
 
-    test('노선 필터가 걸리는 역은 양평 두 곳뿐', () {
+    test('노선 필터가 걸리는 역은 좌천·동래 동명이역 레코드뿐', () {
       final filtered = <String, Set<String>?>{};
       for (final s in stations) {
         final own = distinctSameNameLineIds(target: s, stations: stations);
@@ -218,8 +227,11 @@ void main() {
       }
 
       expect(filtered, {
-        '양평_513': {'5'},
-        '양평_K50': {'경의중앙'},
+        '좌천_116': {'1'},
+        '좌천_816': {'동해'},
+        '동래_125': {'1', '4'},
+        '동래_402': {'1', '4'},
+        '동래_805': {'동해'},
       });
     });
   });

@@ -7,7 +7,7 @@
 ///   flutter test --run-skipped --tags real-api
 ///
 /// 주의사항:
-///   - .env 파일에 유효한 SEOUL_SUBWAY_API_KEY가 필요 (없으면 graceful skip)
+///   - .env 파일에 유효한 BUSAN_SUBWAY_API_KEY가 필요 (없으면 graceful skip)
 ///   - 실제 API를 호출하므로 네트워크 연결 필요
 ///   - 574개 역 전체 테스트 시 약 5~10분 소요
 ///   - 서울 열린데이터 API 일일 호출 한도에 주의
@@ -19,8 +19,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/constants/api_constants.dart';
-import 'package:seoul_subway/data/remote/dto/arrival_info_dto.dart';
+import 'package:busan_subway/core/constants/api_constants.dart';
+import 'package:busan_subway/data/remote/dto/arrival_info_dto.dart';
 
 /// API 호출 간 대기 시간 (서버 부하 방지)
 const _requestDelay = Duration(milliseconds: 100);
@@ -31,13 +31,13 @@ const _batchSize = 5;
 /// API 호출 타임아웃
 const _timeout = Duration(seconds: 15);
 
-/// .env 에서 유효한 SEOUL_SUBWAY_API_KEY 를 읽는다. 없거나 플레이스홀더면 null.
+/// .env 에서 유효한 BUSAN_SUBWAY_API_KEY 를 읽는다. 없거나 플레이스홀더면 null.
 /// (테스트 등록 시점에 평가하여 skip 여부를 결정하기 위해 main() 밖에서 수행)
 String? _readApiKey() {
   final envFile = File('.env');
   if (!envFile.existsSync()) return null;
   final match =
-      RegExp(r'SEOUL_SUBWAY_API_KEY=(.+)').firstMatch(envFile.readAsStringSync());
+      RegExp(r'BUSAN_SUBWAY_API_KEY=(.+)').firstMatch(envFile.readAsStringSync());
   final value = match?.group(1)?.trim();
   if (value == null || value.isEmpty || value == 'your_api_key_here') return null;
   return value;
@@ -48,7 +48,7 @@ void main() {
   // integration 태그 skip 으로 이미 제외되며, --run-skipped 로 명시 실행 시에만 도달)
   final apiKey = _readApiKey();
   final skipReason = apiKey == null
-      ? '.env 에 유효한 SEOUL_SUBWAY_API_KEY 가 없어 통합 테스트를 건너뜁니다.'
+      ? '.env 에 유효한 BUSAN_SUBWAY_API_KEY 가 없어 통합 테스트를 건너뜁니다.'
       : null;
 
   Dio? dio;

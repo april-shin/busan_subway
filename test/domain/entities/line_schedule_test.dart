@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
 
 void main() {
   group('DaySchedule', () {

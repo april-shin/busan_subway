@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/constants/feature_flags.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/foldable_layout.dart';
 import 'features/arrival_info/presentation/screens/arrival_info_screen.dart';
@@ -70,9 +71,12 @@ final GoRouter router = GoRouter(
           ),
         ),
         GoRoute(
-          // `?stationId=` 는 동명이역(5호선 양평 vs 경의중앙선 양평) 구분용 —
+          // `?stationId=` 는 동명이역(부산: 좌천·동래) 구분용 —
           // 없으면 역명만으로 조회한다(노선 필터 없음).
+          // 실시간 기능이 꺼져 있으면 딥링크로 들어와도 홈으로 돌려보낸다.
           path: 'arrivals/:stationName',
+          redirect: (context, state) =>
+              FeatureFlags.realtimeEnabled ? null : '/',
           builder: _withRightSafeArea(
             (context, state) => ArrivalInfoScreen(
               stationName: state.pathParameters['stationName']!,
@@ -91,8 +95,8 @@ final GoRouter router = GoRouter(
   ],
 );
 
-class SeoulSubwayApp extends StatelessWidget {
-  const SeoulSubwayApp({super.key});
+class BusanSubwayApp extends StatelessWidget {
+  const BusanSubwayApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +108,7 @@ class SeoulSubwayApp extends StatelessWidget {
     // 지정한다 — RenderView 가 매 프레임 화면 최상/최하단에서 샘플링해
     // 적용하므로 MaterialApp 의 호출보다 나중에 반영된다.
     return MaterialApp.router(
-      title: '서울 지하철',
+      title: '부산 지하철',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,

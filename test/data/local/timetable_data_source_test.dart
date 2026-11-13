@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
 
 // TimetableDataSource의 파싱 로직은 rootBundle에 의존하므로
 // 파싱 함수를 직접 테스트하기 어렵다.

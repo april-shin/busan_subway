@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/graph/graph_builder.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/express_skip_edge.dart';
+import 'package:busan_subway/graph/graph_builder.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/express_skip_edge.dart';
 
 void main() {
   late GraphBuilder builder;
@@ -236,13 +236,13 @@ void main() {
       );
     });
 
-    test('9호선 모드 전환 edge 는 weight 0 (정책: 같은 플랫폼에서 환승)', () {
+    test('모드 전환 edge 는 배차간격/2 (같은 승강장 0초 예외 노선이 없다)', () {
       final graph = builder.build(
         stations: stations,
         connections: connections,
         transferTimes: {},
         expressSkipEdges: expressEdges,
-        headwaySeconds: const {'9': 240}, // 배차 4분이어도 9호선은 0초 강제
+        headwaySeconds: const {'9': 240}, // 배차 4분 → 120초
       );
 
       final localToExpress = graph
@@ -250,17 +250,17 @@ void main() {
           .firstWhere((e) => e.toNodeId == '905_9E');
       expect(localToExpress.isTransfer, isTrue);
       expect(localToExpress.lineId, '9M');
-      expect(localToExpress.weightSeconds, 0,
-          reason: '9호선 모드 전환은 같은 플랫폼이라 대기 0초');
+      expect(localToExpress.weightSeconds, 120,
+          reason: '부산은 0초 예외 노선이 없어 배차/2 를 쓴다');
 
       final expressToLocal = graph
           .getNeighbors('905_9E')
           .firstWhere((e) => e.toNodeId == '905_9');
       expect(expressToLocal.isTransfer, isTrue);
-      expect(expressToLocal.weightSeconds, 0);
+      expect(expressToLocal.weightSeconds, 120);
     });
 
-    test('headwaySeconds가 없어도 9호선 모드 전환 edge weight는 0', () {
+    test('headwaySeconds가 없으면 모드 전환 edge weight는 기본 배차(180초)/2 = 90', () {
       final graph = builder.build(
         stations: stations,
         connections: connections,
@@ -271,10 +271,10 @@ void main() {
       final modeEdge = graph
           .getNeighbors('905_9')
           .firstWhere((e) => e.toNodeId == '905_9E');
-      expect(modeEdge.weightSeconds, 0);
+      expect(modeEdge.weightSeconds, 90);
     });
 
-    test('비-9호선(예: 공항철도 A) 모드 전환 edge 는 기존 정책(배차/2) 유지',
+    test('다른 노선(가상 A) 모드 전환 edge 도 배차/2',
         () {
       // 가상의 노선 'A' (공항철도) 데이터로 회귀 검증.
       final airportStations = const [
@@ -308,7 +308,7 @@ void main() {
           .firstWhere((e) => e.toNodeId == 'A01_AE');
       expect(modeEdge.lineId, 'AM');
       expect(modeEdge.weightSeconds, 120,
-          reason: '비-9호선은 기존 정책(배차/2) 유지');
+          reason: '배차/2');
     });
 
     test('expressSkipEdges가 비어있으면 _E 노드와 모드 전환 edge가 없다', () {

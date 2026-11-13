@@ -20,20 +20,20 @@ typedef ArrivalFetchResult = ({List<ArrivalInfoDto> arrivals, bool isPartial});
 /// [_fetchMerged] 내부용: 질의 하나의 결과와 실패 사유.
 typedef _SettledFetch = ({List<ArrivalInfoDto> rows, Object? error});
 
-class SeoulApiDataSource {
+class BusanApiDataSource {
   final ApiClient _apiClient;
 
-  SeoulApiDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
+  BusanApiDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
 
   String _requireApiKey() {
-    final apiKey = dotenv.env['SEOUL_SUBWAY_API_KEY'];
+    final apiKey = dotenv.env['BUSAN_SUBWAY_API_KEY'];
     if (apiKey == null || apiKey.isEmpty || apiKey == 'your_api_key_here') {
       developer.log(
-        'API 키 오류: SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다',
-        name: 'SeoulApiDataSource',
+        'API 키 오류: BUSAN_SUBWAY_API_KEY가 설정되지 않았습니다',
+        name: 'BusanApiDataSource',
         level: 1000,
       );
-      throw Exception('SEOUL_SUBWAY_API_KEY가 설정되지 않았습니다');
+      throw Exception('BUSAN_SUBWAY_API_KEY가 설정되지 않았습니다');
     }
     return apiKey;
   }
@@ -54,7 +54,7 @@ class SeoulApiDataSource {
     if (lineApiName == null) {
       developer.log(
         '위치 API 미지원 노선: lineId=$lineId',
-        name: 'SeoulApiDataSource',
+        name: 'BusanApiDataSource',
       );
       return [];
     }
@@ -63,7 +63,7 @@ class SeoulApiDataSource {
 
     developer.log(
       '실시간 열차위치 요청: 노선=$lineId (API명=$lineApiName)',
-      name: 'SeoulApiDataSource',
+      name: 'BusanApiDataSource',
     );
 
     try {
@@ -74,7 +74,7 @@ class SeoulApiDataSource {
       if (list == null) {
         developer.log(
           '열차위치 없음: 노선=$lineId',
-          name: 'SeoulApiDataSource',
+          name: 'BusanApiDataSource',
         );
         return [];
       }
@@ -85,13 +85,13 @@ class SeoulApiDataSource {
 
       developer.log(
         '실시간 열차위치 조회 성공: 노선=$lineId, 열차 수=${result.length}',
-        name: 'SeoulApiDataSource',
+        name: 'BusanApiDataSource',
       );
       return result;
     } catch (e) {
       developer.log(
         '실시간 열차위치 조회 실패: 노선=$lineId',
-        name: 'SeoulApiDataSource',
+        name: 'BusanApiDataSource',
         error: e,
       );
       rethrow;
@@ -172,7 +172,7 @@ class SeoulApiDataSource {
           onError: (Object e, StackTrace st) {
             developer.log(
               '병합 조회 중 질의 실패: 역명=$stationName, API명=$apiName',
-              name: 'SeoulApiDataSource',
+              name: 'BusanApiDataSource',
               error: e,
               stackTrace: st,
               level: 900,
@@ -193,7 +193,7 @@ class SeoulApiDataSource {
     developer.log(
       '병합 조회 완료: 역명=$stationName, 질의명=$apiStationNames, '
       '열차 수=${merged.length}, 실패=${failures.length}/${settled.length}',
-      name: 'SeoulApiDataSource',
+      name: 'BusanApiDataSource',
     );
     return (arrivals: merged, isPartial: failures.isNotEmpty);
   }
@@ -213,7 +213,7 @@ class SeoulApiDataSource {
 
     developer.log(
       '실시간 도착정보 요청: 역명=$label',
-      name: 'SeoulApiDataSource',
+      name: 'BusanApiDataSource',
     );
 
     try {
@@ -228,7 +228,7 @@ class SeoulApiDataSource {
           final message = errorInfo['message']?.toString() ?? '알 수 없는 오류';
           developer.log(
             'API 오류 응답: 역명=$label, 메시지=$message',
-            name: 'SeoulApiDataSource',
+            name: 'BusanApiDataSource',
             level: 1000,
           );
           throw Exception('API 오류: $message');
@@ -239,7 +239,7 @@ class SeoulApiDataSource {
       if (realtimeArrivalList == null) {
         developer.log(
           '도착정보 없음: 역명=$label',
-          name: 'SeoulApiDataSource',
+          name: 'BusanApiDataSource',
         );
         return [];
       }
@@ -251,14 +251,14 @@ class SeoulApiDataSource {
 
       developer.log(
         '실시간 도착정보 조회 성공: 역명=$label, 열차 수=${result.length}',
-        name: 'SeoulApiDataSource',
+        name: 'BusanApiDataSource',
       );
 
       return result;
     } catch (e) {
       developer.log(
         '실시간 도착정보 조회 실패: 역명=$label',
-        name: 'SeoulApiDataSource',
+        name: 'BusanApiDataSource',
         error: e,
       );
       rethrow;

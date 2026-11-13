@@ -6,10 +6,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/home/presentation/screens/home_screen.dart';
-import 'package:seoul_subway/features/home/presentation/widgets/search_bar_widget.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/home/presentation/screens/home_screen.dart';
+import 'package:busan_subway/features/home/presentation/widgets/search_bar_widget.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 
 void main() {
   testWidgets('HomeScreen 이 검색 카드 높이를 mapSafeTopProvider 에 기록한다', (tester) async {

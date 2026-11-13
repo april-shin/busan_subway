@@ -125,17 +125,15 @@ RouteCoverage classifyDestinationCoverage({
 /// 열차마다 반복할 이유가 없다.
 ///
 /// [routeStationIds] 는 탑승 구간의 역 ID 목록(탑승역부터 순서대로), [lineId] 는
-/// **base 노선 ID**(가상 급행 `9E` 가 아닌 `9`) 여야 한다. [stations] 에서 해당
+/// **base 노선 ID**(가상 급행 `{base}E` 가 아닌 base) 여야 한다. [stations] 에서 해당
 /// 노선의 역만 골라 행선지 이름을 역 ID로 해석한다.
 ///
 /// 판정 데이터가 부족하면(구간 역 2개 미만, [stations]/[connections] 미로딩,
 /// 행선지 미해석) 항상 [RouteCoverage.full] 을 돌려준다 — fail-open. 판정 실패로
 /// 정상 열차가 사라지는 것보다 필터를 걸지 않는 편이 안전하다.
 ///
-/// 2호선은 판정하지 않고 항상 [RouteCoverage.full] 이다(사용자 결정). 순환선이라
-/// 계속 도는 열차도 "성수행" 처럼 임의의 역을 행선지로 보고해, 행선지 기준 판정이
-/// 탈 수 있는 열차를 후보에서 빼버린다. 지도 유령 판정도 같은 이유로 2호선을
-/// 제외한다(`live_train_provider.dart` 의 `branchFilterEnabled`).
+/// (서울 시절에는 순환선 2호선을 판정에서 제외했다. 부산은 전 노선이 선형이라
+/// 노선 예외가 없다.)
 RouteCoverage Function(String destination) makeDestinationCoverageClassifier({
   required List<String> routeStationIds,
   required String lineId,
@@ -143,8 +141,7 @@ RouteCoverage Function(String destination) makeDestinationCoverageClassifier({
   required List<Station> stations,
   required List<Connection> connections,
 }) {
-  if (lineId == '2' ||
-      routeStationIds.length < 2 ||
+  if (routeStationIds.length < 2 ||
       stations.isEmpty ||
       connections.isEmpty) {
     return (_) => RouteCoverage.full;

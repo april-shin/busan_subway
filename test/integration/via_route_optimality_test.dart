@@ -4,21 +4,20 @@
 // 같은 문제를 브루트포스(모든 플랫폼 조합 × 구간 Dijkstra)로 다시 풀어 **참조 구현**
 // 으로 삼고, DP 결과가 그 최적과 같은지 비교한다.
 //
-// 배경 — 초기 구현은 구간별 그리디였고, 앞 구간 비용만 보고 경유역 플랫폼을 고정했다.
-// 그 결과 신논현 →[강남, 선릉]→ 왕십리 에서 선릉을 2호선 플랫폼으로 잡아 왕십리까지
-// 2호선 순환선을 12정거장 도는 37.7분 경로가 나왔다(최적 33.7분, 선릉에서 수인분당선
-// 환승). 아래 케이스가 그 회귀 가드다.
+// 배경 — 초기 구현은 구간별 그리디였고, 앞 구간 비용만 보고 경유역 플랫폼을 고정해
+// 환승역에서 손해를 보는 경로가 나왔다(서울 선릉 사례). 부산 데이터로도 같은 불변식을
+// 잠근다.
 //
 // 실데이터(배차간격·환승시간)가 바뀌어도 "DP == 전수탐색 최적" 불변식은 유지되므로
 // 절대 분 수를 하드코딩하지 않는다.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/headway_estimator.dart';
-import 'package:seoul_subway/data/local/local_data_source.dart';
-import 'package:seoul_subway/data/local/timetable_data_source.dart';
-import 'package:seoul_subway/data/repositories/station_repository_impl.dart';
-import 'package:seoul_subway/graph/graph_builder.dart';
-import 'package:seoul_subway/graph/shortest_path.dart';
-import 'package:seoul_subway/graph/subway_graph.dart';
+import 'package:busan_subway/core/utils/headway_estimator.dart';
+import 'package:busan_subway/data/local/local_data_source.dart';
+import 'package:busan_subway/data/local/timetable_data_source.dart';
+import 'package:busan_subway/data/repositories/station_repository_impl.dart';
+import 'package:busan_subway/graph/graph_builder.dart';
+import 'package:busan_subway/graph/shortest_path.dart';
+import 'package:busan_subway/graph/subway_graph.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -74,16 +73,16 @@ void main() {
   group('경유 경로 최적성 (실데이터 vs 전수탐색)', () {
     // 각 케이스: [출발, ...경유, 도착] 역 이름.
     final cases = <List<String>>[
-      // 회귀 가드: 그리디가 선릉을 2호선 플랫폼으로 잡아 4분 손해를 봤던 케이스.
-      ['신논현', '강남', '선릉', '왕십리'],
-      // 경유 1개 — 환승역 경유.
-      ['신논현', '강남', '왕십리'],
+      // 환승역(서면)을 경유 — 1호선·2호선 두 플랫폼 후보가 DP 상태로 남는다.
+      ['다대포해수욕장', '서면', '노포'],
       // 경유역이 이미 최단경로상에 있는 경우.
-      ['신논현', '선정릉', '왕십리'],
-      // 급행 지원 노선(9호선)을 경유 — 가상 급행 노드 후보가 섞인 케이스.
-      ['김포공항', '당산', '신논현'],
+      ['다대포해수욕장', '부산진', '노포'],
+      // 환승이 필요한 경유 — 1호선 출발, 2호선 경유, 동해선 도착.
+      ['남포', '센텀시티', '태화강'],
+      // 이름 다른 환승(벡스코)을 포함한 구간.
+      ['장산', '벡스코(시립미술관)', '일광'],
       // 서로 다른 권역 — 구간마다 환승이 필요한 케이스.
-      ['사당', '을지로3가', '왕십리'],
+      ['가야대', '덕천', '안평'],
     ];
 
     for (final names in cases) {
@@ -119,7 +118,7 @@ void main() {
     }
 
     test('경유역 3개도 전수탐색 최적 이하', () {
-      final names = ['신논현', '강남', '선릉', '삼성', '왕십리'];
+      final names = ['다대포해수욕장', '서면', '연산', '동래', '노포'];
       final stops = stopsFor(names);
 
       final dp = finder.findShortestPathVia(stops);

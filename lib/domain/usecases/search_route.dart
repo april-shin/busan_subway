@@ -13,6 +13,7 @@ import '../../core/constants/dwell_time.dart';
 import '../../core/constants/line_colors.dart';
 import '../../core/utils/headway_estimator.dart';
 import '../../core/utils/line_direction.dart';
+import '../../core/utils/same_station.dart';
 import '../../core/utils/transfer_guide_key.dart';
 
 class SearchRoute {
@@ -62,14 +63,17 @@ class SearchRoute {
     if (fromStation == null || toStation == null) return null;
 
     final finder = ShortestPathFinder(graph: graph);
-    final results = finder.findShortestPathBetweenStations(
-      fromStation.name,
-      toStation.name,
-    );
+    // 역 이름이 아니라 선택된 레코드의 노드 후보로 찾는다 — 이름으로 찾으면
+    // 동명이역(부산 좌천 1호선/동해선, 동해선 동래)이 같은 역으로 취급돼
+    // 0초짜리 빈 경로가 나온다. [executeAll] 과 같은 기준이다.
+    final path = finder.findShortestPathVia([
+      _nodeIdsForStation(graph, fromStation),
+      _nodeIdsForStation(graph, toStation),
+    ]);
 
-    if (results.isEmpty) return null;
+    if (path == null) return null;
 
-    return _buildRouteResult(results.first, stationMap, transferGuides);
+    return _buildRouteResult(path, stationMap, transferGuides);
   }
 
   /// 4가지 경로 후보를 동시에 반환한다.
@@ -245,7 +249,8 @@ class SearchRoute {
   ///
   /// 정규화 규칙(경로 계산이 무의미한 입력을 제거):
   ///   - [stationMap] 에 없는 경유역 ID 는 무시한다.
-  ///   - 직전 정차역과 **같은 역 이름**인 경유역은 무시한다(연속 중복, 출발역과
+  ///   - 직전 정차역과 **같은 물리 역**(이름이 같고 가까움 — 동명이역 좌천·동래는
+  ///     다른 역)인 경유역은 무시한다(연속 중복, 출발역과
   ///     동일한 첫 경유역 등). 같은 역을 다시 지나라는 제약은 경로를 바꾸지 않는다.
   ///   - 마지막 경유역이 도착역과 같은 역이면 도착역 레코드로 교체한다. 사용자가
   ///     고른 도착역 레코드가 최종 정차역으로 남아야 노드 후보 집합이 도착역
@@ -259,10 +264,10 @@ class SearchRoute {
     final stops = <Station>[fromStation];
     for (final id in viaStationIds) {
       final via = stationMap[id];
-      if (via == null || via.name == stops.last.name) continue;
+      if (via == null || isSamePhysicalStation(via, stops.last)) continue;
       stops.add(via);
     }
-    if (stops.length > 1 && stops.last.name == toStation.name) {
+    if (stops.length > 1 && isSamePhysicalStation(stops.last, toStation)) {
       stops[stops.length - 1] = toStation;
     } else {
       stops.add(toStation);
@@ -288,10 +293,23 @@ class SearchRoute {
       for (final base in lineIds) ...['_$base', '_${base}E'],
     };
     // graph 에 실제로 존재하는 동명 노드(base + 가상 급행) 를 모두 후보로 편입.
-    return graph
+    final ids = graph
         .getNodeIdsForStation(station.name)
         .where((id) => allowedSuffixes.any(id.endsWith))
         .toSet();
+    // 이름이 다른 환승역(부산 2호선 `벡스코(시립미술관)` ↔ 동해선 `벡스코`)은 이름으로
+    // 묶이지 않는다. 환승 edge 로 바로 이어진 상대 노선 노드도 같은 물리 역으로 보고
+    // 후보에 넣는다 — 빼면 경로가 환승 edge 로 시작·종료해 `transfer` 라는 가짜
+    // 구간이 생긴다. 같은 이름의 환승 상대는 이미 들어 있어 결과가 바뀌지 않는다.
+    final partners = <String>{
+      for (final id in ids)
+        for (final e in graph.getNeighbors(id))
+          if (e.isTransfer &&
+              !e.lineId.endsWith('M') &&
+              allowedSuffixes.any(e.toNodeId.endsWith))
+            e.toNodeId,
+    };
+    return {...ids, ...partners};
   }
 
   /// 노선별 평균 배차간격(초) 맵을 로드한다.
@@ -597,7 +615,7 @@ class SearchRoute {
     List<Station> stations,
     int durationSeconds,
   ) {
-    final lineName = lineNames[lineId] ?? lineId;
+    final lineName = lineNameFor(lineId);
     final lastStation = stations.isNotEmpty ? stations.last.name : '';
 
     return RouteSegment(

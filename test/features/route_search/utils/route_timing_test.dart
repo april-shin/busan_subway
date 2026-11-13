@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_query_time.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_time_calculator.dart';
-import 'package:seoul_subway/features/route_search/utils/route_timing.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/route_search/utils/departure_query_time.dart';
+import 'package:busan_subway/features/route_search/utils/departure_time_calculator.dart';
+import 'package:busan_subway/features/route_search/utils/route_timing.dart';
 
 void main() {
   // 2026-02-23(월) 09:00 — 평일 시간표를 쓰는 고정 기준 시각.

@@ -2,8 +2,8 @@
 /**
  * 서울교통공사 사이버스테이션 노선 데이터 → SVG 변환 스크립트
  *
- * 입력: seoulmetro_lines_raw.js (var lines = {...})
- * 출력: assets/svg/seoul_subway_linemap_ko.svg
+ * 입력: busanmetro_lines_raw.js (var lines = {...})
+ * 출력: assets/svg/busan_subway_linemap_ko.svg
  *
  * 그리드: 305 columns x 200 rows, cellSize=5 → 1525x1000 px
  */
@@ -25,7 +25,7 @@ const LABEL_OFFSET = 6
 // --- 1) 노선 데이터 파싱 (JavaScript 직접 평가) ---
 
 const raw = fs.readFileSync(
-  path.join(__dirname, 'seoulmetro_lines_raw.js'),
+  path.join(__dirname, 'busanmetro_lines_raw.js'),
   'utf-8'
 )
 
@@ -191,7 +191,7 @@ svgParts.push(`</svg>`)
 
 // --- 3) 파일 저장 ---
 
-const outputPath = path.join(__dirname, '..', 'assets', 'svg', 'seoulmetro_cyber_station.svg')
+const outputPath = path.join(__dirname, '..', 'assets', 'svg', 'busanmetro_cyber_station.svg')
 fs.mkdirSync(path.dirname(outputPath), { recursive: true })
 fs.writeFileSync(outputPath, svgParts.join('\n'), 'utf-8')
 

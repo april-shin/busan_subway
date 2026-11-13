@@ -87,15 +87,15 @@ String _readApiKey() {
     stderr.writeln('.env 파일이 없습니다 (프로젝트 루트에서 실행 필요).');
     exit(1);
   }
-  final match = RegExp(r'SEOUL_SUBWAY_API_KEY\s*=\s*(.+)')
+  final match = RegExp(r'BUSAN_SUBWAY_API_KEY\s*=\s*(.+)')
       .firstMatch(envFile.readAsStringSync());
   if (match == null) {
-    stderr.writeln('.env에 SEOUL_SUBWAY_API_KEY가 없습니다.');
+    stderr.writeln('.env에 BUSAN_SUBWAY_API_KEY가 없습니다.');
     exit(1);
   }
   final key = match.group(1)!.trim();
   if (key.isEmpty || key.contains('your_api_key') || key.contains('<')) {
-    stderr.writeln('.env의 SEOUL_SUBWAY_API_KEY가 placeholder 값입니다: $key');
+    stderr.writeln('.env의 BUSAN_SUBWAY_API_KEY가 placeholder 값입니다: $key');
     exit(1);
   }
   return key;

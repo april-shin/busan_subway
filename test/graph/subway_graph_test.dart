@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/graph/subway_graph.dart';
-import 'package:seoul_subway/graph/models/graph_node.dart';
-import 'package:seoul_subway/graph/models/graph_edge.dart';
+import 'package:busan_subway/graph/subway_graph.dart';
+import 'package:busan_subway/graph/models/graph_node.dart';
+import 'package:busan_subway/graph/models/graph_edge.dart';
 
 void main() {
   late SubwayGraph graph;

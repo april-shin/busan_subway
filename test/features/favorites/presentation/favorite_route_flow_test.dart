@@ -6,14 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/repositories/arrival_repository.dart';
-import 'package:seoul_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
-import 'package:seoul_subway/features/favorites/presentation/widgets/favorite_star_button.dart';
-import 'package:seoul_subway/features/favorites/presentation/widgets/favorite_tag_bar.dart';
-import 'package:seoul_subway/features/home/presentation/widgets/search_bar_widget.dart';
-import 'package:seoul_subway/features/route_search/presentation/screens/route_result_screen.dart';
-import 'package:seoul_subway/features/route_search/presentation/utils/route_result_navigator.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/repositories/arrival_repository.dart';
+import 'package:busan_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
+import 'package:busan_subway/features/favorites/presentation/widgets/favorite_star_button.dart';
+import 'package:busan_subway/features/favorites/presentation/widgets/favorite_tag_bar.dart';
+import 'package:busan_subway/features/home/presentation/widgets/search_bar_widget.dart';
+import 'package:busan_subway/features/route_search/presentation/screens/route_result_screen.dart';
+import 'package:busan_subway/features/route_search/presentation/utils/route_result_navigator.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _MockArrivalRepository extends Mock implements ArrivalRepository {}

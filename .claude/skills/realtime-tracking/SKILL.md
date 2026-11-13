@@ -1,11 +1,11 @@
 ---
 name: realtime-tracking
-description: "서울 지하철 앱의 실시간 열차 추적, 서울 열린데이터 API 통합, 캐싱 전략, 도착시간 추정, 시간표 데이터 관리를 수행. API 연동 수정, 캐싱 로직 변경, 열차 위치 계산, 도착정보 개선, 오프라인 폴백, 시간표/배차간격 관련 요청 시 이 스킬을 사용. live_train_provider.dart, arrival 관련 파일, cache_manager.dart, timetable 관련 작업에 모두 적용."
+description: "부산 지하철 앱의 실시간 열차 추적, 서울 열린데이터 API 통합, 캐싱 전략, 도착시간 추정, 시간표 데이터 관리를 수행. API 연동 수정, 캐싱 로직 변경, 열차 위치 계산, 도착정보 개선, 오프라인 폴백, 시간표/배차간격 관련 요청 시 이 스킬을 사용. live_train_provider.dart, arrival 관련 파일, cache_manager.dart, timetable 관련 작업에 모두 적용."
 ---
 
 # Realtime Tracking
 
-서울 지하철 앱의 실시간 열차 추적 및 API 통합 가이드.
+부산 지하철 앱의 실시간 열차 추적 및 API 통합 가이드.
 
 ## ⛔ 실시간 열차 애니메이션 4원칙 중 원칙 1 — 최상위 정책
 
@@ -19,7 +19,7 @@ http://swopenapi.seoul.go.kr/api/subway/{apiKey}/json/realtimeStationArrival/0/2
 ```
 
 ### 인증
-- API 키: `.env` 파일의 `SEOUL_API_KEY`
+- API 키: `.env` 파일의 `BUSAN_SUBWAY_API_KEY`
 - `flutter_dotenv`로 런타임 로드
 - 플레이스홀더 값이면 예외 발생
 
@@ -117,7 +117,7 @@ computeSegmentDepartures(route, allArrivals, schedules)
 | 파일 | 역할 |
 |------|------|
 | `lib/features/subway_map/presentation/providers/live_train_provider.dart` | 열차 위치 프로바이더 (`receivedAtEpochMs`/`trainNo` 계약 — 원칙 1) |
-| `lib/data/remote/seoul_api_data_source.dart` | API 클라이언트 |
+| `lib/data/remote/busan_api_data_source.dart` | API 클라이언트 |
 | `lib/data/repositories/arrival_repository_impl.dart` | API + 캐시 |
 | `lib/data/local/cache_manager.dart` | 캐시 관리 |
 | `lib/data/local/timetable_data_source.dart` | 시간표 데이터 |

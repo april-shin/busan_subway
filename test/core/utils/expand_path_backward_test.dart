@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/expand_path_backward.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/expand_path_backward.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 // 1호선 가정: 숫자 ID 증가 = 하행. 테스트에서 isDown=true 는 pathToTarget의
 // 역순(ID 감소) 방향으로 이전 역을 찾게 한다.

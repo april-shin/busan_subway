@@ -1,74 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/route_search/presentation/providers/recent_search_provider.dart';
-import 'package:seoul_subway/features/route_search/presentation/screens/station_picker_screen.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/route_search/presentation/providers/recent_search_provider.dart';
+import 'package:busan_subway/features/route_search/presentation/screens/station_picker_screen.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  // 종합운동장(2/9호선 환승), 여의도(5/9호선 환승), 잠실새내(2호선 단일).
+  // 서면(1/2호선 환승), 연산(1/3호선 환승), 물만골(3호선 단일), 동의대(2호선 단일),
+  // 동명이역 좌천(1호선/동해선, 환승 아님 — 약 20km 떨어짐).
   // stations.json 의 실제 레코드 순서를 모사: 같은 이름 역은 lineId 오름차순.
   final testStations = <Station>[
     const Station(
-      id: '217',
-      name: '잠실새내',
+      id: '304',
+      name: '물만골',
+      lineId: '3',
+      latitude: 35.19,
+      longitude: 129.08,
+    ),
+    const Station(
+      id: '219',
+      name: '서면',
       lineId: '2',
-      latitude: 37.51,
-      longitude: 127.09,
+      latitude: 35.158,
+      longitude: 129.06,
+      isTransfer: true,
+      transferLines: ['1', '2'],
     ),
     const Station(
-      id: '218',
-      name: '종합운동장',
+      id: '123',
+      name: '연산',
+      lineId: '1',
+      latitude: 35.185,
+      longitude: 129.08,
+      isTransfer: true,
+      transferLines: ['1', '3'],
+    ),
+    const Station(
+      id: '305',
+      name: '연산',
+      lineId: '3',
+      latitude: 35.185,
+      longitude: 129.08,
+      isTransfer: true,
+      transferLines: ['1', '3'],
+    ),
+    const Station(
+      id: '119',
+      name: '서면',
+      lineId: '1',
+      latitude: 35.158,
+      longitude: 129.06,
+      isTransfer: true,
+      transferLines: ['1', '2'],
+    ),
+    const Station(
+      id: '222',
+      name: '동의대',
       lineId: '2',
-      latitude: 37.51,
-      longitude: 127.07,
-      isTransfer: true,
-      transferLines: ['2', '9'],
+      latitude: 35.14,
+      longitude: 129.04,
+    ),
+    // 동명이역: 1호선 좌천(부산진구) ↔ 동해선 좌천(기장군), 약 20km.
+    // 이름만으로 중복 제거하면 뒤쪽(816)이 사라져 검색으로 선택할 수 없다.
+    const Station(
+      id: '116',
+      name: '좌천',
+      lineId: '1',
+      latitude: 35.1346,
+      longitude: 129.0553,
     ),
     const Station(
-      id: '517',
-      name: '여의도',
-      lineId: '5',
-      latitude: 37.52,
-      longitude: 126.92,
-      isTransfer: true,
-      transferLines: ['5', '9'],
-    ),
-    const Station(
-      id: '915',
-      name: '여의도',
-      lineId: '9',
-      latitude: 37.52,
-      longitude: 126.92,
-      isTransfer: true,
-      transferLines: ['5', '9'],
-    ),
-    const Station(
-      id: '930',
-      name: '종합운동장',
-      lineId: '9',
-      latitude: 37.51,
-      longitude: 127.07,
-      isTransfer: true,
-      transferLines: ['2', '9'],
-    ),
-    // 동명이역: 5호선 양평(서울 영등포구) ↔ 경의중앙선 양평(경기 양평군), 약 53km.
-    // 이름만으로 중복 제거하면 뒤쪽(K50)이 사라져 검색으로 선택할 수 없다.
-    const Station(
-      id: '513',
-      name: '양평',
-      lineId: '5',
-      latitude: 37.5273,
-      longitude: 126.8874,
-    ),
-    const Station(
-      id: 'K50',
-      name: '양평',
-      lineId: '경의중앙',
-      latitude: 37.4895,
-      longitude: 127.4879,
+      id: '816',
+      name: '좌천',
+      lineId: '동해',
+      latitude: 35.31,
+      longitude: 129.22,
     ),
   ];
 
@@ -111,35 +119,35 @@ void main() {
       await tester.pumpWidget(buildHarness());
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'ㅈㅅㅅㄴ');
+      await tester.enterText(find.byType(TextField), 'ㅁㅁㄱ');
       await tester.pumpAndSettle();
 
-      expect(find.text('잠실새내'), findsOneWidget);
-      expect(find.text('여의도'), findsNothing);
-      expect(find.text('종합운동장'), findsNothing);
+      expect(find.text('물만골'), findsOneWidget);
+      expect(find.text('연산'), findsNothing);
+      expect(find.text('서면'), findsNothing);
     });
 
     testWidgets('완성형 검색은 기존과 동일하게 동작한다', (tester) async {
       await tester.pumpWidget(buildHarness());
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), '여의');
+      await tester.enterText(find.byType(TextField), '연');
       await tester.pumpAndSettle();
 
-      expect(find.text('여의도'), findsOneWidget);
-      expect(find.text('잠실새내'), findsNothing);
+      expect(find.text('연산'), findsOneWidget);
+      expect(find.text('물만골'), findsNothing);
     });
 
     testWidgets('조합 중 종성이 흡수돼도 목록이 비지 않는다', (tester) async {
       await tester.pumpWidget(buildHarness());
       await tester.pumpAndSettle();
 
-      // '여의도' 를 치는 도중 ㄷ 이 앞 글자 '의' 의 종성으로 흡수된 상태.
-      // IME 는 이때 'ㄷ' 이 아니라 '여읟' 을 내보낸다.
-      await tester.enterText(find.byType(TextField), '여읟');
+      // '동의대' 를 치는 도중 ㄷ 이 앞 글자 '의' 의 종성으로 흡수된 상태.
+      // IME 는 이때 'ㄷ' 이 아니라 '동읟' 을 내보낸다.
+      await tester.enterText(find.byType(TextField), '동읟');
       await tester.pumpAndSettle();
 
-      expect(find.text('여의도'), findsOneWidget);
+      expect(find.text('동의대'), findsOneWidget);
       expect(find.text('검색 결과가 없습니다'), findsNothing);
     });
 
@@ -147,11 +155,11 @@ void main() {
       await tester.pumpWidget(buildHarness());
       await tester.pumpAndSettle();
 
-      // '잠실새내' 를 치는 도중 ㅅ 이 '실' 의 종성 ㄹ 과 겹쳐 ㄽ 이 된 상태.
-      await tester.enterText(find.byType(TextField), '잠싨');
+      // '물만골' 을 치는 도중 ㅁ 이 '물' 의 종성 ㄹ 과 겹쳐 ㄻ 이 된 상태('묾').
+      await tester.enterText(find.byType(TextField), '묾');
       await tester.pumpAndSettle();
 
-      expect(find.text('잠실새내'), findsOneWidget);
+      expect(find.text('물만골'), findsOneWidget);
     });
 
     testWidgets('매칭이 없으면 안내 문구가 그대로 보인다', (tester) async {
@@ -169,21 +177,21 @@ void main() {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
 
-    // 종합운동장은 2호선 + 9호선에 모두 등록되어 있지만 ListTile 1개만 보여야 함.
-    expect(find.text('종합운동장'), findsOneWidget);
-    expect(find.text('여의도'), findsOneWidget);
-    expect(find.text('잠실새내'), findsOneWidget);
+    // 서면은 1호선 + 2호선에 모두 등록되어 있지만 ListTile 1개만 보여야 함.
+    expect(find.text('서면'), findsOneWidget);
+    expect(find.text('연산'), findsOneWidget);
+    expect(find.text('물만골'), findsOneWidget);
   });
 
   testWidgets('환승역에 소속 노선 뱃지가 모두 표시된다', (tester) async {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
 
-    // 종합운동장: 2호선 + 9호선 뱃지 둘 다 존재.
+    // 서면: 1호선 + 2호선 뱃지 둘 다 존재.
+    expect(find.text('1호선'), findsWidgets);
     expect(find.text('2호선'), findsWidgets);
-    expect(find.text('9호선'), findsWidgets);
-    // 여의도: 5호선 + 9호선 뱃지.
-    expect(find.text('5호선'), findsWidgets);
+    // 연산: 1호선 + 3호선 뱃지.
+    expect(find.text('3호선'), findsWidgets);
   });
 
   testWidgets('환승역 탭 시 대표 Station이 selectedStations에 저장되고 '
@@ -207,39 +215,38 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('종합운동장'));
+    await tester.tap(find.text('서면'));
     await tester.pumpAndSettle();
 
     final selected = container.read(selectedStationsProvider).departure;
     expect(selected, isNotNull);
-    expect(selected!.name, '종합운동장');
-    // transferLines 가 양쪽 노선을 모두 포함해야 이후 executeAll 에서
-    // "양쪽 다 급행 지원 노선" 공유 판정이 가능하다.
-    expect(selected.transferLines, containsAll(['2', '9']));
+    expect(selected!.name, '서면');
+    // transferLines 가 양쪽 노선을 모두 포함해야 이후 경로 검색에서 환승 소속이 보존된다.
+    expect(selected.transferLines, containsAll(['1', '2']));
   });
 
-  group('동명이역(양평)', () {
+  group('동명이역(좌천)', () {
     testWidgets('이름이 같아도 멀리 떨어진 두 역은 각각 표시된다', (tester) async {
       await tester.pumpWidget(buildHarness());
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), '양평');
+      await tester.enterText(find.byType(TextField), '좌천');
       await tester.pumpAndSettle();
 
-      // 검색어를 담은 TextField 도 '양평' 텍스트를 갖고 있으므로 목록 항목만 센다.
+      // 검색어를 담은 TextField 도 '좌천' 텍스트를 갖고 있으므로 목록 항목만 센다.
       expect(
         find.descendant(
           of: find.byType(ListTile),
-          matching: find.text('양평'),
+          matching: find.text('좌천'),
         ),
         findsNWidgets(2),
       );
       // 노선 뱃지로 구분된다.
-      expect(find.text('5호선'), findsOneWidget);
-      expect(find.text('경의중앙선'), findsOneWidget);
+      expect(find.text('1호선'), findsOneWidget);
+      expect(find.text('동해선'), findsOneWidget);
     });
 
-    testWidgets('경의중앙선 양평을 탭하면 K50 이 선택된다', (tester) async {
+    testWidgets('동해선 좌천을 탭하면 816 이 선택된다', (tester) async {
       late ProviderContainer container;
 
       await tester.pumpWidget(
@@ -259,16 +266,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), '양평');
+      await tester.enterText(find.byType(TextField), '좌천');
       await tester.pumpAndSettle();
 
-      // 경의중앙선 뱃지가 붙은 항목(두 번째)을 탭.
-      await tester.tap(find.text('경의중앙선'));
+      // 동해선 뱃지가 붙은 항목(두 번째)을 탭.
+      await tester.tap(find.text('동해선'));
       await tester.pumpAndSettle();
 
       final selected = container.read(selectedStationsProvider).departure;
-      expect(selected?.id, 'K50');
-      expect(selected?.lineId, '경의중앙');
+      expect(selected?.id, '816');
+      expect(selected?.lineId, '동해');
     });
   });
 
@@ -305,7 +312,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('최근 검색'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), '여의');
+      await tester.enterText(find.byType(TextField), '연');
       await tester.pumpAndSettle();
 
       expect(find.text('최근 검색'), findsNothing);
@@ -359,8 +366,8 @@ void main() {
           .setBoth(testStations[2], testStations[4]);
 
       final state = container.read(selectedStationsProvider);
-      expect(state.departure?.name, '여의도');
-      expect(state.arrival?.name, '종합운동장');
+      expect(state.departure?.name, '연산');
+      expect(state.arrival?.name, '서면');
       expect(state.isComplete, isTrue);
     });
   });

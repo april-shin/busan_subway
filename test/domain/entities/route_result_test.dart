@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/entities/transfer_guide.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/entities/transfer_guide.dart';
 
 void main() {
   group('RouteResult', () {

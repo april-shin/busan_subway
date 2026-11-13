@@ -3,9 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/path_on_line.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/path_on_line.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 /// 실제 stations.json/connections.json 데이터를 사용하여
 /// 같은 노선의 모든 역 쌍에 대해 findPathOnLine이 경로를 찾는지 검증한다.

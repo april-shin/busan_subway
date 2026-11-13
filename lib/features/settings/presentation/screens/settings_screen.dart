@@ -41,7 +41,7 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsTile(
                 icon: Icons.my_location_outlined,
                 title: '지도 시작점',
-                trailingText: homeStation?.name ?? '서울역 (기본)',
+                trailingText: homeStation?.name ?? '$kDefaultHomeStationName (기본)',
                 onTap: () => context.go('/pick-station/home'),
               ),
             ],
@@ -75,8 +75,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               _SettingsTile(
                 icon: Icons.train_outlined,
-                title: '실시간 열차 도착 정보',
-                trailingText: '서울 열린데이터광장',
+                title: '노선·역 정보',
+                trailingText: '부산교통공사',
               ),
             ],
           ),

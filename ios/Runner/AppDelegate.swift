@@ -20,7 +20,7 @@ import UIKit
       return
     }
     let channel = FlutterMethodChannel(
-      name: "seoul_subway/device", binaryMessenger: registrar.messenger())
+      name: "busan_subway/device", binaryMessenger: registrar.messenger())
     channel.setMethodCallHandler { call, result in
       if call.method == "isPhoneIdiom" {
         result(UIDevice.current.userInterfaceIdiom == .phone)

@@ -10,18 +10,21 @@
 //
 // 이 테스트는 그 `continue` 한 줄을 지키기 위한 것이다 — 순수함수 테스트
 // (live_arrival_seconds_test.dart)만으로는 게이트가 실제로 배선됐는지 알 수 없다.
+@Skip('부산 전환: FeatureFlags.realtimeEnabled 가 const false 라 liveTrainsProvider 가 항상 빈 목록 — 플래그를 켤 때 부산 픽스처로 복원(로직 자체는 유지)')
+library;
+
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/constants/api_constants.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/live_train_provider.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/core/constants/api_constants.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/live_train_provider.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

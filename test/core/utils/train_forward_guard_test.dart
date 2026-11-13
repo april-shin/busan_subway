@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/train_forward_guard.dart';
+import 'package:busan_subway/core/utils/train_forward_guard.dart';
 
 /// [원칙 1] "열차는 절대 뒤로 가지 않는다" 회귀 가드.
 ///

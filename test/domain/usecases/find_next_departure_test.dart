@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
-import 'package:seoul_subway/domain/usecases/find_next_departure.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/usecases/find_next_departure.dart';
 
 void main() {
   LineSchedule makeSchedule() {

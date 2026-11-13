@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/data/local/local_data_source.dart';
-import 'package:seoul_subway/data/repositories/station_repository_impl.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/entities/line.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
+import 'package:busan_subway/data/local/local_data_source.dart';
+import 'package:busan_subway/data/repositories/station_repository_impl.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/entities/line.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
 
 class MockLocalDataSource extends Mock implements LocalDataSource {}
 

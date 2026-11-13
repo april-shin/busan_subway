@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/constants/dwell_time.dart';
+import 'package:busan_subway/core/constants/dwell_time.dart';
 
 void main() {
   test('dwellTimeSeconds는 30초', () {

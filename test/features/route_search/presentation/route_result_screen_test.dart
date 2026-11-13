@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/repositories/arrival_repository.dart';
-import 'package:seoul_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
-import 'package:seoul_subway/features/route_search/presentation/providers/timetable_providers.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_query_time.dart';
-import 'package:seoul_subway/features/route_search/presentation/screens/route_result_screen.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/repositories/arrival_repository.dart';
+import 'package:busan_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
+import 'package:busan_subway/features/route_search/presentation/providers/timetable_providers.dart';
+import 'package:busan_subway/features/route_search/utils/departure_query_time.dart';
+import 'package:busan_subway/features/route_search/presentation/screens/route_result_screen.dart';
 
 class _MockArrivalRepository extends Mock implements ArrivalRepository {}
 
@@ -42,10 +42,15 @@ final _fixedNow = DateTime(2026, 9, 1, 9, 0);
 /// 전용 파라미터를 뚫지 않고 존을 씌우는 것만으로 시각을 고정할 수 있다.
 /// **이 파일의 모든 테스트는 이 헬퍼로 등록한다** — 맨 `testWidgets` 로 두면
 /// 하루 중 언제 돌리느냐에 따라 결과가 달라진다.
-void testWidgetsAtFixedClock(String description, WidgetTesterCallback body) {
+void testWidgetsAtFixedClock(
+  String description,
+  WidgetTesterCallback body, {
+  bool? skip,
+}) {
   testWidgets(
     description,
     (tester) => withClock(Clock.fixed(_fixedNow), () => body(tester)),
+    skip: skip,
   );
 }
 
@@ -912,7 +917,10 @@ void main() {
       pending.complete(const []);
       await tester.pumpAndSettle();
       expect(find.text('지금은 운행하는 열차가 없습니다'), findsOneWidget);
-    });
+    },
+        // 부산 전환: realtimeEnabled const false 라 출발 시각이 실시간 조회를 기다리지 않음
+        // (arrivalInfoProvider 즉시 빈 목록) — 플래그를 켤 때 복원.
+        skip: true);
 
     testWidgetsAtFixedClock('시트를 열면 기존 선택 시각의 시(hour) 행이 화면 안에 들어온다',
         (tester) async {

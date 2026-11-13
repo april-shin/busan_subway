@@ -1,11 +1,11 @@
 ---
 name: graph-pathfinding
-description: "서울 지하철 앱의 최단경로 알고리즘, 그래프 자료구조, 환승 최적화, 방향 결정 로직을 수행. Dijkstra 알고리즘 수정, BFS 경로탐색, 환승 페널티 튜닝, 노선별 방향 로직, 그래프 구조 변경, 경로 계산 최적화 요청 시 이 스킬을 사용. graph/ 디렉토리, search_route.dart, direction_resolver.dart, path_on_line.dart 관련 작업에 모두 적용."
+description: "부산 지하철 앱의 최단경로 알고리즘, 그래프 자료구조, 환승 최적화, 방향 결정 로직을 수행. Dijkstra 알고리즘 수정, BFS 경로탐색, 환승 페널티 튜닝, 노선별 방향 로직, 그래프 구조 변경, 경로 계산 최적화 요청 시 이 스킬을 사용. graph/ 디렉토리, search_route.dart, direction_resolver.dart, path_on_line.dart 관련 작업에 모두 적용."
 ---
 
 # Graph Pathfinding
 
-서울 지하철 앱의 최단경로 및 그래프 알고리즘 가이드.
+부산 지하철 앱의 최단경로 및 그래프 알고리즘 가이드.
 
 ## 그래프 구조
 

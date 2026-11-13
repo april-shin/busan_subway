@@ -5,7 +5,7 @@ import 'dart:io';
 /// `assets/json/line_schedules.json`의 자정 넘김 데이터 이상 2건을 인플레이스로
 /// 보정하는 idempotent 마이그레이션 스크립트.
 ///
-/// API 호출이 필요 없다 (`.env`에 KOREA_API_KEY/SEOUL_GENERAL_API_KEY가 없어
+/// API 호출이 필요 없다 (`.env`에 KOREA_API_KEY/BUSAN_GENERAL_API_KEY가 없어
 /// `extract_schedules.dart`/`build_metro_timetable.dart` 재실행이 불가능한 상황을
 /// 우회하기 위해 작성됨). 역별 정확 시간표(`t`/`tE`)는 절대 건드리지 않는다 —
 /// `t`/`tE`는 오히려 1호선 f/l 재도출의 authoritative 소스로 "읽기만" 한다.

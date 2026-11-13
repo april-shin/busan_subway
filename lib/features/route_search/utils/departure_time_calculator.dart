@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/subway_id_mapping.dart';
 import '../../../core/utils/ghost_train.dart';
-import '../../../core/utils/line_direction.dart';
 import '../../../core/utils/route_branch.dart';
 import '../../../domain/entities/arrival_info.dart';
 import '../../../domain/entities/connection.dart';
@@ -91,8 +90,6 @@ DepartureContext? resolveDepartureContext(RouteResult routeResult) {
     lineId: context.baseLine,
     isDown: context.isDown,
     now: now,
-    routeStationIds: [for (final s in context.segment.stations) s.id],
-    stations: stations,
     expressOnly: context.express,
     staysOnRouteBranch: makeDestinationBranchFilter(
       // 급행 세그먼트는 정차역만 담고 있지만 판정이 "부분수열" 규칙이라 그대로
@@ -226,8 +223,6 @@ List<DateTime> computeSegmentDepartures({
           lineId: nextRealtimeLineId,
           isDown: nextIsDown,
           now: now,
-          routeStationIds: [for (final s in nextSegment.stations) s.id],
-          stations: stations,
           minArrivalSeconds: minSeconds,
           expressOnly: nextIsExpress,
           staysOnRouteBranch: makeDestinationBranchFilter(
@@ -294,49 +289,17 @@ DateTime? _getRealtimeDeparture({
   required String lineId,
   required bool isDown,
   required DateTime now,
-  required List<String> routeStationIds,
-  List<Station> stations = const [],
   int minArrivalSeconds = 0,
   bool expressOnly = false,
   bool Function(String destination)? staysOnRouteBranch,
   bool Function(ArrivalInfo arrival)? isGhostTrain,
 }) {
-  // 2호선 성수지선처럼 API 라벨 극성이 구간 단위로 앱 규칙과 반대인 구간에서는
-  // 라벨을 뒤집어 읽는다. 안 뒤집으면 **반대 방향 열차의 남은시간**이 출발 시각이
-  // 된다 — 시간표 폴백이 아니라 틀린 실시간 값이라 더 나쁘다.
-  //
-  // 판정 단위는 **열차별 접근 쌍**이다(`apiLabelReversedForTrain` 주석 참조). 경로
-  // 단위로 하면 분기역 성수 출발 지선 경로에서 본선 열차가 후보에 섞여, 더 자주
-  // 오는 본선 열차가 "가장 빠른 열차" 로 뽑힌다 — 고치려던 증상이 역으로 재현된다.
-  // 지도 방향 게이트(`live_train_provider`)와 같은 규칙을 쓴다.
-  final apiLabelReversed = isApiLabelReversedOnRoute(lineId, routeStationIds);
-  final boardingId = routeStationIds.firstOrNull;
-
-  /// 현재역명 → 이 노선의 역 ID. 못 찾으면 null(접근 쌍 판정 불가).
-  String? currentIdOf(ArrivalInfo a) {
-    if (a.currentStationName.isEmpty) return null;
-    for (final s in stations) {
-      if (s.lineId == lineId && s.name == a.currentStationName) return s.id;
-    }
-    return null;
-  }
-
   return arrivalAsync.whenOrNull(
     data: (arrivals) {
       final matching = arrivals.where((a) {
         final mappedLineId = subwayIdToLineId[a.subwayId] ?? a.subwayId;
         if (mappedLineId != lineId) return false;
-        final trainReversed = apiLabelReversedForTrain(
-          lineId: lineId,
-          currentStationId: currentIdOf(a),
-          boardingStationId: boardingId,
-        );
-        // 접근 쌍의 반전 여부가 경로와 다르면 이 경로의 열차가 아니다.
-        // 반전 구간이 아닌 노선에서는 양쪽 다 false 라 아무도 떨어지지 않는다.
-        if (trainReversed != apiLabelReversed) return false;
-        var labelIsDown = isDownDirectionString(a.direction);
-        if (trainReversed) labelIsDown = !labelIsDown;
-        if (labelIsDown != isDown) return false;
+        if (isDownDirectionString(a.direction) != isDown) return false;
         if (a.arrivalSeconds == null) return false;
         if (a.arrivalSeconds! <= minArrivalSeconds) return false;
         if (expressOnly && a.trainType != '급행') return false;

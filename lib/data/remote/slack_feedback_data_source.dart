@@ -33,7 +33,7 @@ class SlackFeedbackDataSource {
 
     // 슬랙은 mrkdwn 텍스트 렌더링. 사용자 본문은 트리플 백틱으로 감싸
     // 마크다운 이스케이핑 없이 그대로 전달한다.
-    final text = '*[Seoul Subway] 사용자 의견*\n'
+    final text = '*[Busan Subway] 사용자 의견*\n'
         '```\n'
         '$message\n'
         '```\n'

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/constants/api_constants.dart';
-import 'package:seoul_subway/core/utils/live_arrival_seconds.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/core/constants/api_constants.dart';
+import 'package:busan_subway/core/utils/live_arrival_seconds.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
 
 /// 지도와 도착정보 화면이 **같은 규칙으로** "알 수 없음"을 판정하는지 고정한다.
 ///

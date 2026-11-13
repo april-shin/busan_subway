@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
+import '../../../../core/constants/feature_flags.dart';
 import '../../../../core/constants/line_colors.dart';
 import '../../../../domain/entities/connection.dart';
 import '../../../../domain/entities/station.dart';
@@ -312,15 +313,14 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
       _showTrains(widget.liveTrains);
     }
 
-    // 홈 역 초기 팬. 사용자가 설정한 역이 있다면 서울역 대신 그 역이
-    // 화면 중앙에 오도록 즉시 이동한다(애니메이션 없음). 설정 없으면
-    // map.html 의 INITIAL_CENTER_X/Y (서울역) 기본값을 그대로 유지.
+    // 홈 역 초기 팬. 사용자가 설정한 역(없으면 기본역 `kDefaultHomeStationName`)이
+    // 화면 중앙에 오도록 즉시 이동한다(애니메이션 없음).
     // 활성 경로가 있으면 그쪽 팬을 우선한다 (경로 진입 UX 우선).
     //
     // 앱 콜드 스타트 시 map.html 은 static asset 이라 수십 ms 만에 로드되지만
     // `homeStationProvider` 는 SharedPreferences 초기화(첫 접근 100~300ms)를
     // 기다려야 값이 나온다. 그래서 `valueOrNull` 로 동기 스냅샷을 찍으면 첫
-    // 실행에서 항상 null → 서울역이 뜨는 회귀가 있었다. `.future` 로 로드
+    // 실행에서 항상 null → 기본 중심이 뜨는 회귀가 있었다. `.future` 로 로드
     // 완료를 기다린 뒤 pan.
     //
     // 콜드 스타트에는 panTarget 이 항상 null 이다. null 이 아닌 채 여기 오는
@@ -340,15 +340,23 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
     }
   }
 
-  /// 홈 역 로드 후 지도 중앙 이동. 실패/설정 없음은 조용히 넘긴다.
+  /// 홈 역 로드 후 지도 중앙 이동. 홈 역이 없으면 기본역
+  /// ([kDefaultHomeStationName])으로 간다. provider 실패도 기본역으로 폴백한다.
   Future<void> _panToHomeStationAsync() async {
+    Station? home;
     try {
-      final home = await ref.read(homeStationProvider.future);
-      if (!mounted || home == null) return;
-      _panTo(home.svgX, home.svgY, durationMs: 0);
+      home = await ref.read(homeStationProvider.future);
     } catch (_) {
-      // provider 실패 시 서울역 기본값 유지.
+      home = null;
     }
+    if (!mounted) return;
+    final target = home ??
+        widget.stations
+            .where((s) => s.name == kDefaultHomeStationName)
+            .firstOrNull;
+    // 기본역도 없으면 map.html 의 INITIAL_CENTER_X/Y 를 그대로 둔다.
+    if (target == null) return;
+    _panTo(target.svgX, target.svgY, durationMs: 0);
   }
 
   void _injectStationData() {
@@ -506,6 +514,8 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
   }
 
   void _handleViewArrivalInfo(String stationName) {
+    // 버튼은 숨겨져 있지만 JS 채널로 들어오는 경우까지 막는다.
+    if (!FeatureFlags.realtimeEnabled) return;
     // 툴팁은 직전에 탭한 역에 붙어 있으므로 tappedStation 이 곧 조회 대상이다.
     // 동명이역(양평 등) 구분을 위해 그 Station ID 를 함께 넘긴다. 역명이
     // 어긋나거나 비어 있으면 ID 없이 역명만으로 진행한다(기존 동작).
@@ -587,6 +597,8 @@ class _SvgWebViewState extends ConsumerState<SvgWebView>
       'svgY': station.svgY,
       'isTransfer': station.isTransfer,
       'transferLines': station.transferLines,
+      // false 면 JS 가 툴팁의 "도착정보" 버튼을 만들지 않는다.
+      'showArrivalInfo': FeatureFlags.realtimeEnabled,
     });
     _runJs("window.showTooltip(${_jsString(json)})");
   }

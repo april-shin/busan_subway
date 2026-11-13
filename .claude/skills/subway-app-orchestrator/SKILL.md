@@ -1,11 +1,11 @@
 ---
 name: subway-app-orchestrator
-description: "서울 지하철 앱의 에이전트 팀을 조율하는 오케스트레이터. 새 기능 구현, 버그 수정, 리팩토링, UI/지도 개선, 알고리즘 최적화, 실시간 데이터 처리 등 앱 개발 작업 요청 시 이 스킬을 사용. 후속 작업: 결과 수정, 부분 재실행, 업데이트, 보완, 다시 실행, 이전 결과 개선, 특정 에이전트만 재호출 요청 시에도 반드시 이 스킬을 사용. 단순 질문/설정 변경/1~2줄 수정은 제외."
+description: "부산 지하철 앱의 에이전트 팀을 조율하는 오케스트레이터. 새 기능 구현, 버그 수정, 리팩토링, UI/지도 개선, 알고리즘 최적화, 실시간 데이터 처리 등 앱 개발 작업 요청 시 이 스킬을 사용. 후속 작업: 결과 수정, 부분 재실행, 업데이트, 보완, 다시 실행, 이전 결과 개선, 특정 에이전트만 재호출 요청 시에도 반드시 이 스킬을 사용. 단순 질문/설정 변경/1~2줄 수정은 제외."
 ---
 
 # Subway App Orchestrator
 
-서울 지하철 앱의 7인 전문가 팀을 조율하여 앱 개발 작업을 수행하는 통합 오케스트레이터.
+부산 지하철 앱의 7인 전문가 팀을 조율하여 앱 개발 작업을 수행하는 통합 오케스트레이터.
 
 ## 실행 모드: 에이전트 팀 (감독자 패턴)
 
@@ -150,7 +150,7 @@ Agent(
 
     [구체적 작업 지시]
 
-    프로젝트 루트: /Users/april/StudioProjects/seoul_subway
+    프로젝트 루트: /Users/april/StudioProjects/busan_subway
   """
 )
 ```
@@ -166,7 +166,7 @@ Agent(
 
     다음 파일들을 리뷰하라: [파일 목록]
 
-    프로젝트 루트: /Users/april/StudioProjects/seoul_subway
+    프로젝트 루트: /Users/april/StudioProjects/busan_subway
   """
 )
 ```
@@ -183,7 +183,7 @@ Agent(
     원래 요청: [사용자 요청]
     수정된 파일: [파일 목록]
 
-    프로젝트 루트: /Users/april/StudioProjects/seoul_subway
+    프로젝트 루트: /Users/april/StudioProjects/busan_subway
   """
 )
 ```

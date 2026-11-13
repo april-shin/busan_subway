@@ -7,15 +7,15 @@ import '../../domain/entities/connection.dart';
 import '../../domain/entities/station.dart';
 import '../../domain/repositories/arrival_repository.dart';
 import '../local/cache_manager.dart';
-import '../remote/seoul_api_data_source.dart';
+import '../remote/busan_api_data_source.dart';
 
 class ArrivalRepositoryImpl implements ArrivalRepository {
-  final SeoulApiDataSource _remoteDataSource;
+  final BusanApiDataSource _remoteDataSource;
   final CacheManager _cacheManager;
   final NetworkInfo _networkInfo;
 
   ArrivalRepositoryImpl({
-    required SeoulApiDataSource remoteDataSource,
+    required BusanApiDataSource remoteDataSource,
     required CacheManager cacheManager,
     required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,

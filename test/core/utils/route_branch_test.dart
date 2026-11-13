@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/route_branch.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/route_branch.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 /// 구간 완주 판정 검증 (지선 분기 / 중간 종착 / 완주).
 ///
-/// 회귀 가드 1: 노선 ID와 방향(하행/외선)만으로 필터링하면 5호선 하행 "마천행"이
+/// 회귀 가드 1(서울 5호선 마천 분기 사례 — 부산 데이터엔 분기가 없어 순수 판정 테스트로만 남김): 노선 ID와 방향(하행/외선)만으로 필터링하면 5호선 하행 "마천행"이
 /// `천호 → 굽은다리` 경로에 섞여 지도에 표시된다. 마천행은 강동에서 갈라져
 /// 굽은다리를 지나지 않으므로 [RouteCoverage.diverged] 여야 한다.
 ///
@@ -170,67 +170,60 @@ void main() {
       );
     }
 
-    // 5호선 하행(천호 → 마천/하남검단산 방면).
+    // 1호선 하행(다대포해수욕장 → 노포 방면, ID 증가).
     RouteCoverage coverage(String destination, List<String> routeNames) =>
-        coverageOn(destination, routeNames, lineId: '5', isDown: true);
+        coverageOn(destination, routeNames, lineId: '1', isDown: true);
 
-    const cheonho = ['천호', '강동', '길동', '굽은다리'];
+    const seomyeonToYeonsan = ['서면', '부전', '양정', '시청', '연산'];
 
-    test('천호 → 굽은다리 경로에서 마천행은 분기(diverged)', () {
-      expect(coverage('마천', cheonho), RouteCoverage.diverged);
+    test('부산은 지선이 없어 diverged 가 나오지 않는다', () {
+      for (final dest in ['노포', '범어사', '부산대', '연산', '서면']) {
+        expect(coverage(dest, seomyeonToYeonsan),
+            isNot(RouteCoverage.diverged),
+            reason: dest);
+      }
     });
 
-    test('천호 → 굽은다리 경로에서 하남검단산행·상일동행은 완주', () {
-      // 둘 다 굽은다리를 지난 뒤 종착하므로 구간을 완주시켜 준다.
-      expect(coverage('하남검단산', cheonho), RouteCoverage.full);
-      expect(coverage('상일동', cheonho), RouteCoverage.full);
+    test('서면 → 연산 경로에서 노포행·연산행은 완주', () {
+      expect(coverage('노포', seomyeonToYeonsan), RouteCoverage.full);
+      expect(coverage('연산', seomyeonToYeonsan), RouteCoverage.full);
     });
 
-    test('천호 → 하남검단산 경로에서 상일동행은 중간 종착', () {
-      const geomdansan = ['천호', '강동', '길동', '굽은다리', '명일', '고덕', '상일동', '강일'];
-      expect(coverage('하남검단산', geomdansan), RouteCoverage.full);
-      expect(coverage('상일동', geomdansan), RouteCoverage.earlyTerminus);
+    test('서면 → 연산 경로에서 하차역 앞에서 끝나는 부전행·시청행은 중간 종착', () {
+      expect(coverage('부전', seomyeonToYeonsan), RouteCoverage.earlyTerminus);
+      expect(coverage('시청', seomyeonToYeonsan), RouteCoverage.earlyTerminus);
     });
 
-    test('천호 → 둔촌동 경로에서는 마천행만 완주한다', () {
-      const dunchon = ['천호', '강동', '둔촌동'];
-      expect(coverage('마천', dunchon), RouteCoverage.full);
-      expect(coverage('하남검단산', dunchon), RouteCoverage.diverged);
+    test('하차역이 중간 종착역까지면 그 열차도 완주', () {
+      expect(coverage('시청', const ['서면', '부전', '양정', '시청']),
+          RouteCoverage.full);
     });
 
-    test('분기 이후 구간(길동 → 명일)은 지선이 하나뿐이라 모두 완주', () {
-      expect(coverage('하남검단산', const ['길동', '굽은다리', '명일']), RouteCoverage.full);
+    test('4호선(미남 → 안평, 하행) 도 같은 규칙', () {
+      RouteCoverage line4(String destination, List<String> names) =>
+          coverageOn(destination, names, lineId: '4', isDown: true);
+      const route = ['미남', '동래', '수안', '낙민'];
+      expect(line4('안평', route), RouteCoverage.full);
+      expect(line4('수안', route), RouteCoverage.earlyTerminus);
     });
 
-    test('7호선 내방 → 장암 경로에서 도봉산행은 중간 종착', () {
-      // 도봉산(702)은 장암(701) 바로 앞 역이라 지선 분기가 아니지만,
-      // 도봉산행만 타서는 장암에 닿지 못한다 → 경로 결과에서는 제외, 지도에서는 유령.
-      // 중간 역은 생략한다 — 판정이 "부분수열" 규칙이라 결과가 같다.
-      const naebangToGangnamgu = ['내방', '고속터미널', '반포', '논현', '학동', '강남구청'];
-      RouteCoverage line7(String destination, List<String> names) =>
-          coverageOn(destination, names, lineId: '7', isDown: false);
-
-      expect(
-        line7('도봉산', const [...naebangToGangnamgu, '도봉산', '장암']),
-        RouteCoverage.earlyTerminus,
-      );
-      expect(
-        line7('장암', const [...naebangToGangnamgu, '도봉산', '장암']),
-        RouteCoverage.full,
-      );
-      // 하차역이 도봉산까지면 도봉산행도 완주시켜 준다.
-      expect(
-        line7('도봉산', const [...naebangToGangnamgu, '도봉산']),
-        RouteCoverage.full,
-      );
+    test('상행(ID 감소)도 판정한다 — 1호선 노포 → 서면', () {
+      RouteCoverage up(String destination) => coverageOn(
+            destination,
+            const ['동래', '교대', '연산', '시청', '양정', '부전', '서면'],
+            lineId: '1',
+            isDown: false,
+          );
+      expect(up('다대포해수욕장'), RouteCoverage.full);
+      expect(up('연산'), RouteCoverage.earlyTerminus);
     });
 
     test('행선지를 해석할 수 없으면 완주로 간주 (fail-open)', () {
       expect(
         classifyDestinationCoverage(
-          routeStationIds: routeIds(cheonho, '5'),
+          routeStationIds: routeIds(seomyeonToYeonsan, '1'),
           destinationStationIds: const [],
-          lineId: '5',
+          lineId: '1',
           connections: connections,
           isDown: true,
         ),
@@ -240,35 +233,30 @@ void main() {
 
     test('makeDestinationBranchFilter 는 완주 열차만 통과시킨다', () {
       final filter = makeDestinationBranchFilter(
-        routeStationIds:
-            routeIds(const ['천호', '강동', '길동', '굽은다리', '명일'], '5'),
-        lineId: '5',
+        routeStationIds: routeIds(seomyeonToYeonsan, '1'),
+        lineId: '1',
         isDown: true,
         stations: stations,
         connections: connections,
       );
-      expect(filter('하남검단산'), isTrue);
-      expect(filter('마천'), isFalse, reason: '지선 분기');
-      expect(filter('강동'), isFalse, reason: '중간 종착');
+      expect(filter('노포'), isTrue);
+      expect(filter('연산'), isTrue);
+      expect(filter('부전'), isFalse, reason: '중간 종착');
     });
 
-    test('2호선은 행선지와 무관하게 모든 열차를 통과시킨다', () {
-      // 강남 → 삼성(외선). "선릉행" 은 일반 판정이면 중간 종착이지만, 순환선은
-      // 행선지가 운행 범위를 뜻하지 않으므로 판정하지 않는다.
-      expect(
-        coverageOn('선릉', const ['강남', '역삼', '선릉', '삼성'],
-            lineId: '2', isDown: true),
-        RouteCoverage.earlyTerminus,
-        reason: '전제: 일반 판정이라면 중간 종착',
-      );
+    test('2호선도 예외 없이 판정한다 (부산 2호선은 순환이 아닌 선형)', () {
+      const route = ['서면', '부암', '가야', '동의대'];
+      expect(coverageOn('가야', route, lineId: '2', isDown: true),
+          RouteCoverage.earlyTerminus);
       final filter = makeDestinationBranchFilter(
-        routeStationIds: routeIds(const ['강남', '역삼', '선릉', '삼성'], '2'),
+        routeStationIds: routeIds(route, '2'),
         lineId: '2',
         isDown: true,
         stations: stations,
         connections: connections,
       );
-      expect(filter('선릉'), isTrue);
+      expect(filter('양산'), isTrue);
+      expect(filter('가야'), isFalse);
     });
   });
 }

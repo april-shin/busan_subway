@@ -213,10 +213,9 @@ class _ArrivalInfoScreenState extends ConsumerState<ArrivalInfoScreen> {
     List<ArrivalInfo> arrivals, {
     required bool includeAppBar,
   }) {
-    final isLine2 = arrivals.isNotEmpty &&
-        arrivals.every((a) => a.subwayId == '1002');
-    final upLabel = isLine2 ? '내선' : '상행';
-    final downLabel = isLine2 ? '외선' : '하행';
+    // 부산은 순환선이 없어 내선/외선 라벨을 쓰지 않는다.
+    const upLabel = '상행';
+    const downLabel = '하행';
 
     final upbound = arrivals.where(_isUp).toList();
     final downbound = arrivals.where(_isDown).toList();

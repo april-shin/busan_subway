@@ -1,4 +1,4 @@
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
 
 /// `assets/json/line_schedules.json` 의 컴팩트 스키마를 [LineSchedule] 로 파싱한다.
 ///

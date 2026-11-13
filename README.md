@@ -1,4 +1,4 @@
-# Seoul Subway
+# Busan Subway
 
 서울 및 수도권 지하철 노선도 기반 경로 검색 및 실시간 도착 정보 앱
 
@@ -27,7 +27,7 @@
 1. **저장소 클론**
    ```bash
    git clone <repository-url>
-   cd seoul_subway
+   cd busan_subway
    ```
 
 2. **환경 변수 설정**
@@ -39,7 +39,7 @@
 
    `.env` 파일을 열어 API 키 입력:
    ```
-   SEOUL_API_KEY=your_api_key_here
+   BUSAN_SUBWAY_API_KEY=your_api_key_here
    ```
 
 3. **의존성 설치**
@@ -271,7 +271,7 @@ dart run tool/build_gimpo_json.dart
 ```
 
 **좌표 출처**:
-- SVG 좌표: 원본 `seoul_metro_map.svg`에서 자동 추출
+- SVG 좌표: 원본 `busan_metro_map.svg`에서 자동 추출
 - 지리 좌표: `generate_station_data.dart`에 하드코딩 (공공데이터/지도 API에서 수집 추정)
 
 ### 실시간 데이터 (서울 열린데이터 API)
@@ -368,7 +368,7 @@ flutter test test/domain/usecases/
 - 테스트: `mocktail` 사용
 
 ### SVG 수정 시 재생성 필수
-원본 `seoul_metro_map.svg` 수정 후 **반드시** 파이프라인 순서대로 실행:
+원본 `busan_metro_map.svg` 수정 후 **반드시** 파이프라인 순서대로 실행:
 ```bash
 dart run tool/extract_svg_stations.dart
 dart run tool/generate_station_data.dart

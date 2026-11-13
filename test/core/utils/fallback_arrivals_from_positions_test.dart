@@ -5,14 +5,17 @@
 // (2026-07-31 실측). 그래서 노선 단위로 전 열차를 주는 위치 API 로 폴백하는데,
 // 이 API 는 잔여초를 주지 않고 노선의 **모든** 열차를 주므로 두 가지가 필요하다:
 // 구간 소요시간 기반 잔여초 추정과, 대상역과 무관한 열차의 제거.
+@Skip('부산 전환: subwayIdToLineId 가 const 빈 맵(실시간 API 미연동)이라 lineId 해석 불가 — 부산 API 코드를 채울 때 부산 픽스처로 복원')
+library;
+
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/fallback_arrivals_from_positions.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
+import 'package:busan_subway/core/utils/fallback_arrivals_from_positions.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

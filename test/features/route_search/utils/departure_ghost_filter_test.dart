@@ -1,29 +1,28 @@
 // 출발 시각 후보의 유령 열차 제거 회귀 가드.
 //
-// 종착이 노선 중간인 열차(회차·셔틀)를 서울 API 가 종착 너머 역에도 도착 예정으로
-// 이어 붙인다. 행선지·방향·노선 필드만으로는 정상 행과 구분되지 않아(2026-10-20 야간
-// 실측) 실시간 출발 시각이 2~7분 이르게 나왔다.
-//  - 4호선 남태령 하행: 사당행(현재역 총신대입구(이수)·이촌, 20·35·95초)이 최단 후보였다.
-//    실제 다음 열차는 안산·오이도행 150~510초.
-//  - 3호선 지축 상행: 구파발행(현재역 불광, 60초)이 대화행(360초)보다 앞섰다.
+// 종착이 노선 중간인 열차(회차·셔틀)를 API 가 종착 너머 역에도 도착 예정으로
+// 이어 붙이는 경우가 있다. 행선지·방향·노선 필드만으로는 정상 행과 구분되지 않아
+// 실시간 출발 시각이 이르게 나온다. 부산 실데이터(1호선 동래 하행 부전행, 3호선
+// 거제 상행 종합운동장행)로 같은 위상 판정이 출발 시각 후보에 걸리는지 검증한다.
 //
 // 실제 노선 데이터(stations.json / connections.json)로 검증한다. 환승 구간
 // (`computeSegmentDepartures`)도 같은 `_getRealtimeDeparture` 를 쓰므로 함께 본다.
+// (실시간 API 의 호선 코드 매핑이 비어 있어 subwayId 는 lineId 원문('1','3')을 쓴다.)
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/route_result.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_time_calculator.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/route_result.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/route_search/utils/departure_time_calculator.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final fixedNow = DateTime(2026, 10, 20, 21, 0, 0);
+  final fixedNow = DateTime(2026, 11, 13, 21, 0, 0);
 
   late List<Station> stations;
   late List<Connection> connections;
@@ -86,8 +85,8 @@ void main() {
         currentStationName: current,
       );
 
-  RouteResult namtaeryeong() => routeOf([
-        segmentOf(stationNames: ['남태령', '선바위', '경마공원'], lineId: '4'),
+  RouteResult dongnae() => routeOf([
+        segmentOf(stationNames: ['동래', '명륜', '온천장'], lineId: '1'),
       ]);
 
   ({DateTime departure, DepartureSource source}) compute(
@@ -97,51 +96,51 @@ void main() {
   }) =>
       computeDepartureTimeDetailed(
         arrivalAsync: AsyncData(arrivals),
-        routeResult: route ?? namtaeryeong(),
+        routeResult: route ?? dongnae(),
         now: fixedNow,
         stations: withTopology ? stations : const [],
         connections: withTopology ? connections : const [],
       );
 
-  ArrivalInfo ghostSadang(int secs, {String current = '총신대입구(이수)'}) =>
+  ArrivalInfo ghostBujeon(int secs, {String current = '서면'}) =>
       arrivalOf(
-        subwayId: '1004',
-        stationName: '남태령',
-        destination: '사당',
+        subwayId: '1',
+        stationName: '동래',
+        destination: '부전',
         current: current,
         arrivalSeconds: secs,
       );
 
-  ArrivalInfo realAnsan(int secs, {String current = '사당', String? dest}) =>
+  ArrivalInfo realNopo(int secs, {String current = '교대', String? dest}) =>
       arrivalOf(
-        subwayId: '1004',
-        stationName: '남태령',
-        destination: dest ?? '안산',
+        subwayId: '1',
+        stationName: '동래',
+        destination: dest ?? '노포',
         current: current,
         arrivalSeconds: secs,
       );
 
   group('computeDepartureTimeDetailed — 유령 열차 제거', () {
-    test('남태령 하행: 사당행 유령(20초)을 건너뛰고 실제 안산행(150초)을 쓴다', () {
+    test('동래 하행: 부전행 유령(20초)을 건너뛰고 실제 노포행(150초)을 쓴다', () {
       final result = compute([
-        ghostSadang(20),
-        realAnsan(150),
-        realAnsan(510, dest: '오이도', current: '동작'),
+        ghostBujeon(20),
+        realNopo(150),
+        realNopo(510, dest: '범어사', current: '연산'),
       ]);
 
       expect(result.source, DepartureSource.realtime);
       expect(result.departure, fixedNow.add(const Duration(seconds: 150)));
     });
 
-    test('실측 3종(현재역 총신대입구(이수) 20초 · 이촌 35초·95초) 모두 제거', () {
+    test('현재역이 어디든(서면 20초 · 범내골 35초·95초) 부전행은 모두 제거', () {
       for (final (cur, secs) in [
-        ('총신대입구(이수)', 20),
-        ('이촌', 35),
-        ('이촌', 95),
+        ('서면', 20),
+        ('범내골', 35),
+        ('범내골', 95),
       ]) {
         final result = compute([
-          ghostSadang(secs, current: cur),
-          realAnsan(450),
+          ghostBujeon(secs, current: cur),
+          realNopo(450),
         ]);
         expect(
           result.departure,
@@ -153,57 +152,57 @@ void main() {
 
     test('정상 열차는 보존 — 유령이 없으면 가장 빠른 열차 그대로', () {
       final result = compute([
-        realAnsan(60),
-        realAnsan(300, dest: '오이도', current: '동작'),
+        realNopo(60),
+        realNopo(300, dest: '범어사', current: '연산'),
       ]);
       expect(result.departure, fixedNow.add(const Duration(seconds: 60)));
     });
 
     test('유령이 정상 열차보다 느려도 결과는 같다 (정렬 순서 무관)', () {
       final result = compute([
-        realAnsan(150),
-        ghostSadang(900),
+        realNopo(150),
+        ghostBujeon(900),
       ]);
       expect(result.departure, fixedNow.add(const Duration(seconds: 150)));
     });
 
     test('유령뿐이면 실시간 후보가 없는 것으로 보고 폴백한다 (실제 열차로 오인하지 않음)', () {
-      final result = compute([ghostSadang(20)]);
+      final result = compute([ghostBujeon(20)]);
       expect(result.source, isNot(DepartureSource.realtime));
     });
 
-    test('passed — 현재역이 이미 남태령을 지난 실제 열차는 그대로 후보', () {
-      // arvlMsg3 가 지연·불일치한 실제 열차(6호선 신내 6310 사례)는 숨기지 않는다.
+    test('passed — 현재역이 이미 동래를 지난 실제 열차는 그대로 후보', () {
+      // 현재역 표기가 지연·불일치한 실제 열차는 숨기지 않는다.
       final result = compute([
-        realAnsan(40, current: '선바위'),
-        realAnsan(450),
+        realNopo(40, current: '명륜'),
+        realNopo(450),
       ]);
       expect(result.departure, fixedNow.add(const Duration(seconds: 40)));
     });
 
     test('판정 불가(현재역 이름 없음)는 통과 — fail-open', () {
       final result = compute([
-        ghostSadang(20, current: ''),
-        realAnsan(150),
+        ghostBujeon(20, current: ''),
+        realNopo(150),
       ]);
       expect(result.departure, fixedNow.add(const Duration(seconds: 20)));
     });
 
     test('stations/connections 미로딩이면 필터 미적용 — fail-open', () {
       final result = compute(
-        [ghostSadang(20), realAnsan(150)],
+        [ghostBujeon(20), realNopo(150)],
         withTopology: false,
       );
       expect(result.departure, fixedNow.add(const Duration(seconds: 20)));
     });
 
-    test('3호선 지축 상행: 구파발행 유령(60초)을 건너뛰고 대화행(360초)을 쓴다', () {
+    test('3호선 거제 상행: 종합운동장행 유령(60초)을 건너뛰고 수영행(360초)을 쓴다', () {
       final route = routeOf([
-        segmentOf(stationNames: ['지축', '삼송', '원흥'], lineId: '3'),
+        segmentOf(stationNames: ['거제', '연산', '물만골'], lineId: '3'),
       ]);
       ArrivalInfo row(String dest, String cur, int secs) => arrivalOf(
-            subwayId: '1003',
-            stationName: '지축',
+            subwayId: '3',
+            stationName: '거제',
             destination: dest,
             current: cur,
             arrivalSeconds: secs,
@@ -211,25 +210,24 @@ void main() {
           );
 
       final result = compute([
-        row('구파발', '불광', 60),
-        row('대화', '연신내', 360),
+        row('종합운동장', '사직', 60),
+        row('수영', '종합운동장', 360),
       ], route: route);
 
       expect(result.departure, fixedNow.add(const Duration(seconds: 360)));
     });
 
-    test('방향·행선지 모순 행(독립문행, 현재역 구파발)은 통과 — fail-open 정책 유지', () {
-      // 같은 실측(21시대)에서 "독립문행 210초"도 후보로 잡혔지만, 이 행은 열차가
-      // 표기 방향의 **반대**로 가는 모순이다. 현재역 → 행선지 경로가 탑승 방향으로는
+    test('방향·행선지 모순 행(대저행, 현재역 종합운동장 — 상행으로 갈 수 없음)은 통과 — fail-open 정책 유지', () {
+      // 이 행은 열차가 표기 방향의 **반대**로 가는 모순이다. 현재역 → 행선지 경로가 탑승 방향으로는
       // 구해지지 않아 판정하지 않고 통과시킨다 — 극성 데이터 오류가 "열차 전부
       // 소실"로 증폭되는 걸 막는 route_branch 의 fail-open 을 대체하지 않는다.
       // (이 테스트는 그 한계를 고정한다 — 고치려면 사용자 결정 사안.)
       final route = routeOf([
-        segmentOf(stationNames: ['지축', '삼송', '원흥'], lineId: '3'),
+        segmentOf(stationNames: ['거제', '연산', '물만골'], lineId: '3'),
       ]);
       ArrivalInfo row(String dest, String cur, int secs) => arrivalOf(
-            subwayId: '1003',
-            stationName: '지축',
+            subwayId: '3',
+            stationName: '거제',
             destination: dest,
             current: cur,
             arrivalSeconds: secs,
@@ -237,8 +235,8 @@ void main() {
           );
 
       final result = compute([
-        row('독립문', '구파발', 210),
-        row('대화', '연신내', 360),
+        row('대저', '종합운동장', 210),
+        row('수영', '사직', 360),
       ], route: route);
 
       expect(result.departure, fixedNow.add(const Duration(seconds: 210)));
@@ -246,14 +244,14 @@ void main() {
   });
 
   group('computeSegmentDepartures — 환승역에도 같은 필터', () {
-    // 2호선 낙성대 → 사당 → (환승) 4호선 하행 남태령 방면.
+    // 2호선 전포 → 서면 → (환승) 1호선 하행 부전 방면.
     RouteResult transferRoute() => routeOf([
           segmentOf(
-            stationNames: ['낙성대', '사당'],
+            stationNames: ['전포', '서면'],
             lineId: '2',
             durationSeconds: 300,
           ),
-          segmentOf(stationNames: ['사당', '남태령', '선바위'], lineId: '4'),
+          segmentOf(stationNames: ['서면', '부전', '양정'], lineId: '1'),
         ]);
 
     final initialDeparture = DateTime(2026, 10, 20, 21, 5);
@@ -264,7 +262,7 @@ void main() {
         routeResult: transferRoute(),
         initialDeparture: initialDeparture,
         schedules: const {},
-        transferArrivals: {'사당': AsyncData(arrivals)},
+        transferArrivals: {'서면': AsyncData(arrivals)},
         now: fixedNow,
         stations: withTopology ? stations : const [],
         connections: withTopology ? connections : const [],
@@ -272,19 +270,19 @@ void main() {
     }
 
     ArrivalInfo row(String dest, String cur, int secs) => arrivalOf(
-          subwayId: '1004',
-          stationName: '사당',
+          subwayId: '1',
+          stationName: '서면',
           destination: dest,
           current: cur,
           arrivalSeconds: secs,
         );
 
-    // 첫 구간 21:05 출발 → 사당 21:10 도착 → 환승 3분 → 21:13 이후(780초) 열차만 유효.
-    test('환승역(사당)의 4호선 하행: 총신대입구(이수)행 유령을 건너뛴다', () {
+    // 첫 구간 21:05 출발 → 서면 21:10 도착 → 환승 3분 → 21:13 이후(780초) 열차만 유효.
+    test('환승역(서면)의 1호선 하행: 범내골행 유령을 건너뛴다', () {
       final result = departures([
-        // 사당 너머가 아니라 사당 **앞**에서 끝나는 열차 — 사당에 오지 않는다.
-        row('총신대입구(이수)', '동작', 800),
-        row('오이도', '이촌', 900),
+        // 서면 **앞**(범내골)에서 끝나는 열차 — 서면에 오지 않는다.
+        row('범내골', '부산진', 800),
+        row('노포', '범일', 900),
       ]);
 
       expect(result.length, 2);
@@ -293,16 +291,16 @@ void main() {
 
     test('정상 열차는 보존 — 유령이 없으면 가장 빠른 열차', () {
       final result = departures([
-        row('안산', '총신대입구(이수)', 800),
-        row('오이도', '이촌', 900),
+        row('노포', '범내골', 800),
+        row('노포', '범일', 900),
       ]);
       expect(result[1], fixedNow.add(const Duration(seconds: 800)));
     });
 
     test('미로딩이면 필터 미적용 — fail-open', () {
       final result = departures([
-        row('총신대입구(이수)', '동작', 800),
-        row('오이도', '이촌', 900),
+        row('범내골', '부산진', 800),
+        row('노포', '범일', 900),
       ], withTopology: false);
       expect(result[1], fixedNow.add(const Duration(seconds: 800)));
     });

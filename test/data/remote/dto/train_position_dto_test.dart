@@ -6,7 +6,7 @@
 //  - 잔여초(`barvlDt`)가 없다 → `arrivalSeconds` 는 null 이어야 하고, 추정은 상위
 //    계층(fallbackArrivalsFromPositions)이 맡는다.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/data/remote/dto/train_position_dto.dart';
+import 'package:busan_subway/data/remote/dto/train_position_dto.dart';
 
 void main() {
   /// 5호선 천호를 대상역으로, 하남검단산행 열차가 광나루에 도착한 상태.
@@ -29,21 +29,28 @@ void main() {
     };
   }
 
-  test('현재 위치 역명은 currentStationName 으로, 대상역은 stationName 으로 들어간다', () {
-    final dto = TrainPositionDto.fromJson(positionJson());
-    final arrival = dto.toArrivalInfo('천호');
+  test(
+    '현재 위치 역명은 currentStationName 으로, 대상역은 stationName 으로 들어간다',
+    () {
+      final dto = TrainPositionDto.fromJson(positionJson());
+      final arrival = dto.toArrivalInfo('천호');
 
-    expect(arrival.stationName, '천호', reason: '이 도착정보가 어느 역에 대한 것인지');
-    // 부역명이 붙은 API 등록명은 표시용 역명으로 되돌아가야 stations.json 매칭이 된다.
-    expect(arrival.currentStationName, '광나루');
-    expect(arrival.trainNo, '5133');
-    expect(arrival.destination, '하남검단산');
-    expect(arrival.trainLineNm, '하남검단산행');
-    expect(arrival.receivedAt, DateTime(2026, 7, 31, 6, 10, 30));
-  });
+      expect(arrival.stationName, '천호', reason: '이 도착정보가 어느 역에 대한 것인지');
+      // 부역명이 붙은 API 등록명은 표시용 역명으로 되돌아가야 stations.json 매칭이 된다.
+      expect(arrival.currentStationName, '광나루');
+      expect(arrival.trainNo, '5133');
+      expect(arrival.destination, '하남검단산');
+      expect(arrival.trainLineNm, '하남검단산행');
+      expect(arrival.receivedAt, DateTime(2026, 7, 31, 6, 10, 30));
+    },
+    skip:
+        '부산 전환: 역명 치환 맵(arrivalApiStationNameOverrides 등)이 const 빈 맵이라 서울 치환 사례를 검증할 수 없음 — 부산 API 등록명을 채울 때 부산 사례로 교체',
+  );
 
   test('잔여초는 채우지 않는다 — 추정은 상위 계층의 몫', () {
-    final arrival = TrainPositionDto.fromJson(positionJson()).toArrivalInfo('천호');
+    final arrival = TrainPositionDto.fromJson(
+      positionJson(),
+    ).toArrivalInfo('천호');
     expect(arrival.arrivalSeconds, isNull);
   });
 
@@ -56,8 +63,9 @@ void main() {
 
   test('trainSttus 는 도착정보 API 의 arvlCd 와 같은 체계로 옮긴다', () {
     ({int? code, String status}) mapped(String sttus) {
-      final a = TrainPositionDto.fromJson(positionJson(trainSttus: sttus))
-          .toArrivalInfo('천호');
+      final a = TrainPositionDto.fromJson(
+        positionJson(trainSttus: sttus),
+      ).toArrivalInfo('천호');
       return (code: a.arrivalCode, status: a.positionStatus);
     }
 
@@ -70,15 +78,15 @@ void main() {
 
   test('directAt=1 은 급행', () {
     expect(
-      TrainPositionDto.fromJson(positionJson(directAt: '1'))
-          .toArrivalInfo('천호')
-          .trainType,
+      TrainPositionDto.fromJson(
+        positionJson(directAt: '1'),
+      ).toArrivalInfo('천호').trainType,
       '급행',
     );
     expect(
-      TrainPositionDto.fromJson(positionJson(directAt: '0'))
-          .toArrivalInfo('천호')
-          .trainType,
+      TrainPositionDto.fromJson(
+        positionJson(directAt: '0'),
+      ).toArrivalInfo('천호').trainType,
       '일반',
     );
   });

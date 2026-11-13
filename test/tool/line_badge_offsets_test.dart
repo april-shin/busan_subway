@@ -14,7 +14,7 @@ List<Map<String, dynamic>> _readJsonList(String path) =>
     (jsonDecode(File(path).readAsStringSync()) as List<dynamic>).cast<Map<String, dynamic>>();
 
 void main() {
-  final svg = File('assets/svg/seoul_metro_map.svg').readAsStringSync();
+  final svg = File('assets/svg/busan_metro_map.svg').readAsStringSync();
   final stations = _readJsonList('assets/json/stations.json');
   final lines = _readJsonList('assets/json/lines.json');
   final conns = _readJsonList('assets/json/connections.json');
@@ -50,9 +50,9 @@ void main() {
     });
 
     test('정상 파일을 읽는다 — 키는 "노선id|종점역명", 값은 앵커→pill 중심 오프셋', () {
-      final o = BadgeOffsets.parse('{"version":1,"offsets":{"김포골드|양촌":{"dx":12.5,"dy":-30}}}');
-      expect(o.byKey, equals({'김포골드|양촌': const BadgeOffset(12.5, -30)}));
-      expect(badgeKey('김포골드', '양촌'), equals('김포골드|양촌'));
+      final o = BadgeOffsets.parse('{"version":1,"offsets":{"동해|부전":{"dx":12.5,"dy":-30}}}');
+      expect(o.byKey, equals({'동해|부전': const BadgeOffset(12.5, -30)}));
+      expect(badgeKey('동해', '부전'), equals('동해|부전'));
     });
 
     test('문법 오류·형식 오류·미지원 버전은 StateError — 깨진 파일을 "보정 없음"으로 읽지 않는다', () {
@@ -67,25 +67,25 @@ void main() {
       final o = BadgeOffsets.parse(jsonEncode({
         'version': 1,
         'offsets': {
-          '2|신설동': {'dx': '3', 'dy': 1}, // 문자열
-          '3|오금': {'dx': 1e9, 'dy': 0}, // 오타성 상한 초과
-          '4|오이도': {'dx': 5}, // dy 없음
-          '5|방화': {'dx': 4, 'dy': -6},
+          '2|장산': {'dx': '3', 'dy': 1}, // 문자열
+          '3|수영': {'dx': 1e9, 'dy': 0}, // 오타성 상한 초과
+          '4|안평': {'dx': 5}, // dy 없음
+          '1|노포': {'dx': 4, 'dy': -6},
         },
       }));
-      expect(o.byKey.keys, equals(['5|방화']));
+      expect(o.byKey.keys, equals(['1|노포']));
       expect(o.warnings.length, equals(3));
-      expect(o.warnings.join('\n'), allOf(contains('2|신설동'), contains('3|오금'), contains('4|오이도')));
+      expect(o.warnings.join('\n'), allOf(contains('2|장산'), contains('3|수영'), contains('4|안평')));
     });
 
     test('encode 는 키 정렬·1항목 1줄이고 parse 와 왕복한다', () {
       const src = BadgeOffsets({
-        '김포골드|양촌': BadgeOffset(12.5, -30),
-        '2|신설동': BadgeOffset(-3.25, 7),
+        '동해|부전': BadgeOffset(12.5, -30),
+        '1|노포': BadgeOffset(-3.25, 7),
       });
       final text = src.encode();
       expect(text.endsWith('}\n'), isTrue);
-      expect(text.indexOf('"2|신설동"'), lessThan(text.indexOf('"김포골드|양촌"')), reason: '키 정렬');
+      expect(text.indexOf('"1|노포"'), lessThan(text.indexOf('"동해|부전"')), reason: '키 정렬');
       expect(BadgeOffsets.parse(text).byKey, equals(src.byKey));
       expect(BadgeOffsets.parse(BadgeOffsets.empty.encode()).byKey, isEmpty);
       expect(jsonDecode(BadgeOffsets.empty.encode()), equals({'version': 1, 'offsets': {}}));
@@ -103,7 +103,7 @@ void main() {
         expect(r.manualWarnings, isEmpty);
         expect(r.staleOffsetKeys, isEmpty);
       }
-      expect(base.result.placements.length, equals(48));
+      expect(base.result.placements.length, equals(12), reason: '6개 노선 × 양 종점');
       expect(base.result.placements.any((p) => p.manual), isFalse);
       expect(base.result.placements.every((p) => p.violations.isEmpty), isTrue);
     });
@@ -132,16 +132,16 @@ void main() {
   });
 
   group('보정이 있을 때', () {
-    const key = '김포골드|양촌';
-    // 앵커 54px 밖·라벨/역 circle 위 — 하드 위반이 되는 자리(다른 배지에는 영향 없음).
-    final bad = one(key, 20, -40);
+    const key = '1|노포';
+    // 앵커에서 멀고(38px > 24px) 역명 라벨과 겹치는 자리 — 하드 위반이 되는 자리(다른 배지에는 영향 없음).
+    final bad = one(key, -60, 0);
 
-    test('1건을 넣으면 그 배지만 움직이고 나머지 47개는 좌표 불변', () {
-      final r = solve(one(key, 32.5, -13.5)).result; // 위반 없는 자리
+    test('1건을 넣으면 그 배지만 움직이고 나머지 11개는 좌표 불변', () {
+      final r = solve(one(key, 15, -20)).result; // 위반 없는 자리
       final b0 = byKey(base.result), b1 = byKey(r);
       expect(r.manualCount, equals(1));
       expect(b1[key]!.manual, isTrue);
-      expect((b1[key]!.ox, b1[key]!.oy), equals((32.5, -13.5)), reason: '오프셋 = 앵커→pill 중심');
+      expect((b1[key]!.ox, b1[key]!.oy), equals((15.0, -20.0)), reason: '오프셋 = 앵커→pill 중심');
       expect((b1[key]!.ox, b1[key]!.oy), isNot(equals((b0[key]!.ox, b0[key]!.oy))));
       for (final k in b0.keys.where((k) => k != key)) {
         expect(b1[k]!.manual, isFalse, reason: k);
@@ -151,8 +151,8 @@ void main() {
       // 렌더 조각도 그 배지의 <g> 하나만 다르다.
       List<String> groups(String f) => f.split('\n').where((l) => l.startsWith('<g class="lb"')).toList();
       final g0 = groups(base.result.svgFragment), g1 = groups(r.svgFragment);
-      expect(g1.length, equals(48));
-      expect([for (var i = 0; i < 48; i++) if (g0[i] != g1[i]) i].length, equals(1));
+      expect(g1.length, equals(12));
+      expect([for (var i = 0; i < 12; i++) if (g0[i] != g1[i]) i].length, equals(1));
       // 앵커 기준 상대 오프셋이다 — 앵커(<g transform>)는 그대로.
       expect(b1[key]!.anchorX, equals(b0[key]!.anchorX));
     });
@@ -162,40 +162,54 @@ void main() {
       expect(r.unresolvedCount, equals(0), reason: '자동 배지 미해결과 무관');
       expect(r.manualWarnings.length, equals(1));
       final w = r.manualWarnings.single;
-      expect(w, allOf(contains('경고'), contains('김포골드'), contains('양촌'), contains('(20,-40)')));
+      expect(w, allOf(contains('경고'), contains('1호선'), contains('노포'), contains('(-60,0)')));
       expect(w, contains('역명 라벨'), reason: '위반 종류');
       expect(w, contains('px²'), reason: '겹침 수치');
       expect(w, contains('앵커에서 너무 멂'), reason: '앵커 24px 규칙도 경고로만 처리');
-      expect(r.summary.any((l) => l.startsWith('수동 보정 배지: 1개 [김포골드|양촌]')), isTrue);
+      expect(r.summary.any((l) => l.startsWith('수동 보정 배지: 1개 [1|노포]')), isTrue);
       expect(r.summary.any((l) => l.startsWith('경고: 수동 보정 배지')), isTrue);
       expect(byKey(r)[key]!.violations, isNotEmpty);
       expect(byKey(r)[key]!.violations.every((v) => !v.soft), isTrue);
     });
 
-    test('수동 배치가 자리를 막아 자동 배지가 하드 위반을 못 피하면 여전히 빌드 실패 — 자동 배지의 실패 정책은 그대로', () {
-      // 신설동 허브(2호선·우이신설 배지)의 유일한 좁은 틈을 2호선 수동 배지가 차지한다.
+    test('수동 배치가 있어도 자동 배지가 하드 위반을 못 피하면 여전히 빌드 실패 — 자동 배지의 실패 정책은 그대로', () {
+      // 2호선 장산 배지 앵커 주변 ±150px 를 환승역 마커(rect)로 막아 자동 배지가 설 자리를 없앤 SVG.
+      // 1호선 노포 배지는 수동으로 정상 자리에 둔다 — 수동 보정이 있다고 자동 배지의 정책이 풀리지 않는다.
+      final p = byKey(base.result)['2|장산']!;
+      final blocked = svg.replaceFirst(
+        '</svg>',
+        '<rect x="${p.anchorX - 150}" y="${p.anchorY - 150}" width="300" height="300" fill="none"/></svg>',
+      );
+      expect(blocked, isNot(equals(svg)));
       expect(
-        () => solve(one('2|신설동', 22, -24.5)),
+        () => solveLineBadges(
+          svgContent: blocked,
+          stationsJson: stations,
+          linesJson: lines,
+          connectionsJson: conns,
+          transferStationNames: transfer,
+          offsets: one(key, 15, -20),
+        ),
         throwsA(isA<StateError>().having(
           (e) => e.message,
           'message',
-          allOf(contains('미해결 배지'), contains('우이신설'), contains('수동 보정'), contains('2|신설동')),
+          allOf(contains('미해결 배지'), contains('장산'), contains('수동 보정'), contains(key)),
         )),
       );
     });
 
     test('자동 배지는 수동 배지를 장애물로 피한다 — 수동 배지가 놓인 자리에서 비켜난다', () {
-      // 5호선·9호선 종점 앵커가 40px 간격으로 이웃해 있다. 5호선 배지를 9호선 자동 배지 자리에 얹으면
-      // 9호선 배지가 비켜나야 하고(자리가 있는 곳), 수동 배지는 움직이지 않는다.
-      final p5 = base.result.placements.firstWhere((p) => p.lineId == '5' && p.anchorX == 328 && p.anchorY == 336);
-      final p9 = base.result.placements.firstWhere((p) => p.lineId == '9' && p.anchorX == 288 && p.anchorY == 336);
-      final dx = p9.anchorX + p9.ox - p5.anchorX, dy = p9.anchorY + p9.oy - p5.anchorY;
-      final r = solve(one(p5.key, dx, dy)).result;
+      // 태화강(동해선) 배지를 안평(4호선) 자동 배지 자리에 얹으면(수동은 앵커 거리 제한이 없다)
+      // 안평 배지가 비켜나야 하고, 수동 배지는 움직이지 않는다.
+      final pm = base.result.placements.firstWhere((p) => p.key == '동해|태화강');
+      final pa = base.result.placements.firstWhere((p) => p.key == '4|안평');
+      final dx = pa.anchorX + pa.ox - pm.anchorX, dy = pa.anchorY + pa.oy - pm.anchorY;
+      final r = solve(one(pm.key, dx, dy)).result;
       final m = byKey(r);
-      expect((m[p5.key]!.ox, m[p5.key]!.oy), equals((dx, dy)), reason: '수동 배지는 그대로');
-      expect((m[p9.key]!.ox, m[p9.key]!.oy), isNot(equals((p9.ox, p9.oy))), reason: '자동 배지가 비켜났다');
-      expect(m[p9.key]!.manual, isFalse);
-      expect(m[p9.key]!.violations, isEmpty);
+      expect((m[pm.key]!.ox, m[pm.key]!.oy), equals((dx, dy)), reason: '수동 배지는 그대로');
+      expect((m[pa.key]!.ox, m[pa.key]!.oy), isNot(equals((pa.ox, pa.oy))), reason: '자동 배지가 비켜났다');
+      expect(m[pa.key]!.manual, isFalse);
+      expect(m[pa.key]!.violations, isEmpty);
       expect(r.summary.any((l) => l.contains('배지↔배지 0쌍')), isTrue);
       expect(r.unresolvedCount, equals(0));
     });
@@ -206,78 +220,82 @@ void main() {
       final r = solve(const BadgeOffsets({
         '없는노선|없는역': BadgeOffset(1, 2),
         '2|없는역': BadgeOffset(3, 4), // 노선은 있고 종점이 틀림
-        '김포골드': BadgeOffset(5, 6), // '|' 없음
+        '노포': BadgeOffset(5, 6), // '|' 없음
       })).result;
       expect(r.svgFragment, equals(base.result.svgFragment), reason: '전부 자동 배치로 떨어진다');
       expect(r.manualCount, equals(0));
-      expect(r.staleOffsetKeys, equals(['없는노선|없는역', '2|없는역', '김포골드']));
+      expect(r.staleOffsetKeys, equals(['없는노선|없는역', '2|없는역', '노포']));
       expect(r.offsetWarnings.length, equals(3));
       final all = r.offsetWarnings.join('\n');
       expect(all, contains('"없는노선|없는역" 가 현재 배지에 없다'));
-      expect(all, contains('"2|신설동"'), reason: '같은 노선의 현재 키를 알려 준다');
-      expect(all, contains('"2|까치산"'));
+      expect(all, contains('"2|장산"'), reason: '같은 노선의 현재 키를 알려 준다');
+      expect(all, contains('"2|양산"'));
       expect(r.summary.any((l) => l.startsWith('경고: 수동 보정 키 "없는노선|없는역"')), isTrue);
       expect(r.unresolvedCount, equals(0));
     });
 
     test('유효한 키와 잘못된 키가 섞이면 유효한 것만 적용된다', () {
       final r = solve(const BadgeOffsets({
-        '김포골드|양촌': BadgeOffset(32.5, -13.5),
+        '1|노포': BadgeOffset(15, -20),
         '2|없는역': BadgeOffset(3, 4),
       })).result;
       expect(r.manualCount, equals(1));
-      expect(byKey(r)['김포골드|양촌']!.manual, isTrue);
+      expect(byKey(r)['1|노포']!.manual, isTrue);
       expect(r.staleOffsetKeys, equals(['2|없는역']));
     });
 
     test('파싱 단계 경고(값 오류)가 빌드 요약에 그대로 나온다', () {
-      final o = BadgeOffsets.parse('{"version":1,"offsets":{"3|오금":{"dx":"x","dy":1}}}');
+      final o = BadgeOffsets.parse('{"version":1,"offsets":{"3|대저":{"dx":"x","dy":1}}}');
       final r = solve(o).result;
       expect(r.manualCount, equals(0));
-      expect(r.offsetWarnings.single, contains('3|오금'));
-      expect(r.summary.any((l) => l.startsWith('경고: 수동 보정 "3|오금"')), isTrue);
+      expect(r.offsetWarnings.single, contains('3|대저'));
+      expect(r.summary.any((l) => l.startsWith('경고: 수동 보정 "3|대저"')), isTrue);
     });
   });
 
   group('편집기 즉시 판정 check() — 빌드와 같은 규칙', () {
     test('빌드가 낸 경고와 같은 위반을 같은 위치에서 낸다', () {
-      final built = solve(one('김포골드|양촌', 20, -40));
-      final built0 = byKey(built.result)['김포골드|양촌']!.violations.map((v) => v.message).toList();
-      final checked = base.check('김포골드|양촌', 20, -40).violations.map((v) => v.message).toList();
+      final built = solve(one('1|노포', -60, 0));
+      final built0 = byKey(built.result)['1|노포']!.violations.map((v) => v.message).toList();
+      final checked = base.check('1|노포', -60, 0).violations.map((v) => v.message).toList();
       expect(checked, equals(built0), reason: '같은 함수(_hard)를 쓰므로 메시지·수치까지 같아야 한다');
       expect(checked.any((m) => m.contains('역명 라벨')), isTrue);
     });
 
     test('자동 위치에서는 위반이 없고, 호출은 상태를 바꾸지 않는다', () {
-      final p = byKey(base.result)['김포골드|양촌']!;
+      final p = byKey(base.result)['1|노포']!;
       final before = base.result.svgFragment;
-      expect(base.check('김포골드|양촌', p.ox, p.oy).violations, isEmpty);
-      base.check('김포골드|양촌', 20, -40); // 위반 자리로 한 번 찔러 본다
-      expect(base.check('김포골드|양촌', p.ox, p.oy).violations, isEmpty, reason: '복원됨');
+      expect(base.check('1|노포', p.ox, p.oy).violations, isEmpty);
+      base.check('1|노포', -60, 0); // 위반 자리로 한 번 찔러 본다
+      expect(base.check('1|노포', p.ox, p.oy).violations, isEmpty, reason: '복원됨');
       expect(base.result.svgFragment, equals(before));
     });
 
-    test('자동 배지와 겹치면 soft(저장하면 비켜남), 타 노선 선·라벨 등은 hard', () {
-      // 2호선 신설동 배지를 우이신설 신설동 자동 배지 자리로.
-      final u = byKey(base.result)['우이신설|신설동']!;
-      final t = byKey(base.result)['2|신설동']!;
-      final r = base.check('2|신설동', u.anchorX + u.ox - t.anchorX, u.anchorY + u.oy - t.anchorY);
+    test('자동 배지와 겹치면 soft(저장하면 비켜남), 앵커 거리·라벨 등은 hard', () {
+      // 동해선 태화강 배지를 4호선 안평 자동 배지 자리로.
+      final u = byKey(base.result)['4|안평']!;
+      final t = byKey(base.result)['동해|태화강']!;
+      final r = base.check('동해|태화강', u.anchorX + u.ox - t.anchorX, u.anchorY + u.oy - t.anchorY);
       final badge = r.violations.where((v) => v.kind == 'badge').toList();
       expect(badge, isNotEmpty);
       expect(badge.every((v) => v.soft), isTrue);
-      expect(badge.first.otherKey, equals('우이신설|신설동'));
-      expect(badge.first.message, contains('우이신설/신설동'));
+      expect(badge.first.otherKey, equals('4|안평'));
+      expect(badge.first.message, contains('4/안평'));
+      // 같은 위치의 앵커 거리 위반은 hard.
+      final anchor = r.violations.where((v) => v.kind == 'anchor').toList();
+      expect(anchor, isNotEmpty);
+      expect(anchor.every((v) => !v.soft), isTrue);
     });
 
     test('알 수 없는 키는 ArgumentError', () {
       expect(() => base.check('없는노선|없는역', 0, 0), throwsArgumentError);
     });
 
-    test('모델 JSON 은 48개 배지의 키·오프셋·위반을 담는다', () {
+    test('모델 JSON 은 12개 배지의 키·오프셋·위반을 담는다', () {
       final m = base.toJson();
       final badges = (m['badges'] as List).cast<Map<String, dynamic>>();
-      expect(badges.length, equals(48));
-      expect(badges.map((b) => b['key']).toSet().length, equals(48), reason: '키는 배지마다 유일');
+      expect(badges.length, equals(12));
+      expect(badges.map((b) => b['key']).toSet().length, equals(12), reason: '키는 배지마다 유일');
       expect(badges.every((b) => (b['key'] as String).contains('|')), isTrue);
       expect(badges.every((b) => b['manual'] == false), isTrue);
       expect(() => jsonEncode(m), returnsNormally);

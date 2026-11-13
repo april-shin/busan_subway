@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/headway_estimator.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/core/utils/headway_estimator.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
 
 LineSchedule _scheduleWith({
   required List<TimePeriod> weekdayPeriods,

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/foldable_layout.dart';
+import 'package:busan_subway/core/utils/foldable_layout.dart';
 
 void main() {
   group('isUnfoldedFoldable', () {

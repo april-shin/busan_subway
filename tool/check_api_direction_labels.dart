@@ -21,7 +21,7 @@
 //   dart run tool/check_api_direction_labels.dart --per-line 12    # 노선당 표본 역 수 상향(기본 가변)
 //   dart run tool/check_api_direction_labels.dart --verbose        # 모든 노선의 불일치 사례 출력
 //
-// API 키는 프로젝트 루트 `.env` 의 `SEOUL_SUBWAY_API_KEY` 에서만 읽으며 출력에 남기지
+// API 키는 프로젝트 루트 `.env` 의 `BUSAN_SUBWAY_API_KEY` 에서만 읽으며 출력에 남기지
 // 않는다. 호출 수는 전 노선 1회 실행당 **약 180건**(실측 183건. 서울 열린데이터 일일
 // 한도는 1,000건/일 이라 하루 5회가 상한이다) — 한도가 빠듯하면 `--lines` 로 좁힐 것.
 // 실제 질의 수는 실행 첫 줄 "질의 대상 N개 역명" 에 찍힌다.
@@ -68,9 +68,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:seoul_subway/core/constants/api_constants.dart';
-import 'package:seoul_subway/core/constants/subway_id_mapping.dart';
-import 'package:seoul_subway/core/utils/line_direction.dart';
+import 'package:busan_subway/core/constants/api_constants.dart';
+import 'package:busan_subway/core/constants/subway_id_mapping.dart';
+import 'package:busan_subway/core/utils/line_direction.dart';
 
 // ---------------------------------------------------------------------------
 // 판정 임계
@@ -733,7 +733,7 @@ String _readApiKey() {
     final line = raw.trim();
     if (line.startsWith('#') || !line.contains('=')) continue;
     final i = line.indexOf('=');
-    if (line.substring(0, i).trim() != 'SEOUL_SUBWAY_API_KEY') continue;
+    if (line.substring(0, i).trim() != 'BUSAN_SUBWAY_API_KEY') continue;
     var v = line.substring(i + 1).trim();
     if (v.length >= 2 &&
         ((v.startsWith('"') && v.endsWith('"')) ||
@@ -741,11 +741,11 @@ String _readApiKey() {
       v = v.substring(1, v.length - 1);
     }
     if (v.isEmpty || v == 'your_api_key_here') {
-      throw _ToolError('SEOUL_SUBWAY_API_KEY 가 비었거나 placeholder 다');
+      throw _ToolError('BUSAN_SUBWAY_API_KEY 가 비었거나 placeholder 다');
     }
     return v;
   }
-  throw _ToolError('.env 에 SEOUL_SUBWAY_API_KEY 가 없다');
+  throw _ToolError('.env 에 BUSAN_SUBWAY_API_KEY 가 없다');
 }
 
 class _ToolError implements Exception {
@@ -1092,13 +1092,10 @@ class _Evaluator {
       if (r == null) return null;
       lastConfident = r.confident;
       lastEdge = '${data.stationById[from]?["name"]}→${data.stationById[r.hop]?["name"]}';
-      // 앱이 **라벨을 읽는 방식** 그대로여야 한다. 노선 단위 반전은 이미
-      // `isDownBetween` 안에 들어 있고, 구간 단위 반전(2호선 성수지선)은 지도·
-      // 출발시각 게이트가 라벨 쪽을 뒤집어 보정한다 — 여기서도 같이 뒤집지
-      // 않으면 이미 고친 구간을 영원히 "불일치" 로 보고한다(거짓 경보).
-      // 반대로 앱에서 보정이 사라지면 이 값이 다시 어긋나 곧바로 잡힌다.
-      final down = isDownBetween(from, r.hop, l);
-      return isApiLabelReversedBetween(from, r.hop, l) ? !down : down;
+      // 앱이 **라벨을 읽는 방식** 그대로여야 한다. 부산 전환으로 구간 단위 라벨
+      // 반전(서울 2호선 성수지선)은 제거됐고 앱은 `isDownBetween` 만으로 라벨을
+      // 읽는다. 반전 구간이 다시 필요해지면 여기도 같이 맞출 것.
+      return isDownBetween(from, r.hop, l);
     }
 
     void noPath(String from, String to) {

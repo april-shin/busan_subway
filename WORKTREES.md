@@ -10,7 +10,7 @@
 
 ## 편집 규칙
 
-- **본 체크아웃(`/Users/april/StudioProjects/seoul_subway`)에서만 편집한다.** 워크트리 안에서는
+- **본 체크아웃(`/Users/april/StudioProjects/busan_subway`)에서만 편집한다.** 워크트리 안에서는
   이 파일을 수정하지 않는다. 워크트리마다 사본을 갖게 되므로 양쪽에서 고치면 병합마다 충돌한다.
 - **선언은 작업을 시작할 때 적는다.** 끝나고 적으면 중복 방지에 아무 쓸모가 없다 — 중복은 남이
   시작하려는 순간에만 막을 수 있다.
@@ -60,7 +60,7 @@
 여러 워크트리가 같은 파일을 잡고 있으면 `⚠겹침` 으로 표시된다.
 
 ```bash
-cd /Users/april/StudioProjects/seoul_subway && git worktree list | tail -n +2 | awk '{print $1}' | while read p; do n=$(basename "$p"); { git -C "$p" -c core.quotepath=false status --porcelain | cut -c4- | sed 's/^.* -> //'; git -C "$p" diff --name-only main...HEAD; } | sort -u | sed "s|^|$n\t|"; done | awk -F'\t' '{o[$2]=o[$2]" "$1; c[$2]++} END{for(f in c) printf "%s\t%s\t←%s\n", (c[f]>1?"⚠겹침":"·"), f, o[f]}' | sort -k1,1r -k2,2 | column -t -s$'\t'
+cd /Users/april/StudioProjects/busan_subway && git worktree list | tail -n +2 | awk '{print $1}' | while read p; do n=$(basename "$p"); { git -C "$p" -c core.quotepath=false status --porcelain | cut -c4- | sed 's/^.* -> //'; git -C "$p" diff --name-only main...HEAD; } | sort -u | sed "s|^|$n\t|"; done | awk -F'\t' '{o[$2]=o[$2]" "$1; c[$2]++} END{for(f in c) printf "%s\t%s\t←%s\n", (c[f]>1?"⚠겹침":"·"), f, o[f]}' | sort -k1,1r -k2,2 | column -t -s$'\t'
 ```
 
 내가 건드릴 파일이 목록에 있으면 그 워크트리와 겹친다.
@@ -99,7 +99,7 @@ cd /Users/april/StudioProjects/seoul_subway && git worktree list | tail -n +2 | 
 `flutter test` 전에 먼저 처리한다. 여기서 나는 컴파일 에러를 코드 회귀로 오진하지 말 것.
 
 ```bash
-cp /Users/april/StudioProjects/seoul_subway/.env . && dart run build_runner build
+cp /Users/april/StudioProjects/busan_subway/.env . && dart run build_runner build
 ```
 
 - `.env` 미복사 → `No file or variants found for asset: .env`
@@ -122,7 +122,7 @@ cp /Users/april/StudioProjects/seoul_subway/.env . && dart run build_runner buil
 ## 상태 새로고침
 
 ```bash
-cd /Users/april/StudioProjects/seoul_subway && echo "main = $(git rev-parse --short main)" && git worktree list | tail -n +2 | awk '{print $1}' | while read p; do n=$(basename "$p"); printf "%-34s HEAD=%-9s ahead=%-3s behind=%-3s dirty=%-3s %s\n" "$n" "$(git -C "$p" rev-parse --short HEAD)" "$(git -C "$p" rev-list --count main..HEAD)" "$(git -C "$p" rev-list --count HEAD..main)" "$(git -C "$p" status --porcelain | wc -l | tr -d ' ')" "$(git -C "$p" log -1 --format='%s' | cut -c1-40)"; done
+cd /Users/april/StudioProjects/busan_subway && echo "main = $(git rev-parse --short main)" && git worktree list | tail -n +2 | awk '{print $1}' | while read p; do n=$(basename "$p"); printf "%-34s HEAD=%-9s ahead=%-3s behind=%-3s dirty=%-3s %s\n" "$n" "$(git -C "$p" rev-parse --short HEAD)" "$(git -C "$p" rev-list --count main..HEAD)" "$(git -C "$p" rev-list --count HEAD..main)" "$(git -C "$p" status --porcelain | wc -l | tr -d ' ')" "$(git -C "$p" log -1 --format='%s' | cut -c1-40)"; done
 ```
 
 읽는 법:
@@ -152,7 +152,7 @@ cd /Users/april/StudioProjects/seoul_subway && echo "main = $(git rev-parse --sh
 커밋이, `dirty>0` 이면 커밋 안 된 작업이 함께 사라진다.
 
 ```bash
-cd /Users/april/StudioProjects/seoul_subway && git worktree remove .claude/worktrees/<이름> && git worktree prune
+cd /Users/april/StudioProjects/busan_subway && git worktree remove .claude/worktrees/<이름> && git worktree prune
 ```
 
 - 디렉토리를 손으로 `rm -rf` 하면 등록 정보가 남는다. 그 경우 `git worktree prune`.

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/parse_arrival_message.dart';
+import 'package:busan_subway/core/utils/parse_arrival_message.dart';
 
 void main() {
   group('parseTimeFromMessage', () {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/constants/api_constants.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/features/arrival_info/presentation/widgets/arrival_card.dart';
+import 'package:busan_subway/core/constants/api_constants.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/features/arrival_info/presentation/widgets/arrival_card.dart';
 
 void main() {
   // receivedAt를 현재 시각으로 설정하여 경과 시간 0초로 테스트

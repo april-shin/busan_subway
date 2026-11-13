@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/theme/tokens/app_typography.dart';
+import 'package:busan_subway/core/theme/tokens/app_typography.dart';
 
 void main() {
   group('appTextTheme — 13개 슬롯 존재 검증', () {

@@ -51,7 +51,7 @@ String _normalizeStationName(String raw) => raw
   // 스코프를 `<text>` 여는 태그로 한정한다 — 빌드 스크립트도 텍스트 요소만
   // 처리하므로, SVG 에 `<circle data-station=...>` 같은 것이 생겨도 기대값이
   // 어긋나지 않는다.
-  final svgContent = File('assets/svg/seoul_metro_map.svg').readAsStringSync();
+  final svgContent = File('assets/svg/busan_metro_map.svg').readAsStringSync();
   final labelPattern = RegExp(r'<text[^>]*data-station="([^"]*)"');
   final svgLabelNames = <String>{};
   var svgLabelCount = 0;
@@ -700,11 +700,14 @@ void main() {
         reason: 'SVG data-station 이름이 stations.json 에 없다 — 역명 정규화가 '
             '틀렸거나 두 데이터가 드리프트했다',
       );
+      // 예외 1건: 2호선 `벡스코(시립미술관)` 와 동해선 `벡스코` 는 이름이 다른 같은
+      // 물리 환승역이라 SVG 에 라벨이 하나(`벡스코(시립미술관)`)뿐이다. 그 외에는
+      // isTransfer 역마다 대응하는 SVG 라벨이 있어야 한다.
       expect(
         expectation.transferNames.difference(expectation.svgLabelNames),
-        isEmpty,
-        reason: 'isTransfer 역인데 대응하는 SVG 라벨이 없다 — 교집합이 조용히 '
-            '줄어든 상태라 tl-major 개수 비교를 믿을 수 없다',
+        equals({'벡스코'}),
+        reason: 'isTransfer 역인데 대응하는 SVG 라벨이 없다 — 이름 다른 환승(벡스코) 외에는 '
+            '교집합이 조용히 줄어든 상태라 tl-major 개수 비교를 믿을 수 없다',
       );
 
       // (2) 라벨 단위 판정 — 개수 비교만으로는 클래스가 <tspan> 에 잘못 붙어도
@@ -733,17 +736,25 @@ void main() {
           reason: 'tl-major 클래스가 하나도 없다 — 라벨 2단(tier) 정책 자체가 '
               '증발했을 수 있다');
 
-      // 실제 환승역(사당: 2·4호선 환승) 라벨에는 클래스가 붙어야 한다.
-      final sadangMatch =
-          RegExp(r'<text[^>]*data-station="사당"[^>]*>').firstMatch(htmlContent);
-      expect(sadangMatch, isNotNull, reason: '사당 라벨을 찾지 못했다');
-      expect(_hasMajorClass(sadangMatch!.group(0)!), isTrue);
+      // 실제 환승역(서면: 1·2호선 환승) 라벨에는 클래스가 붙어야 한다.
+      final seomyeonMatch =
+          RegExp(r'<text[^>]*data-station="서면"[^>]*>').firstMatch(htmlContent);
+      expect(seomyeonMatch, isNotNull, reason: '서면 라벨을 찾지 못했다');
+      expect(_hasMajorClass(seomyeonMatch!.group(0)!), isTrue);
 
-      // 일반역(환승 없음, 예: 1호선 "연천")에는 클래스가 붙지 않아야 한다.
-      final yeoncheonMatch = RegExp(r'<text[^>]*data-station="연천"[^>]*>')
+      // 이름이 다른 환승(벡스코(시립미술관))도 라벨에 클래스가 붙는다. 이 라벨은 두 줄
+      // (벡스코 / (시립미술관))이라 data-station 에 줄바꿈(&#10;)이 들어 있다.
+      final bexcoMatch =
+          RegExp(r'<text[^>]*data-station="벡스코(?:&#10;|\n)?\(시립미술관\)"[^>]*>')
+              .firstMatch(htmlContent);
+      expect(bexcoMatch, isNotNull, reason: '벡스코(시립미술관) 라벨을 찾지 못했다');
+      expect(_hasMajorClass(bexcoMatch!.group(0)!), isTrue);
+
+      // 일반역(환승 없음, 예: 2호선 "장산")에는 클래스가 붙지 않아야 한다.
+      final jangsanMatch = RegExp(r'<text[^>]*data-station="장산"[^>]*>')
           .firstMatch(htmlContent);
-      expect(yeoncheonMatch, isNotNull, reason: '연천 라벨을 찾지 못했다');
-      expect(_hasMajorClass(yeoncheonMatch!.group(0)!), isFalse);
+      expect(jangsanMatch, isNotNull, reason: '장산 라벨을 찾지 못했다');
+      expect(_hasMajorClass(jangsanMatch!.group(0)!), isFalse);
     });
 
     test('textTargetRect가 라벨 tier 별로 다른 확대 배율(f)을 쓴다', () {
@@ -1379,7 +1390,7 @@ void main() {
               .cast<Map<String, dynamic>>();
 
       // 입력 데이터를 한 번 읽어 두고, 조작한 사본으로 buildLineBadges 를 다시 돌린다.
-      final svg = File('assets/svg/seoul_metro_map.svg').readAsStringSync();
+      final svg = File('assets/svg/busan_metro_map.svg').readAsStringSync();
       final stations = readJsonList('assets/json/stations.json');
       final lines = readJsonList('assets/json/lines.json');
       final conns = readJsonList('assets/json/connections.json');
@@ -1447,8 +1458,8 @@ void main() {
 
       test('전 노선(lines.json)의 양 종점에 배지가 정확히 2개씩 있다', () {
         final badges = parseBadges();
-        expect(lines.length, equals(24),
-            reason: '노선 수가 바뀌었다 — 요구사항(24개 노선)과 배지 정책을 재확인할 것');
+        expect(lines.length, equals(6),
+            reason: '노선 수가 바뀌었다 — 부산 6개 노선(1·2·3·4·동해선·부산김해)과 배지 정책을 재확인할 것');
         expect(badges.length, equals(lines.length * 2),
             reason: '정규식이 배지 마크업 형태를 못 읽었거나 배지 수가 다르다');
         for (final line in lines) {
@@ -1462,33 +1473,19 @@ void main() {
         }
       });
 
-      test('긴 노선명 축약표는 사용자 승인 2건뿐이다 — 김포골드·우이신설', () {
+      test('노선명 축약표는 비어 있다 — 모든 배지가 lines.json 의 name 그대로다', () {
         // ⛔ 축약은 **사용자 승인 사안**이다. 배치가 빡빡하다는 이유로 임의로 늘리지 말 것.
-        // 한때 '2'→"2호", '수인분당'→"수인분당", '우이신설'→"우이" 까지 줄여 앵커 상한을 16px 로
-        // 맞춘 적이 있는데(2026-10-06 fix5), "2호" 는 다른 노선이 전부 "N호선" 인 가운데 혼자
-        // 표기가 깨지고 아무도 그렇게 부르지 않아 **철회**했다. 대신 앵커 상한을 24px 로 두면
-        // 공식 명칭 그대로도 미해결 0 이고, 겹침 수치는 오히려 더 좋다(타 노선 선 스침 53.5px→3.5px).
-        // 의정부경전철은 "의정부" 가 실제 역명이라 축약 자체가 불가능하다 — 게이트가 막는다.
-        const expected = {
-          '김포골드': ('김포골드', 60.0), // 배치: lines.json "김포골드라인" 84px → 60px
-          '우이신설': ('우이신설', 60.0), // 가독성: "우이신설경전철" 7자 → 4자 (전 배지 최장이었다)
-        };
-        expect(kLineBadgeNames,
-            equals({for (final e in expected.entries) e.key: e.value.$1}));
-        for (final entry in expected.entries) {
-          final got =
-              parseBadges().where((b) => b['lineId'] == entry.key).toList();
-          expect(got.length, equals(2), reason: '${entry.key} 양 종점');
-          for (final b in got) {
-            expect(b['text'], equals(entry.value.$1));
-            expect(b['w'], equals(entry.value.$2), reason: '글자 폭 합 + 좌우 패딩 12');
-          }
-        }
-        for (final b in parseBadges()
-            .where((b) => !kLineBadgeNames.containsKey(b['lineId']))) {
+        // 부산 노선도에는 승인된 축약이 없다(서울 시절 김포골드·우이신설 2건은 삭제됐다).
+        expect(kLineBadgeNames, isEmpty);
+        for (final b in parseBadges()) {
           final line = lines.firstWhere((l) => l['id'] == b['lineId']);
           expect(b['text'], equals(line['name']), reason: '${b['lineId']} 는 축약하지 않는다');
         }
+        // 가장 긴 문구(부산김해경전철)도 공식 명칭 그대로 풀린다.
+        expect(
+          parseBadges().map((b) => b['text']),
+          contains('부산김해경전철'),
+        );
       });
 
       test('배지 문구는 어떤 실제 역명과도 같지 않다 (역명 라벨로 오독 방지)', () {
@@ -1511,10 +1508,10 @@ void main() {
         expect(group, isNot(contains('<line')), reason: '배지 그룹 안에 <line> 줄기');
         expect(group, isNot(contains('<path')), reason: '배지 그룹 안에 <path> 연결선');
         expect(group, isNot(contains('stroke-dasharray')), reason: '점선 연결선');
-        expect(RegExp(r'<g class="lb"[^>]*>').allMatches(group).length, equals(48));
+        expect(RegExp(r'<g class="lb"[^>]*>').allMatches(group).length, equals(lines.length * 2));
         // 배지 한 개는 <rect> 1 + <text> 1 로만 이뤄진다.
-        expect(RegExp(r'<rect ').allMatches(group).length, equals(48));
-        expect(RegExp(r'<text ').allMatches(group).length, equals(48));
+        expect(RegExp(r'<rect ').allMatches(group).length, equals(lines.length * 2));
+        expect(RegExp(r'<text ').allMatches(group).length, equals(lines.length * 2));
       });
 
       test('줄기가 없으므로 pill 은 앵커(노선 선 끝점)에 붙어 있다 — 앵커↔pill 실제 최단 거리 24px 이하', () {
@@ -1534,36 +1531,34 @@ void main() {
           expect(d, lessThanOrEqualTo(24.0),
               reason: '${b['lineId']} 배지가 앵커에서 ${d.toStringAsFixed(1)}px — 연결선 없이 멀리 띄우면 귀속이 모호하다');
         }
-        expect(dists.length, equals(48));
+        expect(dists.length, equals(lines.length * 2));
         final r = run(); // 보정 없는 자동 배치 알고리즘 자체의 상한
         expect(r.maxAnchorDistPx, lessThanOrEqualTo(24.0));
-        expect(r.anchorDistsPx.length, equals(48));
+        expect(r.anchorDistsPx.length, equals(lines.length * 2));
         // 생성물(= 커밋된 보정으로 빌드된 map.html) 독립 계측과 같은 보정으로 돌린 빌드 로그 통계가 일치한다.
         expect(runWithFile().maxAnchorDistPx, closeTo(dists.reduce(math.max), 0.1));
         expect(r.summary.any((l) => l.contains('줄기(배지↔종점 연결선): 없음')), isTrue);
       });
 
-      test('종점 선정 결과를 고정한다 — 알려진 함정 케이스(지선·순환·분리 노선)', () {
+      test('종점 선정 결과를 고정한다 — 부산 6개 노선은 전부 단순 선형이라 양 끝 역이다', () {
         // 이 단언이 이 기능의 핵심 알고리즘(hop 지름 양 끝)을 지킨다. 앵커-근접 테스트는
-        // "마천 vs 하남검단산" 같은 오판도 통과시키므로 역명으로 직접 못 박는다.
+        // 오판도 통과시키므로 역명으로 직접 못 박는다. 지선·순환이 없어 stationIds 의
+        // 첫/끝 역이 곧 종점이다.
         final names = run().terminalNames;
-        expect(names['1']!.toSet(), equals({'연천', '신창'}),
-            reason: 'stationIds 첫/끝(연천/광명)이 아니라 본선 양 끝');
-        expect(names['2']!.toSet(), equals({'까치산', '신설동'}),
-            reason: '순환선: 그래프의 차수 1 노드 = 두 지선 끝');
-        expect(names['5']!.toSet(), equals({'방화', '하남검단산'}),
-            reason: '유클리드 최원점이면 마천(지선)이 이긴다');
-        expect(names['6']!.toSet(), equals({'신내', '독바위'}),
-            reason: '차수 1 후보가 신내 하나뿐 → 전 노드 폴백(응암루프 반대 끝)');
-        expect(names['GTX-A']!.toSet(), equals({'운정중앙', '동탄'}),
-            reason: '분리 노선 오버라이드(서울역·수서 허브 회피)');
-        expect(names['경의중앙']!.toSet(), equals({'임진강', '지평'}),
-            reason: '서울역 지선 제외');
+        expect(names['1']!.toSet(), equals({'다대포해수욕장', '노포'}));
+        expect(names['2']!.toSet(), equals({'장산', '양산'}));
+        expect(names['3']!.toSet(), equals({'수영', '대저'}));
+        expect(names['4']!.toSet(), equals({'미남', '안평'}));
+        expect(names['동해']!.toSet(), equals({'부전', '태화강'}));
+        expect(names['부산김해']!.toSet(), equals({'사상', '가야대'}));
         // 모든 노선이 정확히 2개의 서로 다른 종점을 갖는다.
+        expect(names.keys.toSet(), equals(lines.map((l) => l['id']).toSet()));
         for (final e in names.entries) {
           expect(e.value.length, equals(2), reason: e.key);
           expect(e.value.toSet().length, equals(2), reason: '${e.key} 종점 중복');
         }
+        expect(kBadgeTerminalOverrides, isEmpty,
+            reason: '끊긴 노선이 없어 분리 노선 오버라이드는 비어 있다');
       });
 
       test('배지 색은 지도에 보이는 SVG 선 색이다 (lines.json colorValue 가 아니다)', () {
@@ -1608,8 +1603,8 @@ void main() {
                 reason: '${b['lineId']} 흰 글씨 대비 ${cr.toStringAsFixed(2)} >= 3.0 → 흰 글씨');
           }
         }
-        // 현 SVG 에서 전환되는 노선을 고정한다(인천1 3.01 은 아슬하게 흰 글씨 유지).
-        expect(dark, equals({'수인분당', '6', '인천2'}));
+        // 현 SVG 에서 전환되는 노선을 고정한다(동해선 1.76:1 → 짙은 글씨).
+        expect(dark, equals({'동해'}));
         // 구현의 대비 계산이 독립 계산과 일치한다.
         for (final b in parseBadges()) {
           expect(contrastRatio(b['fill'] as String, '#ffffff'),
@@ -1730,7 +1725,7 @@ void main() {
           final x = attr('x'), y = attr('y'), w = attr('width'), h = attr('height');
           if (x != null && y != null && w != null && h != null) markers.add([x, y, x + w, y + h]);
         }
-        expect(markers.length, greaterThan(40), reason: '환승역 마커 rect 를 못 읽었다(SVG 형태 변경?)');
+        expect(markers.length, equals(12), reason: '환승역 마커 rect 12개(환승 물리 역 12곳)를 못 읽었다(SVG 형태 변경?)');
         for (final b in autoBadges()) {
           final x0 = (b['ax'] as double) + (b['x'] as double);
           final y0 = (b['ay'] as double) + (b['y'] as double);
@@ -1809,7 +1804,7 @@ void main() {
         expect(cssEnd, greaterThan(cssStart));
         expect(htmlContent.substring(cssStart, cssEnd),
             isNot(contains('will-change')),
-            reason: '정적 48개 요소에 레이어 승격을 쓰지 않는다(래스터 기아 이력)');
+            reason: '정적 배지 요소에 레이어 승격을 쓰지 않는다(래스터 기아 이력)');
         expect(htmlContent, isNot(contains('transform: scale(var(')));
       });
 
@@ -1822,66 +1817,80 @@ void main() {
       });
 
       group('buildLineBadges 는 데이터가 어긋나면 조용히 통과하지 않고 실패한다', () {
-        test('정상 입력은 통과하고 48개를 낸다', () {
-          expect(run().badgeCount, equals(48));
+        test('정상 입력은 통과하고 노선당 2개, 총 12개를 낸다', () {
+          expect(run().badgeCount, equals(12));
         });
 
         test('(1) 노선이 하나 사라지면(매핑과 불일치) 실패', () {
           expect(() => run(ln: lines.sublist(1)), stateErrorWith('불일치'));
         });
 
-        test('(2) 경강선 역 좌표를 엉뚱한 곳으로 옮기면 기하 검증이 실패(보조 검증)', () {
+        test('(2) 동해선 역 좌표를 엉뚱한 곳으로 옮기면 기하 검증이 실패(보조 검증)', () {
           final moved = [
             for (final s in stations)
-              s['lineId'] == '경강' ? {...s, 'svgX': 5.0, 'svgY': 5.0} : s,
+              s['lineId'] == '동해' ? {...s, 'svgX': 5.0, 'svgY': 5.0} : s,
           ];
           expect(() => run(st: moved), stateErrorWith('기하 검증 실패'));
         });
 
-        test('(2b) 매핑이 뒤바뀌면(경춘↔경강) 라벨 대조(주 검증)가 먼저 잡는다', () {
+        test('(2b) 매핑이 뒤바뀌면(동해↔부산김해) 라벨 대조(주 검증)가 먼저 잡는다', () {
           final swapped = {
             ...kLineIdToDataLine,
-            '경춘': kLineIdToDataLine['경강']!,
-            '경강': kLineIdToDataLine['경춘']!,
+            '동해': kLineIdToDataLine['부산김해']!,
+            '부산김해': kLineIdToDataLine['동해']!,
           };
           expect(() => run(codes: swapped), stateErrorWith('라벨 대조 실패'));
         });
 
-        test('(3) 오버라이드 없는 노선이 끊기면 실패 — 3호선 충무로~동대입구 엣지 제거', () {
-          final a = idOf('충무로', '3'), b = idOf('동대입구', '3');
-          final cut = [
+        // 동해선을 송정(812)–오시리아(813) 사이에서 끊은 연결 목록(두 방향 레코드 모두 제거).
+        List<Map<String, dynamic>> cutDonghae() {
+          final a = idOf('송정', '동해'), b = idOf('오시리아', '동해');
+          return [
             for (final c in conns)
-              if (!(c['lineId'] == '3' &&
+              if (!(c['lineId'] == '동해' &&
                   {c['fromStationId'], c['toStationId']}.containsAll({a, b})))
                 c,
           ];
-          expect(cut.length, equals(conns.length - 1), reason: '엣지 1개만 제거돼야 한다');
+        }
+
+        test('(3) 오버라이드 없는 노선이 끊기면 실패 — 1호선 부산진~좌천 엣지 제거', () {
+          final a = idOf('부산진', '1'), b = idOf('좌천', '1');
+          final cut = [
+            for (final c in conns)
+              if (!(c['lineId'] == '1' &&
+                  {c['fromStationId'], c['toStationId']}.containsAll({a, b})))
+                c,
+          ];
+          expect(cut.length, lessThan(conns.length), reason: '엣지가 제거돼야 한다');
           expect(() => run(cn: cut), stateErrorWith('둘 이상의 구간으로 끊겨'));
         });
 
-        test('(4) 오버라이드 역이 더 이상 종점(차수 1)이 아니면 실패 — 동탄에 가상 엣지', () {
+        test('(3b) 끊긴 노선에 오버라이드를 주면 통과한다 — 동해선 송정|오시리아', () {
+          final cut = cutDonghae();
+          expect(cut.length, lessThan(conns.length));
+          final r = run(cn: cut, overrides: {'동해': ['부전', '태화강']});
+          expect(r.terminalNames['동해']!.toSet(), equals({'부전', '태화강'}));
+        });
+
+        test('(4) 오버라이드 역이 더 이상 종점(차수 1)이 아니면 실패 — 태화강에 가상 엣지', () {
           final extended = [
-            ...conns,
-            {'lineId': 'GTX-A', 'fromStationId': idOf('동탄', 'GTX-A'),
-             'toStationId': idOf('성남', 'GTX-A'),
+            ...cutDonghae(),
+            {'lineId': '동해', 'fromStationId': idOf('태화강', '동해'),
+             'toStationId': idOf('덕하', '동해'),
              'travelTimeSeconds': 60, 'isTransfer': false},
           ];
-          expect(() => run(cn: extended), stateErrorWith('더 이상 종점'));
+          expect(() => run(cn: extended, overrides: {'동해': ['부전', '태화강']}),
+              stateErrorWith('더 이상 종점'));
         });
 
         test('(5) 오버라이드 노선이 연결되면 실패 — 오버라이드를 지우도록 강제', () {
-          final joined = [
-            ...conns,
-            {'lineId': 'GTX-A', 'fromStationId': idOf('서울역', 'GTX-A'),
-             'toStationId': idOf('수서', 'GTX-A'),
-             'travelTimeSeconds': 60, 'isTransfer': false},
-          ];
-          expect(() => run(cn: joined), stateErrorWith('이제 연결돼 있다'));
+          expect(() => run(overrides: {'동해': ['부전', '태화강']}),
+              stateErrorWith('이제 연결돼 있다'));
         });
 
         test('(6) 오버라이드 두 역이 같은 구간이면 실패', () {
           expect(
-            () => run(overrides: {'GTX-A': ['운정중앙', '서울역']}),
+            () => run(cn: cutDonghae(), overrides: {'동해': ['부전', '송정']}),
             stateErrorWith('같은 구간'),
           );
         });
@@ -1895,30 +1904,30 @@ void main() {
 
         test('(8) 오버라이드 역명이 노선에 없으면 실패', () {
           expect(
-            () => run(overrides: {'GTX-A': ['없는역', '동탄']}),
+            () => run(cn: cutDonghae(), overrides: {'동해': ['없는역', '태화강']}),
             stateErrorWith('정확히 1건이 아님'),
           );
         });
 
-        test('(9) 배지 문구가 실제 역명과 같으면 실패 — 의정부경전철 → 의정부(의정부역 실존)', () {
+        test('(9) 배지 문구가 실제 역명과 같으면 실패 — 2호선 → "서면"(서면역 실존)', () {
           expect(
-            () => run(names: {...kLineBadgeNames, '의정부': '의정부'}),
+            () => run(names: {...kLineBadgeNames, '2': '서면'}),
             stateErrorWith('실제 역명과 같다'),
           );
         });
 
-        test('(9b) 공백이 섞여도 역명과 같으면 실패 — "의 정 부"', () {
+        test('(9b) 공백이 섞여도 역명과 같으면 실패 — "서 면"', () {
           expect(
-            () => run(names: {...kLineBadgeNames, '의정부': '의 정 부'}),
+            () => run(names: {...kLineBadgeNames, '2': '서 면'}),
             stateErrorWith('실제 역명과 같다'),
           );
         });
 
         test('(9c) 축약하지 않은 노선의 원래 이름이 역명과 같아져도 실패 — 나중에 역이 추가된 상황', () {
-          // "김포골드" 라는 이름의 역이 새로 생기면, 축약 문구(김포골드)가 곧바로 충돌한다.
+          // "1호선" 이라는 이름의 역이 새로 생기면, 1호선 배지 문구가 곧바로 충돌한다.
           final withNewStation = [
             ...stations,
-            {...stations.first, 'id': 'ZZ99', 'name': '김포골드', 'lineId': '1'},
+            {...stations.first, 'id': 'ZZ99', 'name': '1호선', 'lineId': '1'},
           ];
           expect(() => run(st: withNewStation), stateErrorWith('실제 역명과 같다'));
         });
@@ -1932,30 +1941,30 @@ void main() {
 
         test('(11) 축약 문구가 비어 있으면 실패', () {
           expect(
-            () => run(names: {...kLineBadgeNames, '의정부': '  '}),
+            () => run(names: {...kLineBadgeNames, '2': '  '}),
             stateErrorWith('비어 있다'),
           );
         });
 
-        test('(12) 두 노선이 같은 문구로 축약되면 실패 — 의정부·우이신설 → "경전철"', () {
+        test('(12) 두 노선이 같은 문구로 축약되면 실패 — 3·4호선 → "지하철"', () {
           expect(
-            () => run(names: {...kLineBadgeNames, '의정부': '경전철', '우이신설': '경전철'}),
+            () => run(names: {...kLineBadgeNames, '3': '지하철', '4': '지하철'}),
             stateErrorWith('배지 문구가 같다'),
           );
         });
 
         test('(12b) 축약 문구가 다른 노선의 (축약 안 한) 이름과 같아도 실패', () {
-          // 김포골드 → "의정부경전철" 은 lines.json 의 의정부 노선 이름 그대로다.
-          final uijeongbu = lines.firstWhere((l) => l['id'] == '의정부')['name'] as String;
+          // 1호선 → "2호선" 은 lines.json 의 2호선 노선 이름 그대로다.
+          final line2 = lines.firstWhere((l) => l['id'] == '2')['name'] as String;
           expect(
-            () => run(names: {'김포골드': uijeongbu}),
+            () => run(names: {'1': line2}),
             stateErrorWith('배지 문구가 같다'),
           );
         });
 
         test('(12c) 공백만 다른 문구도 같은 문구로 본다 — "경 전 철" vs "경전철"', () {
           expect(
-            () => run(names: {...kLineBadgeNames, '의정부': '경 전 철', '우이신설': '경전철'}),
+            () => run(names: {...kLineBadgeNames, '3': '경 전 철', '4': '경전철'}),
             stateErrorWith('배지 문구가 같다'),
           );
         });
@@ -1963,12 +1972,12 @@ void main() {
         test('(13) 역명 충돌 메시지에 출처(stations.json 의 어느 역인지)가 들어간다', () {
           final withNewStation = [
             ...stations,
-            {...stations.first, 'id': 'ZZ99', 'name': '김포골드', 'lineId': '1'},
+            {...stations.first, 'id': 'ZZ99', 'name': '1호선', 'lineId': '1'},
           ];
-          expect(() => run(st: withNewStation), stateErrorWith('stations.json 역 "김포골드"(id ZZ99'));
+          expect(() => run(st: withNewStation), stateErrorWith('stations.json 역 "1호선"(id ZZ99'));
         });
 
-        test('(15) 공식 명칭 그대로도 전 노선이 풀린다 — 축약은 승인 2건으로 충분하다', () {
+        test('(15) 공식 명칭 그대로도 전 노선이 풀린다 — 축약이 필요 없다', () {
           // 줄기(연결선)로 멀리 보내는 길이 막혀 있어도, 앵커 상한 24px 면 신설동("2호선" 44px)·
           // 청량리("수인분당선" 72px) 허브가 공식 명칭 그대로 풀린다. 한때 상한을 16px 로 잡고
           // '2'→"2호" 까지 줄였다가, 다른 노선이 전부 "N호선" 인데 혼자 표기가 깨져 철회한 경위가
@@ -1980,17 +1989,17 @@ void main() {
               .allMatches(r.svgFragment)
               .map((m) => m.group(1)!)
               .toSet();
-          // 승인 2건 외에는 lines.json 의 name 이 그대로 나와야 한다.
+          // 축약 없이 lines.json 의 name 이 그대로 나와야 한다.
           expect(texts, contains('2호선'));
-          expect(texts, contains('수인분당선'));
+          expect(texts, contains('부산김해경전철'));
           expect(texts, isNot(contains('2호')));
         });
 
         test('(14) 하드 위반을 못 피하는 배지가 있으면 빌드 실패 — 종점 주변을 환승역 마커로 막음', () {
-          // 김포골드 첫 배지 앵커 주변 ±150px 를 덮는 rect 를 SVG 에 추가하면 앵커 16px 안의 모든 후보가
+          // 1호선 첫 배지 앵커 주변 ±150px 를 덮는 rect 를 SVG 에 추가하면 앵커 24px 안의 모든 후보가
           // 환승역 마커와 겹친다 → 미해결. (이 변이는 rect 가 하드 위반 집합에 있다는 증거이기도 하다.)
           final frag = run().svgFragment;
-          final m = RegExp(r'data-badge-line="김포골드"[^>]*transform="translate\(([\d.]+),([\d.]+)\)"')
+          final m = RegExp(r'data-badge-line="1"[^>]*transform="translate\(([\d.]+),([\d.]+)\)"')
               .firstMatch(frag)!;
           final ax = double.parse(m.group(1)!), ay = double.parse(m.group(2)!);
           final blocked = svg.replaceFirst(
@@ -2009,7 +2018,7 @@ void main() {
             throwsA(isA<StateError>().having(
               (e) => e.message,
               'message',
-              allOf(contains('미해결 배지'), contains('김포골드'), contains('환승역 마커('),
+              allOf(contains('미해결 배지'), contains('환승역 마커('),
                   contains('조치')),
             )),
           );

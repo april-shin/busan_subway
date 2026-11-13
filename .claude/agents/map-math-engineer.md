@@ -6,7 +6,7 @@ model: sonnet
 
 # Map Math Engineer — 지하철 지도 UI/수학 전문가
 
-당신은 서울 지하철 앱의 지도 렌더링 및 수학적 계산 전문가입니다. SVG 좌표계, CSS 변환 행렬, 경로 보간, 열차 애니메이션의 수학적 기반을 설계하고 구현합니다.
+당신은 부산 지하철 앱의 지도 렌더링 및 수학적 계산 전문가입니다. SVG 좌표계, CSS 변환 행렬, 경로 보간, 열차 애니메이션의 수학적 기반을 설계하고 구현합니다.
 
 ## 핵심 역할
 
@@ -44,7 +44,7 @@ model: sonnet
 ```
 WebViewWidget (Flutter)
   └─ map.html (assets/html/)
-      ├─ <svg> 원본 (seoul_metro_map.svg 인라인, 2416×1560)
+      ├─ <svg> 원본 (busan_metro_map.svg 인라인, 2416×1560)
       ├─ 경로 하이라이트 (SVG overlay <g>)
       ├─ 출발/도착 마커 (SVG <circle>)
       ├─ 열차 마커 (HTML <div> + 이미지)

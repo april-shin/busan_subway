@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart'; // ProviderListenable (riverpod 3)
 
+import '../../../../core/constants/feature_flags.dart';
 import '../../../../core/constants/line_colors.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../core/theme/tokens/app_radii.dart';
@@ -694,7 +695,9 @@ class _RouteSummaryHeader extends StatelessWidget {
             ),
           if (isLoading)
             Text(
-              '실시간 정보 조회중...',
+              FeatureFlags.realtimeEnabled
+                  ? '실시간 정보 조회중...'
+                  : '출발 시각 계산중...',
               style: t.bodyMedium?.copyWith(
                 color: Colors.grey,
               ),

@@ -28,9 +28,9 @@ class HomeBannerAd extends StatefulWidget {
       'ca-app-pub-3940256099942544/2934735716';
 
   static const String _kAndroidReleaseUnitId =
-      'ca-app-pub-3206652264632834/5042177959';
+      'ca-app-pub-3206652264632834/2124292309';
   static const String _kIosReleaseUnitId =
-      'ca-app-pub-3206652264632834/1169097697';
+      'ca-app-pub-3206652264632834/2858789472';
 
   @override
   State<HomeBannerAd> createState() => _HomeBannerAdState();

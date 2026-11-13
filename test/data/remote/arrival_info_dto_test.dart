@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/data/remote/dto/arrival_info_dto.dart';
+import 'package:busan_subway/data/remote/dto/arrival_info_dto.dart';
 
 void main() {
   group('ArrivalInfoDto', () {
@@ -199,11 +199,7 @@ void main() {
     });
 
     test('barvlDt "0" + arvlCd "99" + arvlMsg2 "2분" → 120 (2순위 폴백)', () {
-      const dto = ArrivalInfoDto(
-        barvlDt: '0',
-        arvlCd: '99',
-        arvlMsg2: '2분',
-      );
+      const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '99', arvlMsg2: '2분');
       expect(dto.toEntity().arrivalSeconds, 120);
     });
 
@@ -218,16 +214,12 @@ void main() {
     });
 
     test('barvlDt null + arvlMsg2 "1분 후" → 60 (2순위 폴백)', () {
-      const dto = ArrivalInfoDto(
-        arvlMsg2: '1분 후',
-      );
+      const dto = ArrivalInfoDto(arvlMsg2: '1분 후');
       expect(dto.toEntity().arrivalSeconds, 60);
     });
 
     test('barvlDt null + arvlMsg2 "전역 출발" → null (시간 아님)', () {
-      const dto = ArrivalInfoDto(
-        arvlMsg2: '전역 출발',
-      );
+      const dto = ArrivalInfoDto(arvlMsg2: '전역 출발');
       expect(dto.toEntity().arrivalSeconds, isNull);
     });
 
@@ -288,11 +280,7 @@ void main() {
       });
 
       test('arvlCd=1 + barvlDt=0 + arvlMsg2 빈 문자열 → 0 (기존 동작)', () {
-        const dto = ArrivalInfoDto(
-          barvlDt: '0',
-          arvlCd: '1',
-          arvlMsg2: '',
-        );
+        const dto = ArrivalInfoDto(barvlDt: '0', arvlCd: '1', arvlMsg2: '');
         expect(dto.toEntity().arrivalSeconds, 0);
       });
     });
@@ -300,61 +288,71 @@ void main() {
     // 6호선 응암순환 종착역: API 는 "응암순환(상선)"으로 응답하며 이 문자열이
     // 역명·방면·메시지 전반에 섞여 온다. toEntity 가 표시 필드를 "응암"으로 정리하되,
     // 시간 파싱(arrivalSeconds)은 raw arvlMsg2 를 써야 하므로 영향받지 않아야 한다.
-    group('응암순환(상선) 표시 정규화 (인바운드)', () {
-      test('역명·방면·종착·메시지의 응암순환(상선)을 응암으로 정리한다', () {
-        const dto = ArrivalInfoDto(
-          subwayId: '1006',
-          statnNm: '응암순환(상선)',
-          trainLineNm: '응암순환(상선)행 - 응암순환(상선)방면',
-          bstatnNm: '응암순환(상선)',
-          arvlMsg2: '응암순환(상선) 도착',
-          arvlMsg3: '응암순환(상선) 도착',
-        );
-        final e = dto.toEntity();
-        expect(e.stationName, '응암');
-        expect(e.trainLineNm, '응암행 - 응암방면');
-        expect(e.destination, '응암');
-        expect(e.arrivalMessage, '응암 도착');
-        expect(e.currentStationName, '응암');
-      });
+    group(
+      '응암순환(상선) 표시 정규화 (인바운드)',
+      () {
+        test('역명·방면·종착·메시지의 응암순환(상선)을 응암으로 정리한다', () {
+          const dto = ArrivalInfoDto(
+            subwayId: '1006',
+            statnNm: '응암순환(상선)',
+            trainLineNm: '응암순환(상선)행 - 응암순환(상선)방면',
+            bstatnNm: '응암순환(상선)',
+            arvlMsg2: '응암순환(상선) 도착',
+            arvlMsg3: '응암순환(상선) 도착',
+          );
+          final e = dto.toEntity();
+          expect(e.stationName, '응암');
+          expect(e.trainLineNm, '응암행 - 응암방면');
+          expect(e.destination, '응암');
+          expect(e.arrivalMessage, '응암 도착');
+          expect(e.currentStationName, '응암');
+        });
 
-      test('시간 파싱은 raw arvlMsg2 기준이라 정규화 영향 없음 ("4분 후" → 240)', () {
-        const dto = ArrivalInfoDto(
-          statnNm: '응암순환(상선)',
-          arvlMsg2: '4분 후 (증산(명지대앞))',
-        );
-        final e = dto.toEntity();
-        expect(e.arrivalSeconds, 240);
-        // 표시 메시지는 부역명까지 정리됨
-        expect(e.arrivalMessage, '4분 후 (증산)');
-      });
-    });
+        test('시간 파싱은 raw arvlMsg2 기준이라 정규화 영향 없음 ("4분 후" → 240)', () {
+          const dto = ArrivalInfoDto(
+            statnNm: '응암순환(상선)',
+            arvlMsg2: '4분 후 (증산(명지대앞))',
+          );
+          final e = dto.toEntity();
+          expect(e.arrivalSeconds, 240);
+          // 표시 메시지는 부역명까지 정리됨
+          expect(e.arrivalMessage, '4분 후 (증산)');
+        });
+      },
+      skip:
+          '부산 전환: 역명 치환 맵(arrivalApiStationNameOverrides 등)이 const 빈 맵이라 서울 치환 사례를 검증할 수 없음 — 부산 API 등록명을 채울 때 부산 사례로 교체',
+    );
 
     // arvlMsg3(현재역)는 API 등록명으로 오므로 표시용 역명으로 되돌려야
     // stations.json 매칭(라이브맵 좌표·도착추정)이 성립한다. (인바운드 역치환)
-    group('currentStationName 표시명 정규화', () {
-      test('축약형 API명 → 표시명 ("지제 도착" → 평택지제)', () {
-        const dto = ArrivalInfoDto(arvlMsg3: '지제 도착');
-        final e = dto.toEntity();
-        expect(e.currentStationName, '평택지제');
-        expect(e.positionStatus, '도착');
-      });
+    group(
+      'currentStationName 표시명 정규화',
+      () {
+        test('축약형 API명 → 표시명 ("지제 도착" → 평택지제)', () {
+          const dto = ArrivalInfoDto(arvlMsg3: '지제 도착');
+          final e = dto.toEntity();
+          expect(e.currentStationName, '평택지제');
+          expect(e.positionStatus, '도착');
+        });
 
-      test('공백 포함 API명 → 표시명 ("4.19 민주묘지 출발" → 4·19민주묘지)', () {
-        const dto = ArrivalInfoDto(arvlMsg3: '4.19 민주묘지 출발');
-        expect(dto.toEntity().currentStationName, '4·19민주묘지');
-      });
+        test('공백 포함 API명 → 표시명 ("4.19 민주묘지 출발" → 4·19민주묘지)', () {
+          const dto = ArrivalInfoDto(arvlMsg3: '4.19 민주묘지 출발');
+          expect(dto.toEntity().currentStationName, '4·19민주묘지');
+        });
 
-      test('부역명 덧붙임형 → 표시명 ("오목교(목동운동장앞) 진입" → 오목교)', () {
-        const dto = ArrivalInfoDto(arvlMsg3: '오목교(목동운동장앞) 진입');
-        expect(dto.toEntity().currentStationName, '오목교');
-      });
+        test('부역명 덧붙임형 → 표시명 ("오목교(목동운동장앞) 진입" → 오목교)', () {
+          const dto = ArrivalInfoDto(arvlMsg3: '오목교(목동운동장앞) 진입');
+          expect(dto.toEntity().currentStationName, '오목교');
+        });
 
-      test('치환 대상 아닌 역명은 그대로 ("역삼 출발" → 역삼)', () {
-        const dto = ArrivalInfoDto(arvlMsg3: '역삼 출발');
-        expect(dto.toEntity().currentStationName, '역삼');
-      });
-    });
+        test('치환 대상 아닌 역명은 그대로 ("역삼 출발" → 역삼)', () {
+          const dto = ArrivalInfoDto(arvlMsg3: '역삼 출발');
+          expect(dto.toEntity().currentStationName, '역삼');
+        });
+      },
+      skip:
+          '부산 전환: 역명 치환 맵(arrivalApiStationNameOverrides 등)이 const 빈 맵이라 서울 치환 사례를 검증할 수 없음 — 부산 API 등록명을 채울 때 부산 사례로 교체',
+    );
 
     // 신분당선 등 일부 노선은 btrainNo 를 빈 문자열로 보낸다. `??` 만 쓰면
     // 빈 문자열이 그대로 trainNo 가 되어 JS 의 열차 식별(activeTrains 키)이

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 
 void main() {
   late SelectedStationsNotifier notifier;

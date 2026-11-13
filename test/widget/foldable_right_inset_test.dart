@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/app.dart' show appRootBuilder;
-import 'package:seoul_subway/core/theme/app_theme.dart';
-import 'package:seoul_subway/core/utils/foldable_layout.dart';
+import 'package:busan_subway/app.dart' show appRootBuilder;
+import 'package:busan_subway/core/theme/app_theme.dart';
+import 'package:busan_subway/core/utils/foldable_layout.dart';
 
 /// 펼친 iPhone Duo 오른쪽 상태바 띠 회귀 가드.
 ///

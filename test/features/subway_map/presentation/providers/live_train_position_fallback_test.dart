@@ -7,19 +7,22 @@
 //
 // 폴백 조건이 "도착정보 0건" 이 아니라 **"해당 노선 0건"** 인 것이 핵심이다.
 // 천호는 8호선이 정상 응답하므로 전체 건수는 0 이 아니다.
+@Skip('부산 전환: FeatureFlags.realtimeEnabled 가 const false 라 liveTrainsProvider 가 항상 빈 목록 — 플래그를 켤 때 부산 픽스처로 복원(로직 자체는 유지)')
+library;
+
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/entities/arrival_info.dart';
-import 'package:seoul_subway/domain/entities/connection.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/domain/repositories/arrival_repository.dart';
-import 'package:seoul_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/live_train_provider.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/domain/entities/arrival_info.dart';
+import 'package:busan_subway/domain/entities/connection.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/domain/repositories/arrival_repository.dart';
+import 'package:busan_subway/features/arrival_info/presentation/providers/arrival_providers.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/live_train_provider.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
 
 class MockArrivalRepository extends Mock implements ArrivalRepository {}
 

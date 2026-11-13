@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
-import 'package:seoul_subway/features/subway_map/presentation/widgets/subway_map_viewer.dart';
-import 'package:seoul_subway/features/subway_map/presentation/widgets/svg_web_view.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/subway_map/presentation/providers/subway_map_providers.dart';
+import 'package:busan_subway/features/subway_map/presentation/widgets/subway_map_viewer.dart';
+import 'package:busan_subway/features/subway_map/presentation/widgets/svg_web_view.dart';
 
 const _stationA = Station(
   id: '201',

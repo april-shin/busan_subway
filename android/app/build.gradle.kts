@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.april.seoul_subway"
+    namespace = "com.april.busan_subway"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.april.seoul_subway"
+        applicationId = "com.april.busan_subway"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // google_mobile_ads 5.x는 Android API 23 (Marshmallow) 이상을 요구하므로

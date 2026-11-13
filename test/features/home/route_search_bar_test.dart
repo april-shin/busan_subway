@@ -6,8 +6,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:seoul_subway/domain/entities/station.dart';
-import 'package:seoul_subway/features/home/presentation/widgets/search_bar_widget.dart';
+import 'package:busan_subway/domain/entities/station.dart';
+import 'package:busan_subway/features/home/presentation/widgets/search_bar_widget.dart';
 
 /// VoidCallback(onDepartureTap/onArrivalTap/onSwap/onSearchRoute/
 /// onClearDeparture/onClearArrival)의 호출 여부를 mocktail로 스파이하기 위한 래퍼.

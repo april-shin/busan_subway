@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/domain/entities/line_schedule.dart';
-import 'package:seoul_subway/domain/usecases/find_next_departure.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_candidates.dart';
-import 'package:seoul_subway/features/route_search/utils/departure_query_time.dart';
+import 'package:busan_subway/domain/entities/line_schedule.dart';
+import 'package:busan_subway/domain/usecases/find_next_departure.dart';
+import 'package:busan_subway/features/route_search/utils/departure_candidates.dart';
+import 'package:busan_subway/features/route_search/utils/departure_query_time.dart';
 
 void main() {
   final monday = DateTime(2026, 2, 23, 9, 0); // 월요일

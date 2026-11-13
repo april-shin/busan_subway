@@ -15,9 +15,9 @@ import 'package:flutter_riverpod/legacy.dart'; // StateProvider (riverpod 3 레�
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/constants/feature_flags.dart';
 import '../../../../core/constants/subway_id_mapping.dart';
 import '../../../../core/utils/enrich_arrival_info.dart';
-import '../../../../core/utils/line_direction.dart';
 import '../../../../core/utils/live_arrival_seconds.dart';
 import '../../../../core/utils/expand_path_backward.dart';
 import '../../../../core/utils/path_on_line.dart';
@@ -165,6 +165,9 @@ String _stripStationAlias(String name) =>
 /// 타이머로 자동 새로고침한다.
 @riverpod
 Future<List<LiveTrain>> liveTrains(Ref ref) async {
+  // 실시간 기능이 꺼져 있으면 API 호출·새로고침 타이머 없이 비운다.
+  if (!FeatureFlags.realtimeEnabled) return const [];
+
   final selected = ref.watch(selectedStationsProvider);
   if (!selected.isComplete) return [];
 
@@ -228,8 +231,6 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   // 이 조건에 걸리지 않는다.** 조건부라 제공이 시작되면 저절로 정상 경로로 돌아오며,
   // 폴백은 같은 공백의 재발에 대비해 유지한다.
   var arrivalsForMap = enrichedArrivals;
-  // 위치 API 폴백을 썼는가. 두 API 는 지선에서 라벨 극성이 달라 구분이 필요하다.
-  var usedPositionFallback = false;
   final hasLineArrival = enrichedArrivals.any(
     (a) => subwayIdToLineId[a.subwayId] == routeFilter.lineId,
   );
@@ -243,7 +244,6 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
             stations: stations,
             connections: connections,
           );
-      usedPositionFallback = true;
       if (kDebugMode && arrivalsForMap.isNotEmpty) {
         debugPrint(
           '위치 API 폴백: $departureStationName ${routeFilter.lineId}호선 '
@@ -276,18 +276,9 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
   final routeStartStation =
       stationsById[routeFilter.routeStationIds.firstOrNull ?? '']?.firstOrNull;
   //
-  // 2호선은 유령 판정에서 **제외한다**(사용자 결정). 순환선이라 행선지
-  // (`bstatnNm`)가 실제 운행 범위를 나타내지 않는다 — 한 바퀴를 계속 도는
-  // 열차도 "성수행" 처럼 임의의 역을 행선지로 보고하므로, 행선지 기준 완주
-  // 판정이 정상 열차를 유령으로 오분류한다.
-  // API 라벨 극성이 이 탑승 구간에서 앱 규칙과 반대인가(2호선 성수지선). 경로가
-  // 바뀌지 않는 한 상수라 루프 밖에서 한 번만 구한다.
-  final apiLabelReversed = isApiLabelReversedOnRoute(
-    routeFilter.lineId,
-    routeFilter.routeStationIds,
-  );
-
-  final branchFilterEnabled = routeFilter.lineId != '2' &&
+  // (서울 시절 2호선 순환선은 행선지가 운행 범위를 뜻하지 않아 이 판정에서 제외했다.
+  // 부산은 전 노선이 선형이라 노선 예외가 없다.)
+  final branchFilterEnabled =
       routeStartStation?.name == departureStationName;
 
   // 완주 판정 메모 — 같은 행선지의 열차가 여러 대 오므로 행선지별 1회만 계산한다.
@@ -338,33 +329,11 @@ Future<List<LiveTrain>> liveTrains(Ref ref) async {
       orElse: () => candidates.first,
     );
 
-    // 라벨 반전은 **열차 자신의 접근 쌍**(현재역 → 탑승역)으로 판정한다. 경로 단위로
-    // 적용하면 분기역 성수(211)에서 출발하는 지선 경로에서 본선 열차까지 뒤집혀
-    // 통과한다 — 성수는 본선 순환에도 쓰여 `_line2SeongsuBranchIds` 에 넣을 수 없고
-    // (넣으면 본선 간선이 오염된다), 2호선은 행선지 기반 지선 필터가 꺼져 있어
-    // (`branchFilterEnabled`) 걸러 줄 장치가 방향 게이트뿐이다. 통과해 버리면
-    // `findPathOnLine` 이 hop 상한 없는 BFS 라 순환을 한 바퀴 도는 42정거장 경로를
-    // 찾아내 열차를 성수 반대편에 붙박아 그린다.
-    //
-    // 접근 쌍의 반전 여부가 경로의 그것과 다르면 그 열차는 이 경로의 열차가 아니다
-    // (지선 경로에 본선 열차, 또는 그 반대) — 방향을 보기 전에 떨군다.
-    // 현재역 == 탑승역인 열차는 접근 쌍이 성립하지 않아 분기역에서 본선/지선을
-    // 가릴 수 없다. 틀린 열차를 그리느니 빼는 쪽을 택한다(반전 전에도 떨어지던 행).
-    final trainReversed = apiLabelReversedForTrain(
-      lineId: lineId,
-      currentStationId: currentStation.id,
-      boardingStationId: routeFilter.routeStationIds.firstOrNull,
-    );
-    if (trainReversed != apiLabelReversed) continue;
-
     // 방향 필터링: 활성 경로 방향과 일치하는 열차만.
-    // ⚠ 반전은 **도착정보 API**(`realtimeStationArrival`) 라벨에만 적용한다. 위치 API
-    // (`realtimePosition`) 폴백은 극성이 앱 규칙과 **이미 일치한다** — 2026-10-28 실측:
-    // 1625 신설동행 `updnLine=1`(하행), 1628 성수지선행 `updnLine=0`(상행)으로 앱
-    // 규칙(ID 증가 = 하행)과 같다. 여기서 뒤집으면 폴백이 작동하는 바로 그 상황에서
-    // 지선 열차가 전부 사라진다.
-    var trainIsDown = isDownDirectionString(arrival.direction);
-    if (trainReversed && !usedPositionFallback) trainIsDown = !trainIsDown;
+    // ⚠ API 의 상/하행 라벨은 앱 규약(`isDownBetween`: 역 ID 증가 = 하행)과 같은
+    // 극성이어야 한다. 실시간 API 를 연동할 때 라벨이 반대인 노선·구간이 있으면
+    // DTO 단계에서 앱 규약으로 변환할 것.
+    final trainIsDown = isDownDirectionString(arrival.direction);
     if (trainIsDown != routeFilter.isDown) continue;
 
     // 잔여시간을 알 수 없는 열차는 **지도에서 뺀다.**

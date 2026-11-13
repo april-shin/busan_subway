@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:seoul_subway/core/utils/chosung_search.dart';
+import 'package:busan_subway/core/utils/chosung_search.dart';
 
 void main() {
   group('matchesStationQuery — 기존 부분일치 동작 보존', () {
